@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Silabos</title>
+
+    <style>
+        /* Agrega scroll horizontal a la tabla */
+        .table-container {
+            overflow-x: auto;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="container">
+    <div class="table-container">
+        <table class="table-bordered border-danger table-warning">
+            <thead class="border-top-color">
+            <tr>
+                 <th >ID</th>
+                        <th>Carrera</th>
+                        <th>Asignatura</th>
+                        <th>Maestro</th>
+                        <th>Encuentros</th>
+                        <th>Fecha</th>
+                        <th>Objetivos</th>
+                        <th>Momentos Didácticos</th>
+                        <th>Unidad</th>
+                        <th>Contenido Temático</th>
+                        <th>Forma Organizativa</th>
+                        <th>Tiempo</th>
+                        <th>Técnicas de Aprendizaje</th>
+                        <th>Descripción de la Estrategia de Aprendizaje</th>
+                        <th>Eje Transversal</th>
+                        <th>H P</th>
+                        <th>N°</th>
+                        <th>Contenido</th>
+                        <th>Técnica de Evaluación</th>
+                        <th>Instrumento de Evaluación</th>
+                        <th>Orientación</th>
+                        <th>Recursos Bibliográficos</th>
+                        <th>Tiempo de Estudio</th>
+                        <th>Total de Horas</th>
+                        <th>Fecha de Entrega</th>
+            </tr>
+            </thead>
+            <tbody class="table-group-divider">
+            {% for codigo, silabos_grupo in silabos_agrupados.items %}
+                <tr class="align-top">
+                    <td colspan="24"><strong>Código: {{ codigo }}</strong></td>
+                </tr>
+                {% for silabo in silabos_grupo %}
+                    <tr class="align-top">
+                        <td>{{ silabo.id }}</td>
+                        <td>{{ silabo.carrera }}</td>
+                        <td>{{ silabo.asignatura }}</td>
+                        <td>{{ silabo.maestro }}</td>
+                        <td>{{ silabo.encuentros }}</td>
+                        <td>{{ silabo.fecha }}</td>
+                        <td>{{ silabo.get_objetivos_display }}</td>
+                        <td>{{ silabo.get_momentos_didacticos_display }}</td>
+                        <td>{{ silabo.get_unidad_display }}</td>
+                        <td>{{ silabo.contenido_tematico }}</td>
+                        <td>{{ silabo.get_forma_organizativa_display }}</td>
+                        <td>{{ silabo.tiempo }}</td>
+                        <td>{{ silabo.get_tecnicas_aprendizaje_display }}</td>
+                        <td>{{ silabo.descripcion_estrategia }}</td>
+                        <td>{{ silabo.get_eje_transversal_display }}</td>
+                        <td>{{ silabo.hp }}</td>
+                        <td>{{ silabo.numero }}</td>
+                        <td>{{ silabo.contenido }}</td>
+                        <td>{{ silabo.get_tecnica_evaluacion_display }}</td>
+                        <td>{{ silabo.get_instrumento_evaluacion_display }}</td>
+                        <td>{{ silabo.orientacion }}</td>
+                        <td>{{ silabo.recursos_bibliograficos }}</td>
+                        <td>{{ silabo.tiempo_estudio }}</td>
+                        <td>{{ silabo.total_horas }}</td>
+                        <td>{{ silabo.fecha_entrega }}</td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+

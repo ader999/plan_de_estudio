@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    {% extends 'base.html' %}
+
+    {% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center align-items-center vh-150 mb-5">
+            <div class="col-md-7 text-center">
+                <i class="fas fa-book fa-6x mb-3 mt-5"></i>
+                <h1 class="display-4">Viaje Hacia la Enseñanza Transformadora</h1>
+                <P class="lead">Bienbenido a mi programa de estudio "Maestros del Futuro" te llevará en un apasionante viaje educativo, donde explorarás y dominarás tecnologías educativas de vanguardia. Esta experiencia te equipará con habilidades esenciales para moldear el futuro de la enseñanza en la era digital y más allá.</P>
+                <a class="btn btn-secondary" href="{% url 'login' %}">Planea el futuro del mañana</a>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+</body>
+</html>

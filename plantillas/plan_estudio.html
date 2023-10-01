@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- Agrega los enlaces a las hojas de estilo de Bootstrap y JavaScript si no lo has hecho ya -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-MCd5Z2lm89l8xL5L0clGgRkgf1kjc5KnuKl5OGT5m3oOzJz3ai63RU0F5mXw7Jd7PzP/AM9WLL5Ilr26P6pOyA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+
+</head>
+<body>
+
+    {% extends 'base.html' %}
+
+    {% block content %}
+    <div class="container mt-5">
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="pill" href="#section1">SILABO</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#section2">Pestaña 2</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#section3">Pestaña 3</a>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3">
+            <div id="section1" class="tab-pane active">
+
+
+
+
+                <!-- Botón para abrir el modal -->
+                <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#miModal">
+                  <i class="fa-solid fa-file-excel fa-lg"></i> Descargar Excel
+                </button>
+
+                <!-- Modal -->
+                <div class="modal fade" id="miModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="background-color: #fdbe01;">
+                  <div class="modal-dialog">
+                    <div class="modal-content" style="background-color: #fa8900;">
+                      <form method="post" action="{% url 'generar_excel' %}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                          <h5 class="modal-title">Insertar Código de Sílabo</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          {% if no_silabos_found %}
+                            <p>No se encontraron sílabos con el código especificado.</p>
+                          {% else %}
+                            <div class="form-group">
+                              <label for="codigoSilabo">Código de Sílabo:</label>
+                              <textarea class="form-control" id="codigoSilabo" name="codigoSilabo" rows="5" placeholder="Inserta aquí tu código de sílabo"></textarea>
+                            </div>
+                          {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                          <button type="submit" class="btn btn-success"> <i class="fa-solid fa-file-excel fa-lg"></i> Descargar Exel</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+
+
+                <!-- Botón para abrir la modal -->
+<button type="button" class="btn btn-danger mb-3" data-bs-toggle="modal" data-bs-target="#modalCodigoSilabo">
+  <i class="fa-solid fa-file-pdf fa-lg"></i>Descargar PDF
+</button>
+
+<!-- Modal para ingresar el código de sílabo -->
+<div class="modal fade" id="modalCodigoSilabo" tabindex="-1" aria-labelledby="modalCodigoSilaboLabel" aria-hidden="true" style="background-color: #fdbe01;">
+  <div class="modal-dialog">
+    <div class="modal-content" style="background-color: #fa8900;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCodigoSilaboLabel">Ingresar Código de Sílabo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Formulario para ingresar el código de sílabo -->
+        <form method="post" action="{% url 'generar_pdf' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="codigoSilabo" class="form-label">Código de Sílabo:</label>
+            <input type="text" class="form-control" id="codigoSilabo" name="codigoSilabo" required>
+          </div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">
+              <i class="fas fa-file-pdf fa-lg"></i> Descargar PDF
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+                {% include 'detalle_silabo.html' %}
+            </div>
+            <div id="section2" class="tab-pane">
+                <h3>Contenido de la Pestaña 2</h3>
+                <p>Este es el contenido de la pestaña 2.</p>
+            </div>
+            <div id="section3" class="tab-pane">
+                <h3>Contenido de la Pestaña 3</h3>
+                <p>Este es el contenido de la pestaña 3.</p>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+
+
+</body>
+</html>

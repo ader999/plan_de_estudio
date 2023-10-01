@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Metadatos y enlaces a hojas de estilo CSS aquí -->
+
+</head>
+<body>
+    {% extends 'base.html' %}
+
+    {% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center align-items-center vh-100">
+            <div class="col-md-6">
+                <div class="card" style="background-color: #fa8900;">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Iniciar Sesión</h5>
+                        <form method="post" action="{% url 'login' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="id_username" class="form-label">Nombre de usuario:</label>
+                                <input type="text" name="username" class="form-control" id="id_username" >
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_password" class="form-label">Contraseña:</label>
+                                <input type="password" name="password" class="form-control" id="id_password">
+                            </div>
+
+                            <button type="submit" class="btn btn-secondary w-100">Iniciar Sesión</button>
+                        </form>
+
+                        <!-- Bloque para mostrar mensajes -->
+                        {% if messages %}
+                            <ul class="list-group mt-3">
+                                {% for message in messages %}
+                                    <li class="list-group-item {% if message.tags %} list-group-item-{{ message.tags }}{% endif %}">{{ message }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    <!-- Más contenido de la página -->
+
+
+</body>
+</html>

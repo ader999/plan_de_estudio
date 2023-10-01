@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>Formulario</title>
+</head>
+<body>
+    <div class="container">
+        <h2>Formulario del Silabo</h2>
+        <form action="#" method="POST">
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="encuentros">Encuentros</label>
+                    <input type="text" class="form-control" id="encuentros" name="encuentros">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="fecha">Fecha</label>
+                    <input type="text" class="form-control" id="fecha" name="fecha">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="objetivos">Objetivos</label>
+                    <select class="form-control" id="objetivos" name="objetivos">
+                        <option value="Conceptual">Conceptual</option>
+                        <option value="Procedimental">Procedimental</option>
+                        <option value="Actitudinal">Actitudinal</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="momentos">Momentos Didácticos</label>
+                    <select class="form-control" id="momentos" name="momentos">
+                        <option value="Primer momento">Primer momento</option>
+                        <option value="Segundo momento">Segundo momento</option>
+                        <option value="Tercer momento">Tercer momento</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="unidad">Unidad</label>
+                    <select class="form-control" id="unidad" name="unidad">
+                        <option value="Unidad I">Unidad I</option>
+                        <option value="Unidad II">Unidad II</option>
+                        <option value="Unidad III">Unidad III</option>
+                        <option value="Unidad IV">Unidad IV</option>
+                        <option value="Unidad V">Unidad V</option>
+                        <option value="Unidad VI">Unidad VI</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="contenidoTematico">Contenido Temático</label>
+                    <textarea class="form-control" id="contenidoTematico" name="contenidoTematico" rows="2"></textarea>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="formaOrganizativa">Forma Organizativa de la Enseñanza</label>
+                    <select class="form-control" id="formaOrganizativa" name="formaOrganizativa">
+                        <option value="Seminario">Seminario</option>
+                        <option value="Conferencia">Conferencia</option>
+                        <option value="Laboratorio">Laboratorio</option>
+                        <option value="Talleres">Talleres</option>
+                        <option value="Otras técnicas de aprendizaje">Otras técnicas de aprendizaje</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="tiempo">Tiempo</label>
+                    <input type="text" class="form-control" id="tiempo" name="tiempo" size="5">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="tecnicasAprendizaje">Técnicas de Aprendizaje</label>
+                    <select class="form-control" id="tecnicasAprendizaje" name="tecnicasAprendizaje">
+                        <option value="Taller">Taller</option>
+                        <option value="Trabajo de campo">Trabajo de campo</option>
+                        <option value="Visita de campo">Visita de campo</option>
+                        <option value="Estudio de casos">Estudio de casos</option>
+                        <option value="Exposición">Exposición</option>
+                        <option value="Investigación">Investigación</option>
+                        <option value="Panel">Panel</option>
+                        <option value="Mesa Redonda">Mesa Redonda</option>
+                        <option value="Debate">Debate</option>
+                        <option value="Proyecto">Proyecto</option>
+                        <option value="Organizadores gráficos">Organizadores gráficos</option>
+                        <option value="Ensayo">Ensayo</option>
+                        <option value="Resumen">Resumen</option>
+                        <option value="Video">Video</option>
+                        <option value="Cuestionario">Cuestionario</option>
+                        <option value="Entrevista">Entrevista</option>
+                        <option value="Trabajo colaborativo">Trabajo colaborativo</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="descripcionEstrategia">Descripción de la Estrategia de Aprendizaje</label>
+                    <textarea class="form-control" id="descripcionEstrategia" name="descripcionEstrategia" rows="2"></textarea>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="ejeTransversal">Eje Transversal</label>
+                    <select class="form-control" id="ejeTransversal" name="ejeTransversal">
+                        <option value="Fe cristiana">Fe cristiana</option>
+                        <option value="Proyección social">Proyección social</option>
+                        <option value="Emprendimiento e innovación">Emprendimiento e innovación</option>
+                        <option value="Investigación">Investigación</option>
+                        <option value="Medio ambiente">Medio ambiente</option>
+                        <option value="Tecnología de la información y comunicación">Tecnología de la información y comunicación</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="hp">H P</label>
+                    <input type="text" class="form-control" id="hp" name="hp" size="5">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="numero">N°</label>
+                    <input type="text" class="form-control" id="numero" name="numero" size="5">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="contenido">Contenido</label>
+                    <textarea class="form-control" id="contenido" name="contenido" rows="2"></textarea>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="tecnicaEvaluacion">Técnica de Evaluación</label>
+                    <select class="form-control" id="tecnicaEvaluacion" name="tecnicaEvaluacion">
+                        <option value="Observación">Observación</option>
+                        <option value="Desempeño">Desempeño</option>
+                        <option value="Interrogatorio">Interrogatorio</option>
+                        <option value="Redacción">Redacción</option>
+                        <option value="Ensayo">Ensayo</option>
+                        <option value="Organizador gráfico">Organizador gráfico</option>
+                        <option value="Monografía">Monografía</option>
+                        <option value="Debate">Debate</option>
+                        <option value="Proyecto">Proyecto</option>
+                        <option value="Foro">Foro</option>
+                        <option value="Estudio de caso">Estudio de caso</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="instrumentoEvaluacion">Instrumento de Evaluación</label>
+                    <select class="form-control" id="instrumentoEvaluacion" name="instrumentoEvaluacion">
+                        <option value="Guía de observación">Guía de observación</option>
+                        <option value="Registro anecdótico">Registro anecdótico</option>
+                        <option value="Diario de clase">Diario de clase</option>
+                        <option value="Diario de trabajo">Diario de trabajo</option>
+                        <option value="Escala">Escala</option>
+                        <option value="Preguntas">Preguntas</option>
+                        <option value="Cuaderno del estudiante">Cuaderno del estudiante</option>
+                        <option value="Portafolio">Portafolio</option>
+                        <option value="Rubrica">Rubrica</option>
+                        <option value="Lista de cotejo">Lista de cotejo</option>
+                        <option value="Prueba oral">Prueba oral</option>
+                        <option value="Prueba escrita">Prueba escrita</option>
+                        <option value="Informe">Informe</option>
+                        <option value="Organizador gráfico">Organizador gráfico</option>
+                        <option value="Resumen">Resumen</option>
+                        <option value="Síntesis">Síntesis</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="orientacion">Orientación</label>
+                    <textarea class="form-control" id="orientacion" name="orientacion" rows="2"></textarea>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="recursosBibliograficos">Recursos Bibliográficos</label>
+                    <textarea class="form-control" id="recursosBibliograficos" name="recursosBibliograficos" rows="2"></textarea>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="tiempoEstudio">Tiempo de Estudio</label>
+                    <input type="text" class="form-control" id="tiempoEstudio" name="tiempoEstudio" size="5">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="totalHoras">Total de Horas</label>
+                    <input type="text" class="form-control" id="totalHoras" name="totalHoras" size="5">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="fechaEntrega">Fecha de Entrega</label>
+                    <input type="text" class="form-control" id="fechaEntrega" name="fechaEntrega" size="10">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Guardar</button>
+        </form>
+    </div>
+
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
