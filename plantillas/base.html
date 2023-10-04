@@ -7,17 +7,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 </head>
-<body  style="background-color: #fdbe01;">
+<body  style="background-color: #003116;">
     <!-- para que se vea bien en dispositivos móviles -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
    <nav class="navbar bg-body-tertiary fixed-top" >
-      <div class="container-fluid fixed-top" style="background-color: #fdb602;">
+      <div class="container-fluid fixed-top" style="background-color:#4a975c;">
         <a class="navbar-brand" href="{% url 'inicio' %}">MAESTROS DEL FUTURO</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" style="background-color: #fa8900;">
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" style="background-color: #4a975c;">
           <div class="offcanvas-header">
             <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Viaje Hacia la Enseñanza Transformadora</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
@@ -35,6 +35,9 @@
               </li>
               <li class="nav-item">
                 <a class="nav-link active" href="{% url 'admin:index' %}">PANEL DE CONTROL</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link active" href="{% url 'logout' %}">CERRAR SECION</a>
               </li>
               <!--<li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -63,7 +66,7 @@
     {% endblock %}
 
    <!-- Footer -->
-   <footer class="text-center" id="page-footer" style="background-color: #fdb602;  margin-bottom: -150px;">
+   <footer class="text-center" id="page-footer" style="background-color: #4a975c;  margin-bottom: -150px;">
     <div class="container">
         <!--<p class="font-weight-bold">Contacto: aderjasmirzeasrocha@gmail.com - Teléfono: 89278365</p>
         <p class="font-weight-bold">Sígueme en las redes sociales</p>-->

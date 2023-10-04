@@ -1,0 +1,84 @@
+<!-- tu_template.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ver Silabo</title>
+
+</head>
+<body>
+
+
+<!-- Modal -->
+
+    {% for codigo, silabos_grupo in silabos_agrupados.items %}
+    {% for silabo in silabos_grupo %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 bg-white p-3">
+                <h5 class="mb-4">DATOS GENERALES</h5>
+                <p><strong>N° de encuentro:</strong> {{ silabo.encuentros }}</p>
+                <p><strong>Municipio:</strong> JALAPA</p>
+                <p><strong>Año lectivo:</strong></p>
+                <p><strong>Carrera:</strong> {{ silabo.carrera }}</p>
+                <p><strong>Asignatura:</strong> {{ silabo.asignatura.asignatura }}</p>
+                <p><strong>Facilitador:</strong> {{ silabo.maestro }}</p>
+            </div>
+            <div class="col-md-6 bg-white p-3">
+                <p><strong>Fecha:</strong> {{ silabo.fecha }}</p>
+                <p><strong>Codigo grupo:</strong></p>
+                <p><strong>Trimestre:</strong> {{ silabo.asignatura.trimestre }}</p>
+                <p><strong>Año de la carrerra:</strong> {{ silabo.asignatura.año }}</p>
+            </div>
+            <div class="col-md-12 bg-white p-3 mb-5">
+                <h5>{{ silabo.unidad }}</h5>
+                <p>{{ silabo.detalle_unidad }}</p>
+                <hr class="my-5">
+                <h5>CONTENIDO DE LA CLASE</h5>
+                <h6>Temas</h6>
+                <p><strong>1)</strong> {{ silabo.contenido_tematico }}</p>
+                <hr>
+                <p><strong>2)</strong> {{ silabo.contenido_tematico }}</p>
+                <hr>
+                <p><strong>3)</strong> {{ silabo.contenido_tematico }}</p>
+                <hr>
+                <h5 class="mt-5">OBJETIVOS DE LA CLASE</h5>
+                <p><strong>Conceptual:</strong> {{ silabo.objetivo_conceptual }}</p>
+                <hr>
+                <p><strong>Procedimental:</strong> {{ silabo.objetivo_procedimental }}</p>
+                <hr>
+                <p><strong>Actitudinal:</strong> {{ silabo.objetivo_actitudinal }}</p>
+                <hr>
+                <h5>ESTRATEGIAS DE ENSEÑANZA, MEDIOS Y ACTIVIDADES DENTRO DEL SALÓN DE CLASE AJUSTADOS A LA ENSEÑANZA POR ENCUENTROS</h5>
+                <p><strong>Primer momento didáctico (se organizan actividades encaminadas a presentar y evaluar el trabajo independiente del estudiante, este momento cierra con las aclaraciones del o la docente).</strong></p>
+                <p>{{ silabo.momento_didactico_primer }}</p>
+                <hr>
+                <p><strong>Segundo momento didáctico (forma organizativa de la enseñanza donde se desarrollarán actividades en el tratamiento y evaluación del nuevo contenido a impartir).</strong></p>
+                <p>{{ silabo.momento_didactico_segundo }}</p>
+                <hr>
+                <p><strong>Tercer momento didáctico (Es la orientación de todo el trabajo que realizará el estudiante durante el período interencuentro a través de la guía para el estudio independiente).</strong></p>
+                <p>{{ silabo.momento_didactico_tercer }}</p>
+                <hr>
+                <h5>APLICACIÓN DE LOS EJES DURANTE EL PROCESO ENSEÑANZA-APRENDIZAJE</h5>
+                <p><strong>(Se establece qué eje(s), cómo se aplicará(n) y en qué momento didáctico).</strong></p>
+                <p>{{ silabo.eje_transversal }}</p>
+                <hr>
+                <h5>OBSERVACIONES:</h5>
+                <p></p>
+                <p><strong>Revisado por</strong></p>
+            </div>
+        </div>
+    </div>
+
+
+
+        <!-- Resto de los datos -->
+
+
+    {% endfor %}
+    {% endfor %}
+
+
+</body>
+</html>

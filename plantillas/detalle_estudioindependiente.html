@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+    <table class="table">
+    <thead>
+            <tr>
+                <th scope="col">N°</th>
+                <th scope="col">Contenido</th>
+                <th scope="col">Técnica de Evaluación</th>
+                <th scope="col">Instrumento de Evaluación</th>
+                <th scope="col">Orientación</th>
+                <th scope="col">Recursos Bibliográficos</th>
+                <th scope="col">Tiempo de Estudio</th>
+                <th scope="col">Fecha de Entrega</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for codigo, estudios_lista in estudios.items %}
+            {% for estudio in estudios_lista %}
+            <tr>
+                <th scope="row">{{ estudio.numero }}</th>
+                <td>{{ estudio.contenido }}</td>
+                <td>{{ estudio.tecnica_evaluacion }}</td>
+                <td>{{ estudio.instrumento_evaluacion }}</td>
+                <td>{{ estudio.orientacion }}</td>
+                <td>{{ estudio.recursos_bibliograficos }}</td>
+                <td>{{ estudio.tiempo_estudio }}</td>
+                <td>{{ estudio.fecha_entrega|date:"Y-m-d" }}</td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+
+</body>
+</html>

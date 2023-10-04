@@ -2,10 +2,10 @@ from django.http import HttpResponse, request ,HttpResponseNotFound
 from django.shortcuts import render, redirect
 
 #librerias para el login
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Silabo
+from .models import Silabo ,Estudio_independiente
 
 from django.contrib.auth.models import User
 #generar exel
@@ -19,9 +19,6 @@ from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from io import BytesIO
 import pandas as pd
-
-
-
 
 
 
@@ -58,6 +55,11 @@ def login_view(request):
 
     return render(request, 'login.html')
 
+def logout_view(request):
+    logout(request)
+    return redirect('login')  # Cambia 'login' por la URL de tu página de inicio de sesión
+
+
 
 @login_required
 def plan_estudio(request):
@@ -69,17 +71,25 @@ def plan_estudio(request):
 
     # Crear un diccionario para agrupar los silabos por código
     silabos_agrupados = {}
+    estudio_independiente = {}
     for silabo in silabos:
         codigo = silabo.codigo
         if codigo not in silabos_agrupados:
             silabos_agrupados[codigo] = []
+            estudio_independiente[codigo] = []  # Inicializar como una lista vacía
         silabos_agrupados[codigo].append(silabo)
-
+        estudio_independiente[codigo].append(silabo.estudio_independiente)
+    print('estudio :', estudio_independiente)
     context = {
-        'silabos_agrupados': silabos_agrupados
+        'silabos_agrupados': silabos_agrupados,
+        'estudios': estudio_independiente
     }
 
     return render(request, 'plan_estudio.html', context)
+
+def Plan_de_clase(request):
+    return render(request, 'detalle_plandeclase.html')
+
 
 # def generar_excel(request):
 #     # Recupera todos los objetos Silabo relacionados con el usuario logueado
@@ -164,11 +174,11 @@ def generar_excel(request):
 
                 for silabo in silabos:
                     ws.cell(row=6, column=2, value=silabo.maestro.username)
-                    ws.cell(row=7, column=2, value=silabo.asignatura.nombre)
+                    ws.cell(row=7, column=2, value=silabo.asignatura.asignatura.nombre)
                     ws.cell(row=row_num, column=1, value=silabo.encuentros)
                     ws.cell(row=row_num, column=2, value=silabo.fecha)
-                    ws.cell(row=row_num, column=3, value=silabo.objetivos)
-                    ws.cell(row=row_num, column=4, value=silabo.momentos_didacticos)
+                    ws.cell(row=row_num, column=3, value=silabo.objetivo_conceptual +' '+ silabo.objetivo_procedimental +' '+silabo.objetivo_actitudinal)
+                    ws.cell(row=row_num, column=4, value=silabo.momento_didactico_primer)
                     ws.cell(row=row_num, column=5, value=silabo.unidad)
                     ws.cell(row=row_num, column=6, value=silabo.contenido_tematico)
                     ws.cell(row=row_num, column=7, value=silabo.forma_organizativa)
@@ -187,101 +197,82 @@ def generar_excel(request):
 
 @login_required
 def generar_pdf_silabo(request):
-    # ...
-
     from io import BytesIO
     from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
     from reportlab.lib.pagesizes import landscape, letter
     from reportlab.lib import colors
     from reportlab.lib.styles import getSampleStyleSheet
+    from django.http import HttpResponse, JsonResponse
+    from django.shortcuts import get_object_or_404
     from reportlab.lib.units import inch
 
-    # ...
-    codigo_silabo = request.POST.get('codigoSilabo')
+    from .models import Silabo
+
     if request.method == 'POST':
-        # ...
+        codigo_silabo = request.POST.get('codigoSilabo', '')  # Validación de entrada
+        if not codigo_silabo:
+            return JsonResponse({'error': 'El código de sílabo no se proporcionó.'}, status=400)
+
+        usuario = request.user
+        silabos = Silabo.objects.filter(codigo=codigo_silabo, maestro=usuario)
+
+        if not silabos.exists():
+            return JsonResponse({'error': 'No se encontraron sílabos para este usuario con el código especificado.'},
+                                status=404)
 
         try:
-            usuario = request.user
-            silabos = Silabo.objects.filter(codigo=codigo_silabo, maestro=usuario)
-
-            if not silabos.exists():
-                return HttpResponse("No se encontraron sílabos para este usuario con el código especificado.",
-                                    status=404)
-
             buffer = BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))  # Cambiar la orientación a horizontal
+            doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
 
-            # Lista para almacenar todos los elementos del PDF
             elements = []
 
-            if silabos:
-                primer_silabo = silabos[0]
-                titulo_texto = f'Código: {primer_silabo.codigo} Carrera: {str(primer_silabo.carrera)} Asignatura: {str(primer_silabo.asignatura)}'
-                titulo = Paragraph(titulo_texto, getSampleStyleSheet()["Title"])
-                elements.append(titulo)
+            # ... Configuración de título y otros elementos
 
-                # Otros datos del maestro o cualquier otro dato que desees incluir fuera de la tabla
-                # Aquí puedes agregar párrafos con la información que necesites
-                maestro_info = f'Maestro: {str(primer_silabo.maestro)}'
-                maestro = Paragraph(maestro_info, getSampleStyleSheet()["Normal"])
-                elements.append(maestro)
-
-            # Datos dentro de la tabla
             table_data = [
-                ["Número de Encuentros", "Fecha", "Unidad", "Objetivos de la Unidad", "Momentos Didácticos",
-                 "Forma Organizativa", "Técnicas de Aprendizaje", "Descripción Estrategia", "Eje Transversal",
-                 "HP", "Número"],
+                ["No de Encuentros", "Fecha", "Unidad", "Objetivos de la Unidad",
+                 "Momentos Didácticos",
+                 "Forma Organizativa", "Técnicas de Aprendizaje",
+                 "Descripción Estrategia", "Evaluación Formativa"]
             ]
 
             for silabo in silabos:
-                fila = [
-                    str(silabo.encuentros), str(silabo.fecha), str(silabo.unidad), str(silabo.objetivo_actitudinal),
-                    Paragraph(str(silabo.momento_didactico_primer), getSampleStyleSheet()["Normal"]),
-                    Paragraph(str(silabo.forma_organizativa), getSampleStyleSheet()["Normal"]),
-                    Paragraph(str(silabo.tecnicas_aprendizaje), getSampleStyleSheet()["Normal"]),
-                    Paragraph(str(silabo.descripcion_estrategia), getSampleStyleSheet()["Normal"]),
-                    Paragraph(str(silabo.eje_transversal), getSampleStyleSheet()["Normal"]),
-                    str(silabo.hp), str(silabo.encuentros)
-                ]
+                table_data.append([
+                    str(silabo.encuentros),
+                    str(silabo.fecha),
+                    str(silabo.unidad),
+                    str(silabo.objetivo_conceptual) + ', ' + str(silabo.objetivo_actitudinal) + ', ' + str(
+                        silabo.objetivo_procedimental),
+                    str(silabo.momento_didactico_primer) + ', ' + (silabo.momento_didactico_segundo) + ', ' + str(
+                        silabo.momento_didactico_tercer),
+                    str(silabo.forma_organizativa),
+                    str(silabo.tecnicas_aprendizaje),
+                    str(silabo.descripcion_estrategia),
+                    str(silabo.eje_transversal)
+                ])
 
-                table_data.append(fila)
-
-            # Crear una tabla para los datos
-            table = Table(table_data, colWidths=[1.5 * inch] * len(table_data[0]))
-
-            # Configurar el estilo de la tabla
             style = TableStyle([
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, 1), colors.beige),
-                ('WORDWRAP', (0, 0), (-1, -1), True),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONT', (0, 0), (-1, -1), 'Helvetica', 8),
+                ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
+                ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
             ])
 
-            # Aplicar el estilo a toda la tabla
-            table.setStyle(style)
+            col_widths = [1.0 * inch, 1.0 * inch, 1.0 * inch, 1.5 * inch, 1.5 * inch, 1.0 * inch, 1.0 * inch,
+                          1.5 * inch, 1.0 * inch]
 
-            # Añadir la tabla al contenido
+            table = Table(table_data, colWidths=col_widths, style=style)
             elements.append(table)
 
-            # Construir el PDF
             doc.build(elements)
 
-            # Guardar el PDF en el objeto buffer
-            buffer.seek(0)
-
-            # Devolver el PDF como respuesta al navegador
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename=silabos_{codigo_silabo}.pdf'
-            response.write(buffer.read())
+            pdf = buffer.getvalue()
             buffer.close()
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="silabo.pdf"'
             return response
 
-        except Silabo.DoesNotExist:
-            return HttpResponseNotFound("No se encontraron sílabos para este usuario con el código especificado.")
+        except Exception as e:
+            return JsonResponse({'error': f"Ocurrió un error al generar el PDF: {e}"}, status=500)
 
-    return redirect('plan_de_estudio')
+        # Resto del código

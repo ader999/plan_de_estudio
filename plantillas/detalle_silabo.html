@@ -5,46 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Silabos</title>
 
-    <style>
-        /* Agrega scroll horizontal a la tabla */
-        .table-container {
-            overflow-x: auto;
-        }
-    </style>
+   <style>
+    /* Agrega scroll horizontal a la tabla */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th, .table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+    }
+
+    /* Estilos para la fila de encabezado */
+    .table th {
+        background-color: #ccc; /* Cambia el fondo del encabezado a gris */
+        font-weight: bold;
+    }
+
+    /* Estilos para las filas de datos */
+    .table tbody tr:nth-child(odd) {
+        background-color: #f9f9f9;
+    }
+
+    /* Estilos para las filas pares */
+    .table tbody tr:nth-child(even) {
+        background-color: #e5e5e5;
+    }
+</style>
+
 
 </head>
 <body>
 
 <div class="container">
     <div class="table-container">
-        <table class="table-bordered border-danger table-warning">
+        <table class="table">
             <thead class="border-top-color">
             <tr>
-                 <th >ID</th>
-                        <th>Carrera</th>
-                        <th>Asignatura</th>
-                        <th>Maestro</th>
-                        <th>Encuentros</th>
-                        <th>Fecha</th>
-                        <th>Objetivos</th>
-                        <th>Momentos Didácticos</th>
-                        <th>Unidad</th>
-                        <th>Contenido Temático</th>
-                        <th>Forma Organizativa</th>
-                        <th>Tiempo</th>
-                        <th>Técnicas de Aprendizaje</th>
-                        <th>Descripción de la Estrategia de Aprendizaje</th>
-                        <th>Eje Transversal</th>
-                        <th>H P</th>
-                        <th>N°</th>
-                        <th>Contenido</th>
-                        <th>Técnica de Evaluación</th>
-                        <th>Instrumento de Evaluación</th>
-                        <th>Orientación</th>
-                        <th>Recursos Bibliográficos</th>
-                        <th>Tiempo de Estudio</th>
-                        <th>Total de Horas</th>
-                        <th>Fecha de Entrega</th>
+                <th>ID</th>
+                <th>Carrera</th>
+                <th>Asignatura</th>
+                <th>Maestro</th>
+                <th>Encuentros</th>
+                <th>Fecha</th>
+                <th>Objetivo Conceptual</th>
+                <th>Objetivo Procedimental</th>
+                <th>Objetivo Actitudinal</th>
+                <th>Primer Momento Didáctico</th>
+                <th>Segundo Momento Didáctico</th>
+                <th>Tercer Momento Didáctico</th>
+                <th>Unidad</th>
+                <th>Detalle Unidad</th>
+                <th>Contenido Temático</th>
+                <th>Forma Organizativa</th>
+                <th>Tiempo</th>
+                <th>Técnicas de Aprendizaje</th>
+                <th>Descripción de la Estrategia de Aprendizaje</th>
+                <th>Eje Transversal</th>
+                <th>H P</th>
             </tr>
             </thead>
             <tbody class="table-group-divider">
@@ -60,25 +84,21 @@
                         <td>{{ silabo.maestro }}</td>
                         <td>{{ silabo.encuentros }}</td>
                         <td>{{ silabo.fecha }}</td>
-                        <td>{{ silabo.get_objetivos_display }}</td>
-                        <td>{{ silabo.get_momentos_didacticos_display }}</td>
-                        <td>{{ silabo.get_unidad_display }}</td>
+                        <td>{{ silabo.objetivo_conceptual }}</td>
+                        <td>{{ silabo.objetivo_procedimental }}</td>
+                        <td>{{ silabo.objetivo_actitudinal }}</td>
+                        <td>{{ silabo.momento_didactico_primer }}</td>
+                        <td>{{ silabo.momento_didactico_segundo }}</td>
+                        <td>{{ silabo.momento_didactico_tercer }}</td>
+                        <td>{{ silabo.unidad }}</td>
+                        <td>{{ silabo.detalle_unidad }}</td>
                         <td>{{ silabo.contenido_tematico }}</td>
-                        <td>{{ silabo.get_forma_organizativa_display }}</td>
+                        <td>{{ silabo.forma_organizativa }}</td>
                         <td>{{ silabo.tiempo }}</td>
-                        <td>{{ silabo.get_tecnicas_aprendizaje_display }}</td>
+                        <td>{{ silabo.tecnicas_aprendizaje }}</td>
                         <td>{{ silabo.descripcion_estrategia }}</td>
-                        <td>{{ silabo.get_eje_transversal_display }}</td>
+                        <td>{{ silabo.eje_transversal }}</td>
                         <td>{{ silabo.hp }}</td>
-                        <td>{{ silabo.numero }}</td>
-                        <td>{{ silabo.contenido }}</td>
-                        <td>{{ silabo.get_tecnica_evaluacion_display }}</td>
-                        <td>{{ silabo.get_instrumento_evaluacion_display }}</td>
-                        <td>{{ silabo.orientacion }}</td>
-                        <td>{{ silabo.recursos_bibliograficos }}</td>
-                        <td>{{ silabo.tiempo_estudio }}</td>
-                        <td>{{ silabo.total_horas }}</td>
-                        <td>{{ silabo.fecha_entrega }}</td>
                     </tr>
                 {% endfor %}
             {% endfor %}
@@ -89,15 +109,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
