@@ -6,6 +6,9 @@ from django import forms
 from django.contrib.admin.filters import DateFieldListFilter
 from django.forms import DateInput
 
+admin.site.site_header = 'MAESTROS DEL FUTURO'
+admin.site.index_title = 'Bienbenidos al Panel de control del sitio'
+admin.site.site_title = 'ADMIN'
 
 
 class FiltrarClases(admin.ModelAdmin):
@@ -53,6 +56,7 @@ class FiltarSilabo(admin.ModelAdmin):
 
 class FiltrarEstudioIndependiente(admin.ModelAdmin):
       list_filter = ('asignatura',)
+
 
 
 admin.site.register(Plan_de_estudio, FiltarPlanDeEstudio)
