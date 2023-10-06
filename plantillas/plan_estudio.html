@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-MCd5Z2lm89l8xL5L0clGgRkgf1kjc5KnuKl5OGT5m3oOzJz3ai63RU0F5mXw7Jd7PzP/AM9WLL5Ilr26P6pOyA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 </head>
 <body>
 
@@ -33,80 +34,6 @@
             <div id="section1" class="tab-pane active">
 
 
-
-
-                <!-- Botón para abrir el modal -->
-                <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#miModal">
-                  <i class="fa-solid fa-file-excel fa-lg"></i> Descargar Excel
-                </button>
-
-                <!-- Modal -->
-                <div class="modal fade" id="miModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" style="background-color: #003116;">
-                  <div class="modal-dialog">
-                    <div class="modal-content" style="background-color: #4a975c;">
-                      <form method="post" action="{% url 'generar_excel' %}">
-                        {% csrf_token %}
-                        <div class="modal-header">
-                          <h5 class="modal-title text-white">Insertar Código de Sílabo</h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                          {% if no_silabos_found %}
-                            <p class="text-white">No se encontraron sílabos con el código especificado.</p>
-                          {% else %}
-                            <div class="form-group">
-                              <label class="text-white" for="codigoSilabo">Código de Sílabo:</label>
-                              <input type="text" class="form-control" id="codigoSilabo" name="codigoSilabo" required>
-                            </div>
-                          {% endif %}
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                          <button type="submit" class="btn btn-success"> <i class="fa-solid fa-file-excel fa-lg"></i> Descargar Exel</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-
-
-
-                <!-- Botón para abrir la modal -->
-<button type="button" class="btn btn-danger mb-3" data-bs-toggle="modal" data-bs-target="#modalCodigoSilabo">
-  <i class="fa-solid fa-file-pdf fa-lg"></i>Descargar PDF
-</button>
-
-<!-- Modal para ingresar el código de sílabo -->
-<div class="modal fade" id="modalCodigoSilabo" tabindex="-1" aria-labelledby="modalCodigoSilaboLabel" aria-hidden="true" style="background-color: #003116;">
-  <div class="modal-dialog">
-    <div class="modal-content" style="background-color: #4a975c;">
-      <div class="modal-header">
-        <h5 class="modal-title text-white" id="modalCodigoSilaboLabel">Ingresar Código de Sílabo</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <!-- Formulario para ingresar el código de sílabo -->
-        <form method="post" action="{% url 'generar_pdf' %}">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label class="text-white" for="codigoSilabo" class="form-label">Código de Sílabo:</label>
-            <input type="text" class="form-control" id="codigoSilabo" name="codigoSilabo" required>
-          </div>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-danger">
-              <i class="fas fa-file-pdf fa-lg"></i> Descargar PDF
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-
                 {% include 'detalle_silabo.html' %}
             </div>
             <div id="section2" class="tab-pane">
@@ -116,13 +43,18 @@
                 {% include 'detalle_plandeclase.html' %}
             </div>
             <div id="section4" class="tab-pane">
-            <h1>Contenido secion 4</h1>
+            {% include 'detalle_guiadeestudioindependiente.html' %}
             </div>
         </div>
     </div>
     {% endblock %}
 
 
-
+<script>
+    document.getElementById("myButton").addEventListener("click", function() {
+        this.classList.toggle("btn-primary"); // Cambia el color de fondo del botón
+        this.classList.toggle("btn-danger"); // Cambia a otro color de fondo (por ejemplo, rojo)
+    });
+</script>
 </body>
 </html>

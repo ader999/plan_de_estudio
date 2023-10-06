@@ -1,4 +1,4 @@
-from django.http import HttpResponse, request ,HttpResponseNotFound
+from django.http import HttpResponse, request ,HttpResponseNotFound, JsonResponse
 from django.shortcuts import render, redirect
 
 #librerias para el login
@@ -20,6 +20,9 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from io import BytesIO
 import pandas as pd
 
+from docx import Document
+from docx.shared import Pt
+
 
 
 
@@ -33,7 +36,9 @@ def silaboform(request):
     return render(request, 'formulario_silabo.html')
 
 def inicio(request):
-    return render(request,'inicio.html')
+    nombre_de_usuario = request.user.username
+
+    return render(request,'inicio.html',{'usuario':nombre_de_usuario})
 
 def acerca_de(request):
     return  render(request, 'acerca_de.html')
@@ -63,9 +68,10 @@ def logout_view(request):
 
 @login_required
 def plan_estudio(request):
+
     # Obtiene el usuario autenticado
     usuario_autenticado = request.user
-
+    nombre_de_usuario = request.user.username
     # Filtra los silabos del maestro autenticado
     silabos = Silabo.objects.filter(maestro=usuario_autenticado)
 
@@ -79,10 +85,11 @@ def plan_estudio(request):
             estudio_independiente[codigo] = []  # Inicializar como una lista vacía
         silabos_agrupados[codigo].append(silabo)
         estudio_independiente[codigo].append(silabo.estudio_independiente)
-    print('estudio :', estudio_independiente)
+
     context = {
         'silabos_agrupados': silabos_agrupados,
-        'estudios': estudio_independiente
+        'estudios': estudio_independiente,
+        'usuario': nombre_de_usuario
     }
 
     return render(request, 'plan_estudio.html', context)
@@ -148,9 +155,11 @@ def Plan_de_clase(request):
 
 @login_required
 def generar_excel(request):
+    print("Me estoy ejecutando")
     if request.method == 'POST':
         # Obtén el código de sílabo del formulario
         codigo_silabo = request.POST.get('codigoSilabo')
+
 
         if codigo_silabo:
             # Si se proporcionó un código de sílabo, realiza la búsqueda
@@ -195,6 +204,75 @@ def generar_excel(request):
     # Si no se proporcionó un código de sílabo o no se encontraron sílabos, redirige a la página principal
     return redirect('plan_de_estudio')  # Reemplaza 'pagina_principal' con la URL de tu elección
 
+
+@login_required
+def generar_docx(request):
+
+
+    if request.method == 'POST':
+        codigo_silabo = request.POST.get('codigoSilabo', '')
+
+        if not codigo_silabo:
+            return JsonResponse({'error': 'El código de sílabo no se proporcionó.'}, status=400)
+
+        usuario = request.user
+        silabos = Silabo.objects.filter(codigo=codigo_silabo, maestro=usuario)
+
+        if not silabos.exists():
+            return JsonResponse({'error': 'No se encontraron sílabos para este usuario con el código especificado.'},
+                                status=404)
+
+        try:
+            # Crear un documento Word
+            document = Document()
+
+            # Agregar contenido al documento
+            for silabo in silabos:
+                document.add_heading(f'Sílabo {silabo.codigo}', level=1)
+
+                # Agregar subtítulos en negrita seguidos de ":"
+                document.add_paragraph().add_run('Encuentros:').bold = True
+                document.add_paragraph(f'{silabo.encuentros}')
+
+                document.add_paragraph().add_run('Fecha:').bold = True
+                document.add_paragraph(f'{silabo.fecha}')
+
+                document.add_paragraph().add_run('Unidad:').bold = True
+                document.add_paragraph(f'{silabo.unidad}')
+
+                document.add_paragraph().add_run('Objetivos:').bold = True
+                document.add_paragraph(
+                    f'{silabo.objetivo_conceptual}, {silabo.objetivo_actitudinal}, {silabo.objetivo_procedimental}')
+
+                document.add_paragraph().add_run('Momentos Didácticos:').bold = True
+                document.add_paragraph(
+                    f'{silabo.momento_didactico_primer}, {silabo.momento_didactico_segundo}, {silabo.momento_didactico_tercer}')
+
+                document.add_paragraph().add_run('Forma Organizativa:').bold = True
+                document.add_paragraph(f'{silabo.forma_organizativa}')
+
+                document.add_paragraph().add_run('Técnicas de Aprendizaje:').bold = True
+                document.add_paragraph(f'{silabo.tecnicas_aprendizaje}')
+
+                document.add_paragraph().add_run('Descripción Estrategia:').bold = True
+                document.add_paragraph(f'{silabo.descripcion_estrategia}')
+
+                document.add_paragraph().add_run('Eje Transversal:').bold = True
+                document.add_paragraph(f'{silabo.eje_transversal}')
+
+            # Guardar el documento en memoria
+            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            response['Content-Disposition'] = 'attachment; filename="silabo.docx"'
+            document.save(response)
+
+            return response
+
+        except Exception as e:
+            return JsonResponse({'error': f"Ocurrió un error al generar el documento Word: {e}"}, status=500)
+
+
+
+
 @login_required
 def generar_pdf_silabo(request):
     from io import BytesIO
@@ -202,7 +280,7 @@ def generar_pdf_silabo(request):
     from reportlab.lib.pagesizes import landscape, letter
     from reportlab.lib import colors
     from reportlab.lib.styles import getSampleStyleSheet
-    from django.http import HttpResponse, JsonResponse
+    from django.http import HttpResponse
     from django.shortcuts import get_object_or_404
     from reportlab.lib.units import inch
 

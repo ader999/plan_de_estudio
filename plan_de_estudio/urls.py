@@ -30,5 +30,6 @@ urlpatterns = [
     path('detalle_silabo/',views.detalle_silabo,name='detalle_silabo'),
     path('generar_excel/', views.generar_excel, name='generar_excel'),
     path('generar_pdf/', views.generar_pdf_silabo, name='generar_pdf'),
+    path('generar_docx/', views.generar_docx, name='generar_docx'),
     path('logout/', views.logout_view, name='logout'),
 ]

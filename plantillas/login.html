@@ -13,6 +13,11 @@
             <div class="col-md-6">
                 <div class="card" style="background-color: #4a975c;">
                     <div class="card-body">
+                        <i class="fas fa-chalkboard-teacher fa-lg" style="font-size: 48px; margin-left: 48%;"></i>
+
+
+
+
                         <h5 class="card-title text-center">Iniciar Sesión</h5>
                         <form method="post" action="{% url 'login' %}">
                             {% csrf_token %}
@@ -26,7 +31,7 @@
                                 <input type="password" name="password" class="form-control" id="id_password">
                             </div>
 
-                            <button type="submit" class="btn btn-secondary w-100">Iniciar Sesión</button>
+                            <button type="submit" class="btn btn-success w-100 mb-5">Iniciar Sesión</button>
                         </form>
 
                         <!-- Bloque para mostrar mensajes -->

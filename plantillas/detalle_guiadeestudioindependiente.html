@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+  <button onclick="imprimirSilabo()"><i class="fas fa-print fa-lg"></i>Imprimir Guia para el estudio independiente</button>
+
+     <script>
+        // Función para imprimir el sílabo
+        function imprimirSilabo() {
+             // Coloca aquí el código JavaScript para abrir la ventana de impresión
+             window.print();
+        }
+    </script>
+
+
+<!-- Modal -->
+
+    {% for codigo, silabos_grupo in silabos_agrupados.items %}
+    {% for silabo in silabos_grupo %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 bg-white p-3">
+
+
+
+
+
+                <h5 class="mb-4">DATOS GENERALES</h5>
+                <p><strong>N° de encuentro:</strong> {{ silabo.encuentros }}</p>
+                <p><strong>Municipio:</strong> JALAPA</p>
+                <p><strong>Año lectivo:</strong></p>
+                <p><strong>Carrera:</strong> {{ silabo.carrera }}</p>
+                <p><strong>Asignatura:</strong> {{ silabo.asignatura.asignatura }}</p>
+                <p><strong>Facilitador:</strong> {{ silabo.maestro }}</p>
+            </div>
+            <div class="col-md-6 bg-white p-3">
+                <p><strong>Fecha:</strong> {{ silabo.fecha }}</p>
+                <p><strong>Codigo grupo:</strong></p>
+                <p><strong>Trimestre:</strong> {{ silabo.asignatura.trimestre }}</p>
+                <p><strong>Año de la carrerra:</strong> {{ silabo.asignatura.año }}</p>
+            </div>
+            <div class="col-md-12 bg-white p-3 mb-5">
+                <h5>{{ silabo.unidad }}</h5>
+                <p>{{ silabo.detalle_unidad }}</p>
+
+                <h5 class="mt-5">OBJETIVOS DE LA UNIDAD</h5>
+                <p><strong>Conceptual:</strong> {{ silabo.objetivo_conceptual }}</p>
+                <hr>
+                <p><strong>Procedimental:</strong> {{ silabo.objetivo_procedimental }}</p>
+                <hr>
+                <p><strong>Actitudinal:</strong> {{ silabo.objetivo_actitudinal }}</p>
+                <hr>
+
+                <table  class="table">
+                    <thead>
+                    <tr>
+                        <th scope="col">N°</th>
+                        <th>TEMAS</th>
+                        <th>ACTIVIDADES A REALIZAR</th>
+                        <th>EVALUACION</th>
+                        <th>RECURSOS</th>
+                        <th>FECHA DE ENTRAGA</th>
+                    </tr>
+
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <th scope="row">{{ silabo.id }}</th>
+                        <td>{{ silabo.contenido_tematico }}</td>
+                        <td>____________</td>
+                        <td>{{ silabo.estudio_independiente.tecnica_evaluacion }}</td>
+                        <td>{{ silabo.estudio_independiente.recursos_bibliograficos }}</td>
+                        <td>{{ silabo.estudio_independiente.fecha_entrega }}</td>
+                    </tr>
+
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+
+
+        <!-- Resto de los datos -->
+
+
+    {% endfor %}
+    {% endfor %}
+
+</body>
+</html>

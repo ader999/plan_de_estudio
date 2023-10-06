@@ -44,41 +44,49 @@
 <body>
 
 <div class="container">
-    <div class="table-container">
+     {% for codigo, silabos_grupo in silabos_agrupados.items %}
+    <div class="table-container mb-3">
+
         <table class="table">
             <thead class="border-top-color">
+            <tr class="align-top">
+
+
+
+
+
+
+            </tr>
             <tr>
-                <th>ID</th>
-                <th>Carrera</th>
-                <th>Asignatura</th>
-                <th>Maestro</th>
-                <th>Encuentros</th>
-                <th>Fecha</th>
-                <th>Objetivo Conceptual</th>
-                <th>Objetivo Procedimental</th>
-                <th>Objetivo Actitudinal</th>
-                <th>Primer Momento Didáctico</th>
-                <th>Segundo Momento Didáctico</th>
-                <th>Tercer Momento Didáctico</th>
-                <th>Unidad</th>
-                <th>Detalle Unidad</th>
-                <th>Contenido Temático</th>
-                <th>Forma Organizativa</th>
-                <th>Tiempo</th>
-                <th>Técnicas de Aprendizaje</th>
-                <th>Descripción de la Estrategia de Aprendizaje</th>
-                <th>Eje Transversal</th>
-                <th>H P</th>
+                <th scope="col">ID</th>
+                <th scope="col">Carrera</th>
+                <th scope="col">Asignatura</th>
+                <th scope="col">Maestro</th>
+                <th scope="col">Encuentros</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Objetivo Conceptual</th>
+                <th scope="col">Objetivo Procedimental</th>
+                <th scope="col">Objetivo Actitudinal</th>
+                <th scope="col">P Momento Didáctico</th>
+                <th scope="col">S Momento Didáctico</th>
+                <th scope="col">T Momento Didáctico</th>
+                <th scope="col">Unidad</th>
+                <th scope="col">Detalle Unidad</th>
+                <th scope="col">Contenido Temático</th>
+                <th scope="col">Forma Organizativa</th>
+                <th scope="col">Tiempo</th>
+                <th scope="col">Técnicas de Aprendizaje</th>
+                <th scope="col">Estrategia Aprendizaje</th>
+                <th scope="col">Eje Transversal</th>
+                <th scope="col">H P</th>
             </tr>
             </thead>
             <tbody class="table-group-divider">
-            {% for codigo, silabos_grupo in silabos_agrupados.items %}
-                <tr class="align-top">
-                    <td colspan="24"><strong>Código: {{ codigo }}</strong></td>
-                </tr>
+
+
                 {% for silabo in silabos_grupo %}
                     <tr class="align-top">
-                        <td>{{ silabo.id }}</td>
+                        <th scope="row">{{ silabo.id }}</th>
                         <td>{{ silabo.carrera }}</td>
                         <td>{{ silabo.asignatura }}</td>
                         <td>{{ silabo.maestro }}</td>
@@ -100,11 +108,43 @@
                         <td>{{ silabo.eje_transversal }}</td>
                         <td>{{ silabo.hp }}</td>
                     </tr>
+
                 {% endfor %}
-            {% endfor %}
+                <tr>
+
+                    <th colspan="3">
+
+                    <form method="post" action="{% url 'generar_excel' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
+                        <button type="submit"> <i class="fa-solid fa-file-excel fa-lg"></i>Descargar Excel</button>
+                   </form>
+
+                </th>
+                 <th colspan="3">
+
+                    <form method="post" action="{% url 'generar_docx' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
+                        <button type="submit"> <i class="fa-solid fa-file-word fa-lg"></i>Descargar Word</button>
+                   </form>
+
+                </th>
+                <th colspan="18">
+                    <form method="post" action="{% url 'generar_pdf' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
+                        <button type="submit"> <i class="fas fa-file-pdf fa-lg"></i>Descargar PDF</button>
+                   </form>
+                </th>
+
+
+                </tr>
             </tbody>
         </table>
+
     </div>
+    {% endfor %}
 </div>
 
 </body>
