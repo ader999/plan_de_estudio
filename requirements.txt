@@ -29,3 +29,4 @@ weasyprint==59.0
 webencodings==0.5.1
 whitenoise==6.5.0
 zopfli==0.2.3
+python-docx==0.8.11
