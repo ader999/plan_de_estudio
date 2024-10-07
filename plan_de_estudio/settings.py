@@ -32,7 +32,14 @@ DEBUG = 'RENDER' not in os.environ
 
 
 #ALLOWED_HOSTS = ['192.168.1.16','192.168.1.102', 'localhost']
-ALLOWED_HOSTS = ['192.168.12.232','localhost']
+ALLOWED_HOSTS = ['192.168.12.232','localhost','planeauml.codeader.com']
+
+#railway
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost',
+    'https://planeauml.codeader.com',
+]
+# Application definition
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
