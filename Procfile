@@ -1,0 +1,1 @@
+web: gunicorn plan_de_estudio.wsgi
