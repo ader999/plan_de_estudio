@@ -1,22 +1,25 @@
+ {% extends 'base.html' %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <title>Title</title>
     <!-- Agrega los enlaces a las hojas de estilo de Bootstrap y JavaScript si no lo has hecho ya -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-MCd5Z2lm89l8xL5L0clGgRkgf1kjc5KnuKl5OGT5m3oOzJz3ai63RU0F5mXw7Jd7PzP/AM9WLL5Ilr26P6pOyA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/planestudio.css' %}">
 
 
 </head>
 <body>
 
-    {% extends 'base.html' %}
+
 
     {% block content %}
     <div class="container mt-5">
         <ul class="nav nav-pills">
             <li class="nav-item">
-                <a class="nav-link active" data-bs-toggle="pill" href="#section1">SILABO</a>
+                <a class="nav-link " data-bs-toggle="pill" href="#section1">SILABO</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="pill" href="#section2">ESTUDIO INDEPENDIENTE</a>

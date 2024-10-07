@@ -37,11 +37,11 @@ def silaboform(request):
 
 def inicio(request):
     nombre_de_usuario = request.user.username
-
     return render(request,'inicio.html',{'usuario':nombre_de_usuario})
 
 def acerca_de(request):
-    return  render(request, 'acerca_de.html')
+    nombre_de_usuario = request.user.username
+    return  render(request, 'acerca_de.html',{'usuario':nombre_de_usuario})
 
 
 def login_view(request):

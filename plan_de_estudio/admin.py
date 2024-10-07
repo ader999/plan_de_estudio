@@ -17,7 +17,7 @@ class FiltrarClases(admin.ModelAdmin):
 
 class FiltarPlanDeEstudio(admin.ModelAdmin):
     list_per_page = 20
-    list_display = ('carrera', 'año', 'asignatura')
+    list_display = ('carrera', 'año', 'trimestre','asignatura','pr','th')
     list_filter = ('carrera', 'año','trimestre')
 
 class AsignaturaFilter(admin.SimpleListFilter):
@@ -45,6 +45,7 @@ class FiltarSilabo(admin.ModelAdmin):
         ('fecha', admin.DateFieldListFilter),  # Utiliza el widget de fecha aquí
     )
 
+    exclude = ('maestro',)  # Excluir el campo maestro del formulario
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'encuentros':
             kwargs['widget'] = forms.NumberInput(attrs={'min': '1', 'max': '10', 'step': '1'})
@@ -53,6 +54,22 @@ class FiltarSilabo(admin.ModelAdmin):
             # Utiliza el widget de calendario AdminDateWidget para el campo de fecha.
             kwargs['widget'] = DateInput(attrs={'type': 'date'})
         return super().formfield_for_dbfield(db_field, **kwargs)
+
+
+
+    def save_model(self, request, obj, form, change):
+        # Establecer el maestro como el usuario que está logueado actualmente
+        if not obj.maestro_id:
+            obj.maestro = request.user
+        obj.save()
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        # Filtrar los silabos por el maestro que está logueado
+        if request.user.is_superuser:
+            return queryset
+        else:
+            return queryset.filter(maestro=request.user)
 
 class FiltrarEstudioIndependiente(admin.ModelAdmin):
       list_filter = ('asignatura',)

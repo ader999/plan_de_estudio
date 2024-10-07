@@ -32,7 +32,7 @@ DEBUG = 'RENDER' not in os.environ
 
 
 #ALLOWED_HOSTS = ['192.168.1.16','192.168.1.102', 'localhost']
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.12.232','localhost']
 
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
@@ -134,26 +134,23 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# settings.py
+STATIC_URL = '/static/'  # Asegúrate de que esta línea esté presente
 
-STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # Asegúrate de que este directorio no sea el mismo que STATIC_ROOT
+]
 
-# Following settings only make sense on production and may break development environments.
-if not DEBUG:
-    # Tell Django to copy statics to the `staticfiles` directory
-    # in your application directory on Render.
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-    # Turn on WhiteNoise storage backend that takes care of compressing static files
-    # and creating unique names for each version so they can safely be cached forever.
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Directorio donde Django recopilará todos los archivos estáticos para producción
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 LOGIN_URL = '/login/'

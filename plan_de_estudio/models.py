@@ -42,7 +42,7 @@ class Plan_de_estudio(models.Model):
     año = models.CharField(max_length=4, choices=NUMEROS_ROMANOS, null=False, unique=False, verbose_name='Año')
     trimestre = models.CharField(max_length=3, choices=TRIMESTRES_ROMANOS, null=False, unique=False, verbose_name='Trimestre')
     codigo = models.CharField(max_length=50, null=False, unique=True, verbose_name='Codigo')
-    asignatura = models.ForeignKey('Asignatura', on_delete=models.CASCADE)
+    asignatura = models.ForeignKey('Asignatura', on_delete=models.CASCADE,null=False)
     pr = models.ForeignKey('Asignatura', null=True, blank=True, on_delete=models.CASCADE, related_name='pr_set')
     pc = models.ForeignKey('Asignatura', null=True, blank=True, on_delete=models.CASCADE, related_name='pc_set')
     cr = models.ForeignKey('Asignatura', null=True, blank=True, on_delete=models.CASCADE, related_name='cr_set')
@@ -55,17 +55,25 @@ class Plan_de_estudio(models.Model):
         return f"{self.asignatura} - {self.carrera} - {self.año}"
 
     def clean(self):
+
+        if self.asignatura_id is None:
+            raise ValidationError("Debes seleccionar una asignatura.")
+
         # Verificar si ya existe un Plan_de_estudio con la misma asignatura en la misma carrera
         existing_plans = Plan_de_estudio.objects.filter(
             carrera=self.carrera,
             asignatura=self.asignatura
         ).exclude(pk=self.pk)  # Excluir el propio objeto si se está editando
-
         if existing_plans.exists():
             raise ValidationError("No puedes insertar la misma asignatura en la misma carrera dos veces.")
 
-
-
+        # Validar que los campos de horas sean mayores que cero y no estén vacíos
+        if self.hp is None or not isinstance(self.hp, int) or self.hp <= 0:
+            raise ValidationError("Las horas prácticas deben ser un número entero mayor que cero y no estar vacías")
+        if self.hti is None or not isinstance(self.hti, int) or self.hti <= 0:
+            raise ValidationError("Las horas teóricas deben ser un número entero mayor que cero y no estar vacías")
+        if self.th is None or not isinstance(self.th, int) or self.th <= 0:
+            raise ValidationError("El total de horas debe ser un número entero mayor que cero y no estar vacías")
 
 
 class Estudio_independiente(models.Model):
@@ -110,6 +118,7 @@ class Estudio_independiente(models.Model):
     instrumento_evaluacion = models.CharField(max_length=255, choices=INSTRUMENTO_EVALUACION_LIST)
     orientacion = models.TextField()
     recursos_bibliograficos = models.TextField()
+    enlace = models.URLField(max_length=200, null=True, blank=True)
     tiempo_estudio = models.IntegerField()
     fecha_entrega = models.DateField(verbose_name='Fecha de Entrega')
 

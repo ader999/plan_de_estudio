@@ -1,0 +1,109 @@
+/* Archivo: estilos.css */
+:root {
+  --color-fondo:#C0C0C0 ;
+    --color-navar: #09799a ;
+    --color-fuente: black;
+    --color-fuente-navar: white;
+  --tamano-texto: 16px;
+}
+
+/* Estilos para el fondo y texto */
+body {
+    background-image: url("https://images.unsplash.com/photo-1486520299386-6d106b22014b?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+
+    background-size: cover; /* Para cubrir toda la pantalla */
+    background-repeat: no-repeat;
+    color: var(--color-fuente); /* Color de texto */
+    font-family: Arial, sans-serif; /* Fuente */
+}
+
+#offcanvasNavbar{
+    background-color: var(--color-navar) !important;
+
+}
+
+
+.nav-item {
+    border: 2px solid var(--color-fuente-navar); /* Borde de 2px con color transparente */
+    border-radius: 10px; /* Borde redondeado */
+    margin-top: 10px;
+    margin-left: 10px;
+    width: calc(300px - 4px); /* Ancho de 300px, considerando el grosor del borde */
+    box-sizing: border-box; /* Incluir el grosor del borde en el cálculo del ancho total */
+    color: white;
+
+}
+.nav-link:active{
+    background-color: transparent;
+}
+
+.nav-link {
+     padding-left:20px;
+     width: 100%; /* El div se expandirá al 100% del ancho del contenedor */
+    height: 100%;
+}
+
+.dropdown-menu{
+     background-color: var(--color-fondo);
+}
+
+
+
+/* -----------------Estilos para la barra de navegación */
+.navbar {
+    background-color: var(--color-navar) !important; /* Color de fondo de la barra de navegación */
+    height:50px;
+}
+
+.navbar-brand {
+
+    color: var(--color-fuente-navar) !important; /* Color del texto del enlace de la marca */
+}
+
+.navbar-toggler-icon {
+    color: var(--color-fuente-navar); /* Color del icono del botón de alternar */
+}
+
+/* Estilos para los enlaces del menú de navegación */
+.navbar-nav .nav-link {
+    color: var(--color-fuente-navar) !important; /* Color de texto de los enlaces del menú */
+}
+
+
+
+/* Estilos para el botón de alternar */
+.offcanvas-header .offcanvas-title {
+    color: var(--color-fuente-navar); /* Color del título del offcanvas */
+}
+
+.offcanvas-header .btn-close {
+    color: #FFFFFF; /* Color del botón de cerrar del offcanvas */
+}
+
+/* Estilos para el pie de página */
+#page-footer {
+    margin-top:250px;
+    padding:50px;
+    background-color: var(--color-navar); /* Color de fondo del pie de página */
+    color: var(--color-fuente-navar); /* Color de texto del pie de página */
+}
+
+/* Estilos para los botones de redes sociales */
+.btn-custom {
+    background-color: transparent;
+    border: 1px solid var(--color-fuente-navar);
+    color: var(--color-fuente-navar) !important;
+    margin: 5px;
+}
+
+.btn-custom:hover {
+    background-color: #FFFFFF;
+    color: #4a975c !important;
+}
+
+/* Estilos para el texto del pie de página */
+#page-footer p {
+    font-size: 14px; /* Tamaño de fuente del texto del pie de página */
+}
+
+

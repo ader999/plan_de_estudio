@@ -17,6 +17,9 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from plan_de_estudio import views
+from django.conf.urls.static import static
+from django.conf import settings
+
 
 urlpatterns = [
     #path('admin/', admin.site.urls),
@@ -32,3 +35,5 @@ urlpatterns = [
     path('generar_docx/', views.generar_docx, name='generar_docx'),
     path('logout/', views.logout_view, name='logout'),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

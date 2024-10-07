@@ -1,56 +1,90 @@
+{% extends 'base.html' %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- Metadatos y enlaces a hojas de estilo CSS aquí -->
+    {% load static %}
+    <style>
+        .card {
 
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+        }
+        .card-body {
+            padding: 40px;
+        }
+        .card-img-top {
+
+            border-radius: 50%;
+            background-color: #6c5b7b;
+            padding: 20px;
+        }
+        .form-control {
+            background-color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+        }
+        .form-control:focus {
+            box-shadow: none;
+            border: 2px solid #6c5b7b;
+        }
+        .btn-primary {
+            background-color: #6c5b7b;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #563d7c;
+        }
+        .btn-secondary {
+            background-color: #9b287b;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #7d2662;
+        }
+    </style>
 </head>
 <body>
-    {% extends 'base.html' %}
 
-    {% block content %}
-    <div class="container mt-5">
-        <div class="row justify-content-center align-items-center vh-100">
-            <div class="col-md-6">
-                <div class="card" style="background-color: #4a975c;">
-                    <div class="card-body">
-                        <i class="fas fa-chalkboard-teacher fa-lg" style="font-size: 48px; margin-left: 48%;"></i>
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center align-items-center vh-100">
+        <div class="col-md-6">
+            <div class="card">
+                <img class="card-img-top mx-auto d-block" src="{% static 'img/logo.webp' %}" alt="Logo" style="height: 150px; width: 150px; margin-top:20px;">
+                <div class="card-body">
+                    <h5 class="card-title text-center mb-4">Iniciar Sesión</h5>
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <input type="text" name="username" class="form-control" id="id_username" placeholder="Nombre de Usuario">
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" name="password" class="form-control" id="id_password" placeholder="Contraseña">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+                    </form>
+                    {% if messages %}
+                        <ul class="list-group mt-3">
+                            {% for message in messages %}
+                                <li class="list-group-item {% if message.tags %} list-group-item-{{ message.tags }}{% endif %}">{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
 
-
-
-
-                        <h5 class="card-title text-center">Iniciar Sesión</h5>
-                        <form method="post" action="{% url 'login' %}">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="id_username" class="form-label">Nombre de usuario:</label>
-                                <input type="text" name="username" class="form-control" id="id_username" >
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="id_password" class="form-label">Contraseña:</label>
-                                <input type="password" name="password" class="form-control" id="id_password">
-                            </div>
-
-                            <button type="submit" class="btn btn-success w-100">Iniciar Sesión</button>
-                        </form>
-
-                        <!-- Bloque para mostrar mensajes -->
-                        {% if messages %}
-                            <ul class="list-group mt-3">
-                                {% for message in messages %}
-                                    <li class="list-group-item {% if message.tags %} list-group-item-{{ message.tags }}{% endif %}">{{ message }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
         </div>
     </div>
-    {% endblock %}
-
-    <!-- Más contenido de la página -->
-
+</div>
+{% endblock %}
 
 </body>
 </html>

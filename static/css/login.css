@@ -1,0 +1,15 @@
+.card {
+  background-color: #6f4a97;
+}
+
+.card-title {
+  text-align: center;
+}
+
+.card-body {
+  color: white;
+}
+
+.btn-primary, .btn-secondary {
+  width: 100%;
+}
