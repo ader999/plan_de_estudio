@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'plan_de_estudio',
+    'widget_tweaks',
 
 ]
 
@@ -144,14 +145,18 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # settings.py
-STATIC_URL = '/static/'  # Asegúrate de que esta línea esté presente
+STATIC_URL = 'static/'  # Asegúrate de que esta línea esté presente
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # Asegúrate de que este directorio no sea el mismo que STATIC_ROOT
+    os.path.join(BASE_DIR, 'static'),
 ]
 
-# Directorio donde Django recopilará todos los archivos estáticos para producción
-STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 
 

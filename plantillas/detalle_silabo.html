@@ -121,7 +121,7 @@
                    </form>
 
                 </th>
-                 <th colspan="3">
+                 <th colspan="21">
 
                     <form method="post" action="{% url 'generar_docx' %}">
                         {% csrf_token %}
@@ -130,13 +130,7 @@
                    </form>
 
                 </th>
-                <th colspan="18">
-                    <form method="post" action="{% url 'generar_pdf' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
-                        <button type="submit"> <i class="fas fa-file-pdf fa-lg"></i>Descargar PDF</button>
-                   </form>
-                </th>
+
 
 
                 </tr>

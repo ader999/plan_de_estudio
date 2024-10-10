@@ -1,18 +1,16 @@
+import json
+
 from django.http import HttpResponse, request ,HttpResponseNotFound, JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 
 #librerias para el login
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Silabo ,Estudio_independiente
+from .models import Silabo ,Estudio_independiente, AsignacionPlanEstudio, Asignatura
 
-from django.contrib.auth.models import User
-#generar exel
-from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
-from openpyxl.styles import Font
-from openpyxl.worksheet.table import Table, TableStyleInfo
+from .forms import SilaboForm
+from django.views.decorators.csrf import csrf_exempt
 
 from openpyxl import load_workbook
 
@@ -32,12 +30,15 @@ def detalle_silabo(request):
     return render(request, 'detalle_silabo.html', {'silabos': silabos})
 
 
-def silaboform(request):
-    return render(request, 'formulario_silabo.html')
 
+
+@login_required
 def inicio(request):
     nombre_de_usuario = request.user.username
-    return render(request,'inicio.html',{'usuario':nombre_de_usuario})
+
+    asignaciones = AsignacionPlanEstudio.objects.filter(usuario=request.user)
+
+    return render(request,'inicio.html',{'usuario':nombre_de_usuario, 'asignaciones': asignaciones})
 
 def acerca_de(request):
     nombre_de_usuario = request.user.username
@@ -52,7 +53,7 @@ def login_view(request):
         if user is not None:
             login(request, user)
             messages.success(request, 'Inicio de sesión exitoso.')
-            return redirect('plan_de_estudio')  # Cambia 'profile' por la URL deseada después del inicio de sesión
+            return redirect('inicio')  # Cambia 'profile' por la URL deseada después del inicio de sesión
         else:
             messages.error(request, 'Credenciales incorrectas. Por favor, intenta de nuevo.')
     else:  # Si la solicitud es GET, muestra el formulario
@@ -94,63 +95,11 @@ def plan_estudio(request):
 
     return render(request, 'plan_estudio.html', context)
 
+
 def Plan_de_clase(request):
     return render(request, 'detalle_plandeclase.html')
 
 
-# def generar_excel(request):
-#     # Recupera todos los objetos Silabo relacionados con el usuario logueado
-#     silabos = Silabo.objects.filter(maestro=request.user)
-#
-#     # Crear un libro de Excel y una hoja de cálculo
-#     wb = Workbook()
-#     ws = wb.active
-#     ws.title = "Sílabos"  # Establece el título de la hoja de cálculo
-#
-#     # Encabezados de columna en negrita
-#     encabezados = ['ID', 'Carrera', 'Asignatura', 'Encuentros', 'Fecha', 'Objetivos', 'Momentos Didácticos', 'Unidad', 'Contenido Temático', 'Forma Organizativa', 'Tiempo', 'Técnicas de Aprendizaje', 'Descripción Estrategia', 'Eje Transversal', 'HP', 'Número', 'Contenido', 'Técnica de Evaluación', 'Instrumento de Evaluación', 'Orientación', 'Recursos Bibliográficos', 'Tiempo de Estudio', 'Total de Horas', 'Fecha de Entrega']
-#     bold_font = Font(bold=True)  # Define un estilo de fuente en negrita
-#
-#     # Agregar encabezados a la hoja de cálculo
-#     for col_num, encabezado in enumerate(encabezados, 2):
-#         cell = ws.cell(row=2, column=col_num, value=encabezado)  # Los encabezados se agregan en la primera fila
-#         cell.font = bold_font  # Aplica el estilo de fuente en negrita
-#
-#     # Agregar datos a la hoja de cálculo
-#     row_num = 3  # Comienza en la segunda fila
-#     for silabo in silabos:
-#         ws.cell(row=row_num, column=2, value=silabo.id)
-#         ws.cell(row=row_num, column=3, value=silabo.carrera.nombre)
-#         ws.cell(row=row_num, column=4, value=silabo.asignatura.nombre)
-#         ws.cell(row=row_num, column=5, value=silabo.encuentros)
-#         ws.cell(row=row_num, column=6, value=silabo.fecha)
-#         ws.cell(row=row_num, column=7, value=silabo.objetivos)
-#         ws.cell(row=row_num, column=8, value=silabo.momentos_didacticos)
-#         ws.cell(row=row_num, column=9, value=silabo.unidad)
-#         ws.cell(row=row_num, column=10, value=silabo.contenido_tematico)
-#         ws.cell(row=row_num, column=11, value=silabo.forma_organizativa)
-#         ws.cell(row=row_num, column=12, value=silabo.tiempo)
-#         ws.cell(row=row_num, column=13, value=silabo.tecnicas_aprendizaje)
-#         ws.cell(row=row_num, column=14, value=silabo.descripcion_estrategia)
-#         ws.cell(row=row_num, column=15, value=silabo.eje_transversal)
-#         ws.cell(row=row_num, column=16, value=silabo.hp)
-#         ws.cell(row=row_num, column=17, value=silabo.numero)
-#         ws.cell(row=row_num, column=18, value=silabo.contenido)
-#         ws.cell(row=row_num, column=19, value=silabo.tecnica_evaluacion)
-#         ws.cell(row=row_num, column=20, value=silabo.instrumento_evaluacion)
-#         ws.cell(row=row_num, column=21, value=silabo.orientacion)
-#         ws.cell(row=row_num, column=22, value=silabo.recursos_bibliograficos)
-#         ws.cell(row=row_num, column=23, value=silabo.tiempo_estudio)
-#         ws.cell(row=row_num, column=24, value=silabo.total_horas)
-#         ws.cell(row=row_num, column=25, value=silabo.fecha_entrega)
-#         row_num += 1
-#
-#     # Crear una respuesta HTTP para descargar el archivo Excel
-#     response = HttpResponse(content_type='application/ms-excel')
-#     response['Content-Disposition'] = 'attachment; filename=silabos.xlsx'
-#     wb.save(response)
-#
-#     return response
 
 
 @login_required
@@ -272,85 +221,61 @@ def generar_docx(request):
 
 
 
-
-@login_required
-def generar_pdf_silabo(request):
-    from io import BytesIO
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
-    from reportlab.lib.pagesizes import landscape, letter
-    from reportlab.lib import colors
-    from reportlab.lib.styles import getSampleStyleSheet
-    from django.http import HttpResponse
-    from django.shortcuts import get_object_or_404
-    from reportlab.lib.units import inch
-
-    from .models import Silabo
+def llenar_silabo(request, asignacion_id):
+    asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
 
     if request.method == 'POST':
-        codigo_silabo = request.POST.get('codigoSilabo', '')  # Validación de entrada
-        if not codigo_silabo:
-            return JsonResponse({'error': 'El código de sílabo no se proporcionó.'}, status=400)
+        form = SilaboForm(request.POST)
+        if form.is_valid():
+            form.save()
 
-        usuario = request.user
-        silabos = Silabo.objects.filter(codigo=codigo_silabo, maestro=usuario)
+            # Actualiza el campo completado de la asignación
+            asignacion.completado = True
+            asignacion.save()
 
-        if not silabos.exists():
-            return JsonResponse({'error': 'No se encontraron sílabos para este usuario con el código especificado.'},
-                                status=404)
+            return redirect('success_view')
+        else:
+            print(form.errors)  # Para verificar si hay errores en el formulario
+    else:
+        form = SilaboForm(initial={
+            'codigo': asignacion.plan_de_estudio.codigo,
+            'carrera': asignacion.plan_de_estudio.carrera,
+            'asignatura': asignacion.plan_de_estudio,
+            'maestro': request.user
+        })
 
-        try:
-            buffer = BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
+    asignaturas = Asignatura.objects.all()
 
-            elements = []
+    return render(request, 'llenar_silabo.html', {'form': form, 'asignacion': asignacion, 'asignaturas': asignaturas})
 
-            # ... Configuración de título y otros elementos
 
-            table_data = [
-                ["No de Encuentros", "Fecha", "Unidad", "Objetivos de la Unidad",
-                 "Momentos Didácticos",
-                 "Forma Organizativa", "Técnicas de Aprendizaje",
-                 "Descripción Estrategia", "Evaluación Formativa"]
-            ]
 
-            for silabo in silabos:
-                table_data.append([
-                    str(silabo.encuentros),
-                    str(silabo.fecha),
-                    str(silabo.unidad),
-                    str(silabo.objetivo_conceptual) + ', ' + str(silabo.objetivo_actitudinal) + ', ' + str(
-                        silabo.objetivo_procedimental),
-                    str(silabo.momento_didactico_primer) + ', ' + (silabo.momento_didactico_segundo) + ', ' + str(
-                        silabo.momento_didactico_tercer),
-                    str(silabo.forma_organizativa),
-                    str(silabo.tecnicas_aprendizaje),
-                    str(silabo.descripcion_estrategia),
-                    str(silabo.eje_transversal)
-                ])
+def agregar_estudio_independiente(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
 
-            style = TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONT', (0, 0), (-1, -1), 'Helvetica', 8),
-                ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
-                ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
-            ])
+        # Obtener la asignatura
+        asignatura = Asignatura.objects.get(id=data.get('asignatura'))
 
-            col_widths = [1.0 * inch, 1.0 * inch, 1.0 * inch, 1.5 * inch, 1.5 * inch, 1.0 * inch, 1.0 * inch,
-                          1.5 * inch, 1.0 * inch]
+        # Crear el nuevo estudio independiente
+        nuevo_estudio = Estudio_independiente.objects.create(
+            asignatura=asignatura,
+            numero=data.get('numero'),
+            contenido=data.get('contenido'),
+            tecnica_evaluacion=data.get('tecnica_evaluacion'),
+            instrumento_evaluacion=data.get('instrumento_evaluacion'),
+            orientacion=data.get('orientacion'),
+            recursos_bibliograficos=data.get('recursos_bibliograficos'),
+            enlace=data.get('enlace'),
+            tiempo_estudio=data.get('tiempo_estudio'),
+            fecha_entrega=data.get('fecha_entrega')
+        )
 
-            table = Table(table_data, colWidths=col_widths, style=style)
-            elements.append(table)
+        return JsonResponse({'success': True, 'id': nuevo_estudio.id, 'nombre': str(nuevo_estudio)})
 
-            doc.build(elements)
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=400)
 
-            pdf = buffer.getvalue()
-            buffer.close()
-            response = HttpResponse(pdf, content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="silabo.pdf"'
-            return response
-
-        except Exception as e:
-            return JsonResponse({'error': f"Ocurrió un error al generar el PDF: {e}"}, status=500)
-
-        # Resto del código
+def success_view(request):
+    return render(request, 'exito.html', {
+        'message': '¡Gracias por llenar el silabo! Apreciamos el tiempo que has dedicado a completarlo.'
+    })

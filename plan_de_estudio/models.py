@@ -217,10 +217,28 @@ class Silabo(models.Model):
     eje_transversal = models.CharField(max_length=255,choices=EJE_TRANSVERSAL_LIST)
     hp = models.CharField(max_length=10)
     estudio_independiente = models.ForeignKey(Estudio_independiente,on_delete=models.CASCADE,verbose_name="Estudio_independiente")
+
     def __str__(self):
         return f'Silabo {self.id}'
 
 
 
 
+
+class AsignacionPlanEstudio(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    plan_de_estudio = models.ForeignKey(Plan_de_estudio, on_delete=models.CASCADE)
+    plan_tematico = models.FileField(upload_to='planes_tematicos/', null=True, blank=True)
+    completado = models.BooleanField(default=False)
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('usuario', 'plan_de_estudio')  # Asegura que un usuario no pueda tener el mismo plan dos veces
+
+    def __str__(self):
+        return f"{self.usuario} - {self.plan_de_estudio}"
+
+    def clean(self):
+        if not self.plan_de_estudio:
+            raise ValidationError("Debes asignar un plan de estudio.")
 

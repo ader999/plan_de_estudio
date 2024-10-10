@@ -28,12 +28,14 @@ urlpatterns = [
     path('admin/',admin.site.urls,),
     path('login/', views.login_view, name='login'),
     path('plan_de_estudio/',views.plan_estudio, name= 'plan_de_estudio'),
-    path('silabo/', views.silaboform,name='silabo'),
     path('detalle_silabo/',views.detalle_silabo,name='detalle_silabo'),
     path('generar_excel/', views.generar_excel, name='generar_excel'),
-    path('generar_pdf/', views.generar_pdf_silabo, name='generar_pdf'),
     path('generar_docx/', views.generar_docx, name='generar_docx'),
     path('logout/', views.logout_view, name='logout'),
+    path('llenar_silabo/<int:asignacion_id>/', views.llenar_silabo, name='llenar_silabo'),
+    path('agregar_estudio_independiente/', views.agregar_estudio_independiente, name='agregar_estudio_independiente'),
+    path('success_view/', views.success_view, name='success_view'),
+
 ]
 if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
