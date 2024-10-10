@@ -31,3 +31,4 @@ zopfli==0.2.3
 python-docx==0.8.11
 gunicorn==20.1.0
 django-widget-tweaks==1.5.0
+python-dotenv==1.0.1
