@@ -15,11 +15,20 @@ class FiltrarClases(admin.ModelAdmin):
     list_per_page = 20
     search_fields = ('nombre',)
 
-class FiltarPlanDeEstudio(admin.ModelAdmin):
-    list_per_page = 20
-    list_display = ('carrera', 'año', 'trimestre','asignatura','pr','th')
-    list_filter = ('carrera', 'año','trimestre')
+class PlanDeEstudioAdmin(admin.ModelAdmin):
+    list_per_page = 20  # Limitar a 20 elementos por página
+    list_display = ('carrera', 'año', 'trimestre', 'asignatura', 'pr', 'th')  # Mostrar la propiedad 'th'
+    list_filter = ('carrera', 'año', 'trimestre')  # Filtros en el panel de administración
+    readonly_fields = ('th',)  # 'th' es solo lectura en el formulario
 
+    fieldsets = (
+        (None, {
+            'fields': ('carrera', 'año', 'trimestre', 'codigo', 'asignatura', 'pr', 'pc', 'cr', 'hp', 'hti', 'th')
+        }),
+    )
+
+    def th(self, obj):
+        return obj.th  # Calcula el valor de 'th' como la suma de 'hp' y 'hti'
 class AsignaturaFilter(admin.SimpleListFilter):
     title = _('Asignatura')
     parameter_name = 'asignatura'
@@ -80,7 +89,7 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
 
 
 
-admin.site.register(Plan_de_estudio, FiltarPlanDeEstudio)
+admin.site.register(Plan_de_estudio, PlanDeEstudioAdmin)
 admin.site.register(Asignatura, FiltrarClases)
 admin.site.register(Carrera)
 admin.site.register(Silabo, FiltarSilabo)
