@@ -5,8 +5,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django import forms
 from django.contrib.admin.filters import DateFieldListFilter
 from django.forms import DateInput
+from import_export.admin import ExportMixin
+from import_export import resources
 
-admin.site.site_header = 'MAESTROS DEL FUTURO'
+admin.site.site_header = 'PLANEAUML'
 admin.site.index_title = 'Bienbenidos al Panel de control del sitio'
 admin.site.site_title = 'ADMIN'
 
@@ -15,10 +17,29 @@ class FiltrarClases(admin.ModelAdmin):
     list_per_page = 20
     search_fields = ('nombre',)
 
-class PlanDeEstudioAdmin(admin.ModelAdmin):
+class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin aquí
+    class CarreraFilter(admin.SimpleListFilter):
+        title = 'Carrera'
+        parameter_name = 'carrera'
+
+        def lookups(self, request, model_admin):
+            # Retornar todas las opciones de carrera disponibles
+            return [(c.id, c.nombre) for c in Carrera.objects.all()]
+
+        def queryset(self, request, queryset):
+            if self.value():
+                return queryset.filter(carrera__id=self.value())
+            return queryset
+
+    class PlanDeEstudioResource(resources.ModelResource):
+        class Meta:
+            model = Plan_de_estudio
+            fields = ('carrera__nombre', 'año', 'trimestre', 'codigo', 'asignatura__nombre', 'hp', 'hti','th')
+
     list_per_page = 20  # Limitar a 20 elementos por página
-    list_display = ('carrera', 'año', 'trimestre', 'asignatura', 'pr', 'th')  # Mostrar la propiedad 'th'
-    list_filter = ('carrera', 'año', 'trimestre')  # Filtros en el panel de administración
+    list_display = ('carrera', 'año', 'trimestre', 'asignatura', 'pr')  # Mostrar los campos
+    list_filter = (CarreraFilter, 'año', 'trimestre')  # Filtros en el panel de administración, incluyendo 'carrera'
+    resource_class = PlanDeEstudioResource
     readonly_fields = ('th',)  # 'th' es solo lectura en el formulario
 
     fieldsets = (
@@ -28,7 +49,12 @@ class PlanDeEstudioAdmin(admin.ModelAdmin):
     )
 
     def th(self, obj):
-        return obj.th  # Calcula el valor de 'th' como la suma de 'hp' y 'hti'
+        # Asegurarse de que hp y hti no sean None antes de sumar
+        if obj.hp is not None and obj.hti is not None:
+            return obj.hp + obj.hti
+        return 0  # Si alguno es None, devolver 0 o cualquier valor predeterminado
+
+
 class AsignaturaFilter(admin.SimpleListFilter):
     title = _('Asignatura')
     parameter_name = 'asignatura'
