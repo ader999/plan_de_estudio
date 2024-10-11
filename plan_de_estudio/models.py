@@ -49,7 +49,6 @@ class Plan_de_estudio(models.Model):
 
     hp = models.IntegerField(null=False, unique=False)
     hti = models.IntegerField(null=False, unique=False)
-    th = models.IntegerField(null=False, unique=False)
 
     def __str__(self):
         return f"{self.asignatura} - {self.carrera} - {self.año}"
