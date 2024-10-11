@@ -1,61 +1,48 @@
- {% extends 'base.html' %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    {% load static %}
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <!-- Agrega los enlaces a las hojas de estilo de Bootstrap y JavaScript si no lo has hecho ya -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-MCd5Z2lm89l8xL5L0clGgRkgf1kjc5KnuKl5OGT5m3oOzJz3ai63RU0F5mXw7Jd7PzP/AM9WLL5Ilr26P6pOyA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" type="text/css" href="{% static 'css/planestudio.css' %}">
+{% extends 'base.html' %}
 
+{% load static %}
+<style>
+    @media (max-width: 768px) {
+    .nav-pills {
+        flex-direction: row !important;
+        justify-content: center;
+    }
+    .nav-pills .nav-link {
+        margin-bottom: 5px;
+    }
+}
 
-</head>
-<body>
-
-
-
-    {% block content %}
-    <div class="container mt-5">
-        <ul class="nav nav-pills">
-            <li class="nav-item">
-                <a class="nav-link " data-bs-toggle="pill" href="#section1">SILABO</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="pill" href="#section2">ESTUDIO INDEPENDIENTE</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="pill" href="#section3">PLAN DE CLASE </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-bs-toggle="pill" href="#section4">GUÍA PARA EL ESTUDIO</a>
-            </li>
-        </ul>
-
-        <div class="tab-content mt-3">
-            <div id="section1" class="tab-pane active">
-
-                {% include 'detalle_silabo.html' %}
+</style>
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Nav pills -->
+        <div class="col-md-3 col-12">
+            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <button class="nav-link active" id="v-pills-silabo-tab" data-bs-toggle="pill" data-bs-target="#section1" type="button" role="tab" aria-controls="section1" aria-selected="true">SILABO</button>
+                <button class="nav-link" id="v-pills-estudioindependiente-tab" data-bs-toggle="pill" data-bs-target="#section2" type="button" role="tab" aria-controls="section2" aria-selected="false">ESTUDIO INDEPENDIENTE</button>
+                <button class="nav-link" id="v-pills-plandeclase-tab" data-bs-toggle="pill" data-bs-target="#section3" type="button" role="tab" aria-controls="section3" aria-selected="false">PLAN DE CLASE</button>
+                <button class="nav-link" id="v-pills-guia-tab" data-bs-toggle="pill" data-bs-target="#section4" type="button" role="tab" aria-controls="section4" aria-selected="false">GUÍA PARA EL ESTUDIO</button>
             </div>
-            <div id="section2" class="tab-pane">
-                {% include 'detalle_estudioindependiente.html' %}
-            </div>
-            <div id="section3" class="tab-pane">
-                {% include 'detalle_plandeclase.html' %}
-            </div>
-            <div id="section4" class="tab-pane">
-            {% include 'detalle_guiadeestudioindependiente.html' %}
+        </div>
+
+        <!-- Tab content -->
+        <div class="col-md-9 col-12">
+            <div class="tab-content" id="v-pills-tabContent">
+                <div class="tab-pane fade show active" id="section1" role="tabpanel" aria-labelledby="v-pills-silabo-tab">
+                    {% include 'plan_estudio_template/detalle_silabo.html' %}
+                </div>
+                <div class="tab-pane fade" id="section2" role="tabpanel" aria-labelledby="v-pills-estudioindependiente-tab">
+                    {% include 'plan_estudio_template/detalle_estudioindependiente.html' %}
+                </div>
+                <div class="tab-pane fade" id="section3" role="tabpanel" aria-labelledby="v-pills-plandeclase-tab">
+                    {% include 'plan_estudio_template/detalle_plandeclase.html' %}
+                </div>
+                <div class="tab-pane fade" id="section4" role="tabpanel" aria-labelledby="v-pills-guia-tab">
+                    {% include 'plan_estudio_template/detalle_guiadeestudioindependiente.html' %}
+                </div>
             </div>
         </div>
     </div>
-    {% endblock %}
-
-
-<script>
-    document.getElementById("myButton").addEventListener("click", function() {
-        this.classList.toggle("btn-primary"); // Cambia el color de fondo del botón
-        this.classList.toggle("btn-danger"); // Cambia a otro color de fondo (por ejemplo, rojo)
-    });
-</script>
-</body>
-</html>
+</div>
+{% endblock %}

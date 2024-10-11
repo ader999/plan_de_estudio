@@ -27,7 +27,7 @@ from docx.shared import Pt
 def detalle_silabo(request):
     # Recupera todos los objetos Silabo
     silabos = Silabo.objects.all()
-    return render(request, 'detalle_silabo.html', {'silabos': silabos})
+    return render(request, 'plan_estudio_template/detalle_silabo.html', {'silabos': silabos})
 
 
 
@@ -97,7 +97,7 @@ def plan_estudio(request):
 
 
 def Plan_de_clase(request):
-    return render(request, 'detalle_plandeclase.html')
+    return render(request, 'plan_estudio_template/detalle_plandeclase.html')
 
 
 
