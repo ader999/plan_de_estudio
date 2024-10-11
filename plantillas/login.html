@@ -1,8 +1,6 @@
 {% extends 'base.html' %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    {% load static %}
+
+{% load static %}
     <style>
         .card {
 
@@ -50,12 +48,10 @@
             background-color: #7d2662;
         }
     </style>
-</head>
-<body>
 
 {% block content %}
 <div class="container mt-5">
-    <div class="row justify-content-center align-items-center vh-100">
+    <div class="row justify-content-center align-items-center vh-80">
         <div class="col-md-6">
             <div class="card">
                 <img class="card-img-top mx-auto d-block" src="{% static 'img/logo.webp' %}" alt="Logo" style="height: 150px; width: 150px; margin-top:20px;">
@@ -74,10 +70,11 @@
                     {% if messages %}
                         <ul class="list-group mt-3">
                             {% for message in messages %}
-                                <li class="list-group-item {% if message.tags %} list-group-item-{{ message.tags }}{% endif %}">{{ message }}</li>
+                                <li class="list-group-item list-group-item-danger">{{ message }}</li>
                             {% endfor %}
                         </ul>
                     {% endif %}
+
 
                 </div>
             </div>
@@ -85,6 +82,3 @@
     </div>
 </div>
 {% endblock %}
-
-</body>
-</html>
