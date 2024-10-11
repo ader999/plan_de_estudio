@@ -222,6 +222,7 @@ def generar_docx(request):
 
 
 def llenar_silabo(request, asignacion_id):
+    nombre_de_usuario = request.user.username
     asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
 
     if request.method == 'POST':
@@ -246,7 +247,7 @@ def llenar_silabo(request, asignacion_id):
 
     asignaturas = Asignatura.objects.all()
 
-    return render(request, 'llenar_silabo.html', {'form': form, 'asignacion': asignacion, 'asignaturas': asignaturas})
+    return render(request, 'llenar_silabo.html', {'form': form, 'asignacion': asignacion, 'asignaturas': asignaturas,'usuario':nombre_de_usuario})
 
 
 

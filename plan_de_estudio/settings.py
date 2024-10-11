@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'plan_de_estudio',
     'widget_tweaks',
+    'import_export',
 
 ]
 

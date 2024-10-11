@@ -21,18 +21,22 @@
                             <strong>Código de Asignatura:</strong> {{ asignacion.plan_de_estudio.codigo }}<br>
                             <strong>Horas Prácticas:</strong> {{ asignacion.plan_de_estudio.hp }}<br>
                             <strong>Horas Teóricas:</strong> {{ asignacion.plan_de_estudio.hti }}<br>
-                            <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.th }}<br>
+                            <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.hp|add:asignacion.plan_de_estudio.hti }}<br>
                         </p>
 
                         {% if asignacion.plan_tematico %}
-                            <a href="{{ asignacion.plan_tematico.url }}" class="btn btn-primary" target="_blank">Descargar Plan Temático</a>
+                            <a href="{{ asignacion.plan_tematico.url }}" class="btn btn-primary" target="_blank">
+                                <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Descargar Plan Temático
+                            </a>
                         {% else %}
                             <p class="text-muted">No se ha asignado un plan temático.</p>
                         {% endif %}
 
                         <!-- Botón para llenar el silabo, solo aparece si no está completado -->
                         {% if not asignacion.completado %}
-                            <a href="{% url 'llenar_silabo' asignacion.id %}" class="btn btn-secondary">Llenar Sílabo</a>
+                            <a href="{% url 'llenar_silabo' asignacion.id %}" class="btn btn-secondary">
+                                <img src="{% static 'img/informe.png' %}" alt="" style="height: 34px">Llenar Sílabo
+                            </a>
                         {% endif %}
                     </div>
 

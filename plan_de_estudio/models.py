@@ -71,8 +71,7 @@ class Plan_de_estudio(models.Model):
             raise ValidationError("Las horas prácticas deben ser un número entero mayor que cero y no estar vacías")
         if self.hti is None or not isinstance(self.hti, int) or self.hti <= 0:
             raise ValidationError("Las horas teóricas deben ser un número entero mayor que cero y no estar vacías")
-        if self.th is None or not isinstance(self.th, int) or self.th <= 0:
-            raise ValidationError("El total de horas debe ser un número entero mayor que cero y no estar vacías")
+
 
 
 class Estudio_independiente(models.Model):
