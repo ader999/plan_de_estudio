@@ -1,0 +1,72 @@
+Sílabo 1
+Código: SIS101
+Carrera: Ingeniería de Sistemas
+Asignatura: Sistemas de Información
+Maestro: maestro1
+Encuentros: 5
+Fecha: 10 de octubre de 2024
+Objetivo Conceptual: Comprender los fundamentos de los sistemas de información.
+Objetivo Procedimental: Desarrollar habilidades para el análisis y diseño de sistemas.
+Objetivo Actitudinal: Fomentar la actitud crítica y proactiva ante los avances tecnológicos.
+Primer Momento Didáctico: Introducción teórica al concepto de sistemas.
+Segundo Momento Didáctico: Análisis de casos prácticos.
+Tercer Momento Didáctico: Discusión grupal y conclusiones.
+Unidad: Unidad I
+Detalle Unidad: Fundamentos de los sistemas de información
+Contenido Temático: Conceptos básicos de sistemas, componentes principales y su interrelación.
+Forma Organizativa: Seminario
+Tiempo: 40 horas
+Técnicas de Aprendizaje: Taller
+Descripción Estrategia: Se realizarán talleres grupales para aplicar los conceptos.
+Eje Transversal: Tecnología de la información y comunicación
+Horas Presenciales (HP): 30 horas
+Estudio Independiente: Lecturas complementarias
+
+Sílabo 2
+Código: SIS102
+Carrera: Ingeniería de Sistemas
+Asignatura: Sistemas de Información
+Maestro: maestro1
+Encuentros: 7
+Fecha: 20 de octubre de 2024
+Objetivo Conceptual: Analizar la arquitectura de hardware y software en un sistema de información.
+Objetivo Procedimental: Implementar soluciones de infraestructura para sistemas.
+Objetivo Actitudinal: Desarrollar compromiso con la innovación tecnológica.
+Primer Momento Didáctico: Descripción de la arquitectura de hardware.
+Segundo Momento Didáctico: Análisis de infraestructura en diferentes casos.
+Tercer Momento Didáctico: Implementación de soluciones a problemas reales.
+Unidad: Unidad II
+Detalle Unidad: Infraestructura de sistemas de información
+Contenido Temático: Componentes de hardware, tipos de software y su rol en la infraestructura.
+Forma Organizativa: Laboratorio
+Tiempo: 50 horas
+Técnicas de Aprendizaje: Trabajo de campo
+Descripción Estrategia: Visitas a centros de datos para ver infraestructuras reales.
+Eje Transversal: Emprendimiento e innovación
+Horas Presenciales (HP): 35 horas
+Estudio Independiente: Lecturas complementarias
+
+Sílabo 3
+Código: SIS103
+Carrera: Ingeniería de Sistemas
+Asignatura: Sistemas de Información
+Maestro: maestro1
+Encuentros: 6
+Fecha: 1 de noviembre de 2024
+Objetivo Conceptual: Entender la importancia de la seguridad de la información.
+Objetivo Procedimental: Desarrollar planes de seguridad para proteger datos e infraestructuras.
+Objetivo Actitudinal: Fomentar la ética y responsabilidad en la gestión de la información.
+Primer Momento Didáctico: Estudio de los principios básicos de seguridad.
+Segundo Momento Didáctico: Evaluación de riesgos en casos prácticos.
+Tercer Momento Didáctico: Diseño de un plan de seguridad para una empresa.
+Unidad: Unidad III
+Detalle Unidad: Seguridad de la información
+Contenido Temático: Políticas de seguridad, tipos de amenazas y planes de contingencia.
+Forma Organizativa: Talleres
+Tiempo: 45 horas
+Técnicas de Aprendizaje: Proyecto
+Descripción Estrategia: Elaboración de proyectos para crear planes de seguridad.
+Eje Transversal: Medio ambiente
+Horas Presenciales (HP): 40 horas
+Estudio Independiente: Lecturas complementarias
+

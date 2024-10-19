@@ -110,7 +110,7 @@ class FiltrarEstudioIndependiente(admin.ModelAdmin):
       list_filter = ('asignatura',)
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'plan_de_estudio', 'completado')
+    list_display = ('usuario', 'plan_de_estudio')
 
 
 
