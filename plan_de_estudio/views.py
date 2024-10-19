@@ -34,9 +34,11 @@ def detalle_silabo(request):
 
 @login_required
 def inicio(request):
+    nombre_de_usuario = request.user.username
     asignaciones = AsignacionPlanEstudio.objects.all()
     rango = range(1, 13)  # Crear el rango para pasarlo al template
-    return render(request, 'inicio.html', {'asignaciones': asignaciones, 'rango': rango})
+
+    return render(request, 'inicio.html', {'asignaciones': asignaciones, 'rango': rango,'usuario':nombre_de_usuario})
 
 def acerca_de(request):
     nombre_de_usuario = request.user.username
