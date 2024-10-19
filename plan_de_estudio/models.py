@@ -123,6 +123,22 @@ class Estudio_independiente(models.Model):
     def __str__(self):
         return f"{self.asignatura} -- {self.contenido}"
 
+class AsignacionPlanEstudio(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    plan_de_estudio = models.ForeignKey(Plan_de_estudio, on_delete=models.CASCADE)
+    plan_tematico = models.FileField(upload_to='planes_tematicos/', null=True, blank=True)
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+    silabos_creados = models.IntegerField(default=0)  # Nuevo campo para contar sílabos
+
+    class Meta:
+        unique_together = ('usuario', 'plan_de_estudio')  # Asegura que un usuario no pueda tener el mismo plan dos veces
+
+    def __str__(self):
+        return f"{self.usuario} - {self.plan_de_estudio}"
+
+    def clean(self):
+        if not self.plan_de_estudio:
+            raise ValidationError("Debes asignar un plan de estudio.")
 
 
     
@@ -194,7 +210,7 @@ class Silabo(models.Model):
     asignatura = models.ForeignKey(Plan_de_estudio, on_delete=models.CASCADE, verbose_name='Pla de estudio')
     maestro = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Maestro')
 
-    encuentros = models.IntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(10)])
+    encuentros = models.IntegerField( validators=[MinValueValidator(1), MaxValueValidator(12)])
     fecha = models.DateField(verbose_name='Fecha')
 
     objetivo_conceptual = models.TextField(verbose_name='Objetivo Conceptual', blank=False)
@@ -215,6 +231,8 @@ class Silabo(models.Model):
     eje_transversal = models.CharField(max_length=255,choices=EJE_TRANSVERSAL_LIST)
     hp = models.CharField(max_length=10)
     estudio_independiente = models.ForeignKey(Estudio_independiente,on_delete=models.CASCADE,verbose_name="Estudio_independiente")
+    asignacion_plan = models.ForeignKey(AsignacionPlanEstudio, on_delete=models.CASCADE, null=True, blank=True,
+                                        related_name="silabo_set")
 
     def __str__(self):
         return f'Silabo {self.id}'
@@ -223,20 +241,4 @@ class Silabo(models.Model):
 
 
 
-class AsignacionPlanEstudio(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    plan_de_estudio = models.ForeignKey(Plan_de_estudio, on_delete=models.CASCADE)
-    plan_tematico = models.FileField(upload_to='planes_tematicos/', null=True, blank=True)
-    completado = models.BooleanField(default=False)
-    fecha_asignacion = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('usuario', 'plan_de_estudio')  # Asegura que un usuario no pueda tener el mismo plan dos veces
-
-    def __str__(self):
-        return f"{self.usuario} - {self.plan_de_estudio}"
-
-    def clean(self):
-        if not self.plan_de_estudio:
-            raise ValidationError("Debes asignar un plan de estudio.")
 

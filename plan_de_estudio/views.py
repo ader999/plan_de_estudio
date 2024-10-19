@@ -34,11 +34,9 @@ def detalle_silabo(request):
 
 @login_required
 def inicio(request):
-    nombre_de_usuario = request.user.username
-
-    asignaciones = AsignacionPlanEstudio.objects.filter(usuario=request.user)
-
-    return render(request,'inicio.html',{'usuario':nombre_de_usuario, 'asignaciones': asignaciones})
+    asignaciones = AsignacionPlanEstudio.objects.all()
+    rango = range(1, 13)  # Crear el rango para pasarlo al template
+    return render(request, 'inicio.html', {'asignaciones': asignaciones, 'rango': rango})
 
 def acerca_de(request):
     nombre_de_usuario = request.user.username
@@ -220,34 +218,47 @@ def generar_docx(request):
             return JsonResponse({'error': f"Ocurrió un error al generar el documento Word: {e}"}, status=500)
 
 
-
+@login_required
 def llenar_silabo(request, asignacion_id):
     nombre_de_usuario = request.user.username
     asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
 
+    silabos_creados = asignacion.silabo_set.count()
     if request.method == 'POST':
         form = SilaboForm(request.POST)
         if form.is_valid():
-            form.save()
+            silabo = form.save(commit=False)  # No guardes todavía
+            silabo.asignacion_plan = asignacion  # Asigna la relación
+            silabo.save()  # Ahora guarda el sílabo
 
-            # Actualiza el campo completado de la asignación
-            asignacion.completado = True
-            asignacion.save()
+            # Actualiza el conteo de sílabos creados
+            silabos_creados = asignacion.silabo_set.count()
+            asignacion.silabos_creados = silabos_creados  # Actualiza el campo
+            asignacion.save()  # Guarda la asignación actualizada
+
 
             return redirect('success_view')
         else:
-            print(form.errors)  # Para verificar si hay errores en el formulario
+            print(form.errors)  # Imprime errores del formulario para depuración
     else:
         form = SilaboForm(initial={
             'codigo': asignacion.plan_de_estudio.codigo,
             'carrera': asignacion.plan_de_estudio.carrera,
             'asignatura': asignacion.plan_de_estudio,
-            'maestro': request.user
+            'maestro': request.user,
+            'encuentros':silabos_creados+1,
         })
 
     asignaturas = Asignatura.objects.all()
+    # Obtener el número de sílabos creados para esta asignación
 
-    return render(request, 'llenar_silabo.html', {'form': form, 'asignacion': asignacion, 'asignaturas': asignaturas,'usuario':nombre_de_usuario})
+    return render(request, 'llenar_silabo.html', {
+        'form': form,
+        'asignacion': asignacion,
+        'asignaturas': asignaturas,
+        'usuario': nombre_de_usuario,
+        'silabos_creados': silabos_creados  # Pasa el conteo a la plantilla
+    })
 
 
 

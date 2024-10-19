@@ -40,6 +40,50 @@
                         {% endif %}
                     </div>
 
+                        <div class="d-flex flex-row justify-content-center align-items-center mb-2 row row-cols-2">
+                        {% for i in rango %}
+                            <div class="mx-2 mt-2 div-custom {% if i <= asignacion.silabos_creados %}div-green{% else %}div-red{% endif %}">
+                                <p class="text-center">{{ i }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Añade estos estilos al archivo CSS -->
+                    <style>
+                        .div-red {
+                            background: #e74c3c; /* Color rojo */
+                        }
+                        .div-green {
+                            background: #2ecc71; /* Color verde */
+                        }
+                        .div-custom {
+                            width: 30px;
+                            height: 30px;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 16px;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            border-radius: 5px;
+                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+                            transition: all 0.3s ease;
+                        }
+                        .div-custom:hover {
+                            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+                        }
+                        .div-custom p {
+                            margin: 0;
+                            padding: 0;
+                        }
+                    </style>
+
+
+
+
+
+
+
                     <!-- Footer de la tarjeta, muestra el estado de completado -->
                     <div class="card-footer text-muted d-flex justify-content-between">
                         <span>Asignado a: {{ asignacion.usuario.username }}</span>
@@ -71,3 +115,14 @@
 </div>
 
 {% endblock %}
+
+
+
+
+
+
+
+
+
+
+
