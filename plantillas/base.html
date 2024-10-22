@@ -16,6 +16,7 @@
     <!-- para que se vea bien en dispositivos móviles -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+
    <nav class="navbar bg-body-tertiary fixed-top" >
       <div class="container-fluid fixed-top">
         <a class="navbar-brand" href="{% url 'inicio' %}"><img src="{% static 'img/logouml.png' %}" alt="" style="height: 50px;">PLANEAUML</a>
@@ -46,6 +47,9 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="{% url 'inicio' %}"><i class="fas fa-home"></i> Inicio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="{% url 'plan_de_estudio' %}"><i class="fa fa-file-lines"></i> Ver datos</a>
                 </li>
 
                 <li class="nav-item">

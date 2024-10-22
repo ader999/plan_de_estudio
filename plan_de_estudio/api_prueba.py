@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-filepath = "datos_ejemplo.txt"  # Corrección del nombre del archivo
+filepath = "../static/data/datos_ejemplo.txt"  # Corrección del nombre del archivo
 
 try:
     with open(filepath, 'r') as file:

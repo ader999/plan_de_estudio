@@ -2,6 +2,7 @@ import json
 
 from django.http import HttpResponse, request ,HttpResponseNotFound, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.conf import settings
 
 #librerias para el login
 from django.contrib.auth import login, authenticate, logout
@@ -20,6 +21,15 @@ import pandas as pd
 
 from docx import Document
 from docx.shared import Pt
+
+
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 
 
@@ -293,3 +303,53 @@ def success_view(request):
     return render(request, 'exito.html', {
         'message': '¡Gracias por llenar el silabo! Apreciamos el tiempo que has dedicado a completarlo.'
     })
+
+
+def generar_silabo(request):
+    if request.method == 'POST':
+        # Obtener el prompt del usuario desde el formulario
+        prompt_usuario = request.POST.get('prompt_usuario', '')
+
+        # Ruta absoluta al archivo datos_ejemplo.txt usando settings.BASE_DIR
+        filepath = os.path.join(settings.BASE_DIR, 'static', 'data', 'datos_ejemplo.txt')
+        print(f"Ruta del archivo: {filepath}")
+
+        try:
+            with open(filepath, 'r') as file:
+                datos_ejemplo = file.read()
+        except FileNotFoundError:
+            return JsonResponse({'error': f"Error: El archivo '{filepath}' no se encuentra."}, status=400)
+
+        # Crear el prompt completo
+        prompt_completo = f"""
+        Instrucciones: Crea un sílabo basado en la siguiente información.
+
+        Datos de ejemplo (para tu referencia):
+
+        {datos_ejemplo}
+
+        Solicitud del usuario:
+        {prompt_usuario}
+        """
+
+        # Configuración del modelo
+        generation_config = {
+            "temperature": 0.7,
+            "max_output_tokens": 1024
+        }
+
+        try:
+            model = genai.GenerativeModel(
+                model_name="gemini-1.5-pro-002",
+                generation_config=generation_config
+            )
+            chat_session = model.start_chat()
+            response = chat_session.send_message(prompt_completo)
+            # Enviar respuesta como JSON
+            return JsonResponse({'silabo_generado': response.text})
+        except genai.errors.GenerativeAIError as e:
+            return JsonResponse({'error': f"Error en la API de Gemini: {e}"}, status=500)
+        except Exception as e:
+            return JsonResponse({'error': f"Error general: {e}"}, status=500)
+
+    return render(request, 'generar_silabo.html')

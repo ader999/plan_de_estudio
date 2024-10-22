@@ -35,6 +35,7 @@ urlpatterns = [
     path('llenar_silabo/<int:asignacion_id>/', views.llenar_silabo, name='llenar_silabo'),
     path('agregar_estudio_independiente/', views.agregar_estudio_independiente, name='agregar_estudio_independiente'),
     path('success_view/', views.success_view, name='success_view'),
+    path('generar-silabo/', views.generar_silabo, name='generar_silabo')
 
 ]
 if settings.DEBUG:
