@@ -1,0 +1,54 @@
+<!-- templates/generar_silabo.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Sílabos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Generar Sílabos</h2>
+        <form id="silabo-form" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="prompt_usuario">Describe las características del sílabo que deseas generar:</label>
+                <textarea id="prompt_usuario" name="prompt_usuario" class="form-control" rows="5" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Generar Sílabo</button>
+        </form>
+
+        <div id="resultado" class="mt-4" style="display: none;">
+            <h3>Sílabo Generado:</h3>
+            <pre id="silabo_generado" class="p-3 border"></pre>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $('#silabo-form').on('submit', function(event){
+                event.preventDefault();
+                var prompt_usuario = $('#prompt_usuario').val();
+
+                $.ajax({
+                    url: '',
+                    type: 'POST',
+                    data: {
+                        'prompt_usuario': prompt_usuario,
+                        'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
+                    },
+                    success: function(response){
+                        $('#resultado').show();
+                        $('#silabo_generado').text(response.silabo_generado);
+                    },
+                    error: function(xhr){
+                        alert('Ocurrió un error: ' + xhr.responseJSON.error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
