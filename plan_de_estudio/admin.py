@@ -7,6 +7,7 @@ from django.contrib.admin.filters import DateFieldListFilter
 from django.forms import DateInput
 from import_export.admin import ExportMixin
 from import_export import resources
+from django.utils.html import format_html
 
 admin.site.site_header = 'PLANEAUML'
 admin.site.index_title = 'Bienbenidos al Panel de control del sitio'
@@ -110,7 +111,13 @@ class FiltrarEstudioIndependiente(admin.ModelAdmin):
       list_filter = ('asignatura',)
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'plan_de_estudio')
+    list_display = ('usuario', 'plan_de_estudio', 'completado_icono')
+
+    def completado_icono(self, obj):
+        # Retorna True si silabos_creados es igual a 12
+        return obj.silabos_creados == 12
+    completado_icono.boolean = True  # Indica que este es un campo booleano
+    completado_icono.short_description = 'Completado'
 
 
 

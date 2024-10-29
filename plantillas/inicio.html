@@ -3,9 +3,42 @@
 {% block content %}
 {% load static %}
 
+
+
+
 <h1 class="mb-4 text-center">Planes de Estudio Asignados</h1>
 
+
     <div class="d-flex justify-content-center">
+
+        <!-- Toast para mensajes  -->
+        <div aria-live="polite" aria-atomic="true" style="position: relative;">
+            <div style="position: absolute; top: 20px; right: 20px; z-index: 1;">
+                {% for message in messages %}
+                    <div class="toast show
+                                {% if message.tags == 'success' %}bg-success text-white
+                                {% elif message.tags == 'error' %}bg-danger text-white
+                                {% endif %}"
+                         role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
+
+                        <div class="toast-header">
+                            <strong class="me-auto">
+                                {% if message.tags == 'success' %} Éxito
+                                {% elif message.tags == 'error' %} Error
+                                {% else %} Notificación
+                                {% endif %}
+                            </strong>
+                            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
         <div class="row row-cols-1 g-4" style="max-width: 800px;">  <!-- Ajuste de ancho máximo para centrado -->
             {% if asignaciones %}
 
@@ -33,9 +66,12 @@
                         {% endif %}
 
                         <!-- Botón para llenar el silabo, solo aparece si no está completado -->
-                        {% if not asignacion.completado %}
-                            <a href="{% url 'llenar_silabo' asignacion.id %}" class="btn btn-secondary">
+                        {% if asignacion.silabos_creados < 12 %}
+                            <a href="{% url 'llenar_silabo' asignacion.id %}" class="btn btn-warning">
                                 <img src="{% static 'img/informe.png' %}" alt="" style="height: 34px">Llenar Sílabo
+                            </a>
+                            <a href="{% url 'guardar_silabo' asignacion.id %}" class="btn  btn-secondary">
+                                <img src="{% static 'img/ia.png' %}" alt="" style="height: 34px">Generar Silabo
                             </a>
                         {% endif %}
                     </div>
@@ -88,7 +124,7 @@
                     <div class="card-footer text-muted d-flex justify-content-between">
                         <span>Asignado a: {{ asignacion.usuario.username }}</span>
                         <span>
-                            {% if asignacion.completado %}
+                            {% if asignacion.silabos_creados == 12 %}
                                 <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
                             {% else %}
                                 <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>

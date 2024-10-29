@@ -26,6 +26,8 @@ from docx.shared import Pt
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
+import re
+
 
 # Cargar variables de entorno
 load_dotenv()
@@ -305,51 +307,126 @@ def success_view(request):
     })
 
 
+
+
+def guardar_silabo(request, asignacion_id):
+    asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
+    nombre_de_usuario = request.user.username
+    silabos_creados = asignacion.silabo_set.count()
+
+    if request.method == 'POST':
+        form = SilaboForm(request.POST)
+        if form.is_valid():
+            silabo = form.save(commit=False)  # No guardes todavía
+            silabo.asignacion_plan = asignacion  # Asigna la relación
+            silabo.save()  # Ahora guarda el sílabo
+
+            # Actualiza el conteo de sílabos creados
+            silabos_creados = asignacion.silabo_set.count()
+            asignacion.silabos_creados = silabos_creados  # Actualiza el campo
+            asignacion.save()  # Guarda la asignación actualizada
+
+            messages.success(request, 'El sílabo ha sido creado correctamente.')
+            return redirect('inicio')
+        else:
+            messages.error(request, 'Hubo un error al crear el sílabo. Por favor, revise los datos.')
+    else:
+        form = SilaboForm(initial={
+            'codigo': asignacion.plan_de_estudio.codigo,
+            'carrera': asignacion.plan_de_estudio.carrera,
+            'asignatura': asignacion.plan_de_estudio,
+            'maestro': request.user,
+            'encuentros': silabos_creados + 1,
+        })
+
+    return render(request, 'generar_silabo.html', {
+        'form': form,
+        'asignacion': asignacion,
+        'usuario': nombre_de_usuario,
+        'silabos_creados': silabos_creados  # Pasa el conteo a la plantilla
+    })
+
+
+
 def generar_silabo(request):
     if request.method == 'POST':
         # Obtener el prompt del usuario desde el formulario
         prompt_usuario = request.POST.get('prompt_usuario', '')
 
-        # Ruta absoluta al archivo datos_ejemplo.txt usando settings.BASE_DIR
+        # Ruta al archivo de datos de ejemplo
         filepath = os.path.join(settings.BASE_DIR, 'static', 'data', 'datos_ejemplo.txt')
         print(f"Ruta del archivo: {filepath}")
 
+        # Intentar leer el archivo con datos de ejemplo
         try:
             with open(filepath, 'r') as file:
                 datos_ejemplo = file.read()
         except FileNotFoundError:
             return JsonResponse({'error': f"Error: El archivo '{filepath}' no se encuentra."}, status=400)
 
-        # Crear el prompt completo
+        # Crear el prompt completo que será enviado al modelo
         prompt_completo = f"""
-        Instrucciones: Crea un sílabo basado en la siguiente información.
+            Instrucciones: Crea un sílabo basado en la siguiente información y devuélvelo en formato JSON estructurado.
 
-        Datos de ejemplo (para tu referencia):
+            Datos de ejemplo (para tu referencia):
 
-        {datos_ejemplo}
+            {datos_ejemplo}
 
-        Solicitud del usuario:
-        {prompt_usuario}
-        """
+            Solicitud del usuario:
+            {prompt_usuario}
 
-        # Configuración del modelo
+            Devuelve los datos como un diccionario JSON con las siguientes claves:
+            - objetivo_conceptual
+            - objetivo_procedimental
+            - objetivo_actitudinal
+            - momento_didactico_primer
+            - momento_didactico_segundo
+            - momento_didactico_tercer
+            - unidad
+            - detalle_unidad
+            - contenido_tematico
+            - forma_organizativa
+            - tiempo
+            - tecnicas_aprendizaje
+            - descripcion_estrategia
+            - eje_transversal
+            - hp
+            - estudio_independiente
+
+            Asegúrate de devolver una salida en formato JSON con las claves y valores correspondientes a cada campo.
+            """
+
+        # Configuración del modelo generativo
         generation_config = {
             "temperature": 0.7,
             "max_output_tokens": 1024
         }
 
         try:
+            # Configurar y ejecutar el modelo para generar la respuesta
             model = genai.GenerativeModel(
                 model_name="gemini-1.5-pro-002",
                 generation_config=generation_config
             )
             chat_session = model.start_chat()
             response = chat_session.send_message(prompt_completo)
-            # Enviar respuesta como JSON
-            return JsonResponse({'silabo_generado': response.text})
-        except genai.errors.GenerativeAIError as e:
-            return JsonResponse({'error': f"Error en la API de Gemini: {e}"}, status=500)
-        except Exception as e:
-            return JsonResponse({'error': f"Error general: {e}"}, status=500)
 
-    return render(request, 'generar_silabo.html')
+            # Obtener el texto generado
+            silabo_generado = response.text.strip()  # Acceso correcto al contenido generado y eliminar espacios en blanco
+
+            # Limpiar el formato si tiene las etiquetas ```json
+            silabo_limpio = re.sub(r'```json|```', '', silabo_generado).strip()
+
+            # Convertir el texto limpio a JSON
+            try:
+                silabo_data = json.loads(silabo_limpio)
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Error al formatear la respuesta como JSON.'}, status=500)
+
+            # Enviar los datos generados a la vista
+            return JsonResponse({'silabo_data': silabo_data})
+
+        except Exception as e:
+            return JsonResponse({'error': f"Error general: {str(e)}"}, status=500)
+
+    return JsonResponse({'error': 'Método no permitido.'}, status=405)
