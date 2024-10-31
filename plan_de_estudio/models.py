@@ -223,7 +223,7 @@ class Silabo(models.Model):
 
     unidad = models.CharField(max_length=255,choices=UNIDAD_LIST)
     detalle_unidad = models.CharField(max_length=255)
-    contenido_tematico = models.TextField(max_length=255)
+    contenido_tematico = models.TextField(max_length=555)
     forma_organizativa = models.CharField(max_length=255, choices=FORMA_ORGANIZATIVA_LIST)
     tiempo = models.CharField(max_length=10)
     tecnicas_aprendizaje = models.CharField(max_length=255, choices=TECNICAS_APRENDIZAJE_LIST)
