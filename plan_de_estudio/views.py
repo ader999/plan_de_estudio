@@ -35,7 +35,7 @@ genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 
 
-
+@login_required
 def detalle_silabo(request):
     # Recupera todos los objetos Silabo
     silabos = Silabo.objects.all()
@@ -47,10 +47,13 @@ def detalle_silabo(request):
 @login_required
 def inicio(request):
     nombre_de_usuario = request.user.username
-    asignaciones = AsignacionPlanEstudio.objects.all()
+    # Ajusta el filtro al campo correspondiente en AsignacionPlanEstudio para el usuario
+    asignaciones = AsignacionPlanEstudio.objects.filter(usuario__username=nombre_de_usuario)
     rango = range(1, 13)  # Crear el rango para pasarlo al template
 
-    return render(request, 'inicio.html', {'asignaciones': asignaciones, 'rango': rango,'usuario':nombre_de_usuario})
+    return render(request, 'inicio.html', {'asignaciones': asignaciones, 'rango': rango, 'usuario': nombre_de_usuario})
+
+
 
 def acerca_de(request):
     nombre_de_usuario = request.user.username
@@ -107,7 +110,7 @@ def plan_estudio(request):
 
     return render(request, 'plan_estudio.html', context)
 
-
+@login_required
 def Plan_de_clase(request):
     return render(request, 'plan_estudio_template/detalle_plandeclase.html')
 
@@ -275,7 +278,7 @@ def llenar_silabo(request, asignacion_id):
     })
 
 
-
+@login_required
 def agregar_estudio_independiente(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -301,6 +304,7 @@ def agregar_estudio_independiente(request):
 
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=400)
 
+@login_required
 def success_view(request):
     return render(request, 'exito.html', {
         'message': '¡Gracias por llenar el silabo! Apreciamos el tiempo que has dedicado a completarlo.'
@@ -308,7 +312,7 @@ def success_view(request):
 
 
 
-
+@login_required
 def guardar_silabo(request, asignacion_id):
     asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
     nombre_de_usuario = request.user.username
@@ -347,7 +351,7 @@ def guardar_silabo(request, asignacion_id):
     })
 
 
-
+@login_required
 def generar_silabo(request):
     if request.method == 'POST':
         # Obtener el prompt del usuario desde el formulario

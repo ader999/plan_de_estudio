@@ -3,6 +3,12 @@
 {% block content %}
 {% load widget_tweaks %}
 
+<style>
+    .oculto {
+        display: none;
+    }
+</style>
+
 <div class="container mt-5">
     <h1 class="mb-4 text-center">Generar Sílabos</h1>
 
@@ -51,31 +57,31 @@
                         {% endif %}
 
                         <!-- Campo Código -->
-                        <div class="mb-3">
+                        <div class="mb-3 oculto">
                             <label for="codigo" class="form-label">Código</label>
                             {{ form.codigo|add_class:"form-control" }}
                         </div>
 
                         <!-- Campo Carrera -->
-                        <div class="mb-3">
+                        <div class="mb-3 oculto">
                             <label for="carrera" class="form-label">Carrera</label>
                             {{ form.carrera|add_class:"form-control" }}
                         </div>
 
                         <!-- Campo Asignatura -->
-                        <div class="mb-3">
+                        <div class="mb-3 oculto">
                             <label for="asignatura" class="form-label">Asignatura (Plan de Estudio)</label>
                             {{ form.asignatura|add_class:"form-control" }}
                         </div>
 
                         <!-- Campo Maestro -->
-                        <div class="mb-3">
+                        <div class="mb-3 oculto">
                             <label for="maestro" class="form-label">Maestro</label>
                             {{ form.maestro|add_class:"form-control" }}
                         </div>
 
                         <!-- Campo Encuentros -->
-                        <div class="mb-3">
+                        <div class="mb-3 oculto">
                             <label for="encuentros" class="form-label">Encuentros</label>
                             {{ form.encuentros|add_class:"form-control" }}
                         </div>

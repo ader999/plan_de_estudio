@@ -3,8 +3,17 @@
 {% block content %}
 {% load widget_tweaks %}
 
+<style>
+    .oculto {
+        display: none;
+    }
+</style>
 <div class="container mt-5">
-    <h1 class="mb-4 text-center">Llenar Sílabo</h1>
+    <div class="text-center">
+        <h1 class="mb-4 text-center">Llenar Sílabo </h1>
+        <h3>({{ asignacion.plan_de_estudio }})</h3>
+    </div>
+
 
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10 col-sm-12">
@@ -31,27 +40,27 @@
                     <form method="post">
                         {% csrf_token %}
 
-                       <div class="mb-3">
+                       <div class="mb-3 oculto">
                             <label for="codigo" class="form-label">Código</label>
                             {{ form.codigo|add_class:"form-control" }}
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3 oculto">
                             <label for="carrera" class="form-label">Carrera</label>
                             {{ form.carrera|add_class:"form-control" }}
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3 oculto">
                             <label for="asignatura" class="form-label">Asignatura (Plan de Estudio)</label>
                             {{ form.asignatura|add_class:"form-control" }}
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3 oculto">
                             <label for="maestro" class="form-label">Maestro</label>
                             {{ form.maestro|add_class:"form-control" }}
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3 oculto">
                             <label for="encuentros" class="form-label">Encuentros</label>
                             {{ form.encuentros|add_class:"form-control" }}
                         </div>
