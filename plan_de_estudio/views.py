@@ -274,7 +274,8 @@ def llenar_silabo(request, asignacion_id):
         'asignacion': asignacion,
         'asignaturas': asignaturas,
         'usuario': nombre_de_usuario,
-        'silabos_creados': silabos_creados  # Pasa el conteo a la plantilla
+        'silabos_creados': silabos_creados,
+        'encuentro': silabos_creados+1
     })
 
 
