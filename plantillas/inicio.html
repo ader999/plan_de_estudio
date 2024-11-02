@@ -45,8 +45,10 @@
             {% for asignacion in asignaciones %}
                 <div class="col">
                     <div class="card shadow-sm h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{ asignacion.plan_de_estudio.asignatura }}</h5>
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title">{{ asignacion.plan_de_estudio.asignatura }}</h5>
                         <p class="card-text">
                             <strong>Carrera:</strong> {{ asignacion.plan_de_estudio.carrera }}<br>
                             <strong>Año:</strong> {{ asignacion.plan_de_estudio.año }}<br>
@@ -112,12 +114,14 @@
                             margin: 0;
                             padding: 0;
                         }
+                        @media (max-width: 768px) {
+                        .card {
+                            width: 90%; /* Hacer que la tarjeta llene el 90% del ancho */
+                            margin: 0 auto; /* Centrar la tarjeta */
+                        }
+                    }
+
                     </style>
-
-
-
-
-
 
 
                     <!-- Footer de la tarjeta, muestra el estado de completado -->
