@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% load static %}
 {% load widget_tweaks %}
 
 <style>
@@ -10,7 +11,11 @@
 </style>
 
 <div class="container mt-5">
-    <h1 class="mb-4 text-center">Generar Sílabos</h1>
+    <div class="text-center">
+        <h1 class="mb-4 text-center">Generar Sílabos</h1>
+        <h3>{{ asignacion.plan_de_estudio }}</h3>
+        <h3>Encuentro ({{ encuentro }})</h3>
+    </div>
 
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10 col-sm-12">
@@ -37,7 +42,7 @@
                 <div class="card-body">
                     <h2>Crear Silabo</h2>
 
-                    <form method="post" action="{% url 'guardar_silabo' asignacion.id %}">
+                    <form method="post" action="{% url 'guardar_silabo' asignacion.id %}" onsubmit="return mostrarSpinner()">
                         {% csrf_token %}
 
                         <!-- Mostrando errores de formulario -->
@@ -178,6 +183,22 @@
                         <div class="mb-3">
                             <label for="estudio_independiente" class="form-label">Estudio Independiente</label>
                             {{ form.estudio_independiente|add_class:"form-select" }}
+
+                            <!-- Botón para abrir el modal -->
+                            <style>
+                                button.btn-primary:hover {
+                                    background-color: #1b2f56;
+                                }
+                                button.btn-primary{
+                                    background: #214588;
+                                }
+
+                            </style>
+                            <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#estudioModal">
+                                <img src="{% static 'img/agregar-archivo.png' %}" alt="" style="height: 34px;"> Agregar nuevo Estudio Independiente
+                            </button>
+
+
                         </div>
 
                         <hr class="my-4">
@@ -185,7 +206,16 @@
                         <div class="alert alert-warning" role="alert">
                           Esta IA puede cometer errores. Por favor, revise la información cuidadosamente antes de guardarla.
                         </div>
-                        <button type="submit" class="btn btn-success w-100">Guardar Sílabo</button>
+                        <div class="text-center">
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-success w-100" id="guardarSilaboBtn">
+                                    <img src="{% static 'img/disquete.png' %}" alt="" style="height: 34px;"> Guardar Sílabo
+                                    <div id="spinner" class="spinner-border spinner-border-sm" style="display: none;" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -194,9 +224,23 @@
 </div>
 
 <script>
-    $(document).ready(function(){
-        $('#silabo-form').on('submit', function(event){
+    $(document).ready(function() {
+        $('#silabo-form').on('submit', function (event) {
             event.preventDefault();
+
+            // Variables para el botón y los spinners
+            const botonGenerar = $('#boton-generar');
+            const spinners = $('.spinner');  // Seleccionar todos los spinners
+            const textoBoton = botonGenerar.find('.text');
+            const iconoBoton = botonGenerar.find('.sparkle');
+
+            // Mostrar todos los spinners y ocultar el texto e ícono del botón
+            spinners.removeClass('d-none');
+            textoBoton.hide();
+            iconoBoton.hide();
+            botonGenerar.prop('disabled', true);  // Deshabilitar el botón
+
+            // Obtener el valor del campo y hacer la solicitud AJAX
             var prompt_usuario = $('#prompt_usuario').val();
 
             $.ajax({
@@ -206,10 +250,10 @@
                     'prompt_usuario': prompt_usuario,
                     'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
                 },
-                success: function(response){
+                success: function (response) {
                     const silaboData = response.silabo_data || {};
 
-                    // Actualizando los valores generados por la IA en el formulario
+                    // Actualizar los valores generados en el formulario
                     $('#id_objetivo_conceptual').val(silaboData.objetivo_conceptual || '');
                     $('#id_objetivo_procedimental').val(silaboData.objetivo_procedimental || '');
                     $('#id_objetivo_actitudinal').val(silaboData.objetivo_actitudinal || '');
@@ -227,11 +271,38 @@
                     $('#id_hp').val(silaboData.hp || '');
                     $('#id_estudio_independiente').val(silaboData.estudio_independiente || '');
                 },
-                error: function(xhr){
+                error: function (xhr) {
                     alert('Ocurrió un error: ' + xhr.responseJSON.error);
+                },
+                complete: function () {
+                    // Restaurar el estado del botón y ocultar los spinners
+                    spinners.addClass('d-none');
+                    textoBoton.show();
+                    iconoBoton.show();
+                    botonGenerar.prop('disabled', false);
                 }
             });
         });
     });
 </script>
+
+<script>
+function mostrarSpinner() {
+    const btn = document.getElementById('guardarSilaboBtn');
+    const spinner = document.getElementById('spinner');
+
+    // Deshabilita el botón
+    btn.disabled = true;
+
+    // Oculta el icono del botón y muestra el spinner
+    const icon = btn.querySelector('img');
+
+    spinner.style.display = 'inline-block'; // Muestra el spinner
+
+    return true; // Asegúrate de que el formulario se envíe
+}
+</script>
+
+{% include 'modal_agregar_estudio_independiente.html' %}
+
 {% endblock %}

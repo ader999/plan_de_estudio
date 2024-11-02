@@ -1,5 +1,6 @@
 import json
 
+from django.db.models.functions import Lower
 from django.http import HttpResponse, request ,HttpResponseNotFound, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
@@ -8,12 +9,13 @@ from django.conf import settings
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Silabo ,Estudio_independiente, AsignacionPlanEstudio, Asignatura
+from .models import Silabo ,Estudio_independiente, AsignacionPlanEstudio, Asignatura, Plan_de_estudio
 
 from .forms import SilaboForm
 from django.views.decorators.csrf import csrf_exempt
 
 from openpyxl import load_workbook
+from django.db.models import Count
 
 from openpyxl.utils.dataframe import dataframe_to_rows
 from io import BytesIO
@@ -235,12 +237,42 @@ def generar_docx(request):
             return JsonResponse({'error': f"Ocurrió un error al generar el documento Word: {e}"}, status=500)
 
 
+def obtener_estudios_independientes(asignacion_id):
+        # Paso 1: Obtener la asignación del plan de estudio
+        asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
+
+        # Paso 2: Obtener el plan de estudio relacionado con la asignación
+        plan_de_estudio = asignacion.plan_de_estudio
+
+        # Paso 3: Obtener la asignatura del plan de estudio
+        asignatura_nombre = plan_de_estudio.asignatura.nombre
+
+        # Imprime la asignatura encontrada para depuración
+        print("Asignatura encontrada:", asignatura_nombre)
+
+        # Paso 4: Filtrar los estudios independientes que tengan la misma asignatura
+        estudios_independientes = Estudio_independiente.objects.filter(
+            asignatura__nombre=asignatura_nombre
+        )
+
+        # Imprime los estudios independientes encontrados para depuración
+        print("Estudios Independientes encontrados:", estudios_independientes)
+
+        return estudios_independientes
+
+
 @login_required
 def llenar_silabo(request, asignacion_id):
+
+
     nombre_de_usuario = request.user.username
     asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
 
     silabos_creados = asignacion.silabo_set.count()
+
+    # Obtener el queryset de estudios independientes filtrados
+    estudios_independientes = obtener_estudios_independientes(asignacion_id)
+
     if request.method == 'POST':
         form = SilaboForm(request.POST)
         if form.is_valid():
@@ -253,21 +285,23 @@ def llenar_silabo(request, asignacion_id):
             asignacion.silabos_creados = silabos_creados  # Actualiza el campo
             asignacion.save()  # Guarda la asignación actualizada
 
-
             return redirect('success_view')
         else:
             print(form.errors)  # Imprime errores del formulario para depuración
     else:
+        # Inicializa el formulario con los valores correspondientes
         form = SilaboForm(initial={
             'codigo': asignacion.plan_de_estudio.codigo,
             'carrera': asignacion.plan_de_estudio.carrera,
             'asignatura': asignacion.plan_de_estudio,
             'maestro': request.user,
-            'encuentros':silabos_creados+1,
+            'encuentros': silabos_creados + 1,
         })
 
+    # Aquí estás asignando los estudios independientes para el formulario
+    form.fields['estudio_independiente'].queryset = estudios_independientes
+
     asignaturas = Asignatura.objects.all()
-    # Obtener el número de sílabos creados para esta asignación
 
     return render(request, 'llenar_silabo.html', {
         'form': form,
@@ -275,7 +309,7 @@ def llenar_silabo(request, asignacion_id):
         'asignaturas': asignaturas,
         'usuario': nombre_de_usuario,
         'silabos_creados': silabos_creados,
-        'encuentro': silabos_creados+1
+        'encuentro': silabos_creados + 1,
     })
 
 
@@ -308,7 +342,8 @@ def agregar_estudio_independiente(request):
 @login_required
 def success_view(request):
     return render(request, 'exito.html', {
-        'message': '¡Gracias por llenar el silabo! Apreciamos el tiempo que has dedicado a completarlo.'
+        'message': '¡Gracias por llenar el silabo! Apreciamos el tiempo que has dedicado a completarlo.',
+        'usuario': request.user.username,
     })
 
 
@@ -343,12 +378,18 @@ def guardar_silabo(request, asignacion_id):
             'maestro': request.user,
             'encuentros': silabos_creados + 1,
         })
+        estudios_independientes=  obtener_estudios_independientes(asignacion_id)
+        form.fields['estudio_independiente'].queryset = estudios_independientes
+
+    asignaturas = Asignatura.objects.all()
 
     return render(request, 'generar_silabo.html', {
         'form': form,
         'asignacion': asignacion,
         'usuario': nombre_de_usuario,
-        'silabos_creados': silabos_creados  # Pasa el conteo a la plantilla
+        'silabos_creados': silabos_creados,  # Pasa el conteo a la plantilla
+        'encuentro': silabos_creados + 1,
+        'asignaturas': asignaturas,
     })
 
 

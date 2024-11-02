@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
-
 {% block content %}
+{% load static %}
 {% load widget_tweaks %}
 
 <style>
@@ -11,7 +11,7 @@
 <div class="container mt-5">
     <div class="text-center">
         <h1 class="mb-4 text-center">Llenar Sílabo </h1>
-        <h3>({{ asignacion.plan_de_estudio }})</h3>
+        <h3>{{ asignacion.plan_de_estudio }}</h3>
         <h3>Encuentro ({{ encuentro }})</h3>
     </div>
 
@@ -38,7 +38,7 @@
 
 
 
-                    <form method="post">
+                    <form method="post" onsubmit="return mostrarSpinner()">
                         {% csrf_token %}
 
                        <div class="mb-3 oculto">
@@ -164,15 +164,31 @@
                             {{ form.estudio_independiente|add_class:"form-select" }}
 
                             <!-- Botón para abrir el modal -->
+                           <style>
+                                button.btn-primary:hover {
+                                    background-color: #1b2f56;
+                                }
+                                button.btn-primary{
+                                    background: #214588;
+                                }
+
+                            </style>
                             <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#estudioModal">
-                                Agregar nuevo Estudio Independiente
+                                <img src="{% static 'img/agregar-archivo.png' %}" alt="" style="height: 34px;"> Agregar nuevo Estudio Independiente
                             </button>
                         </div>
 
 
                         <hr class="my-4">
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success w-100" id="guardarSilaboBtn">
+                                    <img src="{% static 'img/disquete.png' %}" alt="" style="height: 34px;"> Guardar Sílabo
+                                    <div id="spinner" class="spinner-border spinner-border-sm" style="display: none;" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                            </button>
+                        </div>
 
-                        <button type="submit" class="btn btn-success w-100">Guardar Sílabo</button>
                     </form>
                 </div>
             </div>
@@ -180,172 +196,25 @@
     </div>
 </div>
 
-
-<!-- Modal -->
-<div class="modal fade" id="estudioModal" tabindex="-1" aria-labelledby="estudioModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="estudioModalLabel">Agregar Estudio Independiente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formEstudioIndependiente">
-                    {% csrf_token %}
-
-                    <div class="mb-3">
-                        <label for="asignatura" class="form-label">Asignatura</label>
-                        <select id="asignatura" class="form-select">
-                            {% for asignatura in asignaturas %}
-                            <option value="{{ asignatura.id }}">{{ asignatura.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="numero" class="form-label">Número</label>
-                        <input type="number" class="form-control" id="numero" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="contenido" class="form-label">Contenido</label>
-                        <textarea class="form-control" id="contenido" rows="3" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="tecnica_evaluacion" class="form-label">Técnica de Evaluación</label>
-                        <select id="tecnica_evaluacion" class="form-select" multiple>
-                            <option value="Observación">Observación</option>
-                            <option value="Desempeño">Desempeño</option>
-                            <option value="Interrogatorio">Interrogatorio</option>
-                            <option value="Redacción">Redacción</option>
-                            <option value="Ensayo">Ensayo</option>
-                            <option value="Organizador gráfico">Organizador gráfico</option>
-                            <option value="Monografía">Monografía</option>
-                            <option value="Debate">Debate</option>
-                            <option value="Proyecto">Proyecto</option>
-                            <option value="Foro">Foro</option>
-                            <option value="Estudio de caso">Estudio de caso</option>
-                            <option value="Otro">Otro</option>
-                        </select>
-                        <small class="text-muted">Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples opciones.</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="instrumento_evaluacion" class="form-label">Instrumento de Evaluación</label>
-                        <select id="instrumento_evaluacion" class="form-select" multiple>
-                            <option value="Guía de observación">Guía de observación</option>
-                            <option value="Registro anecdótico">Registro anecdótico</option>
-                            <option value="Diario de clase">Diario de clase</option>
-                            <option value="Diario de trabajo">Diario de trabajo</option>
-                            <option value="Escala">Escala</option>
-                            <option value="Preguntas">Preguntas</option>
-                            <option value="Cuaderno del estudiante">Cuaderno del estudiante</option>
-                            <option value="Portafolio">Portafolio</option>
-                            <option value="Rúbrica">Rúbrica</option>
-                            <option value="Lista de cotejo">Lista de cotejo</option>
-                            <option value="Prueba oral">Prueba oral</option>
-                            <option value="Prueba escrita">Prueba escrita</option>
-                            <option value="Informe">Informe</option>
-                            <option value="Organizador gráfico">Organizador gráfico</option>
-                            <option value="Resumen">Resumen</option>
-                            <option value="Síntesis">Síntesis</option>
-                            <option value="Otros">Otros</option>
-                        </select>
-                        <small class="text-muted">Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples opciones.</small>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="orientacion" class="form-label">Orientación</label>
-                        <textarea class="form-control" id="orientacion" rows="3" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="recursos_bibliograficos" class="form-label">Recursos Bibliográficos</label>
-                        <textarea class="form-control" id="recursos_bibliograficos" rows="3" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="enlace" class="form-label">Enlace</label>
-                        <input type="url" class="form-control" id="enlace">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="tiempo_estudio" class="form-label">Tiempo de Estudio (horas)</label>
-                        <input type="number" class="form-control" id="tiempo_estudio" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="fecha_entrega" class="form-label">Fecha de Entrega</label>
-                        <input type="date" class="form-control" id="fecha_entrega" required>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary" id="guardarEstudioBtn">Guardar Estudio</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-
 <script>
-document.getElementById('guardarEstudioBtn').addEventListener('click', function() {
-    // Obtener los valores de los campos del formulario
-    var asignatura = document.getElementById('asignatura').value;
-    var numero = document.getElementById('numero').value;
-    var contenido = document.getElementById('contenido').value;
-    var tecnica_evaluacion = document.getElementById('tecnica_evaluacion').value;
-    var instrumento_evaluacion = document.getElementById('instrumento_evaluacion').value;
-    var orientacion = document.getElementById('orientacion').value;
-    var recursos_bibliograficos = document.getElementById('recursos_bibliograficos').value;
-    var enlace = document.getElementById('enlace').value;
-    var tiempo_estudio = document.getElementById('tiempo_estudio').value;
-    var fecha_entrega = document.getElementById('fecha_entrega').value;
+function mostrarSpinner() {
+    const btn = document.getElementById('guardarSilaboBtn');
+    const spinner = document.getElementById('spinner');
 
-    // Hacer la solicitud fetch para agregar el estudio independiente
-    fetch("{% url 'agregar_estudio_independiente' %}", {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            'asignatura': asignatura,
-            'numero': numero,
-            'contenido': contenido,
-            'tecnica_evaluacion': tecnica_evaluacion,
-            'instrumento_evaluacion': instrumento_evaluacion,
-            'orientacion': orientacion,
-            'recursos_bibliograficos': recursos_bibliograficos,
-            'enlace': enlace,
-            'tiempo_estudio': tiempo_estudio,
-            'fecha_entrega': fecha_entrega
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Agrega la nueva opción al select
-            var select = document.getElementById('id_estudio_independiente');  // Asegúrate de que este ID sea el correcto
-            var option = new Option(data.nombre, data.id);
-            select.add(option);
-            select.value = data.id;  // Selecciona automáticamente el nuevo valor
+    // Deshabilita el botón
+    btn.disabled = true;
 
-            // Cierra el modal
-            var modal = bootstrap.Modal.getInstance(document.getElementById('estudioModal'));
-            modal.hide();
-        } else {
-            // Muestra los errores si los hay
-            alert(data.error);
-        }
-    });
-});
+    // Oculta el icono del botón y muestra el spinner
+    const icon = btn.querySelector('img');
 
+    spinner.style.display = 'inline-block'; // Muestra el spinner
 
+    return true; // Asegúrate de que el formulario se envíe
+}
 </script>
+
+
+{% include 'modal_agregar_estudio_independiente.html' %}
 
 
 {% endblock %}
