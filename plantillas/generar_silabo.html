@@ -7,8 +7,10 @@
 <style>
     .oculto {
         display: none;
-    }
+}
+
 </style>
+
 
 <div class="container mt-5">
     <div class="text-center">
@@ -228,19 +230,16 @@
         $('#silabo-form').on('submit', function (event) {
             event.preventDefault();
 
-            // Variables para el botón y los spinners
             const botonGenerar = $('#boton-generar');
-            const spinners = $('.spinner');  // Seleccionar todos los spinners
+            const spinners = $('.spinner');
             const textoBoton = botonGenerar.find('.text');
             const iconoBoton = botonGenerar.find('.sparkle');
 
-            // Mostrar todos los spinners y ocultar el texto e ícono del botón
             spinners.removeClass('d-none');
             textoBoton.hide();
             iconoBoton.hide();
-            botonGenerar.prop('disabled', true);  // Deshabilitar el botón
+            botonGenerar.prop('disabled', true);
 
-            // Obtener el valor del campo y hacer la solicitud AJAX
             var prompt_usuario = $('#prompt_usuario').val();
 
             $.ajax({
@@ -264,9 +263,9 @@
                     $('#id_detalle_unidad').val(silaboData.detalle_unidad || '');
                     $('#id_contenido_tematico').val(silaboData.contenido_tematico || '');
                     $('#id_forma_organizativa').val(silaboData.forma_organizativa || '');
-                    $('#id_tiempo').val(silaboData.tiempo || '');
+                    $('#id_tiempo').val(silaboData.tiempo || '');  // Asegúrate de que estos campos están siendo llenados
                     $('#id_tecnicas_aprendizaje').val(silaboData.tecnicas_aprendizaje || '');
-                    $('#id_descripcion_estrategia').val(silaboData.descripcion_estrategia || '');
+                    $('#id_descripcion_estrategia').val(silaboData.descripcion_estrategia || ''); // Añadir estos campos
                     $('#id_eje_transversal').val(silaboData.eje_transversal || '');
                     $('#id_hp').val(silaboData.hp || '');
                     $('#id_estudio_independiente').val(silaboData.estudio_independiente || '');
@@ -280,28 +279,97 @@
                     textoBoton.show();
                     iconoBoton.show();
                     botonGenerar.prop('disabled', false);
+
+                    // Activar borde azul en los campos que NO tienen valor
+                    $('.form-control').each(function () {
+                        const currentValue = $(this).val() ? $(this).val().trim() : ''; // Manejar el caso de null
+                        console.log("Campo: ", $(this).attr('id'), " Valor: ", currentValue); // Para depuración
+                        if (currentValue === '') {
+                            $(this).addClass('blue-border'); // Agregar borde azul si está vacío
+                        } else {
+                            $(this).removeClass('blue-border'); // Asegúrate de que se quite el borde azul si hay valor
+                        }
+                    });
                 }
             });
         });
     });
 </script>
 
+
 <script>
-function mostrarSpinner() {
-    const btn = document.getElementById('guardarSilaboBtn');
-    const spinner = document.getElementById('spinner');
+    function mostrarSpinner() {
+        const btn = document.getElementById('guardarSilaboBtn');
+        const spinner = document.getElementById('spinner');
 
-    // Deshabilita el botón
-    btn.disabled = true;
+        // Deshabilita el botón
+        btn.disabled = true;
 
-    // Oculta el icono del botón y muestra el spinner
-    const icon = btn.querySelector('img');
+        // Oculta el icono del botón y muestra el spinner
+        const icon = btn.querySelector('img');
 
-    spinner.style.display = 'inline-block'; // Muestra el spinner
+        spinner.style.display = 'inline-block'; // Muestra el spinner
 
-    return true; // Asegúrate de que el formulario se envíe
-}
+        return true; // Asegúrate de que el formulario se envíe
+    }
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Seleccionar todos los campos con la clase 'form-control' y 'form-select'
+        const fields = document.querySelectorAll('.form-control, .form-select');
+
+        // Función para verificar si el valor contiene letras
+        function containsLetters(value) {
+            return /[a-zA-Z]+/.test(value); // Detecta letras en el valor del campo
+        }
+
+        // Función para manejar el cambio de contenido
+        function handleInputChange(event) {
+            const field = event.target; // El campo que disparó el evento
+            console.log("Contenido actual: ", field.value); // Depuración del contenido del campo
+
+            // Comprobar si el campo está vacío
+            if (field.value.trim() === "") {
+                field.classList.add('blue-border'); // Agrega borde azul si está vacío
+            } else if (field.tagName === 'SELECT' || field.type === 'date') {
+                field.classList.remove('blue-border'); // Remueve borde azul para select y date si hay un valor
+            } else {
+                // Agregar o remover la clase 'blue-border' según el contenido
+                if (containsLetters(field.value)) {
+                    field.classList.remove('blue-border'); // Remueve borde azul
+                } else {
+                    field.classList.add('blue-border'); // Agrega borde azul
+                }
+            }
+        }
+
+        // Agregar eventos a los campos de texto y select
+        fields.forEach(field => {
+            // Manejar el evento 'input' para campos de texto
+            if (field.tagName === 'INPUT' && field.type !== 'checkbox' && field.type !== 'radio') {
+                field.addEventListener('input', handleInputChange);
+            }
+            // Manejar el evento 'change' para select y date
+            else if (field.tagName === 'SELECT' || field.type === 'date') {
+                field.addEventListener('change', handleInputChange);
+            }
+        });
+    });
+</script>
+
+
+
+<style>
+    /* Estilo inicial sin borde azul */
+    .form-control {
+        border: 1px solid #ccc; /* Color de borde estándar */
+    }
+
+    .blue-border {
+        border: 3px solid #fc800c; /* Color de borde cuando se activa */
+    }
+</style>
+
 
 {% include 'modal_agregar_estudio_independiente.html' %}
 

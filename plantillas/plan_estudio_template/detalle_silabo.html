@@ -1,145 +1,142 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Silabos</title>
+{% load static %}
 
-   <style>
-    /* Agrega scroll horizontal a la tabla */
-    .table-container {
-        overflow-x: auto;
+<style>
+    #table-container {
+        overflow-x: auto; /* Permite el desplazamiento horizontal si es necesario */
+        max-width: 100%;  /* Asegura que no exceda el ancho del contenedor */
     }
 
-    .table {
+    #custom-table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: collapse; /* Elimina el espacio entre los bordes de las celdas */
+        table-layout: fixed; /* Fija el ancho de las columnas según lo definido */
     }
 
-    .table th, .table td {
-        border: 1px solid #ccc;
-        padding: 8px;
+    #custom-table th, #custom-table td {
+        border: 1px solid black; /* Bordes negros para todas las celdas */
+        padding: 12px; /* Espaciado para todos los th y td */
         text-align: left;
+        overflow: hidden; /* Oculta contenido que excede el ancho */
+        text-overflow: ellipsis; /* Añade puntos suspensivos para el texto largo */
+        white-space: normal; /* Permite que el texto se envuelva a la siguiente línea */
     }
 
-    /* Estilos para la fila de encabezado */
-    .table th {
-        background-color: #ccc; /* Cambia el fondo del encabezado a gris */
+    #custom-table th {
+        background-color: #e1e1e1; /* Fondo negro para los encabezados */
+        color: black; /* Color de texto blanco para los encabezados */
         font-weight: bold;
     }
 
-    /* Estilos para las filas de datos */
-    .table tbody tr:nth-child(odd) {
-        background-color: #f9f9f9;
+    /* Tamaños personalizados para columnas */
+    #th-small {
+        width: 50px;
     }
 
-    /* Estilos para las filas pares */
-    .table tbody tr:nth-child(even) {
-        background-color: #e5e5e5;
+    #th-medium {
+        width: 100px;
+    }
+
+    #th-large {
+        width: 400px;
+    }
+
+    #th-xlarge {
+        width: 500px;
+    }
+
+    /* Estilos para las filas de datos */
+    #custom-table tbody tr:nth-child(odd) {
+        background-color: #f9f9f9; /* Color para filas impares */
+    }
+
+    #custom-table tbody tr:nth-child(even) {
+        background-color: #e5e5e5; /* Color para filas pares */
     }
 </style>
 
-
-</head>
-<body>
-
 <div class="container">
-     {% for codigo, silabos_grupo in silabos_agrupados.items %}
-    <div class="table-container mb-3">
-
-        <table class="table">
+    {% for codigo, silabos_grupo in silabos_agrupados.items %}
+    <div id="table-container" class="mb-3">
+        <h2>  {{ silabos_grupo.asignatura }}</h2>
+        <table id="custom-table">
             <thead class="border-top-color">
-            <tr class="align-top">
 
 
 
 
-
-
-            </tr>
-            <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Carrera</th>
-                <th scope="col">Asignatura</th>
-                <th scope="col">Maestro</th>
-                <th scope="col">Encuentros</th>
-                <th scope="col">Fecha</th>
-                <th scope="col">Objetivo Conceptual</th>
-                <th scope="col">Objetivo Procedimental</th>
-                <th scope="col">Objetivo Actitudinal</th>
-                <th scope="col">P Momento Didáctico</th>
-                <th scope="col">S Momento Didáctico</th>
-                <th scope="col">T Momento Didáctico</th>
-                <th scope="col">Unidad</th>
-                <th scope="col">Detalle Unidad</th>
-                <th scope="col">Contenido Temático</th>
-                <th scope="col">Forma Organizativa</th>
-                <th scope="col">Tiempo</th>
-                <th scope="col">Técnicas de Aprendizaje</th>
-                <th scope="col">Estrategia Aprendizaje</th>
-                <th scope="col">Eje Transversal</th>
-                <th scope="col">H P</th>
-            </tr>
+                <tr>
+                    <th scope="col" id="th-medium">N Encuentro</th>
+                    <th scope="col" id="th-medium">Carrera</th>
+                    <th scope="col" id="th-large">Asignatura</th>
+                    <th scope="col" id="th-medium">Maestro</th>
+                    <th scope="col" id="th-medium">Fecha</th>
+                    <th scope="col" id="th-xlarge">Objetivo Conceptual</th>
+                    <th scope="col" id="th-xlarge">Objetivo Procedimental</th>
+                    <th scope="col" id="th-xlarge">Objetivo Actitudinal</th>
+                    <th scope="col" id="th-large">P Momento Didáctico</th>
+                    <th scope="col" id="th-large">S Momento Didáctico</th>
+                    <th scope="col" id="th-large">T Momento Didáctico</th>
+                    <th scope="col" id="th-medium">Unidad</th>
+                    <th scope="col" id="th-large">Detalle Unidad</th>
+                    <th scope="col" id="th-large">Contenido Temático</th>
+                    <th scope="col" id="th-large">Forma Organizativa</th>
+                    <th scope="col" id="th-medium">Tiempo</th>
+                    <th scope="col" id="th-large">Técnicas de Aprendizaje</th>
+                    <th scope="col" id="th-large">Estrategia Aprendizaje</th>
+                    <th scope="col" id="th-medium">Eje Transversal</th>
+                    <th scope="col" id="th-small">HP</th>
+                </tr>
             </thead>
             <tbody class="table-group-divider">
-
-
-                {% for silabo in silabos_grupo %}
-                    <tr class="align-top">
-                        <th scope="row">{{ silabo.id }}</th>
-                        <td>{{ silabo.carrera }}</td>
-                        <td>{{ silabo.asignatura }}</td>
-                        <td>{{ silabo.maestro }}</td>
-                        <td>{{ silabo.encuentros }}</td>
-                        <td>{{ silabo.fecha }}</td>
-                        <td>{{ silabo.objetivo_conceptual }}</td>
-                        <td>{{ silabo.objetivo_procedimental }}</td>
-                        <td>{{ silabo.objetivo_actitudinal }}</td>
-                        <td>{{ silabo.momento_didactico_primer }}</td>
-                        <td>{{ silabo.momento_didactico_segundo }}</td>
-                        <td>{{ silabo.momento_didactico_tercer }}</td>
-                        <td>{{ silabo.unidad }}</td>
-                        <td>{{ silabo.detalle_unidad }}</td>
-                        <td>{{ silabo.contenido_tematico }}</td>
-                        <td>{{ silabo.forma_organizativa }}</td>
-                        <td>{{ silabo.tiempo }}</td>
-                        <td>{{ silabo.tecnicas_aprendizaje }}</td>
-                        <td>{{ silabo.descripcion_estrategia }}</td>
-                        <td>{{ silabo.eje_transversal }}</td>
-                        <td>{{ silabo.hp }}</td>
-                    </tr>
-
+            {% for silabo in silabos_grupo %}
+                <tr class="align-top">
+                    <th><h4>{{ silabo.encuentros }}</h4></th>
+                    <td>{{ silabo.carrera }}</td>
+                    <td>{{ silabo.asignatura }}</td>
+                    <td>{{ silabo.maestro }}</td>
+                    <td>{{ silabo.fecha }}</td>
+                    <td>{{ silabo.objetivo_conceptual }}</td>
+                    <td>{{ silabo.objetivo_procedimental }}</td>
+                    <td>{{ silabo.objetivo_actitudinal }}</td>
+                    <td>{{ silabo.momento_didactico_primer }}</td>
+                    <td>{{ silabo.momento_didactico_segundo }}</td>
+                    <td>{{ silabo.momento_didactico_tercer }}</td>
+                    <td>{{ silabo.unidad }}</td>
+                    <td>{{ silabo.detalle_unidad }}</td>
+                    <td>{{ silabo.contenido_tematico }}</td>
+                    <td>{{ silabo.forma_organizativa }}</td>
+                    <td>{{ silabo.tiempo }}</td>
+                    <td>{{ silabo.tecnicas_aprendizaje }}</td>
+                    <td>{{ silabo.descripcion_estrategia }}</td>
+                    <td>{{ silabo.eje_transversal }}</td>
+                    <td>{{ silabo.hp }}</td>
+                </tr>
                 {% endfor %}
                 <tr>
+                    <th colspan="30">
+                       <div class="d-flex align-items-center gap-3">
+                            <form method="post" action="{% url 'generar_excel' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
+                                <button type="submit" class="btn btn-secondary d-flex align-items-center">
+                                    <img src="{% static 'img/exel2.png' %}" alt="" style="height: 34px" class="me-2">Exportar en Excel
+                                </button>
+                            </form>
 
-                    <th colspan="3">
+                            <form method="post" action="{% url 'generar_docx' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
+                                <button type="submit" class="btn btn-secondary d-flex align-items-center">
+                                    <img src="{% static 'img/doc.png' %}" alt="" style="height: 30px" class="me-2">Exportar en Word
+                                </button>
+                            </form>
+                        </div>
 
-                    <form method="post" action="{% url 'generar_excel' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
-                        <button type="submit"> <i class="fa-solid fa-file-excel fa-lg"></i>Descargar Excel</button>
-                   </form>
-
-                </th>
-                 <th colspan="21">
-
-                    <form method="post" action="{% url 'generar_docx' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
-                        <button type="submit"> <i class="fa-solid fa-file-word fa-lg"></i>Descargar Word</button>
-                   </form>
-
-                </th>
-
-
+                    </th>
 
                 </tr>
             </tbody>
         </table>
-
     </div>
     {% endfor %}
 </div>
-
-</body>
-</html>
