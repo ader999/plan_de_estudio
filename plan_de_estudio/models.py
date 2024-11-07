@@ -239,18 +239,18 @@ class Silabo(models.Model):
 
 
 class PlanTematico(models.Model):
-    nombre_de_la_unidad = models.CharField(max_length=255)
-    clases_teoricas_s = models.CharField(max_length=255)
-    clases_teoricas_c = models.CharField(max_length=255)
-    tct = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
-    clases_practicas_laboratorio = models.CharField(max_length=255)
-    clases_practicas_campo_trabajo = models.CharField(max_length=255)
-    clases_practicas_teoria = models.CharField(max_length=255)
-    clases_practicas_visitas_tc = models.CharField(max_length=255)
-    tcp = models.IntegerField(validators=[MinValueValidator(2), MaxValueValidator(8)])
-    evaluacion_final_examen = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
-    evaluacion_final_trabajo_clase = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
-    evaluacion_final_participacion_clase = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    nombre_de_la_unidad = models.IntegerField()
+    clases_teoricas_s = models.IntegerField()
+    clases_teoricas_c = models.IntegerField()
+    tct = models.IntegerField()
+    clases_practicas_laboratorio = models.IntegerField()
+    clases_practicas_campo_trabajo = models.IntegerField()
+    clases_practicas_teoria = models.IntegerField()
+    clases_practicas_visitas_tc = models.IntegerField()
+    tcp = models.IntegerField()
+    evaluacion_final_examen = models.IntegerField()
+    evaluacion_final_trabajo_clase = models.IntegerField()
+    evaluacion_final_participacion_clase = models.IntegerField()
     te = models.IntegerField()  # Total de evaluaciones
     thp = models.IntegerField() # Total de horas prácticas
     ti = models.IntegerField()  # Total de intervenciones
