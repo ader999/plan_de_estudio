@@ -238,7 +238,38 @@ class Silabo(models.Model):
         return f'Silabo {self.id}'
 
 
+class PlanTematico(models.Model):
+    nombre_de_la_unidad = models.CharField(max_length=255)
+    clases_teoricas_semanales = models.CharField(max_length=255)
+    clases_teoricas_continuas = models.CharField(max_length=255)
+    tct = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
+    clases_practicas_laboratorio = models.CharField(max_length=255)
+    clases_practicas_campo_trabajo = models.CharField(max_length=255)
+    clases_practicas_teoria = models.CharField(max_length=255)
+    clases_practicas_visitas_tc = models.CharField(max_length=255)
+    tcp = models.IntegerField(validators=[MinValueValidator(2), MaxValueValidator(8)])
+    evaluacion_final_examen = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    evaluacion_final_trabajo_clase = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    evaluacion_final_participacion_clase = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    te = models.IntegerField()  # Total de evaluaciones
+    thp = models.IntegerField() # Total de horas prácticas
+    ti = models.IntegerField()  # Total de intervenciones
+    th = models.IntegerField()  # Total de horas
 
+    def __str__(self):
+        return f'Unidad: {self.nombre_de_la_unidad} (ID: {self.id})'
 
+class Unidades(models.Model):
+    objetivo_especifico = models.CharField(max_length=555)
+    objetivo_procedimental = models.CharField(max_length=555)
+    objetivo_actitudinal = models.CharField(max_length=555)
+    plan_analitico = models.CharField(max_length=555)
+    recomendaciones_metodologicas = models.CharField(max_length=800)
+    forma_de_evaluacion = models.CharField(max_length=800)
+    relacion_eje_contenido_de_la_unidad = models.CharField(max_length=800)
+    plan_tematico = models.ForeignKey(PlanTematico, on_delete=models.CASCADE, related_name='unidades')
+
+    def __str__(self):
+        return f'Objetivo de la Unidad: {self.objetivo_especifico} (Plan Temático: {self.plan_tematico.nombre_de_la_unidad})'
 
 
