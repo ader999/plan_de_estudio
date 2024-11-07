@@ -240,8 +240,8 @@ class Silabo(models.Model):
 
 class PlanTematico(models.Model):
     nombre_de_la_unidad = models.CharField(max_length=255)
-    clases_teoricas_semanales = models.CharField(max_length=255)
-    clases_teoricas_continuas = models.CharField(max_length=255)
+    clases_teoricas_s = models.CharField(max_length=255)
+    clases_teoricas_c = models.CharField(max_length=255)
     tct = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
     clases_practicas_laboratorio = models.CharField(max_length=255)
     clases_practicas_campo_trabajo = models.CharField(max_length=255)
