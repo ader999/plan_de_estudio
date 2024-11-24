@@ -31,7 +31,7 @@ Solicitud del usuario:
 
 generation_config = {
     "temperature": 0.7,
-    "max_output_tokens": 1024
+    "max_output_tokens": 2024
 }
 
 try:

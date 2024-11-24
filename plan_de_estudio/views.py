@@ -27,6 +27,8 @@ from docx.shared import Pt
 
 import os
 import google.generativeai as genai
+import openai
+
 from dotenv import load_dotenv
 import re
 
@@ -402,30 +404,82 @@ def guardar_silabo(request, asignacion_id):
     })
 
 
+
+
+
 @login_required
 def generar_silabo(request):
+
+    # Función para usar el modelo de Google
+    def usar_modelo_google(prompt_completo, generation_config):
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash-latest",
+            generation_config=generation_config
+        )
+        chat_session = model.start_chat()
+        response = chat_session.send_message(prompt_completo)
+        return response.text.strip()
+
+    def usar_modelo_openai(prompt_completo):
+        """
+        Función para interactuar con OpenAI usando el cliente de chat basado en el script compartido.
+        """
+        # Inicializar cliente de OpenAI
+        client = openai.Client(api_key=os.environ.get("OPENAI_API_KEY"))
+
+        try:
+            # Crear el mensaje con el modelo
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",  # Especifica el modelo deseado
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Asistente para crear sílabo y plan de clases."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt_completo
+                    }
+                ]
+            )
+
+            # Extraer el contenido del mensaje generado
+            messages = response.choices[0].message.content.strip()
+            print("-------------------------------------------------------------",messages)
+            return messages
+
+        except Exception as e:
+            raise RuntimeError(f"Error al generar respuesta con OpenAI: {str(e)}")
+
+
     if request.method == 'POST':
-        # Obtener el prompt del usuario desde el formulario
+        # Obtener los datos del formulario
         prompt_usuario = request.POST.get('prompt_usuario', '')
+        encuentro = request.POST.get('encuentro')
+        plan = request.POST.get('plan')
+        #modelo_seleccionado = request.POST.get('modelo', 'google')  # Por defecto usa Google
+        modelo_seleccionado = 'openai'
+
 
         # Ruta al archivo de datos de ejemplo
         filepath = os.path.join(settings.BASE_DIR, 'static', 'data', 'datos_ejemplo.txt')
-        print(f"Ruta del archivo: {filepath}")
 
-        # Intentar leer el archivo con datos de ejemplo
         try:
             with open(filepath, 'r') as file:
                 datos_ejemplo = file.read()
         except FileNotFoundError:
             return JsonResponse({'error': f"Error: El archivo '{filepath}' no se encuentra."}, status=400)
 
-        # Crear el prompt completo que será enviado al modelo
+        # Crear el prompt completo
         prompt_completo = f"""
             Instrucciones: Crea un sílabo basado en la siguiente información y devuélvelo en formato JSON estructurado.
 
             Datos de ejemplo (para tu referencia):
 
             {datos_ejemplo}
+            
+            el silabo que vas a crear espara el encuentro: {encuentro} de 12 encuentros
+            Plan de estudio: {plan}
 
             Solicitud del usuario:
             {prompt_usuario}
@@ -447,38 +501,48 @@ def generar_silabo(request):
             - eje_transversal
             - hp
             - estudio_independiente
+        """
+        print("1111111111111111111111111111111111111111111111111",prompt_completo)
 
-            Asegúrate de devolver una salida en formato JSON con las claves y valores correspondientes a cada campo.
-            """
-
-        # Configuración del modelo generativo
         generation_config = {
             "temperature": 0.7,
             "max_output_tokens": 1024
         }
 
         try:
-            # Configurar y ejecutar el modelo para generar la respuesta
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-pro-002",
-                generation_config=generation_config
-            )
-            chat_session = model.start_chat()
-            response = chat_session.send_message(prompt_completo)
+            # Usar el modelo seleccionado
+            if modelo_seleccionado == 'google':
+                silabo_generado = usar_modelo_google(prompt_completo, generation_config)
+            elif modelo_seleccionado == 'openai':
+                silabo_generado = usar_modelo_openai(prompt_completo)
+            else:
+                return JsonResponse({'error': 'Modelo no válido seleccionado.'}, status=400)
 
-            # Obtener el texto generado
-            silabo_generado = response.text.strip()  # Acceso correcto al contenido generado y eliminar espacios en blanco
-
-            # Limpiar el formato si tiene las etiquetas ```json
-            silabo_limpio = re.sub(r'```json|```', '', silabo_generado).strip()
-
-            # Convertir el texto limpio a JSON
             try:
-                silabo_data = json.loads(silabo_limpio)
-            except json.JSONDecodeError:
-                return JsonResponse({'error': 'Error al formatear la respuesta como JSON.'}, status=500)
+                # Usar el modelo seleccionado
+                if modelo_seleccionado == 'google':
+                    silabo_generado = usar_modelo_google(prompt_completo, generation_config)
+                elif modelo_seleccionado == 'openai':
+                    silabo_generado = usar_modelo_openai(prompt_completo)
+                else:
+                    return JsonResponse({'error': 'Modelo no válido seleccionado.'}, status=400)
 
-            # Enviar los datos generados a la vista
+                silabo_limpio = re.sub(r'```json|```', '', silabo_generado).strip()  # Eliminar las marcas de código
+                silabo_limpio = silabo_limpio.replace('\n', '').replace('\r',
+                                                                        '')  # Eliminar saltos de línea y retornos de carro
+                print("Silabo limpio:", silabo_limpio)  # Verificar si la limpieza es correcta
+
+                # Convertir el texto limpio a JSON
+                try:
+                    silabo_data = json.loads(silabo_limpio)
+                except json.JSONDecodeError:
+                    return JsonResponse({'error': 'Error al formatear la respuesta como JSON.'}, status=500)
+
+                return JsonResponse({'silabo_data': silabo_data})
+
+            except Exception as e:
+                return JsonResponse({'error': f"Error general: {str(e)}"}, status=500)
+
             return JsonResponse({'silabo_data': silabo_data})
 
         except Exception as e:

@@ -28,8 +28,11 @@
 
                         <div class="mb-3">
                             <label for="prompt_usuario" class="form-label">Describe las características del sílabo que deseas generar:</label>
-                            <textarea id="prompt_usuario" name="prompt_usuario" class="form-control" rows="5" required></textarea>
+                            <textarea id="prompt_usuario" name="prompt_usuario" class="form-control" rows="5"></textarea>
                         </div>
+                        <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">
+                        <input type="hidden" id="plan" name="plan" value="{{ asignacion.plan_de_estudio }}">
+
 
                         {% include 'generar_plan_estudio/boton_generar.html' %}
                     </form>
@@ -241,12 +244,16 @@
             botonGenerar.prop('disabled', true);
 
             var prompt_usuario = $('#prompt_usuario').val();
+            var encuentro = $('#encuentro').val();  // Obtener el valor del campo oculto
+            var plan = $('#plan').val();
 
             $.ajax({
                 url: '{% url "generar_silabo" %}',
                 type: 'POST',
                 data: {
                     'prompt_usuario': prompt_usuario,
+                    'encuentro': encuentro,
+                    'plan': plan,
                     'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),
                 },
                 success: function (response) {
