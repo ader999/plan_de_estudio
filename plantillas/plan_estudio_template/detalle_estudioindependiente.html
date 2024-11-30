@@ -1,46 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-    <div class="table-container mb-3"  style="overflow-x: auto;">
-        <table class="table">
-            <thead>
-                    <tr>
-                        <th scope="col">N°</th>
-                        <th scope="col">Contenido</th>
-                        <th scope="col">Técnica de Evaluación</th>
-                        <th scope="col">Instrumento de Evaluación</th>
-                        <th scope="col">Orientación</th>
-                        <th scope="col">Recursos Bibliográficos</th>
-                        <th scope="col">Tiempo de Estudio</th>
-                        <th scope="col">Fecha de Entrega</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for codigo, estudios_lista in estudios.items %}
-                    {% for estudio in estudios_lista %}
-                    <tr>
-                        <th scope="row">{{ estudio.numero }}</th>
-                        <td>{{ estudio.contenido }}</td>
-                        <td>{{ estudio.tecnica_evaluacion }}</td>
-                        <td>{{ estudio.instrumento_evaluacion }}</td>
-                        <td>{{ estudio.orientacion }}</td>
-                        <td>{{ estudio.recursos_bibliograficos }}</td>
-                        <td>{{ estudio.tiempo_estudio }}</td>
-                        <td>{{ estudio.fecha_entrega|date:"Y-m-d" }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% endfor %}
-                </tbody>
-            </table>
+<!-- Modal -->
+<div class="modal fade" id="tableModal" tabindex="-1" aria-labelledby="tableModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tableModalLabel">Detalles de Estudio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container mb-3" style="overflow-x: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">N°</th>
+                                <th scope="col">Contenido</th>
+                                <th scope="col">Técnica de Evaluación</th>
+                                <th scope="col">Instrumento de Evaluación</th>
+                                <th scope="col">Orientación</th>
+                                <th scope="col">Recursos Bibliográficos</th>
+                                <th scope="col">Enlace</th>
+                                <th scope="col">Tiempo de Estudio</th>
+                                <th scope="col">Fecha de Entrega</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope="row">{{ silabo.estudio_independiente.id  }}</th>
+                                <td> {{ silabo.estudio_independiente.contenido }}</td>
+                                <td>{{ silabo.estudio_independiente.tecnica_evaluacion  }}</td>
+                                <td>{{ silabo.estudio_independiente.orientacion }}</td>
+                                <td>{{ silabo.estudio_independiente.recursos_bibliograficos }}</td>
+                                <td><a href="{{ silabo.estudio_independiente.enlace }}" target="_blank">{{ silabo.estudio_independiente.enlace }}</a></td>
+                                <td>{{ silabo.estudio_independiente.tiempo_estudio }}</td>
+                                <td>{{ silabo.estudio_independiente.fecha_entrega }}</td>
+                            </tr>
 
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
     </div>
-
-
-
-
-</body>
-</html>
+</div>

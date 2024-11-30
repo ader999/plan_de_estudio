@@ -54,6 +54,8 @@
     }
 </style>
 
+
+
 <div class="container">
     {% for codigo, silabos_grupo in silabos_agrupados.items %}
     <div id="table-container" class="mb-3">
@@ -85,6 +87,7 @@
                     <th scope="col" id="th-large">Estrategia Aprendizaje</th>
                     <th scope="col" id="th-medium">Eje Transversal</th>
                     <th scope="col" id="th-small">HP</th>
+                    <th scope="col" id="th-large">Estudio I</th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">
@@ -110,6 +113,13 @@
                     <td>{{ silabo.descripcion_estrategia }}</td>
                     <td>{{ silabo.eje_transversal }}</td>
                     <td>{{ silabo.hp }}</td>
+                    <td>
+                        {% include 'plan_estudio_template/detalle_estudioindependiente.html' %}
+
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tableModal">
+                            Ver Estudio Independiente
+                        </button>
+                    </td>
                 </tr>
                 {% endfor %}
                 <tr>

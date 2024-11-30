@@ -88,7 +88,6 @@ def logout_view(request):
 
 @login_required
 def plan_estudio(request):
-
     # Obtiene el usuario autenticado
     usuario_autenticado = request.user
     nombre_de_usuario = request.user.username
@@ -97,22 +96,19 @@ def plan_estudio(request):
 
     # Crear un diccionario para agrupar los silabos por código
     silabos_agrupados = {}
-    estudio_independiente = {}
     for silabo in silabos:
         codigo = silabo.codigo
         if codigo not in silabos_agrupados:
             silabos_agrupados[codigo] = []
-            estudio_independiente[codigo] = []  # Inicializar como una lista vacía
         silabos_agrupados[codigo].append(silabo)
-        estudio_independiente[codigo].append(silabo.estudio_independiente)
 
     context = {
         'silabos_agrupados': silabos_agrupados,
-        'estudios': estudio_independiente,
         'usuario': nombre_de_usuario
     }
 
     return render(request, 'plan_estudio.html', context)
+
 
 @login_required
 def Plan_de_clase(request):
@@ -184,8 +180,6 @@ def generar_excel(request):
 
 @login_required
 def generar_docx(request):
-
-
     if request.method == 'POST':
         codigo_silabo = request.POST.get('codigoSilabo', '')
 
@@ -203,49 +197,78 @@ def generar_docx(request):
             # Crear un documento Word
             document = Document()
 
-            # Agregar contenido al documento
+            # Título principal del documento
+            document.add_heading('Sílabo Generado', level=0)
+
             for silabo in silabos:
-                document.add_heading(f'Sílabo {silabo.codigo}', level=1)
+                # Encabezado para cada sílabo
+                document.add_heading(f'Sílabo: {silabo.codigo}', level=1)
 
-                # Agregar subtítulos en negrita seguidos de ":"
-                document.add_paragraph().add_run('Encuentros:').bold = True
-                document.add_paragraph(f'{silabo.encuentros}')
+                # Agregar información del sílabo
+                document.add_paragraph().add_run('Maestro: ').bold = True
+                document.add_paragraph(silabo.maestro.username)
 
-                document.add_paragraph().add_run('Fecha:').bold = True
-                document.add_paragraph(f'{silabo.fecha}')
+                document.add_paragraph().add_run('Asignatura: ').bold = True
+                document.add_paragraph(silabo.asignatura.asignatura.nombre)
 
-                document.add_paragraph().add_run('Unidad:').bold = True
-                document.add_paragraph(f'{silabo.unidad}')
+                document.add_paragraph().add_run('Encuentros: ').bold = True
+                document.add_paragraph(str(silabo.encuentros))
 
-                document.add_paragraph().add_run('Objetivos:').bold = True
+                document.add_paragraph().add_run('Fecha: ').bold = True
+                document.add_paragraph(str(silabo.fecha))
+
+                document.add_paragraph().add_run('Unidad: ').bold = True
+                document.add_paragraph(silabo.unidad)
+
+                document.add_paragraph().add_run('Objetivos: ').bold = True
                 document.add_paragraph(
-                    f'{silabo.objetivo_conceptual}, {silabo.objetivo_actitudinal}, {silabo.objetivo_procedimental}')
+                    f"Conceptual: {silabo.objetivo_conceptual}, "
+                    f"Procedimental: {silabo.objetivo_procedimental}, "
+                    f"Actitudinal: {silabo.objetivo_actitudinal}"
+                )
 
-                document.add_paragraph().add_run('Momentos Didácticos:').bold = True
+                document.add_paragraph().add_run('Momentos Didácticos: ').bold = True
                 document.add_paragraph(
-                    f'{silabo.momento_didactico_primer}, {silabo.momento_didactico_segundo}, {silabo.momento_didactico_tercer}')
+                    f"Primer Momento: {silabo.momento_didactico_primer}, "
+                    f"Segundo Momento: {silabo.momento_didactico_segundo}, "
+                    f"Tercer Momento: {silabo.momento_didactico_tercer}"
+                )
 
-                document.add_paragraph().add_run('Forma Organizativa:').bold = True
-                document.add_paragraph(f'{silabo.forma_organizativa}')
+                document.add_paragraph().add_run('Contenido Temático: ').bold = True
+                document.add_paragraph(silabo.contenido_tematico)
 
-                document.add_paragraph().add_run('Técnicas de Aprendizaje:').bold = True
-                document.add_paragraph(f'{silabo.tecnicas_aprendizaje}')
+                document.add_paragraph().add_run('Forma Organizativa: ').bold = True
+                document.add_paragraph(silabo.forma_organizativa)
 
-                document.add_paragraph().add_run('Descripción Estrategia:').bold = True
-                document.add_paragraph(f'{silabo.descripcion_estrategia}')
+                document.add_paragraph().add_run('Tiempo: ').bold = True
+                document.add_paragraph(str(silabo.tiempo))
 
-                document.add_paragraph().add_run('Eje Transversal:').bold = True
-                document.add_paragraph(f'{silabo.eje_transversal}')
+                document.add_paragraph().add_run('Técnicas de Aprendizaje: ').bold = True
+                document.add_paragraph(silabo.tecnicas_aprendizaje)
 
-            # Guardar el documento en memoria
+                document.add_paragraph().add_run('Descripción Estrategia: ').bold = True
+                document.add_paragraph(silabo.descripcion_estrategia)
+
+                document.add_paragraph().add_run('Eje Transversal: ').bold = True
+                document.add_paragraph(silabo.eje_transversal)
+
+                document.add_paragraph().add_run('Horas Prácticas: ').bold = True
+                document.add_paragraph(str(silabo.hp))
+
+                # Separador para cada sílabo
+                document.add_page_break()
+
+            # Preparar el archivo para descargar
             response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-            response['Content-Disposition'] = 'attachment; filename="silabo.docx"'
+            response['Content-Disposition'] = 'attachment; filename="silabo_generado.docx"'
             document.save(response)
 
             return response
 
         except Exception as e:
             return JsonResponse({'error': f"Ocurrió un error al generar el documento Word: {e}"}, status=500)
+
+    return redirect('plan_de_estudio')
 
 
 def obtener_estudios_independientes(asignacion_id):
@@ -409,16 +432,44 @@ def guardar_silabo(request, asignacion_id):
 
 @login_required
 def generar_silabo(request):
-
     # Función para usar el modelo de Google
     def usar_modelo_google(prompt_completo, generation_config):
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash-latest",
-            generation_config=generation_config
-        )
-        chat_session = model.start_chat()
-        response = chat_session.send_message(prompt_completo)
-        return response.text.strip()
+        """
+        Usa el modelo de Google para generar una respuesta basada en el prompt dado.
+
+        Args:
+            prompt_completo (str): Prompt que contiene las instrucciones y datos.
+            generation_config (dict): Configuración para la generación del modelo.
+
+        Returns:
+            str: Respuesta generada por el modelo.
+        """
+        # Cargar la clave API desde .env
+        load_dotenv()
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY no está configurada en el archivo .env")
+
+        try:
+            # Configurar la API
+            genai.configure(api_key=api_key)
+
+            # Crear el modelo y sesión de chat
+            model = genai.GenerativeModel(
+                model_name="gemini-1.5-flash-latest",
+                generation_config=generation_config
+            )
+            chat_session = model.start_chat()
+
+            # Generar respuesta
+            response = chat_session.send_message(prompt_completo)
+            return response.text.strip()
+
+        except genai.errors.GenerativeAIError as e:
+            raise RuntimeError(f"Error en la API de Gemini: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Error inesperado: {e}")
+
 
     def usar_modelo_openai(prompt_completo):
         """
@@ -445,21 +496,19 @@ def generar_silabo(request):
 
             # Extraer el contenido del mensaje generado
             messages = response.choices[0].message.content.strip()
-            print("-------------------------------------------------------------",messages)
+            print("-------------------------------------------------------------", messages)
             return messages
 
         except Exception as e:
             raise RuntimeError(f"Error al generar respuesta con OpenAI: {str(e)}")
-
 
     if request.method == 'POST':
         # Obtener los datos del formulario
         prompt_usuario = request.POST.get('prompt_usuario', '')
         encuentro = request.POST.get('encuentro')
         plan = request.POST.get('plan')
-        #modelo_seleccionado = request.POST.get('modelo', 'google')  # Por defecto usa Google
-        modelo_seleccionado = 'openai'
-
+        # modelo_seleccionado = request.POST.get('modelo', 'google')  # Por defecto usa Google
+        modelo_seleccionado = 'google'
 
         # Ruta al archivo de datos de ejemplo
         filepath = os.path.join(settings.BASE_DIR, 'static', 'data', 'datos_ejemplo.txt')
@@ -477,7 +526,7 @@ def generar_silabo(request):
             Datos de ejemplo (para tu referencia):
 
             {datos_ejemplo}
-            
+
             el silabo que vas a crear espara el encuentro: {encuentro} de 12 encuentros
             Plan de estudio: {plan}
 
@@ -502,7 +551,7 @@ def generar_silabo(request):
             - hp
             - estudio_independiente
         """
-        print("1111111111111111111111111111111111111111111111111",prompt_completo)
+        print("1111111111111111111111111111111111111111111111111", prompt_completo)
 
         generation_config = {
             "temperature": 0.7,
@@ -518,31 +567,21 @@ def generar_silabo(request):
             else:
                 return JsonResponse({'error': 'Modelo no válido seleccionado.'}, status=400)
 
+            # Extraer contenido JSON de la respuesta generada
             try:
-                # Usar el modelo seleccionado
-                if modelo_seleccionado == 'google':
-                    silabo_generado = usar_modelo_google(prompt_completo, generation_config)
-                elif modelo_seleccionado == 'openai':
-                    silabo_generado = usar_modelo_openai(prompt_completo)
-                else:
-                    return JsonResponse({'error': 'Modelo no válido seleccionado.'}, status=400)
+                # Buscar el bloque JSON con una expresión regular
+                match = re.search(r'\{.*\}', silabo_generado, re.DOTALL)
+                if not match:
+                    return JsonResponse({'error': 'No se encontró un bloque JSON válido en la respuesta.'}, status=500)
 
-                silabo_limpio = re.sub(r'```json|```', '', silabo_generado).strip()  # Eliminar las marcas de código
-                silabo_limpio = silabo_limpio.replace('\n', '').replace('\r',
-                                                                        '')  # Eliminar saltos de línea y retornos de carro
-                print("Silabo limpio:", silabo_limpio)  # Verificar si la limpieza es correcta
+                silabo_json_text = match.group(0).strip()  # Extraer el JSON encontrado
 
-                # Convertir el texto limpio a JSON
-                try:
-                    silabo_data = json.loads(silabo_limpio)
-                except json.JSONDecodeError:
-                    return JsonResponse({'error': 'Error al formatear la respuesta como JSON.'}, status=500)
+                # Convertir el texto a un objeto JSON
+                silabo_data = json.loads(silabo_json_text)
+            except json.JSONDecodeError as e:
+                return JsonResponse({'error': f'Error al decodificar JSON: {str(e)}'}, status=500)
 
-                return JsonResponse({'silabo_data': silabo_data})
-
-            except Exception as e:
-                return JsonResponse({'error': f"Error general: {str(e)}"}, status=500)
-
+            # Devolver el JSON como respuesta
             return JsonResponse({'silabo_data': silabo_data})
 
         except Exception as e:
