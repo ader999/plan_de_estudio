@@ -536,7 +536,7 @@ def generar_silabo(request):
 
             # Crear el modelo y sesión de chat
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash-latest",
+                model_name="gemini-1.5-pro-latest",
                 generation_config=generation_config
             )
             chat_session = model.start_chat()
