@@ -175,7 +175,87 @@ def generar_excel(request):
                 return response
 
     # Si no se proporcionó un código de sílabo o no se encontraron sílabos, redirige a la página principal
+    return redirect('plan_de_estudio')  # Reemplaza 'pagina_principal' con la URL de tu
+
+
+@login_required
+def generar_excel_original(request):
+    print("Me estoy ejecutando")
+    if request.method == 'POST':
+        # Obtén el código de sílabo del formulario
+        codigo_silabo = request.POST.get('codigoSilabo')
+
+
+        if codigo_silabo:
+            # Si se proporcionó un código de sílabo, realiza la búsqueda
+            silabos = Silabo.objects.filter(codigo=codigo_silabo, maestro=request.user)
+
+            if silabos.exists():
+                # Si se encontraron sílabos, continúa con la lógica para generar el archivo Excel
+                # ...
+
+                # Ruta a la plantilla de Excel en tu proyecto
+                template_path = 'excel_templates/plantilla_original.xlsx'
+
+                # Carga la plantilla de Excel
+                wb = load_workbook(template_path)
+
+                # Selecciona una hoja de cálculo (worksheet) si es necesario
+                ws = wb.active  # O selecciona una hoja específica
+
+                # Inserta los datos en las celdas correspondientes
+                row_num = 0  # Fila en la que se insertarán los datos
+
+                for silabo in silabos:
+
+                    ws.cell(row=7, column=3, value=silabo.maestro.username)
+                    ws.cell(row=5, column=9, value=silabo.asignatura.asignatura.nombre)
+
+                    ws.cell(row=12+row_num, column=3, value=silabo.unidad)
+                    ws.cell(row=13+ row_num, column=3, value=silabo.unidad)
+                    ws.cell(row=18+row_num, column=3, value=silabo.unidad)
+
+                    ws.cell(row=11+row_num, column=4, value=silabo.detalle_unidad)
+                    ws.cell(row=13+row_num, column=4, value=silabo.detalle_unidad)
+                    ws.cell(row=18+row_num, column=4, value=silabo.detalle_unidad)
+
+                    ws.cell(row=11+row_num, column=6, value=silabo.objetivo_conceptual)
+                    ws.cell(row=13+row_num, column=6, value=silabo.objetivo_procedimental)
+                    ws.cell(row=18+row_num, column=6, value=silabo.objetivo_actitudinal)
+                    ws.cell(row=11+row_num, column=7, value=silabo.contenido_tematico)
+
+                    ws.cell(row=12+row_num, column=9, value=silabo.momento_didactico_primer)
+                    ws.cell(row=14+row_num, column=9, value=silabo.momento_didactico_segundo)
+                    ws.cell(row=19+row_num, column=9, value=silabo.momento_didactico_tercer)
+
+                    ws.cell(row=12+row_num, column=10, value=silabo.tiempo)
+                    """
+                    ws.cell(row=row_num, column=1, value=silabo.encuentros)
+                    ws.cell(row=row_num, column=2, value=silabo.fecha)
+                    
+                    
+                    
+                    
+                    ws.cell(row=row_num, column=11, value=silabo.forma_organizativa)
+                    
+                    ws.cell(row=row_num, column=13, value=silabo.tecnicas_aprendizaje)
+                    ws.cell(row=row_num, column=14, value=silabo.descripcion_estrategia)
+                    ws.cell(row=row_num, column=15, value=silabo.eje_transversal)
+                    ws.cell(row=row_num, column=16, value=silabo.hp)"""
+                    # Agrega los datos para otros campos aquí
+                    row_num += 23  # Avanza a la siguiente fila
+
+                # Guarda el archivo Excel en memoria
+                response = HttpResponse(content_type='application/ms-excel')
+                response['Content-Disposition'] = 'attachment; filename=archivo_generado.xlsx'
+                wb.save(response)
+
+                return response
+
+    # Si no se proporcionó un código de sílabo o no se encontraron sílabos, redirige a la página principal
     return redirect('plan_de_estudio')  # Reemplaza 'pagina_principal' con la URL de tu elección
+
+
 
 
 @login_required
@@ -507,9 +587,9 @@ def generar_silabo(request):
         prompt_usuario = request.POST.get('prompt_usuario', '')
         encuentro = request.POST.get('encuentro')
         plan = request.POST.get('plan')
-        # modelo_seleccionado = request.POST.get('modelo', 'google')  # Por defecto usa Google
-        modelo_seleccionado = 'google'
-
+        modelo_seleccionado = request.POST.get('modelo_select')  # Por defecto usa Google
+        #modelo_seleccionado = 'google'
+        print("Imprimiendo el modelo selecionodao:::::::::::::::::: "+modelo_seleccionado)
         # Ruta al archivo de datos de ejemplo
         filepath = os.path.join(settings.BASE_DIR, 'static', 'data', 'datos_ejemplo.txt')
 
@@ -555,7 +635,7 @@ def generar_silabo(request):
 
         generation_config = {
             "temperature": 0.7,
-            "max_output_tokens": 1024
+            "max_output_tokens": 1524
         }
 
         try:

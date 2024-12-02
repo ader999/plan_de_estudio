@@ -33,8 +33,25 @@
                         <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">
                         <input type="hidden" id="plan" name="plan" value="{{ asignacion.plan_de_estudio }}">
 
+                       <div class="d-flex flex-wrap align-items-center gap-2">
+                            <!-- Botón generado -->
 
-                        {% include 'generar_plan_estudio/boton_generar.html' %}
+
+                            <!-- Etiqueta para el select -->
+                            <label for="opciones" class="form-label mb-0" style="margin-top: 12px;">Modelo:</label>
+
+                            <!-- Combobox con ancho personalizado -->
+                            <select id="opciones" name="opciones" class="form-select" style="width: 200px;margin-top: 12px;">
+                                <option value="google">Google - Gemini</option>
+                                <option value="openai">OpenAI - Davinci</option>
+                            </select>
+
+                           {% include 'generar_plan_estudio/boton_generar.html' %}
+                        </div>
+
+
+
+
                     </form>
                 </div>
             </div>
@@ -244,6 +261,7 @@
             botonGenerar.prop('disabled', true);
 
             var prompt_usuario = $('#prompt_usuario').val();
+            var modeloSeleccionado = $('#opciones').val();
             var encuentro = $('#encuentro').val();  // Obtener el valor del campo oculto
             var plan = $('#plan').val();
 
@@ -252,6 +270,7 @@
                 type: 'POST',
                 data: {
                     'prompt_usuario': prompt_usuario,
+                    'modelo_select': modeloSeleccionado,
                     'encuentro': encuentro,
                     'plan': plan,
                     'csrfmiddlewaretoken': $('[name="csrfmiddlewaretoken"]').val(),

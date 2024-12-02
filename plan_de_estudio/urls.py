@@ -15,6 +15,7 @@ urlpatterns = [
     path('plan_de_estudio/',views.plan_estudio, name= 'plan_de_estudio'),
     path('detalle_silabo/',views.detalle_silabo,name='detalle_silabo'),
     path('generar_excel/', views.generar_excel, name='generar_excel'),
+    path('generar_excel2/', views.generar_excel_original, name='generar_excel_original'),
     path('generar_docx/', views.generar_docx, name='generar_docx'),
     path('logout/', views.logout_view, name='logout'),
     path('llenar_silabo/<int:asignacion_id>/', views.llenar_silabo, name='llenar_silabo'),

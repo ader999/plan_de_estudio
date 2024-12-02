@@ -133,6 +133,14 @@
                                 </button>
                             </form>
 
+                           <form method="post" action="{% url 'generar_excel_original' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
+                                <button type="submit" class="btn btn-secondary d-flex align-items-center">
+                                    <img src="{% static 'img/exel2.png' %}" alt="" style="height: 34px" class="me-2">Exportar Exel plantilla original
+                                </button>
+                            </form>
+
                             <form method="post" action="{% url 'generar_docx' %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
