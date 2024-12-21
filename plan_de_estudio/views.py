@@ -164,6 +164,17 @@ def generar_excel(request):
                     ws.cell(row=row_num, column=14, value=silabo.descripcion_estrategia)
                     ws.cell(row=row_num, column=15, value=silabo.eje_transversal)
                     ws.cell(row=row_num, column=16, value=silabo.hp)
+
+                    ws.cell(row=row_num, column=17, value=silabo.estudio_independiente.numero)
+                    ws.cell(row=row_num, column=18, value=silabo.estudio_independiente.contenido)
+                    ws.cell(row=row_num, column=19, value=silabo.estudio_independiente.tecnica_evaluacion)
+                    ws.cell(row=row_num, column=20, value=silabo.estudio_independiente.orientacion)
+                    ws.cell(row=row_num, column=21, value=silabo.estudio_independiente.recursos_bibliograficos)
+                    ws.cell(row=row_num, column=22, value=silabo.estudio_independiente.enlace)
+                    ws.cell(row=row_num, column=23, value=silabo.estudio_independiente.tiempo_estudio)
+                    ws.cell(row=row_num, column=24, value=silabo.estudio_independiente.fecha_entrega)
+
+
                     # Agrega los datos para otros campos aquí
                     row_num += 1  # Avanza a la siguiente fila
 
@@ -210,6 +221,14 @@ def generar_excel_original(request):
 
                     ws.cell(row=7, column=3, value=silabo.maestro.username)
                     ws.cell(row=5, column=9, value=silabo.asignatura.asignatura.nombre)
+                    ws.cell(row=5, column=4, value=silabo.carrera.nombre)
+                    ws.cell(row=5, column=13, value=silabo.asignacion_plan.plan_de_estudio.trimestre)
+                    ws.cell(row=7, column=10,
+                            value=silabo.asignacion_plan.plan_de_estudio.pr.nombre if silabo.asignacion_plan.plan_de_estudio.pr else "N/A")
+                    ws.cell(row=7, column=12,
+                            value=silabo.asignacion_plan.plan_de_estudio.pc.nombre if silabo.asignacion_plan.plan_de_estudio.pc else "N/A")
+                    ws.cell(row=7, column=13,
+                            value=silabo.asignacion_plan.plan_de_estudio.cr.nombre if silabo.asignacion_plan.plan_de_estudio.cr else "N/A")
 
                     ws.cell(row=12+row_num, column=3, value=silabo.unidad)
                     ws.cell(row=13+ row_num, column=3, value=silabo.unidad)
@@ -229,6 +248,14 @@ def generar_excel_original(request):
                     ws.cell(row=19+row_num, column=9, value=silabo.momento_didactico_tercer)
 
                     ws.cell(row=12+row_num, column=10, value=silabo.tiempo)
+
+
+                    #Estudio independiente
+                    ws.cell(row=23 + row_num, column=3, value=silabo.unidad)
+                    ws.cell(row=23 + row_num, column=6, value=silabo.estudio_independiente.contenido)
+                    ws.cell(row=23 + row_num, column=8, value=silabo.estudio_independiente.instrumento_evaluacion)
+                    ws.cell(row=23 + row_num, column=10, value=silabo.estudio_independiente.tiempo_estudio)
+                    ws.cell(row=23 + row_num, column=11, value=silabo.estudio_independiente.recursos_bibliograficos)
                     """
                     ws.cell(row=row_num, column=1, value=silabo.encuentros)
                     ws.cell(row=row_num, column=2, value=silabo.fecha)

@@ -27,7 +27,7 @@
                         {% csrf_token %}
 
                         <div class="mb-3">
-                            <label for="prompt_usuario" class="form-label">Describe las características del sílabo que deseas generar:</label>
+                            <label for="prompt_usuario" class="form-label">(Opcional) espesifica alguna caracteristica que quieres que contenga el sìlabo:</label>
                             <textarea id="prompt_usuario" name="prompt_usuario" class="form-control" rows="5"></textarea>
                         </div>
                         <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">
