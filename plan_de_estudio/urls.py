@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 from django.urls import path
 from plan_de_estudio import views
@@ -19,9 +18,10 @@ urlpatterns = [
     path('generar_docx/', views.generar_docx, name='generar_docx'),
     path('logout/', views.logout_view, name='logout'),
     path('llenar_silabo/<int:asignacion_id>/', views.llenar_silabo, name='llenar_silabo'),
-    path('agregar_estudio_independiente/', views.agregar_estudio_independiente, name='agregar_estudio_independiente'),
+    path('agregar_guia/', views.agregar_estudio_independiente, name='agregar_guia'),
     path('success_view/', views.success_view, name='success_view'),
     path('generar-silabo/', views.generar_silabo, name='generar_silabo'),
+    path('generar_guia/', views.generar_estudio_independiente, name='generar_guia'),
     path('generar-silabo-view/<int:asignacion_id>/', views.guardar_silabo, name='guardar_silabo')
 
 ]

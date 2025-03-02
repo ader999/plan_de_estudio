@@ -15,11 +15,11 @@ Unidad: Unidad I
 Detalle Unidad: Fundamentos de los sistemas de información
 Contenido Temático: Conceptos básicos de sistemas, componentes principales y su interrelación.
 Forma Organizativa: Seminario
-Tiempo: 40 horas
+Tiempo: 40
 Técnicas de Aprendizaje: Taller
 Descripción Estrategia: Se realizarán talleres grupales para aplicar los conceptos.
 Eje Transversal: Tecnología de la información y comunicación
-Horas Presenciales (HP): 30 horas
+Horas Presenciales (HP): 30
 Estudio Independiente: Lecturas complementarias
 
 Sílabo 2
@@ -39,11 +39,11 @@ Unidad: Unidad II
 Detalle Unidad: Infraestructura de sistemas de información
 Contenido Temático: Componentes de hardware, tipos de software y su rol en la infraestructura.
 Forma Organizativa: Laboratorio
-Tiempo: 50 horas
+Tiempo: 50
 Técnicas de Aprendizaje: Trabajo de campo
 Descripción Estrategia: Visitas a centros de datos para ver infraestructuras reales.
 Eje Transversal: Emprendimiento e innovación
-Horas Presenciales (HP): 35 horas
+Horas Presenciales (HP): 35
 Estudio Independiente: Lecturas complementarias
 
 Sílabo 3
@@ -63,10 +63,10 @@ Unidad: Unidad III
 Detalle Unidad: Seguridad de la información
 Contenido Temático: Políticas de seguridad, tipos de amenazas y planes de contingencia.
 Forma Organizativa: Talleres
-Tiempo: 45 horas
+Tiempo: 45
 Técnicas de Aprendizaje: Proyecto
 Descripción Estrategia: Elaboración de proyectos para crear planes de seguridad.
 Eje Transversal: Medio ambiente
-Horas Presenciales (HP): 40 horas
+Horas Presenciales (HP): 40
 Estudio Independiente: Lecturas complementarias
 

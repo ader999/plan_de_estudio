@@ -1,15 +1,20 @@
 import json
+import os
+import re
+from dotenv import load_dotenv
+import logging
 
 from django.db.models.functions import Lower
 from django.http import HttpResponse, request ,HttpResponseNotFound, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
+import logging
 
 #librerias para el login
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Silabo ,Estudio_independiente, AsignacionPlanEstudio, Asignatura, Plan_de_estudio
+from .models import Silabo, Guia, AsignacionPlanEstudio, Asignatura, Plan_de_estudio
 
 from .forms import SilaboForm
 from django.views.decorators.csrf import csrf_exempt
@@ -18,33 +23,24 @@ from openpyxl import load_workbook
 from django.db.models import Count
 
 from openpyxl.utils.dataframe import dataframe_to_rows
-from io import BytesIO
 import pandas as pd
-
 from docx import Document
 from docx.shared import Pt
 
-
-import os
+# Importaciones para IA
+import openai  # Importar openai directamente, sin la clase OpenAI
 import google.generativeai as genai
-import openai
-
-from dotenv import load_dotenv
-import re
-
+import httpx
 
 # Cargar variables de entorno
 load_dotenv()
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-
-
+genai.configure(api_key=os.environ.get("GOOGLE_GENERATIVE_API_KEY"))
 
 @login_required
 def detalle_silabo(request):
     # Recupera todos los objetos Silabo
     silabos = Silabo.objects.all()
     return render(request, 'plan_estudio_template/detalle_silabo.html', {'silabos': silabos})
-
 
 
 
@@ -186,7 +182,9 @@ def generar_excel(request):
                 return response
 
     # Si no se proporcionó un código de sílabo o no se encontraron sílabos, redirige a la página principal
-    return redirect('plan_de_estudio')  # Reemplaza 'pagina_principal' con la URL de tu
+    return redirect('plan_de_estudio')  # Reemplaza 'pagina_principal' con la URL de tu elección
+
+
 
 
 @login_required
@@ -289,7 +287,6 @@ def generar_excel_original(request):
 def generar_docx(request):
     if request.method == 'POST':
         codigo_silabo = request.POST.get('codigoSilabo', '')
-
         if not codigo_silabo:
             return JsonResponse({'error': 'El código de sílabo no se proporcionó.'}, status=400)
 
@@ -391,28 +388,27 @@ def obtener_estudios_independientes(asignacion_id):
         # Imprime la asignatura encontrada para depuración
         print("Asignatura encontrada:", asignatura_nombre)
 
-        # Paso 4: Filtrar los estudios independientes que tengan la misma asignatura
-        estudios_independientes = Estudio_independiente.objects.filter(
-            asignatura__nombre=asignatura_nombre
-        )
+        # Paso 4: Filtrar las guías que estén relacionadas con sílabos de esta asignatura
+        # Nota: Ajustamos el filtro según la estructura actual del modelo
+        guias = Guia.objects.filter(
+            silabo__asignacion_plan__plan_de_estudio__asignatura__nombre=asignatura_nombre
+        ).distinct()
 
-        # Imprime los estudios independientes encontrados para depuración
-        print("Estudios Independientes encontrados:", estudios_independientes)
+        # Imprime las guías encontradas para depuración
+        print("Guías encontradas:", guias)
 
-        return estudios_independientes
+        return guias
 
 
 @login_required
 def llenar_silabo(request, asignacion_id):
-
-
     nombre_de_usuario = request.user.username
     asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
 
     silabos_creados = asignacion.silabo_set.count()
 
-    # Obtener el queryset de estudios independientes filtrados
-    estudios_independientes = obtener_estudios_independientes(asignacion_id)
+    # Obtener el queryset de guías filtradas
+    guias = obtener_estudios_independientes(asignacion_id)
 
     if request.method == 'POST':
         form = SilaboForm(request.POST)
@@ -434,13 +430,12 @@ def llenar_silabo(request, asignacion_id):
         form = SilaboForm(initial={
             'codigo': asignacion.plan_de_estudio.codigo,
             'carrera': asignacion.plan_de_estudio.carrera,
-            'asignatura': asignacion.plan_de_estudio,
             'maestro': request.user,
             'encuentros': silabos_creados + 1,
         })
 
-    # Aquí estás asignando los estudios independientes para el formulario
-    form.fields['estudio_independiente'].queryset = estudios_independientes
+    # Aquí estás asignando las guías para el formulario
+    form.fields['guia'].queryset = guias
 
     asignaturas = Asignatura.objects.all()
 
@@ -458,27 +453,58 @@ def llenar_silabo(request, asignacion_id):
 def agregar_estudio_independiente(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-
-        # Obtener la asignatura
-        asignatura = Asignatura.objects.get(id=data.get('asignatura'))
-
-        # Crear el nuevo estudio independiente
-        nuevo_estudio = Estudio_independiente.objects.create(
-            asignatura=asignatura,
-            numero=data.get('numero'),
-            contenido=data.get('contenido'),
-            tecnica_evaluacion=data.get('tecnica_evaluacion'),
-            instrumento_evaluacion=data.get('instrumento_evaluacion'),
-            orientacion=data.get('orientacion'),
-            recursos_bibliograficos=data.get('recursos_bibliograficos'),
-            enlace=data.get('enlace'),
-            tiempo_estudio=data.get('tiempo_estudio'),
+        
+        # Obtener la asignación del plan de estudio
+        asignacion_id = data.get('asignacion_id')
+        asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
+        
+        # Obtener el silabo actual
+        silabo = Silabo.objects.filter(asignacion_plan=asignacion).order_by('-encuentros').first()
+        
+        if not silabo:
+            return JsonResponse({'error': 'No se encontró un sílabo para esta asignación'}, status=400)
+        
+        # Convertir el tiempo estimado a un float para el campo tiempo_minutos
+        try:
+            tiempo_minutos = float(data.get('tiempo_minutos', 60.0))
+        except (ValueError, TypeError):
+            tiempo_minutos = 60.0  # Valor predeterminado si hay un error
+            
+        # Convertir el puntaje a float si existe
+        try:
+            puntaje = float(data.get('puntaje')) if data.get('puntaje') else None
+        except (ValueError, TypeError):
+            puntaje = None
+        
+        # Mapear los datos recibidos a los campos del modelo Guia
+        guia = Guia.objects.create(
+            silabo=silabo,
+            numero_guia=int(data.get('numero_guia', 1)),
+            fecha=data.get('fecha'),  # Usar el nuevo campo fecha
+            unidad=data.get('unidad', silabo.unidad),  # Usar el valor del formulario o el del silabo
+            objetivo=data.get('objetivo', 'Conceptual'),  # Usar el valor del formulario
+            contenido_tematico=data.get('contenido_tematico', ''),
+            actividades=data.get('actividades', ''),
+            instrumento_evaluacion=data.get('instrumento_evaluacion', ''),
+            criterios_evaluacion=data.get('criterios_evaluacion', ''),
+            tiempo_minutos=tiempo_minutos,
+            recursos=data.get('recursos', ''),
+            puntaje=puntaje,
+            evaluacion_sumativa=data.get('evaluacion_sumativa', ''),
             fecha_entrega=data.get('fecha_entrega')
         )
+        
+        # Actualizar el silabo para referenciar esta guía
+        silabo.guia = guia
+        silabo.save()
+        
+        return JsonResponse({
+            'message': 'Guía de estudio agregada correctamente',
+            'id': guia.id
+        })
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
-        return JsonResponse({'success': True, 'id': nuevo_estudio.id, 'nombre': str(nuevo_estudio)})
-
-    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=400)
 
 @login_required
 def success_view(request):
@@ -515,12 +541,11 @@ def guardar_silabo(request, asignacion_id):
         form = SilaboForm(initial={
             'codigo': asignacion.plan_de_estudio.codigo,
             'carrera': asignacion.plan_de_estudio.carrera,
-            'asignatura': asignacion.plan_de_estudio,
             'maestro': request.user,
             'encuentros': silabos_creados + 1,
         })
-        estudios_independientes=  obtener_estudios_independientes(asignacion_id)
-        form.fields['estudio_independiente'].queryset = estudios_independientes
+        guias = obtener_estudios_independientes(asignacion_id)
+        form.fields['guia'].queryset = guias
 
     asignaturas = Asignatura.objects.all()
 
@@ -553,9 +578,9 @@ def generar_silabo(request):
         """
         # Cargar la clave API desde .env
         load_dotenv()
-        api_key = os.environ.get("GEMINI_API_KEY")
+        api_key = os.environ.get("GOOGLE_GENERATIVE_API_KEY")
         if not api_key:
-            raise ValueError("GEMINI_API_KEY no está configurada en el archivo .env")
+            raise ValueError("GOOGLE_GENERATIVE_API_KEY no está configurada en el archivo .env")
 
         try:
             # Configurar la API
@@ -582,12 +607,23 @@ def generar_silabo(request):
         """
         Función para interactuar con OpenAI usando el cliente de chat basado en el script compartido.
         """
-        # Inicializar cliente de OpenAI
-        client = openai.Client(api_key=os.environ.get("OPENAI_API_KEY"))
-
         try:
-            # Crear el mensaje con el modelo
-            response = client.chat.completions.create(
+            # Limpiar variables de entorno de proxy que podrían estar causando el error
+            for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
+                if key in os.environ:
+                    del os.environ[key]
+            
+            # Configurar API key para OpenAI 0.28
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
+                
+            # Configurar la API key directamente (estilo OpenAI 0.28)
+            import openai
+            openai.api_key = api_key
+            
+            # Crear el mensaje con el modelo usando la API antigua (0.28)
+            completion = openai.ChatCompletion.create(
                 model="gpt-4o-mini",  # Especifica el modelo deseado
                 messages=[
                     {
@@ -602,12 +638,52 @@ def generar_silabo(request):
             )
 
             # Extraer el contenido del mensaje generado
-            messages = response.choices[0].message.content.strip()
+            messages = completion.choices[0].message.content
             print("-------------------------------------------------------------", messages)
             return messages
 
         except Exception as e:
+            print(f"Error detallado al usar OpenAI: {str(e)}")
             raise RuntimeError(f"Error al generar respuesta con OpenAI: {str(e)}")
+
+
+    def generar_con_openai(prompt):
+        """Función interna para generar texto con OpenAI"""
+        try:
+            # Limpiar variables de entorno de proxy que podrían estar causando el error
+            for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
+                if key in os.environ:
+                    del os.environ[key]
+            
+            # Configurar API key para OpenAI 0.28
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
+                
+            # Configurar la API key directamente (estilo OpenAI 0.28)
+            import openai
+            openai.api_key = api_key
+            
+            # Crear el mensaje con el modelo usando la API antigua (0.28)
+            completion = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",  # Especifica el modelo deseado
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Asistente para generar guías de estudio."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+            
+            # Extraer el contenido del mensaje
+            return completion.choices[0].message.content
+        except Exception as e:
+            logging.error(f"Error al generar con OpenAI: {str(e)}")
+            return None
 
     if request.method == 'POST':
         # Obtener los datos del formulario
@@ -676,22 +752,246 @@ def generar_silabo(request):
 
             # Extraer contenido JSON de la respuesta generada
             try:
-                # Buscar el bloque JSON con una expresión regular
-                match = re.search(r'\{.*\}', silabo_generado, re.DOTALL)
+                # Agregar logging para diagnóstico
+                logging.info(f"Respuesta AI recibida (primeros 500 caracteres): {silabo_generado[:500]}...")
+                
+                # Buscar el bloque JSON con una expresión regular más robusta
+                # Busca tanto bloques de código markdown con JSON como JSON directo
+                match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```|(\{.*\})', silabo_generado, re.DOTALL)
+                
                 if not match:
-                    return JsonResponse({'error': 'No se encontró un bloque JSON válido en la respuesta.'}, status=500)
+                    error_msg = 'No se encontró un bloque JSON válido en la respuesta.'
+                    logging.error(f"{error_msg} Respuesta completa: {silabo_generado}")
+                    return JsonResponse({'error': error_msg, 'respuesta_completa': silabo_generado[:1000]}, status=500)
 
-                silabo_json_text = match.group(0).strip()  # Extraer el JSON encontrado
-
+                # Extraer el JSON encontrado - puede estar en grupo 1 (dentro de ```) o grupo 2 (JSON directo)
+                if match.group(1):
+                    silabo_json_text = match.group(1).strip()
+                else:
+                    silabo_json_text = match.group(2).strip()
+                
+                logging.info(f"JSON extraído: {silabo_json_text[:200]}...")
+                
+                # Limpiar cualquier carácter especial o formato
+                silabo_json_text = re.sub(r'```json|```', '', silabo_json_text).strip()
+                
                 # Convertir el texto a un objeto JSON
-                silabo_data = json.loads(silabo_json_text)
+                try:
+                    silabo_data = json.loads(silabo_json_text)
+                except json.JSONDecodeError as json_error:
+                    # Intento de reparación de JSON si fallan las comillas
+                    try:
+                        # Reemplazar comillas simples por dobles si es necesario
+                        fixed_json = silabo_json_text.replace("'", '"')
+                        silabo_data = json.loads(fixed_json)
+                        logging.info("JSON reparado exitosamente reemplazando comillas simples por dobles")
+                    except json.JSONDecodeError:
+                        # Re-lanzar la excepción original si la reparación no funcionó
+                        raise json_error
+                        
             except json.JSONDecodeError as e:
-                return JsonResponse({'error': f'Error al decodificar JSON: {str(e)}'}, status=500)
-
+                error_msg = f'Error al decodificar JSON: {str(e)}'
+                logging.error(f"{error_msg} - JSON texto: {silabo_json_text}")
+                return JsonResponse({
+                    'error': error_msg, 
+                    'json_text': silabo_json_text[:500],
+                    'respuesta_completa': silabo_generado[:500]
+                }, status=500)
+            
             # Devolver el JSON como respuesta
             return JsonResponse({'silabo_data': silabo_data})
 
         except Exception as e:
+            print(e)
             return JsonResponse({'error': f"Error general: {str(e)}"}, status=500)
 
     return JsonResponse({'error': 'Método no permitido.'}, status=405)
+
+
+@csrf_exempt
+def generar_estudio_independiente(request):
+    """
+    Vista para generar una guía de estudio utilizando IA.
+    """
+    def generar_con_openai(prompt):
+        """Función interna para generar texto con OpenAI"""
+        try:
+            # Limpiar variables de entorno de proxy que podrían estar causando el error
+            for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
+                if key in os.environ:
+                    del os.environ[key]
+            
+            # Configurar API key para OpenAI 0.28
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
+                
+            # Configurar la API key directamente (estilo OpenAI 0.28)
+            import openai
+            openai.api_key = api_key
+            
+            # Crear el mensaje con el modelo usando la API antigua (0.28)
+            completion = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",  # Especifica el modelo deseado
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Asistente para generar guías de estudio."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            )
+            
+            # Extraer el contenido del mensaje
+            return completion.choices[0].message.content
+        except Exception as e:
+            logging.error(f"Error al generar con OpenAI: {str(e)}")
+            return None
+
+    if request.method == 'POST':
+        asignacion_id = request.POST.get('asignacion_id')
+        modelo_seleccionado = request.POST.get('modelo_select', 'google')
+        
+        print(f"Recibida solicitud para generar guía de estudio. Asignación ID: {asignacion_id}, Modelo: {modelo_seleccionado}")
+
+        # Obtener la asignación y datos relacionados
+        asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
+        plan_estudio = asignacion.plan_de_estudio
+        
+        silabo_actual = Silabo.objects.filter(
+            asignacion_plan=asignacion
+        ).order_by('-encuentros').first()
+        
+        if not silabo_actual:
+            return JsonResponse({'error': 'No se encontró un sílabo para esta asignación'}, status=400)
+            
+        silabos_anteriores = Silabo.objects.filter(
+            asignacion_plan=asignacion
+        ).order_by('encuentros')
+        
+        # Construir contexto de sílabos anteriores
+        contexto_silabos = ""
+        for idx, silabo in enumerate(silabos_anteriores):
+            contexto_silabos += f"""
+            Encuentro {idx+1}:
+            - Unidad: {silabo.unidad}
+            - Contenido temático: {silabo.contenido_tematico}
+            - Técnicas de aprendizaje: {silabo.tecnicas_aprendizaje}
+            - Descripción de estrategia: {silabo.descripcion_estrategia}
+            - Objetivos: 
+              * Conceptual: {silabo.objetivo_conceptual}
+              * Procedimental: {silabo.objetivo_procedimental}
+              * Actitudinal: {silabo.objetivo_actitudinal}
+            """
+
+        # Crear el prompt completo
+        prompt_completo = f"""
+        Instrucciones: Genera una descripción detallada de una guía de estudio basada en la siguiente información.
+        
+        Datos del Sílabo:
+        - Asignatura: {plan_estudio.asignatura.nombre}
+        - Carrera: {plan_estudio.carrera.nombre}
+        - Código: {plan_estudio.codigo}
+        - Encuentro actual: {silabos_anteriores.count()} de 12
+        - Horas Prácticas (HP): {plan_estudio.hp}
+        - Horas de Trabajo Independiente (HTI): {plan_estudio.hti}
+        - Unidad actual: {silabo_actual.unidad}
+        - Contenido temático: {silabo_actual.contenido_tematico}
+        
+        Contexto de encuentros anteriores:
+        {contexto_silabos}
+
+        Por favor, genera una guía de estudio en formato JSON con la siguiente estructura:
+        {{
+          "descripcion": "Una descripción detallada del contenido temático de la guía",
+          "actividades": ["Actividad 1", "Actividad 2", "Actividad 3"],
+          "recursos": ["Recurso 1", "Recurso 2", "Recurso 3"],
+          "tiempo_estimado": "Tiempo estimado en minutos",
+          "criterios_evaluacion": ["Criterio 1", "Criterio 2", "Criterio 3"]
+        }}
+        
+        Asegúrate de que el JSON sea válido y pueda ser parseado correctamente.
+        """
+        
+        print("Prompt generado, enviando a la API...")
+        
+        # Generar respuesta según el modelo seleccionado
+        respuesta_ai = None
+        
+        if modelo_seleccionado == 'openai':
+            respuesta_ai = generar_con_openai(prompt_completo)
+        else:  # google por defecto
+            try:
+                # Configurar el modelo
+                generation_config = {
+                    "temperature": 0.7,
+                    "top_p": 0.95,
+                    "top_k": 40,
+                }
+                
+                model = genai.GenerativeModel(
+                    model_name="gemini-pro",
+                    generation_config=generation_config
+                )
+                
+                # Generar respuesta
+                response = model.generate_content(prompt_completo)
+                respuesta_ai = response.text
+                
+            except Exception as e:
+                error_msg = f'Error al generar con Google AI: {str(e)}'
+                logging.error(error_msg)
+                return JsonResponse({'error': error_msg}, status=500)
+        
+        if not respuesta_ai:
+            return JsonResponse({'error': 'No se pudo generar una respuesta'}, status=500)
+        
+        print("Respuesta generada, procesando...")
+        
+        # Procesar la respuesta para extraer el JSON
+        try:
+            # Buscar el JSON en la respuesta
+            json_match = re.search(r'\{.*\}', respuesta_ai, re.DOTALL)
+            
+            if json_match:
+                # Si encontramos el JSON dentro de bloques de código, usar el grupo 1, de lo contrario usar el grupo 2
+                json_str = json_match.group(0).strip()  # Extraer el JSON encontrado
+
+                # Limpiar el string JSON
+                json_str = re.sub(r'```json|```', '', json_str).strip()
+                
+                # Convertir el texto a un objeto JSON
+                data = json.loads(json_str)
+                
+                # Asegurarse de que los campos esperados estén presentes
+                expected_fields = ['descripcion', 'actividades', 'recursos', 'tiempo_estimado', 'criterios_evaluacion']
+                for field in expected_fields:
+                    if field not in data:
+                        data[field] = "" if field != 'tiempo_estimado' else "60"
+                    
+                    # Asegurarse de que los campos de lista sean realmente listas
+                    if field in ['actividades', 'recursos', 'criterios_evaluacion']:
+                        if not isinstance(data[field], list):
+                            if data[field]:  # Si no está vacío
+                                data[field] = [data[field]]
+                
+                print("Datos procesados correctamente, enviando respuesta")
+                return JsonResponse({'guia_data': data})
+            else:
+                error_msg = 'No se encontró un formato JSON válido en la respuesta'
+                logging.error(error_msg)
+                return JsonResponse({'error': error_msg}, status=500)
+                
+        except json.JSONDecodeError as e:
+            error_msg = f'Error al decodificar JSON: {str(e)}'
+            logging.error(error_msg)
+            return JsonResponse({'error': error_msg}, status=500)
+        except Exception as e:
+            error_msg = f'Error al procesar la respuesta: {str(e)}'
+            logging.error(error_msg)
+            return JsonResponse({'error': error_msg}, status=500)
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)

@@ -73,56 +73,6 @@ class Plan_de_estudio(models.Model):
             raise ValidationError("Las horas teóricas deben ser un número entero mayor que cero y no estar vacías")
 
 
-
-class Estudio_independiente(models.Model):
-    TECNICA_EVALUACION_LIST = (
-        ('Observación', 'Observación'),
-        ('Desempeño', 'Desempeño'),
-        ('Interrogatorio', 'Interrogatorio'),
-        ('Redacción', 'Redacción'),
-        ('Ensayo', 'Ensayo'),
-        ('Organizador gráfico', 'Organizador gráfico'),
-        ('Monografía', 'Monografía'),
-        ('Debate', 'Debate'),
-        ('Proyecto', 'Proyecto'),
-        ('Foro', 'Foro'),
-        ('Estudio de caso', 'Estudio de caso'),
-        ('Otro', 'Otro'),
-    )
-
-    INSTRUMENTO_EVALUACION_LIST = (
-        ('Guía de observación', 'Guía de observación'),
-        ('Registro anecdótico', 'Registro anecdótico'),
-        ('Diario de clase', 'Diario de clase'),
-        ('Diario de trabajo', 'Diario de trabajo'),
-        ('Escala', 'Escala'),
-        ('Preguntas', 'Preguntas'),
-        ('Cuaderno del estudiante', 'Cuaderno del estudiante'),
-        ('Portafolio', 'Portafolio'),
-        ('Rúbrica', 'Rúbrica'),
-        ('Lista de cotejo', 'Lista de cotejo'),
-        ('Prueba oral', 'Prueba oral'),
-        ('Prueba escrita', 'Prueba escrita'),
-        ('Informe', 'Informe'),
-        ('Organizador gráfico', 'Organizador gráfico'),
-        ('Resumen', 'Resumen'),
-        ('Síntesis', 'Síntesis'),
-        ('Otros', 'Otros'),
-    )
-    asignatura = models.ForeignKey(Asignatura,on_delete=models.CASCADE)
-    numero = models.IntegerField(null=False)
-    contenido = models.TextField()
-    tecnica_evaluacion = models.CharField(max_length=255, choices=TECNICA_EVALUACION_LIST)
-    instrumento_evaluacion = models.CharField(max_length=255, choices=INSTRUMENTO_EVALUACION_LIST)
-    orientacion = models.TextField()
-    recursos_bibliograficos = models.TextField()
-    enlace = models.URLField(max_length=200, null=True, blank=True)
-    tiempo_estudio = models.IntegerField()
-    fecha_entrega = models.DateField(verbose_name='Fecha de Entrega')
-
-    def __str__(self):
-        return f"{self.asignatura} -- {self.contenido}"
-
 class AsignacionPlanEstudio(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     plan_de_estudio = models.ForeignKey(Plan_de_estudio, on_delete=models.CASCADE)
@@ -139,10 +89,6 @@ class AsignacionPlanEstudio(models.Model):
     def clean(self):
         if not self.plan_de_estudio:
             raise ValidationError("Debes asignar un plan de estudio.")
-
-
-    
-
 
 
 class Silabo(models.Model):
@@ -230,9 +176,9 @@ class Silabo(models.Model):
     descripcion_estrategia = models.TextField(max_length=555)
     eje_transversal = models.CharField(max_length=255,choices=EJE_TRANSVERSAL_LIST)
     hp = models.CharField(max_length=10)
-    estudio_independiente = models.ForeignKey(Estudio_independiente,on_delete=models.CASCADE,verbose_name="Estudio_independiente")
+    guia = models.ForeignKey('Guia', on_delete=models.CASCADE, verbose_name="Guía de estudio", null=True, blank=True, related_name="silabos")
     asignacion_plan = models.ForeignKey(AsignacionPlanEstudio, on_delete=models.CASCADE, null=True, blank=True,
-                                        related_name="silabo_set")
+                                         related_name="silabo_set")
 
     def __str__(self):
         return f'Silabo {self.id}'
@@ -273,3 +219,30 @@ class Unidades(models.Model):
         return f'Objetivo de la Unidad: {self.objetivo_especifico} (Plan Temático: {self.plan_tematico.nombre_de_la_unidad})'
 
 
+class Guia(models.Model):
+    """
+    Representa una guía de estudio dentro del sílabo.
+    """
+    TIPO_OBJETIVO_CHOICES = [
+        ('Conceptual', 'Conceptual'),
+        ('Procedimental', 'Procedimental'),
+        ('Actitudinal', 'Actitudinal'),
+    ]
+    
+    silabo = models.ForeignKey(Silabo, on_delete=models.CASCADE, related_name="guias")
+    numero_guia = models.IntegerField(verbose_name="N° Guía")
+    fecha = models.DateField()
+    unidad = models.CharField(max_length=255, choices=Silabo.UNIDAD_LIST, verbose_name="N° de unidad")
+    objetivo = models.CharField(max_length=20, choices=TIPO_OBJETIVO_CHOICES, verbose_name="Objetivo")
+    contenido_tematico = models.TextField(blank=True, null=True, verbose_name="Contenido Temático")
+    actividades = models.TextField(blank=True, null=True, verbose_name="Actividades")
+    instrumento_evaluacion = models.TextField(blank=True, null=True, verbose_name="Instrumento de evaluación")
+    criterios_evaluacion = models.TextField(blank=True, null=True, verbose_name="Criterios de evaluación")
+    tiempo_minutos = models.FloatField(blank=True, null=True, verbose_name="Tiempo en minutos")
+    recursos = models.TextField(blank=True, null=True, verbose_name="Recursos")
+    puntaje = models.FloatField(blank=True, null=True, verbose_name="Puntaje")
+    evaluacion_sumativa = models.CharField(max_length=255, blank=True, null=True, verbose_name="Evaluación sumativa")
+    fecha_entrega = models.DateField(blank=True, null=True, verbose_name="Fecha de Entrega")
+    
+    def __str__(self):
+        return f"Guía {self.numero_guia} - {self.unidad} - {self.fecha}"

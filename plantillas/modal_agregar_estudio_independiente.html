@@ -1,96 +1,103 @@
-
 <!-- Modal -->
 <div class="modal fade" id="estudioModal" tabindex="-1" aria-labelledby="estudioModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="estudioModalLabel">Agregar Estudio Independiente</h5>
+                <h5 class="modal-title" id="estudioModalLabel">Agregar Guía de Estudio</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="formEstudioIndependiente">
                     {% csrf_token %}
 
+                    <div class="form-group mb-3">
+                        <label>Seleccionar Modelo IA:</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="modelo_select" id="modelo_google" value="google" checked>
+                            <label class="form-check-label" for="modelo_google">
+                                Google (Gemini)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="modelo_select" id="modelo_openai" value="openai">
+                            <label class="form-check-label" for="modelo_openai">
+                                OpenAI (GPT)
+                            </label>
+                        </div>
+                    </div>
                     <div class="mb-3">
-                        <label for="asignatura" class="form-label">Asignatura</label>
-                        <select id="asignatura" class="form-select">
-                            {% for asignatura in asignaturas %}
-                            <option value="{{ asignatura.id }}">{{ asignatura.nombre }}</option>
-                            {% endfor %}
+                        <button type="button" class="btn btn-primary" id="btnGenerarEstudioIndependiente">
+                            Generar Guía de Estudio
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="numero_guia" class="form-label">Número de Guía</label>
+                        <input type="number" class="form-control" id="numero_guia" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fecha" class="form-label">Fecha de la Guía</label>
+                        <input type="date" class="form-control" id="fecha" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="unidad" class="form-label">Unidad</label>
+                        <select class="form-select" id="unidad" required>
+                            <option value="Unidad I">Unidad I</option>
+                            <option value="Unidad II">Unidad II</option>
+                            <option value="Unidad III">Unidad III</option>
+                            <option value="Unidad IV">Unidad IV</option>
                         </select>
                     </div>
 
                     <div class="mb-3">
-                        <label for="numero" class="form-label">Número</label>
-                        <input type="number" class="form-control" id="numero" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="contenido" class="form-label">Contenido</label>
-                        <textarea class="form-control" id="contenido" rows="3" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="tecnica_evaluacion" class="form-label">Técnica de Evaluación</label>
-                        <select id="tecnica_evaluacion" class="form-select" multiple>
-                            <option value="Observación">Observación</option>
-                            <option value="Desempeño">Desempeño</option>
-                            <option value="Interrogatorio">Interrogatorio</option>
-                            <option value="Redacción">Redacción</option>
-                            <option value="Ensayo">Ensayo</option>
-                            <option value="Organizador gráfico">Organizador gráfico</option>
-                            <option value="Monografía">Monografía</option>
-                            <option value="Debate">Debate</option>
-                            <option value="Proyecto">Proyecto</option>
-                            <option value="Foro">Foro</option>
-                            <option value="Estudio de caso">Estudio de caso</option>
-                            <option value="Otro">Otro</option>
+                        <label for="objetivo" class="form-label">Tipo de Objetivo</label>
+                        <select class="form-select" id="objetivo" required>
+                            <option value="Conceptual">Conceptual</option>
+                            <option value="Procedimental">Procedimental</option>
+                            <option value="Actitudinal">Actitudinal</option>
                         </select>
-                        <small class="text-muted">Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples opciones.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="contenido_tematico" class="form-label">Contenido Temático</label>
+                        <textarea class="form-control" id="contenido_tematico" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="actividades" class="form-label">Actividades</label>
+                        <textarea class="form-control" id="actividades" rows="3" required></textarea>
                     </div>
 
                     <div class="mb-3">
                         <label for="instrumento_evaluacion" class="form-label">Instrumento de Evaluación</label>
-                        <select id="instrumento_evaluacion" class="form-select" multiple>
-                            <option value="Guía de observación">Guía de observación</option>
-                            <option value="Registro anecdótico">Registro anecdótico</option>
-                            <option value="Diario de clase">Diario de clase</option>
-                            <option value="Diario de trabajo">Diario de trabajo</option>
-                            <option value="Escala">Escala</option>
-                            <option value="Preguntas">Preguntas</option>
-                            <option value="Cuaderno del estudiante">Cuaderno del estudiante</option>
-                            <option value="Portafolio">Portafolio</option>
-                            <option value="Rúbrica">Rúbrica</option>
-                            <option value="Lista de cotejo">Lista de cotejo</option>
-                            <option value="Prueba oral">Prueba oral</option>
-                            <option value="Prueba escrita">Prueba escrita</option>
-                            <option value="Informe">Informe</option>
-                            <option value="Organizador gráfico">Organizador gráfico</option>
-                            <option value="Resumen">Resumen</option>
-                            <option value="Síntesis">Síntesis</option>
-                            <option value="Otros">Otros</option>
-                        </select>
-                        <small class="text-muted">Mantén presionada la tecla Ctrl (o Cmd en Mac) para seleccionar múltiples opciones.</small>
+                        <textarea class="form-control" id="instrumento_evaluacion" rows="3" required></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label for="orientacion" class="form-label">Orientación</label>
-                        <textarea class="form-control" id="orientacion" rows="3" required></textarea>
+                        <label for="criterios_evaluacion" class="form-label">Criterios de Evaluación</label>
+                        <textarea class="form-control" id="criterios_evaluacion" rows="3" required></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label for="recursos_bibliograficos" class="form-label">Recursos Bibliográficos</label>
-                        <textarea class="form-control" id="recursos_bibliograficos" rows="3" required></textarea>
+                        <label for="recursos" class="form-label">Recursos</label>
+                        <textarea class="form-control" id="recursos" rows="3" required></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label for="enlace" class="form-label">Enlace</label>
-                        <input type="url" class="form-control" id="enlace">
+                        <label for="tiempo_minutos" class="form-label">Tiempo (minutos)</label>
+                        <input type="number" class="form-control" id="tiempo_minutos" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="tiempo_estudio" class="form-label">Tiempo de Estudio (horas)</label>
-                        <input type="number" class="form-control" id="tiempo_estudio" required>
+                        <label for="puntaje" class="form-label">Puntaje</label>
+                        <input type="number" step="0.1" class="form-control" id="puntaje">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="evaluacion_sumativa" class="form-label">Evaluación Sumativa</label>
+                        <input type="text" class="form-control" id="evaluacion_sumativa">
                     </div>
 
                     <div class="mb-3">
@@ -101,66 +108,150 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary" id="guardarEstudioBtn">Guardar Estudio</button>
+                <button type="button" class="btn btn-primary" id="guardarEstudioBtn">Guardar Guía</button>
             </div>
         </div>
     </div>
 </div>
 
-
-
 <script>
 document.getElementById('guardarEstudioBtn').addEventListener('click', function() {
     // Obtener los valores de los campos del formulario
-    var asignatura = document.getElementById('asignatura').value;
-    var numero = document.getElementById('numero').value;
-    var contenido = document.getElementById('contenido').value;
-    var tecnica_evaluacion = document.getElementById('tecnica_evaluacion').value;
-    var instrumento_evaluacion = document.getElementById('instrumento_evaluacion').value;
-    var orientacion = document.getElementById('orientacion').value;
-    var recursos_bibliograficos = document.getElementById('recursos_bibliograficos').value;
-    var enlace = document.getElementById('enlace').value;
-    var tiempo_estudio = document.getElementById('tiempo_estudio').value;
-    var fecha_entrega = document.getElementById('fecha_entrega').value;
+    const numero_guia = document.getElementById('numero_guia').value;
+    const fecha = document.getElementById('fecha').value;
+    const unidad = document.getElementById('unidad').value;
+    const objetivo = document.getElementById('objetivo').value;
+    const contenido_tematico = document.getElementById('contenido_tematico').value;
+    const actividades = document.getElementById('actividades').value;
+    const instrumento_evaluacion = document.getElementById('instrumento_evaluacion').value;
+    const criterios_evaluacion = document.getElementById('criterios_evaluacion').value;
+    const recursos = document.getElementById('recursos').value;
+    const tiempo_minutos = document.getElementById('tiempo_minutos').value;
+    const puntaje = document.getElementById('puntaje').value;
+    const evaluacion_sumativa = document.getElementById('evaluacion_sumativa').value;
+    const fecha_entrega = document.getElementById('fecha_entrega').value;
+    const asignacion_id = '{{ asignacion.id }}';  // Obtener el ID de la asignación del contexto
 
-    // Hacer la solicitud fetch para agregar el estudio independiente
-    fetch("{% url 'agregar_estudio_independiente' %}", {
+    // Crear objeto con los datos
+    const data = {
+        numero_guia: numero_guia,
+        fecha: fecha,
+        unidad: unidad,
+        objetivo: objetivo,
+        contenido_tematico: contenido_tematico,
+        actividades: actividades,
+        instrumento_evaluacion: instrumento_evaluacion,
+        criterios_evaluacion: criterios_evaluacion,
+        recursos: recursos,
+        tiempo_minutos: tiempo_minutos,
+        puntaje: puntaje,
+        evaluacion_sumativa: evaluacion_sumativa,
+        fecha_entrega: fecha_entrega,
+        asignacion_id: asignacion_id  // Agregar el ID de la asignación
+    };
+
+    // Realizar la petición AJAX
+    fetch('/agregar_guia/', {
         method: 'POST',
         headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
         },
-        body: JSON.stringify({
-            'asignatura': asignatura,
-            'numero': numero,
-            'contenido': contenido,
-            'tecnica_evaluacion': tecnica_evaluacion,
-            'instrumento_evaluacion': instrumento_evaluacion,
-            'orientacion': orientacion,
-            'recursos_bibliograficos': recursos_bibliograficos,
-            'enlace': enlace,
-            'tiempo_estudio': tiempo_estudio,
-            'fecha_entrega': fecha_entrega
-        })
+        body: JSON.stringify(data)
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            // Agrega la nueva opción al select
-            var select = document.getElementById('id_estudio_independiente');  // Asegúrate de que este ID sea el correcto
-            var option = new Option(data.nombre, data.id);
-            select.add(option);
-            select.value = data.id;  // Selecciona automáticamente el nuevo valor
-
-            // Cierra el modal
-            var modal = bootstrap.Modal.getInstance(document.getElementById('estudioModal'));
-            modal.hide();
+        if (data.message) {
+            alert(data.message);
+            location.reload();  // Recargar la página para actualizar la lista
         } else {
-            // Muestra los errores si los hay
-            alert(data.error);
+            alert('Error: ' + data.error);
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al guardar la guía de estudio');
     });
 });
 
+$(document).ready(function() {
+    $('#btnGenerarEstudioIndependiente').click(function() {
+        const modelo_seleccionado = $('input[name="modelo_select"]:checked').val();
+        const asignacion_id = '{{ asignacion.id }}';
 
+        // Mostrar indicador de carga
+        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generando...');
+
+        $.ajax({
+            url: '/generar_guia/',
+            type: 'POST',
+            data: {
+                modelo_select: modelo_seleccionado,
+                asignacion_id: asignacion_id,
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.guia_data) {
+                    const data = response.guia_data;
+                    
+                    // Llenar los campos del formulario con los datos generados
+                    $('#contenido_tematico').val(data.descripcion);
+                    
+                    // Convertir las actividades en una lista formateada
+                    if (Array.isArray(data.actividades)) {
+                        const actividades = data.actividades.join('\n• ');
+                        $('#actividades').val('• ' + actividades);
+                    } else {
+                        $('#actividades').val(data.actividades);
+                    }
+                    
+                    // Establecer el tiempo estimado
+                    $('#tiempo_minutos').val(data.tiempo_estimado);
+                    
+                    // Convertir los recursos en una lista formateada
+                    if (Array.isArray(data.recursos)) {
+                        const recursos = data.recursos.join('\n• ');
+                        $('#recursos').val('• ' + recursos);
+                    } else {
+                        $('#recursos').val(data.recursos);
+                    }
+                    
+                    // Convertir los criterios de evaluación en una lista formateada
+                    if (Array.isArray(data.criterios_evaluacion)) {
+                        const criterios = data.criterios_evaluacion.join('\n• ');
+                        $('#criterios_evaluacion').val('• ' + criterios);
+                    } else {
+                        $('#criterios_evaluacion').val(data.criterios_evaluacion);
+                    }
+                    
+                    // Establecer un número predeterminado si no está ya establecido
+                    if (!$('#numero_guia').val()) {
+                        $('#numero_guia').val('1');
+                    }
+                    
+                    // Establecer fechas actuales si no están ya establecidas
+                    if (!$('#fecha').val() || !$('#fecha_entrega').val()) {
+                        const today = new Date();
+                        const formattedDate = today.toISOString().split('T')[0];
+                        
+                        if (!$('#fecha').val()) {
+                            $('#fecha').val(formattedDate);
+                        }
+                        
+                        if (!$('#fecha_entrega').val()) {
+                            $('#fecha_entrega').val(formattedDate);
+                        }
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Error al generar la guía de estudio: ' + (xhr.responseJSON?.error || error));
+            },
+            complete: function() {
+                // Restaurar el botón
+                $('#btnGenerarEstudioIndependiente').prop('disabled', false).html('Generar Guía de Estudio');
+            }
+        });
+    });
+});
 </script>

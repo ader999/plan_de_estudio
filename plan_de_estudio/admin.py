@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Plan_de_estudio, Asignatura, Carrera, Silabo, Estudio_independiente, AsignacionPlanEstudio, PlanTematico, Unidades
+from .models import Plan_de_estudio, Asignatura, Carrera, Silabo, Guia, AsignacionPlanEstudio, PlanTematico, Unidades
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django import forms
@@ -107,8 +107,8 @@ class FiltarSilabo(admin.ModelAdmin):
         else:
             return queryset.filter(maestro=request.user)
 
-class FiltrarEstudioIndependiente(admin.ModelAdmin):
-      list_filter = ('asignatura',)
+class FiltrarGuia(admin.ModelAdmin):
+      list_filter = ('silabo__asignatura',)
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     list_display = ('usuario', 'plan_de_estudio', 'completado_icono')
@@ -126,7 +126,7 @@ admin.site.register(Plan_de_estudio, PlanDeEstudioAdmin)
 admin.site.register(Asignatura, FiltrarClases)
 admin.site.register(Carrera)
 admin.site.register(Silabo, FiltarSilabo)
-admin.site.register(Estudio_independiente,FiltrarEstudioIndependiente)
+admin.site.register(Guia, FiltrarGuia)
 admin.site.register(AsignacionPlanEstudio, AsignacionPlanEstudioAdmin)
 admin.site.register(PlanTematico)
 admin.site.register(Unidades)

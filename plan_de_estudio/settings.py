@@ -34,7 +34,7 @@ DEBUG = 'RENDER' not in os.environ
 
 
 #ALLOWED_HOSTS = ['192.168.1.16','192.168.1.102', 'localhost']
-ALLOWED_HOSTS = ['192.168.12.232','localhost','planeauml.codeader.com']
+ALLOWED_HOSTS = ['192.168.12.232','localhost','planeauml.codeader.com', '127.0.0.1']
 
 #railway
 CSRF_TRUSTED_ORIGINS = [

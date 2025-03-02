@@ -1,12 +1,12 @@
 from django import forms
-from .models import Silabo, Estudio_independiente
+from .models import Silabo, Guia
 
 
 class SilaboForm(forms.ModelForm):
-    estudio_independiente = forms.ModelChoiceField(
-        queryset=Estudio_independiente.objects.all(),  # Ajusta según necesites filtrar
-        required=True,
-        empty_label="Selecciona un Estudio Independiente"
+    guia = forms.ModelChoiceField(
+        queryset=Guia.objects.all(),  # Ajusta según necesites filtrar
+        required=False,
+        empty_label="Selecciona una Guía de Estudio"
     )
 
     class Meta:
@@ -21,6 +21,3 @@ class SilaboForm(forms.ModelForm):
         # Asegurarse de que el campo de fecha tenga el tipo adecuado
         if 'fecha' in self.fields:
             self.fields['fecha'].widget = forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
-
-
-
