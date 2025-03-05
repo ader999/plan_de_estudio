@@ -1,3 +1,5 @@
+{% load static %}
+
 <!-- Contenido del Estudio Independiente -->
 <script>
     console.log('Plantilla agregar_estudio_independiente.html cargada');
@@ -123,11 +125,19 @@
         <label for="fecha_entrega" class="form-label">Fecha de Entrega</label>
         <input type="date" class="form-control" id="fecha_entrega" required>
     </div>
+
+    <div class="alert alert-warning" role="alert">
+        Esta IA puede cometer errores. Por favor, revise la información cuidadosamente antes de guardarla.
+      </div>
+
 </form>
 
 <div class="text-center mt-3">
-    <button type="button" class="btn btn-primary" id="guardarEstudioBtn">
-        <i class="fas fa-save"></i> Guardar Guía
+    <button type="button" class="btn btn-success w-100" id="guardarEstudioBtn">
+        <img src="{% static 'img/disquete.png' %}" alt="" style="height: 34px;"> Guardar datos
+        <div id="spinner" class="spinner-border spinner-border-sm d-none" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     </button>
 </div>
 
@@ -139,72 +149,201 @@ $(document).ready(function() {
     $('#guardarEstudioBtn').on('click', function() {
         console.log('Botón guardar clickeado');
         
-        // Obtener los valores de los campos del formulario
-        const numero_guia = document.getElementById('numero_guia').value;
-        const fecha = document.getElementById('fecha').value;
-        const unidad = document.getElementById('unidad').value;
-        const objetivo_conceptual = document.getElementById('objetivo_conceptual').value;
-        const objetivo_procedimental = document.getElementById('objetivo_procedimental').value;
-        const objetivo_actitudinal = document.getElementById('objetivo_actitudinal').value;
-        const contenido_tematico = document.getElementById('contenido_tematico').value;
-        const actividades = document.getElementById('actividades').value;
-        const instrumento_cuaderno = document.getElementById('instrumento_cuaderno').value;
-        const instrumento_organizador = document.getElementById('instrumento_organizador').value;
-        const instrumento_diario = document.getElementById('instrumento_diario').value;
-        const instrumento_prueba = document.getElementById('instrumento_prueba').value;
-        const criterios_evaluacion = document.getElementById('criterios_evaluacion').value;
-        const recursos = document.getElementById('recursos').value;
-        const tiempo_minutos = document.getElementById('tiempo_minutos').value;
-        const puntaje = document.getElementById('puntaje').value;
-        const evaluacion_sumativa = document.getElementById('evaluacion_sumativa').value;
-        const fecha_entrega = document.getElementById('fecha_entrega').value;
-        const asignacion_id = '{{ asignacion.id }}';  // Obtener el ID de la asignación del contexto
-
-        // Crear objeto con los datos
-        const data = {
-            numero_guia: numero_guia,
-            fecha: fecha,
-            unidad: unidad,
-            objetivo_conceptual: objetivo_conceptual,
-            objetivo_procedimental: objetivo_procedimental,
-            objetivo_actitudinal: objetivo_actitudinal,
-            contenido_tematico: contenido_tematico,
-            actividades: actividades,
-            instrumento_cuaderno: instrumento_cuaderno,
-            instrumento_organizador: instrumento_organizador,
-            instrumento_diario: instrumento_diario,
-            instrumento_prueba: instrumento_prueba,
-            criterios_evaluacion: criterios_evaluacion,
-            recursos: recursos,
-            tiempo_minutos: tiempo_minutos,
-            puntaje: puntaje,
-            evaluacion_sumativa: evaluacion_sumativa,
-            fecha_entrega: fecha_entrega,
-            asignacion_id: asignacion_id  // Agregar el ID de la asignación
-        };
-
-        // Realizar la petición AJAX
-        fetch('/agregar_guia/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                alert(data.message);
-                location.reload();  // Recargar la página para actualizar la lista
-            } else {
-                alert('Error: ' + data.error);
+        // Mostrar el spinner
+        $('#spinner').removeClass('d-none');
+        
+        try {
+            // Obtener el ID de asignación del formulario principal
+            let asignacionId = null;
+            
+            // Método 1: Buscar input con name="asignacion_id"
+            const asignacionInput = $('input[name="asignacion_id"]');
+            if (asignacionInput.length > 0 && asignacionInput.val()) {
+                asignacionId = asignacionInput.val();
+                console.log('ID obtenido de input[name="asignacion_id"]:', asignacionId);
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al guardar la guía de estudio');
-        });
+            
+            // Método 2: Buscar data attribute en el formulario
+            if (!asignacionId) {
+                const formWithData = $('.card-body form[data-asignacion-id]');
+                if (formWithData.length > 0 && formWithData.data('asignacion-id')) {
+                    asignacionId = formWithData.data('asignacion-id');
+                    console.log('ID obtenido de data-asignacion-id:', asignacionId);
+                }
+            }
+            
+            // Método 3: Extraer de la URL del formulario
+            if (!asignacionId) {
+                const formWithAction = $('form[action*="guardar_silabo"]');
+                if (formWithAction.length > 0 && formWithAction.attr('action')) {
+                    const actionUrl = formWithAction.attr('action');
+                    console.log('URL de acción del formulario:', actionUrl);
+                    
+                    const matches = actionUrl.match(/\/(\d+)\/?$/);
+                    if (matches && matches[1]) {
+                        asignacionId = matches[1];
+                        console.log('ID extraído de la URL del formulario:', asignacionId);
+                    }
+                }
+            }
+            
+            // Método 4: Buscar en la URL de la página
+            if (!asignacionId) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const idFromUrl = urlParams.get('id') || urlParams.get('asignacion_id');
+                
+                if (idFromUrl) {
+                    asignacionId = idFromUrl;
+                    console.log('ID obtenido de la URL de la página:', asignacionId);
+                }
+            }
+            
+            // Método 5: Buscar en el contenido de la página
+            if (!asignacionId) {
+                // Buscar en el HTML de la página
+                const pageContent = document.body.innerHTML;
+                const idMatch = pageContent.match(/asignacion[_\s]id[=:]\s*['"]?(\d+)['"]?/i);
+                if (idMatch && idMatch[1]) {
+                    asignacionId = idMatch[1];
+                    console.log('ID encontrado en el contenido de la página:', asignacionId);
+                }
+            }
+            
+            // Verificar si se encontró un ID
+            if (!asignacionId) {
+                // Último recurso: solicitar al usuario
+                asignacionId = prompt("No se pudo detectar el ID de asignación. Por favor, ingrese el ID manualmente:");
+                if (!asignacionId) {
+                    throw new Error('No se proporcionó un ID de asignación válido');
+                }
+            }
+            
+            console.log('ID de asignación final:', asignacionId);
+            
+            // Obtener los valores de los campos del formulario de estudio independiente
+            const numero_guia = document.getElementById('numero_guia').value;
+            const fecha = document.getElementById('fecha').value;
+            const unidad = document.getElementById('unidad').value;
+            
+            // Obtener los valores de texto para los objetivos
+            const objetivo_conceptual = document.getElementById('objetivo_conceptual').value;
+            const objetivo_procedimental = document.getElementById('objetivo_procedimental').value;
+            const objetivo_actitudinal = document.getElementById('objetivo_actitudinal').value;
+            
+            const contenido_tematico = document.getElementById('contenido_tematico').value;
+            const actividades = document.getElementById('actividades').value;
+            
+            // Obtener los valores de texto para los instrumentos
+            const instrumento_cuaderno = document.getElementById('instrumento_cuaderno').value;
+            const instrumento_organizador = document.getElementById('instrumento_organizador').value;
+            const instrumento_diario = document.getElementById('instrumento_diario').value;
+            const instrumento_prueba = document.getElementById('instrumento_prueba').value;
+            
+            const criterios_evaluacion = document.getElementById('criterios_evaluacion').value;
+            const recursos = document.getElementById('recursos').value;
+            const tiempo_minutos = document.getElementById('tiempo_minutos').value;
+            const puntaje = document.getElementById('puntaje').value;
+            const evaluacion_sumativa = document.getElementById('evaluacion_sumativa').value;
+            const fecha_entrega = document.getElementById('fecha_entrega').value;
+            
+            // Obtener los datos del formulario de sílabo
+            const silaboDataObj = {};
+            
+            // Obtener todos los campos del formulario de sílabo
+            const formSilaboInputs = document.querySelectorAll('form[action*="guardar_silabo"] input, form[action*="guardar_silabo"] textarea, form[action*="guardar_silabo"] select');
+            
+            formSilaboInputs.forEach(input => {
+                if (input.name && input.value) {
+                    console.log(`Campo sílabo: ${input.name} = ${input.value}`);
+                    silaboDataObj[input.name] = input.value;
+                }
+            });
+
+            // Crear objeto con los datos de la guía
+            const dataGuia = {
+                numero_guia: numero_guia,
+                fecha: fecha,
+                unidad: unidad,
+                objetivo_conceptual: objetivo_conceptual,
+                objetivo_procedimental: objetivo_procedimental,
+                objetivo_actitudinal: objetivo_actitudinal,
+                contenido_tematico: contenido_tematico,
+                actividades: actividades,
+                instrumento_cuaderno: instrumento_cuaderno,
+                instrumento_organizador: instrumento_organizador,
+                instrumento_diario: instrumento_diario,
+                instrumento_prueba: instrumento_prueba,
+                criterios_evaluacion: criterios_evaluacion,
+                recursos: recursos,
+                tiempo_minutos: tiempo_minutos,
+                puntaje: puntaje,
+                evaluacion_sumativa: evaluacion_sumativa,
+                fecha_entrega: fecha_entrega,
+                asignacion_id: asignacionId,
+                // Añadir los datos del formulario de sílabo
+                silabo_data: silaboDataObj
+            };
+            
+            console.log('Datos a enviar:', dataGuia);
+            
+            // Obtener el token CSRF
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? 
+                              document.querySelector('[name=csrfmiddlewaretoken]').value : 
+                              '{{ csrf_token }}';
+                              
+            console.log('CSRF Token:', csrfToken);
+            
+            // URL para enviar los datos
+            const url = '/gestionar_silabo_y_guia/';
+            console.log('Enviando datos a URL:', url);
+
+            // Realizar la petición AJAX
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(dataGuia)
+            })
+            .then(response => {
+                console.log('Respuesta recibida:', response);
+                console.log('Estado de la respuesta:', response.status);
+                console.log('Headers de la respuesta:', [...response.headers.entries()]);
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Ocultar el spinner
+                $('#spinner').addClass('d-none');
+                
+                console.log('Datos de respuesta:', data);
+                if (data.message) {
+                    alert(data.message);
+                    location.reload();  // Recargar la página para actualizar la lista
+                } else if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    alert('Datos guardados correctamente');
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                // Ocultar el spinner
+                $('#spinner').addClass('d-none');
+                
+                console.error('Error:', error);
+                alert('Error al guardar la guía de estudio y el sílabo: ' + error.message);
+            });
+        } catch (error) {
+            // Ocultar el spinner en caso de error
+            $('#spinner').addClass('d-none');
+            console.error('Error en el procesamiento:', error);
+            alert('Error en el procesamiento: ' + error.message);
+        }
     });
 });
 
@@ -244,7 +383,7 @@ $(document).ready(function() {
                         $('#objetivo_conceptual').val(data.objetivo_conceptual);
                     } else if (data.objetivo) { // Compatibilidad con respuestas antiguas
                         if (data.objetivo === 'Conceptual') {
-                            $('#objetivo_conceptual').val('Comprende y analiza los conceptos clave relacionados con el tema.\n\n- Identifica y define los términos principales.\n- Establece relaciones entre conceptos.');
+                            $('#objetivo_conceptual').val('Conceptual');
                         }
                     }
                     
@@ -252,7 +391,7 @@ $(document).ready(function() {
                         $('#objetivo_procedimental').val(data.objetivo_procedimental);
                     } else if (data.objetivo) { // Compatibilidad con respuestas antiguas
                         if (data.objetivo === 'Procedimental') {
-                            $('#objetivo_procedimental').val('Aplica y desarrolla habilidades prácticas relacionadas con el tema.\n\n- Utiliza métodos y técnicas apropiadas.\n- Resuelve problemas aplicando los conceptos.');
+                            $('#objetivo_procedimental').val('Procedimental');
                         }
                     }
                     
@@ -260,7 +399,7 @@ $(document).ready(function() {
                         $('#objetivo_actitudinal').val(data.objetivo_actitudinal);
                     } else if (data.objetivo) { // Compatibilidad con respuestas antiguas
                         if (data.objetivo === 'Actitudinal') {
-                            $('#objetivo_actitudinal').val('Valora y adopta actitudes positivas relacionadas con el tema.\n\n- Muestra interés y participación activa.\n- Desarrolla una postura crítica y reflexiva.');
+                            $('#objetivo_actitudinal').val('Actitudinal');
                         }
                     }
                     
@@ -270,7 +409,7 @@ $(document).ready(function() {
                     } else if (data.instrumento_evaluacion) { // Compatibilidad con respuestas antiguas
                         const texto = data.instrumento_evaluacion.toLowerCase();
                         if (texto.includes('cuaderno') || texto.includes('libreta')) {
-                            $('#instrumento_cuaderno').val('Registro de actividades y apuntes en el cuaderno del estudiante.\n\n- Organización y estructura de los apuntes.\n- Completitud de las actividades asignadas.');
+                            $('#instrumento_cuaderno').val('Cuaderno del estudiante');
                         }
                     }
                     
@@ -279,7 +418,7 @@ $(document).ready(function() {
                     } else if (data.instrumento_evaluacion) { // Compatibilidad con respuestas antiguas
                         const texto = data.instrumento_evaluacion.toLowerCase();
                         if (texto.includes('organizador') || texto.includes('mapa') || texto.includes('esquema')) {
-                            $('#instrumento_organizador').val('Elaboración de organizador gráfico que sintetice los conceptos clave.\n\n- Claridad en la representación visual.\n- Inclusión de todos los conceptos importantes.');
+                            $('#instrumento_organizador').val('Organizador gráfico');
                         }
                     }
                     
@@ -288,7 +427,7 @@ $(document).ready(function() {
                     } else if (data.instrumento_evaluacion) { // Compatibilidad con respuestas antiguas
                         const texto = data.instrumento_evaluacion.toLowerCase();
                         if (texto.includes('diario') || texto.includes('bitácora')) {
-                            $('#instrumento_diario').val('Registro en diario de trabajo sobre el proceso de aprendizaje.\n\n- Reflexión sobre los aprendizajes adquiridos.\n- Identificación de fortalezas y áreas de mejora.');
+                            $('#instrumento_diario').val('Diario de trabajo');
                         }
                     }
                     
@@ -297,7 +436,7 @@ $(document).ready(function() {
                     } else if (data.instrumento_evaluacion) { // Compatibilidad con respuestas antiguas
                         const texto = data.instrumento_evaluacion.toLowerCase();
                         if (texto.includes('prueba') || texto.includes('examen') || texto.includes('test')) {
-                            $('#instrumento_prueba').val('Evaluación escrita sobre los contenidos estudiados.\n\n- Preguntas de comprensión y análisis.\n- Ejercicios de aplicación de conceptos.');
+                            $('#instrumento_prueba').val('Prueba escrita');
                         }
                     }
                     

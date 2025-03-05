@@ -223,20 +223,22 @@ class Guia(models.Model):
     """
     Representa una guía de estudio dentro del sílabo.
     """
-    TIPO_OBJETIVO_CHOICES = [
-        ('Conceptual', 'Conceptual'),
-        ('Procedimental', 'Procedimental'),
-        ('Actitudinal', 'Actitudinal'),
-    ]
     
     silabo = models.ForeignKey(Silabo, on_delete=models.CASCADE, related_name="guias")
     numero_guia = models.IntegerField(verbose_name="N° Guía")
     fecha = models.DateField()
     unidad = models.CharField(max_length=255, choices=Silabo.UNIDAD_LIST, verbose_name="N° de unidad")
-    objetivo = models.CharField(max_length=20, choices=TIPO_OBJETIVO_CHOICES, verbose_name="Objetivo")
+    # Reemplazando el campo único de objetivo por campos específicos
+    objetivo_procedimental = models.TextField(blank=True, null=True, verbose_name="Procedimental")
+    objetivo_conceptual = models.TextField(blank=True, null=True, verbose_name="Conceptual")
+    objetivo_actitudinal = models.TextField(blank=True, null=True, verbose_name="Actitudinal")
     contenido_tematico = models.TextField(blank=True, null=True, verbose_name="Contenido Temático")
     actividades = models.TextField(blank=True, null=True, verbose_name="Actividades")
-    instrumento_evaluacion = models.TextField(blank=True, null=True, verbose_name="Instrumento de evaluación")
+    # Reemplazando el campo único de instrumento_evaluacion por campos específicos
+    instrumento_cuaderno = models.TextField(blank=True, null=True, verbose_name="Cuaderno del estudiante")
+    instrumento_organizador = models.TextField(blank=True, null=True, verbose_name="Organizador gráfico")
+    instrumento_diario = models.TextField(blank=True, null=True, verbose_name="Diario de trabajo")
+    instrumento_prueba = models.TextField(blank=True, null=True, verbose_name="Prueba escrita")
     criterios_evaluacion = models.TextField(blank=True, null=True, verbose_name="Criterios de evaluación")
     tiempo_minutos = models.FloatField(blank=True, null=True, verbose_name="Tiempo en minutos")
     recursos = models.TextField(blank=True, null=True, verbose_name="Recursos")

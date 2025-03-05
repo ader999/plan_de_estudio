@@ -17,12 +17,13 @@ urlpatterns = [
     path('generar_excel2/', views.generar_excel_original, name='generar_excel_original'),
     path('generar_docx/', views.generar_docx, name='generar_docx'),
     path('logout/', views.logout_view, name='logout'),
-    path('llenar_silabo/<int:asignacion_id>/', views.llenar_silabo, name='llenar_silabo'),
-    path('agregar_guia/', views.agregar_estudio_independiente, name='agregar_guia'),
+    path('agregar_guia/', views.gestionar_silabo_y_guia, name='agregar_guia'),
     path('success_view/', views.success_view, name='success_view'),
     path('generar-silabo/', views.generar_silabo, name='generar_silabo'),
     path('generar_guia/', views.generar_estudio_independiente, name='generar_guia'),
-    path('generar-silabo-view/<int:asignacion_id>/', views.guardar_silabo, name='guardar_silabo')
+    path('gestionar_silabo_y_guia/', views.gestionar_silabo_y_guia, name='gestionar_silabo_y_guia_ajax'),
+    path('gestionar_silabo_y_guia/<int:id>/', views.gestionar_silabo_y_guia, name='gestionar_silabo_y_guia'),
+    path('generar-silabo-view/<int:asignacion_id>/', views.gestionar_silabo_y_guia, name='guardar_silabo')
 
 ]
 if settings.DEBUG:

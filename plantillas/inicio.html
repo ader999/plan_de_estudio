@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <div class="row row-cols-1 g-4" style="max-width: 800px;">  <!-- Ajuste de ancho máximo para centrado -->
+        <div class="row row-cols-1 g-4" style="max-width: 840px;">  <!-- Ajuste de ancho máximo para centrado -->
             {% if asignaciones %}
 
             {% for asignacion in asignaciones %}
@@ -69,12 +69,10 @@
 
                         <!-- Botón para llenar el silabo, solo aparece si no está completado -->
                         {% if asignacion.silabos_creados <= 12 %}
-                            <a href="{% url 'llenar_silabo' asignacion.id %}" class="btn btn-warning">
-                                <img src="{% static 'img/informe.png' %}" alt="" style="height: 34px">Llenar Sílabo
+                            <a href="{% url 'guardar_silabo' asignacion.id %}" class="btn btn-warning">
+                                <img src="{% static 'img/informe.png' %}" alt="" style="height: 34px">Generar Silabo
                             </a>
-                            <a href="{% url 'guardar_silabo' asignacion.id %}" class="btn" style="background: #0585a1;">
-                                <img src="{% static 'img/ia.png' %}" alt="" style="height: 34px;">Generar Silabo
-                            </a>
+                    
                         {% endif %}
                     </div>
 
