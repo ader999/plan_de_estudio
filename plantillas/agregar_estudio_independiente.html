@@ -8,6 +8,8 @@
 
 <form id="formEstudioIndependiente">
     {% csrf_token %}
+    <!-- Agregar un campo oculto para el ID de asignación -->
+    <input type="hidden" id="asignacion_id" name="asignacion_id" value="{{ asignacion.id }}">
 
     <div class="form-group mb-3">
         <label>Seleccionar Modelo IA:</label>
@@ -153,69 +155,23 @@ $(document).ready(function() {
         $('#spinner').removeClass('d-none');
         
         try {
-            // Obtener el ID de asignación del formulario principal
-            let asignacionId = null;
+            // Obtener el ID de asignación del campo oculto en este formulario
+            let asignacionId = $('#asignacion_id').val();
+            console.log('ID de asignación del campo oculto en este formulario:', asignacionId);
             
-            // Método 1: Buscar input con name="asignacion_id"
-            const asignacionInput = $('input[name="asignacion_id"]');
-            if (asignacionInput.length > 0 && asignacionInput.val()) {
-                asignacionId = asignacionInput.val();
-                console.log('ID obtenido de input[name="asignacion_id"]:', asignacionId);
-            }
-            
-            // Método 2: Buscar data attribute en el formulario
+            // Si no se encuentra, buscar en el campo global
             if (!asignacionId) {
-                const formWithData = $('.card-body form[data-asignacion-id]');
-                if (formWithData.length > 0 && formWithData.data('asignacion-id')) {
-                    asignacionId = formWithData.data('asignacion-id');
-                    console.log('ID obtenido de data-asignacion-id:', asignacionId);
-                }
-            }
-            
-            // Método 3: Extraer de la URL del formulario
-            if (!asignacionId) {
-                const formWithAction = $('form[action*="guardar_silabo"]');
-                if (formWithAction.length > 0 && formWithAction.attr('action')) {
-                    const actionUrl = formWithAction.attr('action');
-                    console.log('URL de acción del formulario:', actionUrl);
-                    
-                    const matches = actionUrl.match(/\/(\d+)\/?$/);
-                    if (matches && matches[1]) {
-                        asignacionId = matches[1];
-                        console.log('ID extraído de la URL del formulario:', asignacionId);
-                    }
-                }
-            }
-            
-            // Método 4: Buscar en la URL de la página
-            if (!asignacionId) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const idFromUrl = urlParams.get('id') || urlParams.get('asignacion_id');
-                
-                if (idFromUrl) {
-                    asignacionId = idFromUrl;
-                    console.log('ID obtenido de la URL de la página:', asignacionId);
-                }
-            }
-            
-            // Método 5: Buscar en el contenido de la página
-            if (!asignacionId) {
-                // Buscar en el HTML de la página
-                const pageContent = document.body.innerHTML;
-                const idMatch = pageContent.match(/asignacion[_\s]id[=:]\s*['"]?(\d+)['"]?/i);
-                if (idMatch && idMatch[1]) {
-                    asignacionId = idMatch[1];
-                    console.log('ID encontrado en el contenido de la página:', asignacionId);
-                }
+                asignacionId = $('#asignacion_id_global').val();
+                console.log('ID de asignación del campo global:', asignacionId);
             }
             
             // Verificar si se encontró un ID
             if (!asignacionId) {
-                // Último recurso: solicitar al usuario
-                asignacionId = prompt("No se pudo detectar el ID de asignación. Por favor, ingrese el ID manualmente:");
-                if (!asignacionId) {
-                    throw new Error('No se proporcionó un ID de asignación válido');
-                }
+                // En lugar de pedir al usuario, mostrar un mensaje de error
+                $('#spinner').addClass('d-none');
+                console.error('No se pudo detectar el ID de asignación');
+                alert('Error: No se pudo detectar el ID de asignación. Por favor, intente nuevamente desde la página principal.');
+                return; // Detener la ejecución
             }
             
             console.log('ID de asignación final:', asignacionId);
@@ -287,56 +243,35 @@ $(document).ready(function() {
             console.log('Datos a enviar:', dataGuia);
             
             // Obtener el token CSRF
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? 
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]') ? 
                               document.querySelector('[name=csrfmiddlewaretoken]').value : 
                               '{{ csrf_token }}';
                               
-            console.log('CSRF Token:', csrfToken);
+            console.log('CSRF Token:', csrftoken);
             
-            // URL para enviar los datos
-            const url = '/gestionar_silabo_y_guia/';
-            console.log('Enviando datos a URL:', url);
-
-            // Realizar la petición AJAX
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+            // Enviar los datos al servidor
+            $.ajax({
+                url: '/gestionar_silabo_y_guia/',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(dataGuia),
+                beforeSend: function(xhr, settings) {
+                    if (!this.crossDomain) {
+                        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                    }
                 },
-                body: JSON.stringify(dataGuia)
-            })
-            .then(response => {
-                console.log('Respuesta recibida:', response);
-                console.log('Estado de la respuesta:', response.status);
-                console.log('Headers de la respuesta:', [...response.headers.entries()]);
-                
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
+                success: function(response) {
+                    $('#spinner').addClass('d-none');
+                    console.log('Respuesta del servidor:', response);
+                    
+                    // Redirigir a la página de éxito
+                    window.location.href = '/success_view/';
+                },
+                error: function(xhr, status, error) {
+                    $('#spinner').addClass('d-none');
+                    console.error('Error al guardar:', error);
+                    alert('Error al guardar los datos. Por favor, intente nuevamente.');
                 }
-                return response.json();
-            })
-            .then(data => {
-                // Ocultar el spinner
-                $('#spinner').addClass('d-none');
-                
-                console.log('Datos de respuesta:', data);
-                if (data.message) {
-                    alert(data.message);
-                    location.reload();  // Recargar la página para actualizar la lista
-                } else if (data.error) {
-                    alert('Error: ' + data.error);
-                } else {
-                    alert('Datos guardados correctamente');
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                // Ocultar el spinner
-                $('#spinner').addClass('d-none');
-                
-                console.error('Error:', error);
-                alert('Error al guardar la guía de estudio y el sílabo: ' + error.message);
             });
         } catch (error) {
             // Ocultar el spinner en caso de error

@@ -521,8 +521,13 @@ def gestionar_silabo_y_guia(request, asignacion_id=None, id=None):
             
             # Mapear los datos recibidos a los campos del modelo Guia
             try:
+                # Primero guardamos el sílabo sin asociarlo a una guía
+                silabo.guia = None  # Aseguramos que no haya una guía asociada inicialmente
+                silabo.save()
+                
+                # Ahora creamos la guía con referencia al sílabo
                 guia = Guia.objects.create(
-                    silabo=silabo,
+                    silabo=silabo,  # Asociamos la guía al sílabo
                     numero_guia=int(data.get('numero_guia', 1)),
                     fecha=data.get('fecha'),
                     unidad=data.get('unidad', silabo.unidad),
@@ -544,19 +549,17 @@ def gestionar_silabo_y_guia(request, asignacion_id=None, id=None):
                 )
                 print(f"Guía creada correctamente: {guia.id}")
                 
-                # Actualizar el silabo para referenciar esta guía
+                # Ahora actualizamos el sílabo para referenciar esta guía
                 silabo.guia = guia
                 silabo.save()
                 print(f"Sílabo actualizado con referencia a la guía")
                 
-                return JsonResponse({
-                    'message': 'Sílabo y guía de estudio guardados correctamente',
-                    'id': guia.id
-                })
+                # Redirigir a la vista de éxito en lugar de devolver una respuesta JSON
+                return redirect('success_view')
+                
             except Exception as e:
                 print(f"Error al crear la guía: {e}")
                 return JsonResponse({'error': f'Error al crear la guía: {str(e)}'}, status=400)
-                
         except json.JSONDecodeError as e:
             print(f"Error al decodificar JSON: {e}")
             return JsonResponse({'error': f'Error al decodificar JSON: {str(e)}'}, status=400)
@@ -589,9 +592,13 @@ def gestionar_silabo_y_guia(request, asignacion_id=None, id=None):
 
                 # Verificar si también se enviaron datos para la guía
                 if 'objetivo_conceptual_guia' in request.POST:
+                    # Primero guardamos el sílabo sin asociarlo a una guía
+                    silabo.guia = None
+                    silabo.save()
+                    
                     # Crear una guía asociada al sílabo
                     guia = Guia.objects.create(
-                        silabo=silabo,
+                        silabo=silabo,  # Asociamos la guía al sílabo
                         numero_guia=1,  # Valor por defecto o ajustar según necesidad
                         fecha=silabo.fecha,  # Usar la misma fecha del sílabo
                         unidad=silabo.unidad,  # Usar la misma unidad del sílabo
@@ -616,7 +623,7 @@ def gestionar_silabo_y_guia(request, asignacion_id=None, id=None):
                     silabo.save()
 
                 messages.success(request, 'El sílabo ha sido creado correctamente.')
-                return redirect('inicio')
+                return redirect('success_view')
             else:
                 messages.error(request, 'Hubo un error al crear el sílabo. Por favor, revise los datos.')
         else:
@@ -942,51 +949,104 @@ def generar_estudio_independiente(request):
         asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
         plan_estudio = asignacion.plan_de_estudio
         
+        # Buscar guías anteriores para usar como contexto principal
+        guias_anteriores = Guia.objects.filter(
+            silabo__asignacion_plan=asignacion
+        ).order_by('numero_guia')
+        
+        # Obtener el sílabo actual solo para información complementaria
         silabo_actual = Silabo.objects.filter(
             asignacion_plan=asignacion
         ).order_by('-encuentros').first()
         
+        # Construir contexto de guías anteriores
+        contexto_guias = ""
+        if guias_anteriores.exists():
+            for idx, guia in enumerate(guias_anteriores):
+                # Procesar actividades que pueden estar en formato JSON o texto
+                actividades_str = "No especificado"
+                if guia.actividades:
+                    try:
+                        if guia.actividades.startswith('['):
+                            actividades_list = json.loads(guia.actividades)
+                            actividades_str = ", ".join(actividades_list)
+                        else:
+                            actividades_str = guia.actividades
+                    except:
+                        actividades_str = guia.actividades
+                
+                # Procesar recursos que pueden estar en formato JSON o texto
+                recursos_str = "No especificado"
+                if guia.recursos:
+                    try:
+                        if guia.recursos.startswith('['):
+                            recursos_list = json.loads(guia.recursos)
+                            recursos_str = ", ".join(recursos_list)
+                        else:
+                            recursos_str = guia.recursos
+                    except:
+                        recursos_str = guia.recursos
+                
+                contexto_guias += f"""
+                Guía {idx+1}:
+                - Unidad: {guia.unidad}
+                - Contenido temático: {guia.contenido_tematico or "No especificado"}
+                - Actividades: {actividades_str}
+                - Recursos: {recursos_str}
+                - Tiempo estimado: {guia.tiempo_minutos or "No especificado"} minutos
+                - Puntaje: {guia.puntaje or "No especificado"}
+                - Evaluación sumativa: {guia.evaluacion_sumativa or "No especificado"}
+                - Objetivos: 
+                  * Conceptual: {guia.objetivo_conceptual or "No especificado"}
+                  * Procedimental: {guia.objetivo_procedimental or "No especificado"}
+                  * Actitudinal: {guia.objetivo_actitudinal or "No especificado"}
+                - Instrumentos de evaluación:
+                  * Cuaderno: {guia.instrumento_cuaderno or "No especificado"}
+                  * Organizador gráfico: {guia.instrumento_organizador or "No especificado"}
+                  * Diario de trabajo: {guia.instrumento_diario or "No especificado"}
+                  * Prueba escrita: {guia.instrumento_prueba or "No especificado"}
+                """
+        
+        # Determinar el número de la próxima guía
+        numero_proxima_guia = guias_anteriores.count() + 1
+        
+        # Crear el prompt completo basado en la información disponible
         if not silabo_actual:
-            return JsonResponse({'error': 'No se encontró un sílabo para esta asignación'}, status=400)
+            # Si no hay sílabo, crear un prompt básico con información del plan de estudio
+            prompt_completo = f"""
+            Instrucciones: Genera una descripción detallada de una guía de estudio inicial (Guía #{numero_proxima_guia}) basada en la siguiente información.
             
-        silabos_anteriores = Silabo.objects.filter(
-            asignacion_plan=asignacion
-        ).order_by('encuentros')
-        
-        # Construir contexto de sílabos anteriores
-        contexto_silabos = ""
-        for idx, silabo in enumerate(silabos_anteriores):
-            contexto_silabos += f"""
-            Encuentro {idx+1}:
-            - Unidad: {silabo.unidad}
-            - Contenido temático: {silabo.contenido_tematico}
-            - Técnicas de aprendizaje: {silabo.tecnicas_aprendizaje}
-            - Descripción de estrategia: {silabo.descripcion_estrategia}
-            - Objetivos: 
-              * Conceptual: {silabo.objetivo_conceptual}
-              * Procedimental: {silabo.objetivo_procedimental}
-              * Actitudinal: {silabo.objetivo_actitudinal}
+            Datos del Plan de Estudio:
+            - Asignatura: {plan_estudio.asignatura.nombre}
+            - Carrera: {plan_estudio.carrera.nombre}
+            - Código: {plan_estudio.codigo}
+            - Horas Prácticas (HP): {plan_estudio.hp}
+            - Horas de Trabajo Independiente (HTI): {plan_estudio.hti}
+            
+            {f"Contexto de guías anteriores:\n{contexto_guias}" if contexto_guias else "Esta será la primera guía para esta asignación."}
             """
-
-        # Crear el prompt completo
-        prompt_completo = f"""
-        Instrucciones: Genera una descripción detallada de una guía de estudio basada en la siguiente información.
+        else:
+            # Si hay sílabo, incluir su información
+            prompt_completo = f"""
+            Instrucciones: Genera una descripción detallada de una guía de estudio (Guía #{numero_proxima_guia}) basada en la siguiente información.
+            
+            Datos del Sílabo:
+            - Asignatura: {plan_estudio.asignatura.nombre}
+            - Carrera: {plan_estudio.carrera.nombre}
+            - Código: {plan_estudio.codigo}
+            - Encuentro actual: {silabo_actual.encuentros} de 12
+            - Horas Prácticas (HP): {plan_estudio.hp}
+            - Horas de Trabajo Independiente (HTI): {plan_estudio.hti}
+            - Unidad actual: {silabo_actual.unidad}
+            - Contenido temático: {silabo_actual.contenido_tematico}
+            
+            {f"Contexto de guías anteriores:\n{contexto_guias}" if contexto_guias else "Esta será la primera guía para esta asignación."}
+            """
         
-        Datos del Sílabo:
-        - Asignatura: {plan_estudio.asignatura.nombre}
-        - Carrera: {plan_estudio.carrera.nombre}
-        - Código: {plan_estudio.codigo}
-        - Encuentro actual: {silabos_anteriores.count()} de 12
-        - Horas Prácticas (HP): {plan_estudio.hp}
-        - Horas de Trabajo Independiente (HTI): {plan_estudio.hti}
-        - Unidad actual: {silabo_actual.unidad}
-        - Contenido temático: {silabo_actual.contenido_tematico}
-        
-        Contexto de encuentros anteriores:
-        {contexto_silabos}
-
+        # Añadir la estructura JSON esperada al prompt
+        prompt_completo += """
         Por favor, genera una guía de estudio en formato JSON con la siguiente estructura:
-        {{
+        {
           "descripcion": "Una descripción detallada del contenido temático de la guía",
           "actividades": ["Actividad 1", "Actividad 2", "Actividad 3"],
           "recursos": ["Recurso 1", "Recurso 2", "Recurso 3"],
@@ -1001,7 +1061,7 @@ def generar_estudio_independiente(request):
           "instrumento_organizador": "Descripción de cómo se utilizará el organizador gráfico como instrumento de evaluación",
           "instrumento_diario": "Descripción de cómo se utilizará el diario de trabajo como instrumento de evaluación",
           "instrumento_prueba": "Descripción de cómo se utilizará la prueba escrita como instrumento de evaluación"
-        }}
+        }
         
         Asegúrate de que el JSON sea válido y pueda ser parseado correctamente.
         """

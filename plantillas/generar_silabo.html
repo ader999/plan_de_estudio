@@ -211,8 +211,11 @@
                         <div class="card-body">
                             <h2 class="mb-4 text-center">Guia</h2>
                             
+                            <!-- Pasar el ID de asignación a la plantilla de estudio independiente -->
+                            <input type="hidden" id="asignacion_id_global" value="{{ asignacion.id }}">
+                            
                             <!-- Incluir el formulario de estudio independiente -->
-                            {% include 'agregar_estudio_independiente.html' %}
+                            {% include 'agregar_estudio_independiente.html' with asignacion=asignacion %}
                             
                             <!-- Botón de navegación de regreso al formulario principal -->
                             <div class="text-center mt-4">
