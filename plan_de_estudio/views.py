@@ -1023,7 +1023,7 @@ def generar_estudio_independiente(request):
             - Horas Prácticas (HP): {plan_estudio.hp}
             - Horas de Trabajo Independiente (HTI): {plan_estudio.hti}
             
-            {f"Contexto de guías anteriores:\n{contexto_guias}" if contexto_guias else "Esta será la primera guía para esta asignación."}
+            {f"Contexto de guías anteriores:{chr(10)}{contexto_guias}" if contexto_guias else "Esta será la primera guía para esta asignación."}
             """
         else:
             # Si hay sílabo, incluir su información
@@ -1040,7 +1040,7 @@ def generar_estudio_independiente(request):
             - Unidad actual: {silabo_actual.unidad}
             - Contenido temático: {silabo_actual.contenido_tematico}
             
-            {f"Contexto de guías anteriores:\n{contexto_guias}" if contexto_guias else "Esta será la primera guía para esta asignación."}
+            {f"Contexto de guías anteriores:{chr(10)}{contexto_guias}" if contexto_guias else "Esta será la primera guía para esta asignación."}
             """
         
         # Añadir la estructura JSON esperada al prompt
