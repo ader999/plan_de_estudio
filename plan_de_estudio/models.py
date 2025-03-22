@@ -243,7 +243,7 @@ class Guia(models.Model):
     tiempo_minutos = models.FloatField(blank=True, null=True, verbose_name="Tiempo en minutos")
     recursos = models.TextField(blank=True, null=True, verbose_name="Recursos")
     puntaje = models.FloatField(blank=True, null=True, verbose_name="Puntaje")
-    evaluacion_sumativa = models.CharField(max_length=255, blank=True, null=True, verbose_name="Evaluación sumativa")
+    evaluacion_sumativa = models.TextField(blank=True, null=True, verbose_name="Evaluación sumativa")
     fecha_entrega = models.DateField(blank=True, null=True, verbose_name="Fecha de Entrega")
     
     def __str__(self):
