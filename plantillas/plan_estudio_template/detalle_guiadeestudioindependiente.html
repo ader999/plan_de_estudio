@@ -1,417 +1,428 @@
-<script>
-    // Función para imprimir la guía
-    function imprimirGuiaEstudio() {
-        window.print();
-    }
+{% load static %}
 
-    // Función para filtrar por número de encuentro
-    function filtrarGuiaPorEncuentro(codigo, numero) {
-        // Ocultar todos los planes para este código
-        document.querySelectorAll(`.guia-${codigo}`).forEach(guia => {
-            guia.style.display = 'none';
-        });
-        
-        // Mostrar solo el plan con el número de encuentro seleccionado
-        document.querySelector(`.guia-${codigo}-${numero}`).style.display = 'block';
-        
-        // Actualizar estado visual de los botones
-        document.querySelectorAll(`.guia-btn-encuentro-${codigo}`).forEach(btn => {
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-outline-primary');
-        });
-        
-        document.querySelector(`.guia-btn-encuentro-${codigo}-${numero}`).classList.remove('btn-outline-primary');
-        document.querySelector(`.guia-btn-encuentro-${codigo}-${numero}`).classList.add('btn-primary');
-    }
-    
-    // Inicializar mostrar solo el primer encuentro al cargar la página
-    document.addEventListener('DOMContentLoaded', function() {
-        // Inicialización para el acordeón que está abierto por defecto
-        const guiaPrimerAcordeon = document.querySelector('#accordionGuiaEstudio .accordion-collapse.show');
-        if (guiaPrimerAcordeon) {
-            const codigo = guiaPrimerAcordeon.id.replace('collapse-', '');
-            inicializarFiltradoGuia(codigo);
-        }
-        
-        // Escuchar eventos de apertura de acordeones
-        document.querySelectorAll('#accordionGuiaEstudio .accordion-collapse').forEach(function(collapse) {
-            collapse.addEventListener('shown.bs.collapse', function() {
-                const codigo = this.id.replace('collapse-', '');
-                inicializarFiltradoGuia(codigo);
-            });
-        });
-    });
-    
-    // Función para inicializar el filtrado en un acordeón específico
-    function inicializarFiltradoGuia(codigo) {
-        // Ocultar todos los encuentros primero
-        document.querySelectorAll(`.guia-${codigo}`).forEach(guia => {
-            guia.style.display = 'none';
-        });
-        
-        // Encontrar el primer encuentro y mostrarlo
-        const primerBoton = document.querySelector(`.guia-btn-encuentro-${codigo}`);
-        if (primerBoton) {
-            const encuentroNum = primerBoton.getAttribute('data-encuentro');
-            filtrarGuiaPorEncuentro(codigo, encuentroNum);
-        }
-    }
-</script>
-
-<!-- Estilos personalizados -->
 <style>
-    .guia-component {
+    /* Variables */
+    :root {
+        --guia-gris-claro: #f5f8fa;
+        --guia-gris-borde: #e5e8eb;
+        --guia-border-radius: 8px;
+        --guia-box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        --guia-transition: all 0.2s ease-in-out;
+        --color-azul-oscuro: #1B4F72;
+        --color-azul-2: #2874A6;
+        --color-azul-3: #2E86C1;
+    }
+    
+    /* Contenedor principal */
+    .guia-container {
         background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-radius: var(--guia-border-radius);
+        box-shadow: var(--guia-box-shadow);
+        margin: 0;
+        overflow: hidden;
+    }
+    
+    .guia-component .main-content {
+        display: none;
+    }
+    
+    .guia-component .main-content.active {
+        display: block;
+    }
+    
+    /* Navegación de encuentros */
+    .guia-component .encuentros-nav {
+        display: flex;
+        background-color: white;
+        overflow-x: auto;
+        padding: 15px;
+        gap: 8px;
+        border-bottom: 1px solid var(--guia-gris-borde);
+    }
+    
+    .guia-component .encuentro-tab {
+        background-color: var(--guia-gris-claro);
+        border: 1px solid var(--guia-gris-borde);
+        border-radius: 50px;
+        padding: 8px 16px;
+        min-width: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--guia-transition);
+        font-weight: 600;
+        color: var(--color-azul-oscuro);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .guia-component .encuentro-tab.active {
+        background-color: var(--color-azul-3);
+        color: white;
+        border-color: var(--color-azul-3);
+    }
+    
+    .guia-component .encuentro-tab:hover:not(.active) {
+        background-color: rgba(46, 134, 193, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    /* Contenido del encuentro */
+    .guia-component .encuentro-content {
+        display: none;
         padding: 20px;
     }
     
-    .guia-card {
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        overflow: hidden;
-        margin-bottom: 2rem;
-        background-color: white;
+    .guia-component .encuentro-content.active {
+        display: block;
     }
     
-    .guia-header {
-        background: linear-gradient(135deg, var(--color-azul-2), var(--color-azul-oscuro));
-        color: white;
-        padding: 15px;
-        border-radius: 10px 10px 0 0;
-        position: relative;
+    /* Secciones de datos */
+    .guia-component .data-section {
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--guia-gris-borde);
+        padding-bottom: 20px;
     }
     
-    .guia-header::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 5px;
-        background: linear-gradient(90deg, var(--color-azul-1), var(--color-azul-3));
+    .guia-component .data-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
     }
     
-    .guia-section {
-        border-left: 4px solid var(--color-azul-3);
-        margin-bottom: 15px;
-        padding-left: 10px;
-    }
-    
-    .guia-section-title {
-        background-color: var(--color-gris-1);
-        color: white;
-        padding: 8px 15px;
-        border-radius: 5px;
-        margin-bottom: 15px;
-        display: inline-block;
-    }
-    
-    .guia-filter-buttons .btn {
-        margin-bottom: 5px;
-        transition: all 0.3s ease;
-    }
-    
-    .guia-filter-buttons .btn.btn-primary {
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .guia-data-table {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-    
-    .guia-data-table td:first-child {
-        font-weight: bold;
-        width: 35%;
+    .guia-component .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
         color: var(--color-azul-oscuro);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
-    .guia-accordion-button:not(.collapsed) {
+    .guia-component .section-title i {
+        font-size: 1.2rem;
+    }
+    
+    .guia-component .data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+    
+    .guia-component .data-card {
+        background-color: var(--guia-gris-claro);
+        border-radius: var(--guia-border-radius);
+        padding: 12px 16px;
+    }
+    
+    .guia-component .card-title {
+        color: var(--color-azul-2);
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .guia-component .card-value {
+        font-weight: 500;
+        color: #333;
+    }
+    
+    /* Tablas */
+    .guia-component .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+    }
+    
+    .guia-component .data-table th {
+        background-color: var(--guia-gris-claro);
+        color: var(--color-azul-oscuro);
+        font-weight: 600;
+        text-align: left;
+        padding: 10px 16px;
+        border: 1px solid var(--guia-gris-borde);
+    }
+    
+    .guia-component .data-table td {
+        padding: 10px 16px;
+        border: 1px solid var(--guia-gris-borde);
+        vertical-align: top;
+    }
+    
+    .guia-component .data-table tr:nth-child(even) {
+        background-color: rgba(245, 248, 250, 0.5);
+    }
+    
+    .guia-component .data-table tr:hover {
+        background-color: rgba(46, 134, 193, 0.05);
+    }
+    
+    /* Botón para imprimir */
+    .guia-component .print-button {
         background-color: var(--color-azul-3);
         color: white;
+        border: none;
+        border-radius: var(--guia-border-radius);
+        padding: 8px 16px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 15px 20px;
+        transition: var(--guia-transition);
     }
     
-    .guia-accordion-button:focus {
-        box-shadow: 0 0 0 0.25rem rgba(46, 134, 193, 0.25);
-    }
-    
-    .guia-accordion-item {
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid rgba(0,0,0,0.125);
-        margin-bottom: 1rem;
-        background-color: white;
-    }
-    
-    .guia-content-item {
-        padding: 10px;
-        border-radius: 5px;
-        background-color: #f8f9fa;
-        margin-bottom: 10px;
-    }
-    
-    .guia-badge {
-        padding: 0.5em 0.8em;
-    }
-    
-    .guia-table-responsive {
-        overflow-x: auto;
-    }
-    
-    .guia-table {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-    
-    .guia-table th {
+    .guia-component .print-button:hover {
         background-color: var(--color-azul-2);
-        color: white;
-        font-weight: 500;
-        text-align: center;
+        transform: translateY(-2px);
     }
     
-    .guia-table td, .guia-table th {
-        padding: 0.75rem;
-        vertical-align: middle;
-        border-top: 1px solid #dee2e6;
+    /* Responsive */
+    @media (max-width: 768px) {
+        .guia-component .data-grid {
+            grid-template-columns: 1fr;
+        }
     }
     
-    .guia-content {
-        background-color: white;
-        color: #212529; /* Ensure text has good contrast on white */
-    }
-    
-    #accordionGuiaEstudio .accordion-body {
-        background-color: #f8f9fa;
-        padding: 1.5rem;
-        color: #212529;
-    }
-    
-    #accordionGuiaEstudio .accordion-collapse {
-        background-color: white;
-    }
-    
-    #accordionGuiaEstudio .guia-container {
-        background-color: white;
-    }
-    
-    /* Override any background colors from parent elements */
-    #accordionGuiaEstudio .guia-section p {
-        color: #212529;
-    }
-
+    /* Estilos para impresión */
     @media print {
-        .guia-filter-buttons, .guia-btn-encuentro {
+        body {
+            font-size: 12pt;
+            background: white;
+            --guia-box-shadow: none;
+        }
+        
+        .guia-component .main-content,
+        .guia-component .encuentro-content {
+            display: block !important;
+        }
+        
+        .guia-component table th,
+        .guia-component table td {
+            border: 1px solid #ddd;
+        }
+        
+        .guia-component .print-button,
+        .guia-component .encuentros-nav {
             display: none !important;
-        }
-        
-        .guia-card {
-            box-shadow: none;
-            break-inside: avoid;
-            page-break-inside: avoid;
-            margin-bottom: 30px;
-        }
-        
-        .guia-container {
-            display: block !important;
-        }
-        
-        .guia-container > div {
-            display: block !important;
-            width: 100% !important;
         }
     }
 </style>
 
-<!-- Acordeón -->
-<div class="accordion" id="accordionGuiaEstudio">
-    {% for codigo, silabos_grupo in silabos_agrupados.items %}
-    <div class="guia-accordion-item mb-4">
-        <h2 class="accordion-header" id="heading-{{ codigo }}">
-            <button class="accordion-button guia-accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ codigo }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-{{ codigo }}">
-                <div class="d-flex flex-column flex-md-row justify-content-between w-100">
-                    <div>
-                        <strong> Guía de Estudio Independiente: {{ codigo }}</strong>
+<div class="container mt-4 guia-component">
+    <!-- Acordeón -->
+    <div class="accordion" id="guiaAccordion">
+        {% for codigo, silabos_grupo in silabos_agrupados.items %}
+        <div class="accordion-item mb-4">
+            <h2 class="accordion-header" id="heading-{{ codigo }}">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ codigo }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-{{ codigo }}">
+                    <div class="d-flex flex-column flex-md-row justify-content-between w-100">
+                        <div>
+                            <strong>📚 Guía para el Estudio Independiente: {{ codigo }}</strong>
+                        </div>
+                        <div class="d-flex gap-3">
+                            {% with primer_silabo=silabos_grupo.0 %}
+                            <span class="badge" style="background-color: var(--color-azul-2);">{{ primer_silabo.carrera }}</span>
+                            <span class="badge" style="background-color: var(--color-azul-3);">{{ primer_silabo.fecha|date:"d/m/Y" }}</span>
+                            <span class="badge" style="background-color: var(--color-azul-oscuro);">
+                                <i class="fas fa-calendar-check me-1"></i>
+                                Encuentros: {{ silabos_grupo|length }}/12
+                            </span>
+                            {% endwith %}
+                        </div>
                     </div>
-                    <div class="d-flex gap-3">
-                        {% with primer_silabo=silabos_grupo.0 %}
-                        <span class="badge guia-badge" style="background-color: var(--color-azul-2);">{{ primer_silabo.carrera }}</span>
-                        <span class="badge guia-badge" style="background-color: var(--color-azul-3);">{{ primer_silabo.fecha|date:"d/m/Y" }}</span>
-                        <span class="badge guia-badge" style="background-color: var(--color-azul-oscuro);">
-                            <i class="fas fa-calendar-check me-1"></i>
-                            Encuentros: {{ silabos_grupo|length }}/12
-                        </span>
-                        {% endwith %}
-                    </div>
-                </div>
-            </button>
-        </h2>
-        <div id="collapse-{{ codigo }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading-{{ codigo }}" data-bs-parent="#accordionGuiaEstudio">
-            <div class="accordion-body p-3">
-                <!-- Filtro por número de encuentro -->
-                <div class="mb-4 guia-filter-buttons">
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                        <span class="fw-bold me-2">Filtrar por número de encuentro:</span>
+                </button>
+            </h2>
+            <div id="collapse-{{ codigo }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading-{{ codigo }}" data-bs-parent="#guiaAccordion">
+                <div class="accordion-body p-0">
+                    <div class="guia-container">
+                        <!-- Navegación de encuentros -->
+                        <div class="encuentros-nav">
+                            {% for silabo in silabos_grupo|dictsort:"encuentros" %}
+                            <div class="encuentro-tab {% if forloop.first %}active{% endif %}" data-target="guia-encuentro-{{ silabo.encuentros }}-{{ codigo }}">
+                                {{ silabo.encuentros }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                            
+                        <!-- Contenido de cada encuentro -->
                         {% for silabo in silabos_grupo|dictsort:"encuentros" %}
-                        <button 
-                            class="btn btn-outline-primary btn-sm guia-btn-encuentro-{{ codigo }} guia-btn-encuentro-{{ codigo }}-{{ silabo.encuentros }}" 
-                            onclick="filtrarGuiaPorEncuentro('{{ codigo }}', '{{ silabo.encuentros }}')"
-                            data-encuentro="{{ silabo.encuentros }}">
-                            Encuentro {{ silabo.encuentros }}
-                        </button>
+                        <div class="encuentro-content {% if forloop.first %}active{% endif %}" id="guia-encuentro-{{ silabo.encuentros }}-{{ codigo }}">
+                            <!-- Información básica -->
+                            <div class="data-section">
+                                <h3 class="section-title info-title">Información General</h3>
+                                <div class="data-grid">
+                                    <div class="data-card">
+                                        <div class="data-label">N° de encuentro</div>
+                                        <div class="data-value">{{ silabo.encuentros }}</div>
+                                    </div>
+                                    <div class="data-card">
+                                        <div class="data-label">Municipio</div>
+                                        <div class="data-value">JALAPA</div>
+                                    </div>
+                                    <div class="data-card">
+                                        <div class="data-label">Carrera</div>
+                                        <div class="data-value">{{ silabo.carrera }}</div>
+                                    </div>
+                                    <div class="data-card">
+                                        <div class="data-label">Asignatura</div>
+                                        <div class="data-value">{{ silabo.asignatura.asignatura }}</div>
+                                    </div>
+                                    <div class="data-card">
+                                        <div class="data-label">Facilitador</div>
+                                        <div class="data-value">{{ silabo.maestro }}</div>
+                                    </div>
+                                    <div class="data-card">
+                                        <div class="data-label">Fecha</div>
+                                        <div class="data-value">{{ silabo.fecha }}</div>
+                                    </div>
+                                    <div class="data-card">
+                                        <div class="data-label">Trimestre</div>
+                                        <div class="data-value">{{ silabo.asignatura.trimestre }}</div>
+                                    </div>
+                                    <div class="data-card">
+                                        <div class="data-label">Año de la carrera</div>
+                                        <div class="data-value">{{ silabo.asignatura.año }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                                
+                            <!-- Unidad y detalles -->
+                            <div class="data-section">
+                                <h3 class="section-title">Unidad de Estudio</h3>
+                                <div class="data-card">
+                                    <div class="data-label">{{ silabo.unidad }}</div>
+                                    <div class="data-value">{{ silabo.detalle_unidad }}</div>
+                                </div>
+                            </div>
+                                
+                            <!-- Objetivos -->
+                            <div class="data-section">
+                                <h3 class="section-title objetivos-title">Objetivos de la Unidad</h3>
+                                <div class="data-grid">
+                                    <div class="data-card">
+                                        <div class="data-label">Conceptual</div>
+                                        <div class="data-value">{{ silabo.objetivo_conceptual }}</div>
+                                    </div>
+                                    <div class="data-card">
+                                        <div class="data-label">Procedimental</div>
+                                        <div class="data-value">{{ silabo.objetivo_procedimental }}</div>
+                                    </div>
+                                    <div class="data-card">
+                                        <div class="data-label">Actitudinal</div>
+                                        <div class="data-value">{{ silabo.objetivo_actitudinal }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                                
+                            <!-- Tabla de estudio independiente -->
+                            <div class="data-section">
+                                <h3 class="section-title actividades-title">Plan de Estudio Independiente</h3>
+                                <div class="table-container">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th width="5%">N°</th>
+                                                <th width="20%">Temas</th>
+                                                <th width="25%">Actividades a Realizar</th>
+                                                <th width="20%">Evaluación</th>
+                                                <th width="20%">Recursos</th>
+                                                <th width="10%">Fecha de Entrega</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>{{ silabo.encuentros }}</td>
+                                                <td>{{ silabo.contenido_tematico }}</td>
+                                                <td>{{ silabo.estudio_independiente.actividades_realizar|default:"____________" }}</td>
+                                                <td>{{ silabo.estudio_independiente.tecnica_evaluacion }}</td>
+                                                <td>{{ silabo.estudio_independiente.recursos_bibliograficos }}</td>
+                                                <td>{{ silabo.estudio_independiente.fecha_entrega }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                         {% endfor %}
-                        
-                        <div class="ms-auto">
-                            <button class="btn btn-outline-secondary btn-sm" onclick="imprimirGuiaEstudio()">
-                                <i class="fas fa-print"></i> Imprimir
-                            </button>
-                        </div>
+                        <button class="print-button" onclick="window.print()">Imprimir</button>
                     </div>
-                </div>
-                
-                <!-- Contenedor para guías de estudio -->
-                <div class="guia-container">
-                    {% for silabo in silabos_grupo|dictsort:"encuentros" %}
-                    <div class="container mb-5 guia-{{ codigo }} guia-{{ codigo }}-{{ silabo.encuentros }}">
-                        <div class="guia-card">
-                            <div class="guia-header">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h4 class="mb-0">
-                                        <i class="fas fa-book me-2"></i>
-                                        Guía de Estudio Independiente - Encuentro {{ silabo.encuentros }}
-                                    </h4>
-                                    <span class="badge bg-light text-dark">{{ silabo.fecha|date:"d/m/Y" }}</span>
-                                </div>
-                            </div>
-                            <div class="guia-content p-4">
-                                <div class="row g-4">
-                                    <!-- Primera columna -->
-                                    <div class="col-md-6">
-                                        <div class="guia-section">
-                                            <h5 class="guia-section-title">
-                                                <i class="fas fa-info-circle me-2"></i>
-                                                DATOS GENERALES
-                                            </h5>
-                                            <table class="guia-data-table">
-                                                <tr>
-                                                    <td>N° de encuentro:</td>
-                                                    <td>{{ silabo.encuentros }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Municipio:</td>
-                                                    <td>JALAPA</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Año lectivo:</td>
-                                                    <td>{{ silabo.fecha|date:"Y" }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Carrera:</td>
-                                                    <td>{{ silabo.carrera }}</td>
-                                                </tr>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Segunda columna -->
-                                    <div class="col-md-6">
-                                        <div class="guia-section">
-                                            <h5 class="guia-section-title">
-                                                <i class="fas fa-graduation-cap me-2"></i>
-                                                DATOS ACADÉMICOS
-                                            </h5>
-                                            <table class="guia-data-table">
-                                                <tr>
-                                                    <td>Asignatura:</td>
-                                                    <td>{{ silabo.asignatura.asignatura }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Facilitador:</td>
-                                                    <td>{{ silabo.maestro }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Trimestre:</td>
-                                                    <td>{{ silabo.asignatura.trimestre }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Año de la carrera:</td>
-                                                    <td>{{ silabo.asignatura.año }}</td>
-                                                </tr>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Contenido de la unidad -->
-                                    <div class="col-12">
-                                        <div class="guia-section">
-                                            <h5 class="guia-section-title">
-                                                <i class="fas fa-bookmark me-2"></i>
-                                                UNIDAD
-                                            </h5>
-                                            <div class="guia-content-item">
-                                                <h6 class="fw-bold">{{ silabo.unidad }}</h6>
-                                                <p>{{ silabo.detalle_unidad }}</p>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="guia-section">
-                                            <h5 class="guia-section-title">
-                                                <i class="fas fa-bullseye me-2"></i>
-                                                OBJETIVOS DE LA UNIDAD
-                                            </h5>
-                                            <div class="guia-content-item">
-                                                <h6 class="fw-bold mb-2">Conceptual:</h6>
-                                                <p>{{ silabo.objetivo_conceptual }}</p>
-                                                
-                                                <h6 class="fw-bold mb-2">Procedimental:</h6>
-                                                <p>{{ silabo.objetivo_procedimental }}</p>
-                                                
-                                                <h6 class="fw-bold mb-2">Actitudinal:</h6>
-                                                <p>{{ silabo.objetivo_actitudinal }}</p>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="guia-section">
-                                            <h5 class="guia-section-title">
-                                                <i class="fas fa-tasks me-2"></i>
-                                                ACTIVIDADES DE ESTUDIO INDEPENDIENTE
-                                            </h5>
-                                            <div class="guia-table-responsive">
-                                                <table class="guia-table table table-bordered">
-                                                    <thead>
-                                                        <tr>
-                                                            <th width="5%">N°</th>
-                                                            <th width="20%">TEMAS</th>
-                                                            <th width="25%">ACTIVIDADES A REALIZAR</th>
-                                                            <th width="15%">EVALUACIÓN</th>
-                                                            <th width="20%">RECURSOS</th>
-                                                            <th width="15%">FECHA DE ENTREGA</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td class="text-center">{{ silabo.encuentros }}</td>
-                                                            <td>{{ silabo.contenido_tematico }}</td>
-                                                            <td>{{ silabo.estudio_independiente.actividades|default:"_____________" }}</td>
-                                                            <td>{{ silabo.estudio_independiente.tecnica_evaluacion }}</td>
-                                                            <td>{{ silabo.estudio_independiente.recursos_bibliograficos }}</td>
-                                                            <td>{{ silabo.estudio_independiente.fecha_entrega }}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
                 </div>
             </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
+
+<script>
+    // JavaScript para la navegación entre encuentros y vistas principales
+    document.addEventListener('DOMContentLoaded', function() {
+        // Función para cambiar entre encuentros
+        function switchEncuentro(targetId, tabs, contents) {
+            // Desactivar todas las pestañas y contenidos
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Activar la pestaña y contenido seleccionados
+            const selectedTab = document.querySelector(`.encuentro-tab[data-target="${targetId}"]`);
+            const selectedContent = document.getElementById(targetId);
+            
+            if (selectedTab && selectedContent) {
+                selectedTab.classList.add('active');
+                selectedContent.classList.add('active');
+            }
+        }
+        
+        // Usar delegación de eventos para las pestañas de encuentros
+        document.querySelectorAll('.encuentros-nav').forEach(nav => {
+            nav.addEventListener('click', function(e) {
+                const tab = e.target.closest('.encuentro-tab');
+                if (!tab) return; // Si el clic no fue en una pestaña, salir
+                
+                const targetId = tab.getAttribute('data-target');
+                const container = this.closest('.guia-container');
+                const tabs = container.querySelectorAll('.encuentro-tab');
+                const contents = container.querySelectorAll('.encuentro-content');
+                
+                switchEncuentro(targetId, tabs, contents);
+            });
+        });
+        
+        // Inicializar para el primer acordeón si está abierto
+        const firstAccordion = document.querySelector('.accordion-collapse.show');
+        if (firstAccordion) {
+            const container = firstAccordion.querySelector('.guia-container');
+            const firstTab = container.querySelector('.encuentro-tab.active');
+            
+            if (firstTab) {
+                const targetId = firstTab.getAttribute('data-target');
+                const tabs = container.querySelectorAll('.encuentro-tab');
+                const contents = container.querySelectorAll('.encuentro-content');
+                
+                switchEncuentro(targetId, tabs, contents);
+            }
+        }
+        
+        // Manejar eventos de acordeón para cargar el contenido apropiado cuando se abre
+        document.querySelectorAll('.accordion-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                if (!isExpanded) { // Si se está expandiendo ahora
+                    setTimeout(() => {
+                        const container = this.closest('.accordion-item').querySelector('.guia-container');
+                        if (container) {
+                            const firstTab = container.querySelector('.encuentro-tab.active') || container.querySelector('.encuentro-tab');
+                            if (firstTab) {
+                                const targetId = firstTab.getAttribute('data-target');
+                                const tabs = container.querySelectorAll('.encuentro-tab');
+                                const contents = container.querySelectorAll('.encuentro-content');
+                                
+                                switchEncuentro(targetId, tabs, contents);
+                            }
+                        }
+                    }, 350); // Esperar a que termine la animación del acordeón
+                }
+            });
+        });
+    });
+</script>
