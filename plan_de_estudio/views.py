@@ -181,14 +181,14 @@ def generar_excel(request):
                     ws.cell(row=row_num, column=15, value=silabo.eje_transversal)
                     ws.cell(row=row_num, column=16, value=silabo.hp)
 
-                    ws.cell(row=row_num, column=17, value=silabo.estudio_independiente.numero)
-                    ws.cell(row=row_num, column=18, value=silabo.estudio_independiente.contenido)
-                    ws.cell(row=row_num, column=19, value=silabo.estudio_independiente.tecnica_evaluacion)
-                    ws.cell(row=row_num, column=20, value=silabo.estudio_independiente.orientacion)
-                    ws.cell(row=row_num, column=21, value=silabo.estudio_independiente.recursos_bibliograficos)
-                    ws.cell(row=row_num, column=22, value=silabo.estudio_independiente.enlace)
-                    ws.cell(row=row_num, column=23, value=silabo.estudio_independiente.tiempo_estudio)
-                    ws.cell(row=row_num, column=24, value=silabo.estudio_independiente.fecha_entrega)
+                    ws.cell(row=row_num, column=17, value=silabo.guia.numero_guia)
+                    ws.cell(row=row_num, column=18, value=silabo.guia.contenido_tematico)
+                    ws.cell(row=row_num, column=19, value=silabo.guia.criterios_evaluacion)
+                    ws.cell(row=row_num, column=20, value=silabo.guia.actividades)
+                    ws.cell(row=row_num, column=21, value=silabo.guia.recursos)
+                    ws.cell(row=row_num, column=22, value=silabo.guia.evaluacion_sumativa)
+                    ws.cell(row=row_num, column=23, value=silabo.guia.tiempo_minutos)
+                    ws.cell(row=row_num, column=24, value=silabo.guia.fecha_entrega)
 
 
                     # Agrega los datos para otros campos aquí
@@ -270,23 +270,21 @@ def generar_excel_original(request):
 
                     #Estudio independiente
                     ws.cell(row=23 + row_num, column=3, value=silabo.unidad)
-                    ws.cell(row=23 + row_num, column=6, value=silabo.estudio_independiente.contenido)
-                    ws.cell(row=23 + row_num, column=8, value=silabo.estudio_independiente.instrumento_evaluacion)
-                    ws.cell(row=23 + row_num, column=10, value=silabo.estudio_independiente.tiempo_estudio)
-                    ws.cell(row=23 + row_num, column=11, value=silabo.estudio_independiente.recursos_bibliograficos)
-                    """
-                    ws.cell(row=row_num, column=1, value=silabo.encuentros)
-                    ws.cell(row=row_num, column=2, value=silabo.fecha)
-                    
-                    
-                    
-                    
-                    ws.cell(row=row_num, column=11, value=silabo.forma_organizativa)
-                    
-                    ws.cell(row=row_num, column=13, value=silabo.tecnicas_aprendizaje)
-                    ws.cell(row=row_num, column=14, value=silabo.descripcion_estrategia)
-                    ws.cell(row=row_num, column=15, value=silabo.eje_transversal)
-                    ws.cell(row=row_num, column=16, value=silabo.hp)"""
+                    ws.cell(row=23 + row_num, column=6, value=silabo.guia.contenido_tematico)
+                    ws.cell(row=23 + row_num, column=8, value=silabo.guia.criterios_evaluacion)
+                    ws.cell(row=23 + row_num, column=10, value=silabo.guia.tiempo_minutos)
+                    ws.cell(row=23 + row_num, column=11, value=silabo.guia.recursos)
+                    ws.cell(row=23 + row_num, column=12, value=silabo.guia.puntaje)
+                    ws.cell(row=23 + row_num, column=13, value=silabo.guia.evaluacion_sumativa)
+                    ws.cell(row=23 + row_num, column=14, value=silabo.guia.objetivo_conceptual)
+                    ws.cell(row=23 + row_num, column=15, value=silabo.guia.objetivo_procedimental)
+                    ws.cell(row=23 + row_num, column=16, value=silabo.guia.objetivo_actitudinal)
+                    ws.cell(row=23 + row_num, column=17, value=silabo.guia.instrumento_cuaderno)
+                    ws.cell(row=23 + row_num, column=18, value=silabo.guia.instrumento_organizador)
+                    ws.cell(row=23 + row_num, column=19, value=silabo.guia.instrumento_diario)
+                    ws.cell(row=23 + row_num, column=20, value=silabo.guia.instrumento_prueba)
+                    ws.cell(row=23 + row_num, column=21, value=silabo.guia.fecha_entrega)
+
                     # Agrega los datos para otros campos aquí
                     row_num += 23  # Avanza a la siguiente fila
 
@@ -1293,31 +1291,63 @@ def cargar_guia(request, silabo_id):
         # Obtener el sílabo específico
         silabo = Silabo.objects.get(id=silabo_id)
         
-        # Obtener la guía específica para este sílabo
-        # Usamos select_related para optimizar la consulta
-        guia = Guia.objects.filter(silabo_id=silabo_id).first()
-        
-        # Información de debugging
+        # Información de debugging inicial
         debug_info = {
             'silabo_id': silabo_id,
             'silabo_encuentro': silabo.encuentros,
-            'guia_id': guia.id if guia else None,
+            'asignatura': silabo.asignatura.asignatura if hasattr(silabo, 'asignatura') and silabo.asignatura else 'No asignada'
         }
         
-        print(f"DEBUG INFO: {debug_info}")
+        print(f"DEBUG INFO SILABO: {debug_info}")
         
-        if not guia:
+        # Verificar cuántas guías hay asociadas a este sílabo
+        guias_count = Guia.objects.filter(silabo_id=silabo_id).count()
+        print(f"Cantidad de guías para el sílabo {silabo_id}: {guias_count}")
+        
+        if guias_count == 0:
             return render(request, 'plan_estudio_template/detalle_estudioindependiente.html', {
                 'silabo': silabo,
-                'mensaje_error': 'Este sílabo no tiene guías asociadas.'
+                'mensaje_error': 'Este sílabo no tiene guía asociada.',
+                'debug_info': debug_info
             })
+        elif guias_count > 1:
+            # Si hay múltiples guías, tomamos la específica para este encuentro
+            # o la primera en su defecto
+            print(f"Atención: Se encontraron {guias_count} guías para el sílabo {silabo_id}")
+            guias = Guia.objects.filter(silabo_id=silabo_id).order_by('numero_guia')
+            for g in guias:
+                print(f"Guía ID: {g.id}, Número: {g.numero_guia}, Silabo: {g.silabo_id}")
             
+            # Intentamos hacer coincidir la guía con el número de encuentro del sílabo
+            try:
+                guia = guias.filter(numero_guia=silabo.encuentros).first()
+                if not guia:
+                    guia = guias.first()  # Si no hay coincidencia, usamos la primera
+            except Exception as e:
+                print(f"Error al filtrar por encuentro: {str(e)}")
+                guia = guias.first()
+        else:
+            # Si hay exactamente una guía
+            guia = Guia.objects.get(silabo_id=silabo_id)
+        
+        # Información de debugging completa
+        debug_info.update({
+            'guia_id': guia.id if guia else None,
+            'guia_numero': guia.numero_guia if guia else None,
+            'total_guias': guias_count
+        })
+        
+        print(f"DEBUG INFO COMPLETO: {debug_info}")
+        
         return render(request, 'plan_estudio_template/detalle_estudioindependiente.html', {
             'silabo': silabo,
             'guia': guia,
             'debug_info': debug_info
         })
+            
     except Silabo.DoesNotExist:
         return HttpResponse(f"Sílabo no encontrado (ID: {silabo_id})", status=404)
     except Exception as e:
-        return HttpResponse(f"Error al cargar la guía: {str(e)} (Sílabo ID: {silabo_id})", status=500)
+        error_msg = f"Error al cargar la guía: {str(e)} (Sílabo ID: {silabo_id})"
+        print(f"ERROR: {error_msg}")
+        return HttpResponse(error_msg, status=500)
