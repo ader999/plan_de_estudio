@@ -3,23 +3,104 @@
 {% block content %}
 
 <style>
+:root {
+  --color-azul-1: #2874a6;
+  --color-azul-2: #1f618d;
+  --color-azul-3: #2e86c1;
+  --color-gris-1: #717d7e;
+  --color-gris-2: #707b7c;
+  --color-azul-oscuro: #2e4053;
+}
+
 #container {
     display: flex;
-    justify-content: center; /* Centrar horizontalmente */
-    align-items: center; /* Centrar verticalmente */
-    height: 100vh; /* Altura del viewport */
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, var(--color-azul-1), var(--color-azul-2), var(--color-azul-3));
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+}
+
+/* Celebratory balloons animation */
+.balloon {
+    position: absolute;
+    width: 30px;
+    height: 40px;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: float 12s linear infinite;
+    opacity: 0.7;
+}
+
+.balloon:before {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) translateX(0) rotate(0);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translateY(-100vh) translateX(calc(20px * var(--i))) rotate(calc(360deg * var(--i)));
+        opacity: 0;
+    }
+}
+
+/* Confetti animation */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    opacity: 0;
+    animation: confetti-fall 5s ease-in-out infinite;
+}
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
 }
 
 #card {
     overflow: hidden;
     position: relative;
     text-align: left;
-    border-radius: 0.5rem;
-    max-width: 500px; /* Aumentar el tamaño máximo de la tarjeta */
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    background-color: #fff;
-    padding: 1.5rem; /* Agregar relleno interno */
-    margin: 0 5%; /* Dejar un margen del 10% (5% a cada lado) */
+    border-radius: 1rem;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    padding: 2rem;
+    margin: 0 5%;
+    z-index: 10;
+    animation: card-appear 0.8s ease-out;
+}
+
+@keyframes card-appear {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 #card .dismiss {
@@ -29,107 +110,197 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1.5rem; /* Aumentar el tamaño del botón */
+    padding: 0.75rem 1.5rem;
     background-color: #fff;
-    color: black;
-    border: 2px solid #D1D5DB;
-    font-size: 1.25rem; /* Aumentar tamaño de fuente */
+    color: var(--color-azul-oscuro);
+    border: 2px solid var(--color-gris-2);
+    font-size: 1.25rem;
     font-weight: 300;
-    width: 40px; /* Aumentar el tamaño del botón */
-    height: 40px; /* Aumentar el tamaño del botón */
+    width: 40px;
+    height: 40px;
     border-radius: 7px;
     transition: .3s ease;
 }
 
+#card .dismiss:hover {
+    background-color: var(--color-azul-3);
+    color: white;
+}
+
 #card .header {
-    padding: 1.5rem 1rem; /* Ajustar padding */
+    padding: 1.5rem 1rem;
 }
 
 #card .image {
     display: flex;
     margin-left: auto;
     margin-right: auto;
-    background-color: #e2feee;
+    background: linear-gradient(135deg, var(--color-azul-3), var(--color-azul-1));
     flex-shrink: 0;
     justify-content: center;
     align-items: center;
-    width: 4rem; /* Aumentar tamaño del círculo */
-    height: 4rem; /* Aumentar tamaño del círculo */
+    width: 5rem;
+    height: 5rem;
     border-radius: 9999px;
-    animation: animate .6s linear alternate-reverse infinite;
+    animation: success-pulse 1.5s ease-in-out infinite alternate;
     transition: .6s ease;
+    box-shadow: 0 0 15px rgba(46, 134, 193, 0.5);
+}
+
+@keyframes success-pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 15px rgba(46, 134, 193, 0.5);
+    }
+    100% {
+        transform: scale(1.1);
+        box-shadow: 0 0 25px rgba(46, 134, 193, 0.8);
+    }
 }
 
 #card .image svg {
-    color: #0afa2a;
-    width: 3rem; /* Aumentar tamaño del SVG */
-    height: 3rem; /* Aumentar tamaño del SVG */
+    color: white;
+    width: 3rem;
+    height: 3rem;
+    stroke: white;
+    animation: check-appear 1s ease-out;
+}
+
+@keyframes check-appear {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 #card .content {
-    margin-top: 1rem; /* Aumentar el espacio superior */
+    margin-top: 1.5rem;
     text-align: center;
 }
 
 #card .title {
-    color: #066e29;
-    font-size: 1.5rem; /* Aumentar tamaño de fuente */
+    color: var(--color-azul-1);
+    font-size: 1.8rem;
     font-weight: 600;
-    line-height: 1.75rem; /* Ajustar altura de línea */
+    line-height: 1.75rem;
+    margin-bottom: 1rem;
+    animation: fade-in 0.8s ease-out 0.3s both;
 }
 
 #card .message {
     margin-top: 0.5rem;
-    color: #595b5f;
-    font-size: 1rem; /* Aumentar tamaño de fuente */
-    line-height: 1.5rem; /* Ajustar altura de línea */
+    color: var(--color-gris-1);
+    font-size: 1.1rem;
+    line-height: 1.5rem;
+    animation: fade-in 0.8s ease-out 0.5s both;
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 #card .actions {
-    margin: 1rem 0; /* Ajustar márgenes */
+    margin: 1.5rem 0 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: fade-in 0.8s ease-out 0.7s both;
 }
 
 #card .history, #card .track {
     display: inline-flex;
-    padding: 0.75rem 1.5rem; /* Aumentar el tamaño de los botones */
-    font-size: 1.25rem; /* Aumentar tamaño de fuente */
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
     line-height: 1.5rem;
     font-weight: 500;
     justify-content: center;
     width: 100%;
-    border-radius: 0.375rem;
-    border: 1px solid #D1D5DB;
-    background-color: #1aa06d; /* Mantener el mismo fondo */
-    color: #ffffff; /* Color del texto */
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border-radius: 0.5rem;
+    border: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+#card .history {
+    background: linear-gradient(135deg, var(--color-azul-2), var(--color-azul-1));
+    color: #ffffff;
+    box-shadow: 0 4px 6px rgba(40, 116, 166, 0.3);
+}
+
+#card .history:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 10px rgba(40, 116, 166, 0.4);
 }
 
 #card .track {
-    background-color: #fff; /* Botón de volver al inicio */
-    color: #242525; /* Color del texto */
-    border: 1px solid #D1D5DB; /* Borde */
+    background-color: white;
+    color: var(--color-azul-oscuro);
+    border: 2px solid var(--color-azul-3);
+    box-shadow: 0 4px 6px rgba(112, 123, 124, 0.1);
+}
+
+#card .track:hover {
+    background-color: var(--color-azul-3);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 7px 10px rgba(112, 123, 124, 0.2);
+}
+
+#card .history a, #card .track a {
+    color: inherit;
+    text-decoration: none;
+    width: 100%;
+    display: block;
 }
 
 /* Estilos responsivos para dispositivos móviles */
 @media (max-width: 768px) {
     #card {
-        width: 90%; /* Hacer que la tarjeta llene el 90% del ancho */
-        margin: 0 auto; /* Centrar la tarjeta */
+        width: 90%;
+        margin: 0 auto;
     }
-}
-
-@keyframes animate {
-    from {
-        transform: scale(1);
-    }
-
-    to {
-        transform: scale(1.09);
+    
+    #card .actions {
+        flex-direction: column;
     }
 }
 </style>
 
 <div id="container">
+    <!-- Animated balloons -->
+    <div class="balloon" style="--i:1; background: rgba(255, 255, 255, 0.7); left: 10%;"></div>
+    <div class="balloon" style="--i:2; background: rgba(255, 255, 255, 0.7); left: 20%;"></div>
+    <div class="balloon" style="--i:3; background: rgba(255, 255, 255, 0.7); left: 30%;"></div>
+    <div class="balloon" style="--i:4; background: rgba(255, 255, 255, 0.7); left: 40%;"></div>
+    <div class="balloon" style="--i:5; background: rgba(255, 255, 255, 0.7); left: 50%;"></div>
+    <div class="balloon" style="--i:6; background: rgba(255, 255, 255, 0.7); left: 60%;"></div>
+    <div class="balloon" style="--i:7; background: rgba(255, 255, 255, 0.7); left: 70%;"></div>
+    <div class="balloon" style="--i:8; background: rgba(255, 255, 255, 0.7); left: 80%;"></div>
+    
+    <!-- Confetti elements -->
+    <div class="confetti" style="background: #ffcc00; left: 10%; animation-delay: 0s;"></div>
+    <div class="confetti" style="background: #ff6699; left: 20%; animation-delay: 0.5s;"></div>
+    <div class="confetti" style="background: #33ccff; left: 30%; animation-delay: 1s;"></div>
+    <div class="confetti" style="background: #99ff66; left: 40%; animation-delay: 1.5s;"></div>
+    <div class="confetti" style="background: #ff9933; left: 50%; animation-delay: 2s;"></div>
+    <div class="confetti" style="background: #cc99ff; left: 60%; animation-delay: 2.5s;"></div>
+    <div class="confetti" style="background: #66ffcc; left: 70%; animation-delay: 3s;"></div>
+    <div class="confetti" style="background: #ff6666; left: 80%; animation-delay: 3.5s;"></div>
+    
     <div id="card">
         <div class="header">
             <div class="image">
@@ -137,20 +308,46 @@
                     <g stroke-width="0" id="SVGRepo_bgCarrier"></g>
                     <g stroke-linejoin="round" stroke-linecap="round" id="SVGRepo_tracerCarrier"></g>
                     <g id="SVGRepo_iconCarrier">
-                        <path stroke-linejoin="round" stroke-linecap="round" stroke-width="1.5" stroke="#000000" d="M20 7L9.00004 18L3.99994 13"></path>
+                        <path stroke-linejoin="round" stroke-linecap="round" stroke-width="2.5" stroke="#ffffff" d="M20 7L9.00004 18L3.99994 13"></path>
                     </g>
                 </svg>
             </div>
             <div class="content">
-                <span class="title">Los datos se guardaron</span>
+                <span class="title">¡Datos guardados con éxito!</span>
                 <p class="message">{{ message }}</p>
             </div>
             <div class="actions">
-                <button type="button" class="history"><a href="{% url 'plan_de_estudio' %}">Ver datos</a></button>
+                <button type="button" class="history"><a href="{% url 'plan_de_estudio' %}">Ver datos guardados</a></button>
                 <button type="button" class="track"><a href="{% url 'inicio' %}">Volver al inicio</a></button>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Add dynamic confetti elements
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('container');
+    
+    // Create more confetti with random colors and positions
+    for (let i = 0; i < 30; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+        
+        // Random colors from our palette
+        const colors = ['#2874a6', '#1f618d', '#2e86c1', '#717d7e', '#707b7c', '#2e4053', '#ffffff'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        confetti.style.background = randomColor;
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.width = Math.random() * 8 + 5 + 'px';
+        confetti.style.height = Math.random() * 8 + 5 + 'px';
+        confetti.style.animationDelay = Math.random() * 5 + 's';
+        confetti.style.animationDuration = Math.random() * 3 + 3 + 's';
+        
+        container.appendChild(confetti);
+    }
+});
+</script>
 
 {% endblock %}
