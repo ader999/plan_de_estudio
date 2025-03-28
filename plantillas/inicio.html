@@ -12,23 +12,32 @@
     <div class="d-flex justify-content-center">
 
         <!-- Toast para mensajes  -->
-        <div aria-live="polite" aria-atomic="true" style="position: relative;">
-            <div style="position: absolute; top: 20px; right: 20px; z-index: 1;">
+        <div aria-live="polite" aria-atomic="true" class="position-relative">
+            <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
                 {% for message in messages %}
-                    <div class="toast show
+                    <div class="toast show shadow-lg border-0 rounded-3 overflow-hidden
                                 {% if message.tags == 'success' %}bg-success text-white
                                 {% elif message.tags == 'error' %}bg-danger text-white
+                                {% else %}bg-white text-dark
                                 {% endif %}"
                          role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
 
-                        <div class="toast-header">
+                        <div class="toast-header {% if message.tags == 'success' %}bg-success bg-opacity-75 text-white
+                                {% elif message.tags == 'error' %}bg-danger bg-opacity-75 text-white
+                                {% else %}bg-light
+                                {% endif %}">
+                            <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill
+                                {% elif message.tags == 'error' %}bi-exclamation-circle-fill
+                                {% else %}bi-info-circle-fill
+                                {% endif %} me-2"></i>
                             <strong class="me-auto">
                                 {% if message.tags == 'success' %} Éxito
                                 {% elif message.tags == 'error' %} Error
                                 {% else %} Notificación
                                 {% endif %}
                             </strong>
-                            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                            <small class="text-opacity-75">Ahora</small>
+                            <button type="button" class="btn-close {% if message.tags == 'success' or message.tags == 'error' %}btn-close-white{% endif %}" data-bs-dismiss="toast" aria-label="Close"></button>
                         </div>
 
                         <div class="toast-body">
@@ -69,71 +78,72 @@
 
                         <!-- Botón para llenar el silabo, solo aparece si no está completado -->
                         {% if asignacion.silabos_creados <= 12 %}
-                            <a href="{% url 'guardar_silabo' asignacion.id %}" class="btn btn-warning">
+                            <a href="{% url 'ver_formulario' asignacion_id=asignacion.id %}" class="btn btn-warning">
                                 <img src="{% static 'img/informe.png' %}" alt="" style="height: 34px">Generar Silabo
                             </a>
                     
                         {% endif %}
+                        
+                        <!-- Indicadores numéricos -->
+                        <div class="d-flex flex-wrap justify-content-center align-items-center mt-3">
+                            {% for i in rango %}
+                                <div class="mx-1 my-1 div-custom {% if i <= asignacion.silabos_creados %}div-green{% else %}div-red{% endif %}">
+                                    <p class="text-center">{{ i }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
 
-                        <div class="d-flex flex-row justify-content-center align-items-center mb-2 row row-cols-2">
-                        {% for i in rango %}
-                            <div class="mx-2 mt-2 div-custom {% if i <= asignacion.silabos_creados %}div-green{% else %}div-red{% endif %}">
-                                <p class="text-center">{{ i }}</p>
-                            </div>
-                        {% endfor %}
+                        <!-- Añade estos estilos al archivo CSS -->
+                        <style>
+                            .div-red {
+                                background: #e74c3c; /* Color rojo */
+                            }
+                            .div-green {
+                                background: #2ecc71; /* Color verde */
+                            }
+                            .div-custom {
+                                width: 30px;
+                                height: 30px;
+                                color: white;
+                                font-weight: bold;
+                                font-size: 16px;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                border-radius: 5px;
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+                                transition: all 0.3s ease;
+                            }
+                            .div-custom:hover {
+                                box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+                            }
+                            .div-custom p {
+                                margin: 0;
+                                padding: 0;
+                            }
+                            @media (max-width: 768px) {
+                            .card {
+                                width: 90%; /* Hacer que la tarjeta llene el 90% del ancho */
+                                margin: 0 auto; /* Centrar la tarjeta */
+                            }
+                        }
+
+                        </style>
+
+
+                        <!-- Footer de la tarjeta, muestra el estado de completado -->
+                        <div class="card-footer text-muted d-flex justify-content-between">
+                            <span>Asignado a: {{ asignacion.usuario.username }}</span>
+                            <span>
+                                {% if asignacion.silabos_creados == 12 %}
+                                    <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
+                                {% else %}
+                                    <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>
+                                {% endif %}
+                            </span>
+                        </div>
                     </div>
-
-                    <!-- Añade estos estilos al archivo CSS -->
-                    <style>
-                        .div-red {
-                            background: #e74c3c; /* Color rojo */
-                        }
-                        .div-green {
-                            background: #2ecc71; /* Color verde */
-                        }
-                        .div-custom {
-                            width: 30px;
-                            height: 30px;
-                            color: white;
-                            font-weight: bold;
-                            font-size: 16px;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            border-radius: 5px;
-                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
-                            transition: all 0.3s ease;
-                        }
-                        .div-custom:hover {
-                            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
-                        }
-                        .div-custom p {
-                            margin: 0;
-                            padding: 0;
-                        }
-                        @media (max-width: 768px) {
-                        .card {
-                            width: 90%; /* Hacer que la tarjeta llene el 90% del ancho */
-                            margin: 0 auto; /* Centrar la tarjeta */
-                        }
-                    }
-
-                    </style>
-
-
-                    <!-- Footer de la tarjeta, muestra el estado de completado -->
-                    <div class="card-footer text-muted d-flex justify-content-between">
-                        <span>Asignado a: {{ asignacion.usuario.username }}</span>
-                        <span>
-                            {% if asignacion.silabos_creados == 12 %}
-                                <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
-                            {% else %}
-                                <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>
-                            {% endif %}
-                        </span>
-                    </div>
-                </div>
                 </div>
             {% endfor %}
 
@@ -151,14 +161,3 @@
 
 
 {% endblock %}
-
-
-
-
-
-
-
-
-
-
-

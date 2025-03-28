@@ -17,14 +17,16 @@ urlpatterns = [
     path('generar_excel2/', views.generar_excel_original, name='generar_excel_original'),
     path('generar_docx/', views.generar_docx, name='generar_docx'),
     path('logout/', views.logout_view, name='logout'),
-    path('agregar_guia/', views.gestionar_silabo_y_guia, name='agregar_guia'),
     path('success_view/', views.success_view, name='success_view'),
     path('generar-silabo/', views.generar_silabo, name='generar_silabo'),
     path('generar_guia/', views.generar_estudio_independiente, name='generar_guia'),
-    path('gestionar_silabo_y_guia/', views.gestionar_silabo_y_guia, name='gestionar_silabo_y_guia_ajax'),
-    path('gestionar_silabo_y_guia/<int:id>/', views.gestionar_silabo_y_guia, name='gestionar_silabo_y_guia'),
-    path('generar-silabo-view/<int:asignacion_id>/', views.gestionar_silabo_y_guia, name='guardar_silabo')
-
+    
+    # Rutas para formularios de sílabo y guía
+    path('formulario_silabo_guia/<int:asignacion_id>/', views.ver_formulario_silabo_guia, name='ver_formulario'),
+    path('guardar_silabo_guia/<int:asignacion_id>/', views.guardar_silabo_y_guia, name='guardar_silabo_guia'),
+    
+    # Ruta para cargar guía específica de un sílabo
+    path('cargar_guia/<int:silabo_id>/', views.cargar_guia, name='cargar_guia'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

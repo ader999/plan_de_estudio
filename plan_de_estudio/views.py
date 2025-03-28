@@ -38,9 +38,29 @@ genai.configure(api_key=os.environ.get("GOOGLE_GENERATIVE_API_KEY"))
 
 @login_required
 def detalle_silabo(request):
-    # Recupera todos los objetos Silabo
-    silabos = Silabo.objects.all()
-    return render(request, 'plan_estudio_template/detalle_silabo.html', {'silabos': silabos})
+    # Recupera todos los objetos Silabo con sus guías relacionadas
+    silabos = Silabo.objects.all().prefetch_related('guias')
+    
+    # Agrupar sílabos por código de asignatura
+    silabos_agrupados = {}
+    
+    for silabo in silabos:
+        codigo = silabo.asignacion.codigo
+        if codigo not in silabos_agrupados:
+            silabos_agrupados[codigo] = []
+        
+        silabos_agrupados[codigo].append(silabo)
+    
+    # Añadir información adicional a cada grupo
+    for codigo, grupo in silabos_agrupados.items():
+        # Ordenar por número de encuentro
+        grupo.sort(key=lambda s: s.encuentros)
+        
+        # Añadir nombre de asignatura como atributo del grupo
+        if grupo:
+            grupo.asignatura = grupo[0].asignacion.nombre
+    
+    return render(request, 'plan_estudio_template/detalle_silabo.html', {'silabos_agrupados': silabos_agrupados})
 
 
 
@@ -412,14 +432,52 @@ def success_view(request):
 
 
 @login_required
-def gestionar_silabo_y_guia(request, asignacion_id=None, id=None):
+def ver_formulario_silabo_guia(request, asignacion_id=None, id=None):
     """
-    Función unificada para gestionar tanto sílabos como guías de estudio independiente.
+    Función para mostrar el formulario de sílabo y guía.
+    Maneja la operación de mostrar el formulario para crear un sílabo o guía.
+    """
+    if asignacion_id or id:
+        if asignacion_id:
+            asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
+        else:
+            asignacion = get_object_or_404(AsignacionPlanEstudio, id=id)
+        nombre_de_usuario = request.user.username
+        silabos_creados = asignacion.silabo_set.count()
+
+        form = SilaboForm(initial={
+            'codigo': asignacion.plan_de_estudio.codigo,
+            'carrera': asignacion.plan_de_estudio.carrera,
+            'asignatura': asignacion.plan_de_estudio,  # Asignar el plan de estudio como asignatura
+            'maestro': request.user,
+            'encuentros': silabos_creados + 1,
+        })
+        guias = obtener_estudios_independientes(asignacion.id)
+        form.fields['guia'].queryset = guias
+
+        asignaturas = Asignatura.objects.all()
+
+        return render(request, 'formulario_principal.html', {
+            'form': form,
+            'asignacion': asignacion,
+            'usuario': nombre_de_usuario,
+            'silabos_creados': silabos_creados,
+            'encuentro': silabos_creados + 1,
+            'asignaturas': asignaturas,
+        })
+    
+    # Caso de error: falta asignacion_id
+    return JsonResponse({'error': 'Falta ID de asignación'}, status=400)
+
+@login_required
+def guardar_silabo_y_guia(request, asignacion_id=None, id=None):
+    """
+    Función para guardar sílabos y guías de estudio independiente.
     Maneja dos operaciones:
-    1. Guardar un nuevo sílabo (método GET y POST con form data)
+    1. Guardar un nuevo sílabo (método POST con form data)
     2. Agregar una guía de estudio independiente (método POST con JSON data)
     """
-    print(f"gestionar_silabo_y_guia llamada con asignacion_id={asignacion_id}, id={id}, método={request.method}")
+    print(f"guardar_silabo_y_guia llamada con asignacion_id={asignacion_id}, id={id}, método={request.method}")
     
     # Caso 1: Guardar guía de estudio y sílabo (POST con JSON)
     if request.method == 'POST' and request.content_type == 'application/json':
@@ -450,16 +508,17 @@ def gestionar_silabo_y_guia(request, asignacion_id=None, id=None):
             silabo = None
             if id:  # Si se está editando un sílabo existente
                 silabo = get_object_or_404(Silabo, id=id)
-            else:
-                # Buscar si ya existe un sílabo para esta asignación
-                silabo = Silabo.objects.filter(asignacion_plan=asignacion).order_by('-encuentros').first()
+            # Eliminamos la búsqueda del sílabo existente para siempre crear uno nuevo
+            # else:
+            #     # Buscar si ya existe un sílabo para esta asignación
+            #     silabo = Silabo.objects.filter(asignacion_plan=asignacion).order_by('-encuentros').first()
                 
             # Si no existe un sílabo o tenemos datos para crear/actualizar uno
             if not silabo or silabo_data:
                 # Si tenemos datos del sílabo, creamos o actualizamos
                 if silabo_data:
                     # Crear un formulario con los datos recibidos
-                    if silabo:
+                    if silabo and id:  # Solo actualizamos si se proporciona un ID específico
                         # Actualizar el sílabo existente
                         form = SilaboForm(silabo_data, instance=silabo)
                     else:
@@ -554,8 +613,14 @@ def gestionar_silabo_y_guia(request, asignacion_id=None, id=None):
                 silabo.save()
                 print(f"Sílabo actualizado con referencia a la guía")
                 
-                # Redirigir a la vista de éxito en lugar de devolver una respuesta JSON
-                return redirect('success_view')
+                # Actualiza el conteo de sílabos creados
+                silabos_creados = Silabo.objects.filter(asignacion_plan=asignacion).count()
+                asignacion.silabos_creados = silabos_creados
+                asignacion.save()
+                
+                # Redirigir a la vista de éxito
+                response_data = {'success': True, 'redirect_url': '/success_view/'}
+                return JsonResponse(response_data)
                 
             except Exception as e:
                 print(f"Error al crear la guía: {e}")
@@ -567,89 +632,67 @@ def gestionar_silabo_y_guia(request, asignacion_id=None, id=None):
             print(f"Error general: {e}")
             return JsonResponse({'error': f'Error general: {str(e)}'}, status=500)
     
-    # Caso 2: Guardar sílabo (GET o POST con form data)
-    elif asignacion_id or id:
+    # Caso 2: Guardar sílabo (POST con form data)
+    elif request.method == 'POST':
         if asignacion_id:
             asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
         else:
             asignacion = get_object_or_404(AsignacionPlanEstudio, id=id)
-        nombre_de_usuario = request.user.username
-        silabos_creados = asignacion.silabo_set.count()
+        
+        form = SilaboForm(request.POST)
+        if form.is_valid():
+            # Guardar el sílabo
+            silabo = form.save(commit=False)
+            silabo.asignacion_plan = asignacion
+            silabo.asignatura = asignacion.plan_de_estudio  # Aseguramos que se asigne la asignatura
+            silabo.save()
 
-        if request.method == 'POST':
-            form = SilaboForm(request.POST)
-            if form.is_valid():
-                # Guardar el sílabo
-                silabo = form.save(commit=False)
-                silabo.asignacion_plan = asignacion
-                silabo.asignatura = asignacion.plan_de_estudio  # Aseguramos que se asigne la asignatura
+            # Actualiza el conteo de sílabos creados
+            silabos_creados = asignacion.silabo_set.count()
+            asignacion.silabos_creados = silabos_creados
+            asignacion.save()
+
+            # Verificar si también se enviaron datos para la guía
+            if 'objetivo_conceptual_guia' in request.POST:
+                # Primero guardamos el sílabo sin asociarlo a una guía
+                silabo.guia = None
+                silabo.save()
+                
+                # Crear una guía asociada al sílabo
+                guia = Guia.objects.create(
+                    silabo=silabo,  # Asociamos la guía al sílabo
+                    numero_guia=1,  # Valor por defecto o ajustar según necesidad
+                    fecha=silabo.fecha,  # Usar la misma fecha del sílabo
+                    unidad=silabo.unidad,  # Usar la misma unidad del sílabo
+                    objetivo_conceptual=request.POST.get('objetivo_conceptual_guia', ''),
+                    objetivo_procedimental=request.POST.get('objetivo_procedimental_guia', ''),
+                    objetivo_actitudinal=request.POST.get('objetivo_actitudinal_guia', ''),
+                    contenido_tematico=request.POST.get('contenido_tematico_guia', silabo.contenido_tematico),
+                    actividades=request.POST.get('actividades', ''),
+                    instrumento_cuaderno=request.POST.get('instrumento_cuaderno', ''),
+                    instrumento_organizador=request.POST.get('instrumento_organizador', ''),
+                    instrumento_diario=request.POST.get('instrumento_diario', ''),
+                    instrumento_prueba=request.POST.get('instrumento_prueba', ''),
+                    criterios_evaluacion=request.POST.get('criterios_evaluacion', ''),
+                    tiempo_minutos=float(request.POST.get('tiempo_minutos', 60.0)),
+                    recursos=request.POST.get('recursos', ''),
+                    evaluacion_sumativa=request.POST.get('evaluacion_sumativa', ''),
+                    fecha_entrega=request.POST.get('fecha_entrega', silabo.fecha)
+                )
+                
+                # Actualizar el sílabo para referenciar esta guía
+                silabo.guia = guia
                 silabo.save()
 
-                # Actualiza el conteo de sílabos creados
-                silabos_creados = asignacion.silabo_set.count()
-                asignacion.silabos_creados = silabos_creados
-                asignacion.save()
-
-                # Verificar si también se enviaron datos para la guía
-                if 'objetivo_conceptual_guia' in request.POST:
-                    # Primero guardamos el sílabo sin asociarlo a una guía
-                    silabo.guia = None
-                    silabo.save()
-                    
-                    # Crear una guía asociada al sílabo
-                    guia = Guia.objects.create(
-                        silabo=silabo,  # Asociamos la guía al sílabo
-                        numero_guia=1,  # Valor por defecto o ajustar según necesidad
-                        fecha=silabo.fecha,  # Usar la misma fecha del sílabo
-                        unidad=silabo.unidad,  # Usar la misma unidad del sílabo
-                        objetivo_conceptual=request.POST.get('objetivo_conceptual_guia', ''),
-                        objetivo_procedimental=request.POST.get('objetivo_procedimental_guia', ''),
-                        objetivo_actitudinal=request.POST.get('objetivo_actitudinal_guia', ''),
-                        contenido_tematico=request.POST.get('contenido_tematico_guia', silabo.contenido_tematico),
-                        actividades=request.POST.get('actividades', ''),
-                        instrumento_cuaderno=request.POST.get('instrumento_cuaderno', ''),
-                        instrumento_organizador=request.POST.get('instrumento_organizador', ''),
-                        instrumento_diario=request.POST.get('instrumento_diario', ''),
-                        instrumento_prueba=request.POST.get('instrumento_prueba', ''),
-                        criterios_evaluacion=request.POST.get('criterios_evaluacion', ''),
-                        tiempo_minutos=float(request.POST.get('tiempo_minutos', 60.0)),
-                        recursos=request.POST.get('recursos', ''),
-                        evaluacion_sumativa=request.POST.get('evaluacion_sumativa', ''),
-                        fecha_entrega=request.POST.get('fecha_entrega', silabo.fecha)
-                    )
-                    
-                    # Actualizar el sílabo para referenciar esta guía
-                    silabo.guia = guia
-                    silabo.save()
-
-                messages.success(request, 'El sílabo ha sido creado correctamente.')
-                return redirect('success_view')
-            else:
-                messages.error(request, 'Hubo un error al crear el sílabo. Por favor, revise los datos.')
+            messages.success(request, 'El sílabo ha sido creado correctamente.')
+            return redirect('success_view')
         else:
-            form = SilaboForm(initial={
-                'codigo': asignacion.plan_de_estudio.codigo,
-                'carrera': asignacion.plan_de_estudio.carrera,
-                'asignatura': asignacion.plan_de_estudio,  # Asignar el plan de estudio como asignatura
-                'maestro': request.user,
-                'encuentros': silabos_creados + 1,
-            })
-            guias = obtener_estudios_independientes(asignacion.id)
-            form.fields['guia'].queryset = guias
-
-        asignaturas = Asignatura.objects.all()
-
-        return render(request, 'generar_silabo.html', {
-            'form': form,
-            'asignacion': asignacion,
-            'usuario': nombre_de_usuario,
-            'silabos_creados': silabos_creados,
-            'encuentro': silabos_creados + 1,
-            'asignaturas': asignaturas,
-        })
+            messages.error(request, 'Hubo un error al crear el sílabo. Por favor, revise los datos.')
+            # Redirigir al formulario con los errores
+            return ver_formulario_silabo_guia(request, asignacion_id, id)
     
-    # Caso de error: método no permitido o falta asignacion_id
-    return JsonResponse({'error': 'Método no permitido o falta ID de asignación'}, status=405)
+    # Caso de error: método no permitido
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 
 @login_required
@@ -702,7 +745,7 @@ def generar_silabo(request):
         try:
             # Limpiar variables de entorno de proxy que podrían estar causando el error
             for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
-                if key in os.environ:
+               if key in os.environ:
                     del os.environ[key]
             
             # Configurar API key para OpenAI 0.28
@@ -845,7 +888,7 @@ def generar_silabo(request):
                 
                 # Buscar el bloque JSON con una expresión regular más robusta
                 # Busca tanto bloques de código markdown con JSON como JSON directo
-                match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```|(\{.*\})', silabo_generado, re.DOTALL)
+                match = re.search(r'```(?:json)?\s*(\{.*\})\s*```|(\{.*\})', silabo_generado, re.DOTALL)
                 
                 if not match:
                     error_msg = 'No se encontró un bloque JSON válido en la respuesta.'
@@ -880,11 +923,7 @@ def generar_silabo(request):
             except json.JSONDecodeError as e:
                 error_msg = f'Error al decodificar JSON: {str(e)}'
                 logging.error(f"{error_msg} - JSON texto: {silabo_json_text}")
-                return JsonResponse({
-                    'error': error_msg, 
-                    'json_text': silabo_json_text[:500],
-                    'respuesta_completa': silabo_generado[:500]
-                }, status=500)
+                return JsonResponse({'error': error_msg}, status=500)
             
             # Devolver el JSON como respuesta
             return JsonResponse({'silabo_data': silabo_data})
@@ -901,6 +940,88 @@ def generar_estudio_independiente(request):
     """
     Vista para generar una guía de estudio utilizando IA.
     """
+    def usar_modelo_google(prompt_completo, generation_config):
+        """
+        Usa el modelo de Google para generar una respuesta basada en el prompt dado.
+
+        Args:
+            prompt_completo (str): Prompt que contiene las instrucciones y datos.
+            generation_config (dict): Configuración para la generación del modelo.
+
+        Returns:
+            str: Respuesta generada por el modelo.
+        """
+        # Cargar la clave API desde .env
+        load_dotenv()
+        api_key = os.environ.get("GOOGLE_GENERATIVE_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_GENERATIVE_API_KEY no está configurada en el archivo .env")
+
+        try:
+            # Configurar la API
+            genai.configure(api_key=api_key)
+
+            # Crear el modelo y sesión de chat
+            model = genai.GenerativeModel(
+                model_name="gemini-1.5-pro-latest",
+                generation_config=generation_config
+            )
+            chat_session = model.start_chat()
+
+            # Generar respuesta
+            response = chat_session.send_message(prompt_completo)
+            return response.text.strip()
+
+        except genai.errors.GenerativeAIError as e:
+            raise RuntimeError(f"Error en la API de Gemini: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Error inesperado: {e}")
+
+
+    def usar_modelo_openai(prompt_completo):
+        """
+        Función para interactuar con OpenAI usando el cliente de chat basado en el script compartido.
+        """
+        try:
+            # Limpiar variables de entorno de proxy que podrían estar causando el error
+            for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
+               if key in os.environ:
+                    del os.environ[key]
+            
+            # Configurar API key para OpenAI 0.28
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
+                
+            # Configurar la API key directamente (estilo OpenAI 0.28)
+            import openai
+            openai.api_key = api_key
+            
+            # Crear el mensaje con el modelo usando la API antigua (0.28)
+            completion = openai.ChatCompletion.create(
+                model="gpt-4o-mini",  # Especifica el modelo deseado
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Asistente para crear sílabo y plan de clases."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt_completo
+                    }
+                ]
+            )
+
+            # Extraer el contenido del mensaje generado
+            messages = completion.choices[0].message.content
+            print("-------------------------------------------------------------", messages)
+            return messages
+
+        except Exception as e:
+            print(f"Error detallado al usar OpenAI: {str(e)}")
+            raise RuntimeError(f"Error al generar respuesta con OpenAI: {str(e)}")
+
+
     def generar_con_openai(prompt):
         """Función interna para generar texto con OpenAI"""
         try:
@@ -1067,6 +1188,7 @@ def generar_estudio_independiente(request):
         """
         
         print("Prompt generado, enviando a la API...")
+        logging.info("Prompt generado, enviando a la API...")
         
         # Generar respuesta según el modelo seleccionado
         respuesta_ai = None
@@ -1097,9 +1219,13 @@ def generar_estudio_independiente(request):
                 return JsonResponse({'error': error_msg}, status=500)
         
         if not respuesta_ai:
-            return JsonResponse({'error': 'No se pudo generar una respuesta'}, status=500)
+            error_msg = 'No se pudo generar una respuesta'
+            logging.error(error_msg)
+            return JsonResponse({'error': error_msg}, status=500)
         
         print("Respuesta generada, procesando...")
+        logging.info("Respuesta generada, procesando...")
+        logging.debug(f"Respuesta AI (primeros 200 caracteres): {respuesta_ai[:200]}...")
         
         # Procesar la respuesta para extraer el JSON
         try:
@@ -1107,11 +1233,13 @@ def generar_estudio_independiente(request):
             json_match = re.search(r'\{.*\}', respuesta_ai, re.DOTALL)
             
             if json_match:
-                # Si encontramos el JSON dentro de bloques de código, usar el grupo 1, de lo contrario usar el grupo 2
-                json_str = json_match.group(0).strip()  # Extraer el JSON encontrado
-
-                # Limpiar el string JSON
+                # Extraer el JSON encontrado
+                json_str = json_match.group(0).strip()
+                
+                # Limpiar el string JSON (eliminar bloques de código markdown)
                 json_str = re.sub(r'```json|```', '', json_str).strip()
+                
+                logging.debug(f"JSON extraído (primeros 200 caracteres): {json_str[:200]}...")
                 
                 # Convertir el texto a un objeto JSON
                 data = json.loads(json_str)
@@ -1121,27 +1249,75 @@ def generar_estudio_independiente(request):
                 for field in expected_fields:
                     if field not in data:
                         data[field] = "" if field != 'tiempo_estimado' else "60"
-                    
+                        
                     # Asegurarse de que los campos de lista sean realmente listas
                     if field in ['actividades', 'recursos', 'criterios_evaluacion']:
                         if not isinstance(data[field], list):
                             if data[field]:  # Si no está vacío
                                 data[field] = [data[field]]
+                            else:
+                                data[field] = []
                 
                 print("Datos procesados correctamente, enviando respuesta")
+                logging.info("Datos procesados correctamente, enviando respuesta")
                 return JsonResponse({'guia_data': data})
             else:
                 error_msg = 'No se encontró un formato JSON válido en la respuesta'
                 logging.error(error_msg)
+                logging.debug(f"Respuesta completa que no contiene JSON: {respuesta_ai}")
                 return JsonResponse({'error': error_msg}, status=500)
-                
+                    
         except json.JSONDecodeError as e:
             error_msg = f'Error al decodificar JSON: {str(e)}'
             logging.error(error_msg)
+            logging.debug(f"JSON con error: {json_str}")
             return JsonResponse({'error': error_msg}, status=500)
         except Exception as e:
             error_msg = f'Error al procesar la respuesta: {str(e)}'
             logging.error(error_msg)
             return JsonResponse({'error': error_msg}, status=500)
+        except Exception as e:
+            error_msg = f'Error inesperado: {str(e)}'
+            logging.error(error_msg)
+            return JsonResponse({'error': error_msg}, status=500)
     
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+@login_required
+def cargar_guia(request, silabo_id):
+    """
+    Vista para cargar una guía específica de un sílabo mediante AJAX.
+    """
+    try:
+        # Obtener el sílabo específico
+        silabo = Silabo.objects.get(id=silabo_id)
+        
+        # Obtener la guía específica para este sílabo
+        # Usamos select_related para optimizar la consulta
+        guia = Guia.objects.filter(silabo_id=silabo_id).first()
+        
+        # Información de debugging
+        debug_info = {
+            'silabo_id': silabo_id,
+            'silabo_encuentro': silabo.encuentros,
+            'guia_id': guia.id if guia else None,
+        }
+        
+        print(f"DEBUG INFO: {debug_info}")
+        
+        if not guia:
+            return render(request, 'plan_estudio_template/detalle_estudioindependiente.html', {
+                'silabo': silabo,
+                'mensaje_error': 'Este sílabo no tiene guías asociadas.'
+            })
+            
+        return render(request, 'plan_estudio_template/detalle_estudioindependiente.html', {
+            'silabo': silabo,
+            'guia': guia,
+            'debug_info': debug_info
+        })
+    except Silabo.DoesNotExist:
+        return HttpResponse(f"Sílabo no encontrado (ID: {silabo_id})", status=404)
+    except Exception as e:
+        return HttpResponse(f"Error al cargar la guía: {str(e)} (Sílabo ID: {silabo_id})", status=500)

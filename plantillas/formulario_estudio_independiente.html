@@ -1,0 +1,247 @@
+{% load static %}
+
+<!-- Contenido del Estudio Independiente -->
+<h2 class="text-center">Guía de Estudio Independiente</h2>
+<script>
+    console.log('Plantilla formulario_estudio_independiente.html cargada');
+    console.log('ID de asignación recibido:', '{{ asignacion.id }}');
+</script>
+
+<form id="formEstudioIndependiente">
+    {% csrf_token %}
+    <!-- Agregar un campo oculto para el ID de asignación -->
+    <input type="hidden" id="asignacion_id" name="asignacion_id" value="{{ asignacion.id }}">
+
+    <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap mb-3">
+        <div class="d-flex align-items-center">
+            <label for="modelo_select_estudio" class="form-label mb-0 me-2">Modelo:</label>
+            <select id="modelo_select_estudio" name="modelo_select" class="form-select" style="width: 200px;">
+                <option value="google">Google - Gemini</option>
+                <option value="openai">OpenAI - GPT</option>
+            </select>
+        </div>
+        
+        {% include 'generar_plan_estudio/boton_generar_estudio.html' %}
+    </div>
+
+    <!-- Campo oculto para Número de Guía -->
+    <input type="hidden" id="numero_guia" name="numero_guia" value="{{ encuentro }}">
+
+    <div class="mb-3">
+        <label for="fecha" class="form-label">Fecha de la Guía</label>
+        <input type="date" class="form-control" id="fecha" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="unidad" class="form-label">Unidad</label>
+        <select class="form-select" id="unidad" required>
+            <option value="Unidad I">Unidad I</option>
+            <option value="Unidad II">Unidad II</option>
+            <option value="Unidad III">Unidad III</option>
+            <option value="Unidad IV">Unidad IV</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Tipo de Objetivo</label>
+        <div class="mb-2">
+            <label for="objetivo_conceptual" class="form-label">Conceptual</label>
+            <textarea class="form-control" id="objetivo_conceptual" rows="2"></textarea>
+        </div>
+        <div class="mb-2">
+            <label for="objetivo_procedimental" class="form-label">Procedimental</label>
+            <textarea class="form-control" id="objetivo_procedimental" rows="2"></textarea>
+        </div>
+        <div class="mb-2">
+            <label for="objetivo_actitudinal" class="form-label">Actitudinal</label>
+            <textarea class="form-control" id="objetivo_actitudinal" rows="2"></textarea>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="contenido_tematico" class="form-label">Contenido Temático</label>
+        <textarea class="form-control" id="contenido_tematico" rows="3" required></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="actividades" class="form-label">Actividades</label>
+        <textarea class="form-control" id="actividades" rows="3" required></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Instrumento de Evaluación</label>
+        <div class="mb-2">
+            <label for="instrumento_cuaderno" class="form-label">Cuaderno del estudiante</label>
+            <textarea class="form-control" id="instrumento_cuaderno" rows="2"></textarea>
+        </div>
+        <div class="mb-2">
+            <label for="instrumento_organizador" class="form-label">Organizador gráfico</label>
+            <textarea class="form-control" id="instrumento_organizador" rows="2"></textarea>
+        </div>
+        <div class="mb-2">
+            <label for="instrumento_diario" class="form-label">Diario de trabajo</label>
+            <textarea class="form-control" id="instrumento_diario" rows="2"></textarea>
+        </div>
+        <div class="mb-2">
+            <label for="instrumento_prueba" class="form-label">Prueba escrita</label>
+            <textarea class="form-control" id="instrumento_prueba" rows="2"></textarea>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="criterios_evaluacion" class="form-label">Criterios de Evaluación</label>
+        <textarea class="form-control" id="criterios_evaluacion" rows="3" required></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="recursos" class="form-label">Recursos</label>
+        <textarea class="form-control" id="recursos" rows="3" required></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label for="tiempo_minutos" class="form-label">Tiempo (minutos)</label>
+        <input type="number" class="form-control" id="tiempo_minutos" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="puntaje" class="form-label">Puntaje</label>
+        <input type="number" step="0.1" class="form-control" id="puntaje">
+    </div>
+
+    <div class="mb-3">
+        <label for="evaluacion_sumativa" class="form-label">Evaluación Sumativa</label>
+        <input type="text" class="form-control" id="evaluacion_sumativa">
+    </div>
+
+    <div class="mb-3">
+        <label for="fecha_entrega" class="form-label">Fecha de Entrega</label>
+        <input type="date" class="form-control" id="fecha_entrega" required>
+    </div>
+
+ 
+</form>
+
+<div class="text-center mt-3">
+    <!-- Botón de guardar eliminado ya que la acción se maneja desde formulario_principal.html -->
+</div>
+
+<script>
+function mostrarSpinnerEstudio() {
+    // Mostrar los spinners quitando la clase d-none
+    $('#boton-generar-estudio .spinner').removeClass('d-none');
+    
+    // Ocultar el texto y el sparkle del botón
+    $('#boton-generar-estudio .text, #boton-generar-estudio .sparkle').addClass('d-none');
+    
+    return true;
+}
+
+$(document).ready(function() {
+    console.log('Inicializando eventos para generar guía de estudio');
+    
+    // Inicializar el botón para generar estudio independiente
+    $('#boton-generar-estudio').on('click', function() {
+        // Mostrar los spinners
+        mostrarSpinnerEstudio();
+        
+        // Deshabilitar el botón
+        $(this).prop('disabled', true);
+        
+        // Obtener el ID de asignación
+        const asignacionId = $('#asignacion_id').val() || $('#asignacion_id_global').val();
+        
+        // Obtener el modelo seleccionado
+        const modeloSeleccionado = $('#modelo_select_estudio').val();
+        
+        // Verificar si se encontró un ID
+        if (!asignacionId) {
+            $(this).prop('disabled', false);
+            // Ocultar spinners y mostrar texto
+            $('#boton-generar-estudio .spinner').addClass('d-none');
+            $('#boton-generar-estudio .text, #boton-generar-estudio .sparkle').removeClass('d-none');
+            alert('Error: No se pudo detectar el ID de asignación. Por favor, intente nuevamente desde la página principal.');
+            return;
+        }
+        
+        // Crear un objeto con los datos para la solicitud
+        const datos = {
+            asignacion_id: asignacionId,
+            modelo_select: modeloSeleccionado
+        };
+        
+        // Obtener el token CSRF
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Realizar la solicitud AJAX
+        $.ajax({
+            url: '/generar_guia/',
+            type: 'POST',
+            data: datos,  
+            dataType: 'json',
+            beforeSend: function(xhr, settings) {
+                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            },
+            success: function(response) {
+                console.log('Respuesta del servidor:', response);
+                
+                // Verificar si tenemos datos de guía
+                if (response.guia_data) {
+                    const guiaData = response.guia_data;
+                    
+                    // Rellenar los campos del formulario con la respuesta
+                    $('#contenido_tematico').val(guiaData.descripcion || '');
+                    
+                    // Manejar actividades (puede ser un array)
+                    if (Array.isArray(guiaData.actividades)) {
+                        $('#actividades').val(guiaData.actividades.join('\n'));
+                    } else {
+                        $('#actividades').val(guiaData.actividades || '');
+                    }
+                    
+                    // Manejar recursos (puede ser un array)
+                    if (Array.isArray(guiaData.recursos)) {
+                        $('#recursos').val(guiaData.recursos.join('\n'));
+                    } else {
+                        $('#recursos').val(guiaData.recursos || '');
+                    }
+                    
+                    $('#tiempo_minutos').val(guiaData.tiempo_estimado || '');
+                    
+                    // Manejar criterios (puede ser un array)
+                    if (Array.isArray(guiaData.criterios_evaluacion)) {
+                        $('#criterios_evaluacion').val(guiaData.criterios_evaluacion.join('\n'));
+                    } else {
+                        $('#criterios_evaluacion').val(guiaData.criterios_evaluacion || '');
+                    }
+                    
+                    $('#puntaje').val(guiaData.puntaje || '');
+                    $('#evaluacion_sumativa').val(guiaData.evaluacion_sumativa || '');
+                    $('#objetivo_conceptual').val(guiaData.objetivo_conceptual || '');
+                    $('#objetivo_procedimental').val(guiaData.objetivo_procedimental || '');
+                    $('#objetivo_actitudinal').val(guiaData.objetivo_actitudinal || '');
+                    $('#instrumento_cuaderno').val(guiaData.instrumento_cuaderno || '');
+                    $('#instrumento_organizador').val(guiaData.instrumento_organizador || '');
+                    $('#instrumento_diario').val(guiaData.instrumento_diario || '');
+                    $('#instrumento_prueba').val(guiaData.instrumento_prueba || '');
+                } else {
+                    console.error('No se recibieron datos de guía en la respuesta');
+                    alert('Error: No se recibieron datos de guía. Por favor, intente nuevamente.');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error al generar estudio independiente:', error);
+                alert('Error al generar el estudio independiente. Por favor, intente nuevamente.');
+            },
+            complete: function() {
+                // Restaurar el botón a su estado original
+                $('#boton-generar-estudio').prop('disabled', false);
+                // Ocultar spinners y mostrar texto
+                $('#boton-generar-estudio .spinner').addClass('d-none');
+                $('#boton-generar-estudio .text, #boton-generar-estudio .sparkle').removeClass('d-none');
+            }
+        });
+    });
+});
+</script>

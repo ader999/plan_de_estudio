@@ -1,31 +1,31 @@
-<button id="boton-generar" class="mt-1" type="submit">
-    <div class="spinner-grow spinner d-none" role="status" id="spinner1" style="color: #FF4081;">
+<button id="boton-generar-estudio" class="mt-1" type="button">
+    <div class="spinner-grow spinner d-none" role="status" id="spinner-estudio1" style="color: #2874a6;">
         <span class="visually-hidden">Loading...</span>
     </div>
 
-    <div class="spinner-grow spinner d-none" role="status" id="spinner2" style="color: #7C4DFF;">
+    <div class="spinner-grow spinner d-none" role="status" id="spinner-estudio2" style="color: #3498db;">
         <span class="visually-hidden">Loading...</span>
     </div>
 
-    <div class="spinner-grow spinner d-none" role="status" id="spinner3" style="color: #FF9800;">
+    <div class="spinner-grow spinner d-none" role="status" id="spinner-estudio3" style="color: #1f618d;">
         <span class="visually-hidden">Loading...</span>
     </div>
 
-    <div class="spinner-grow spinner d-none" role="status" id="spinner4" style="color: #00BCD4;">
+    <div class="spinner-grow spinner d-none" role="status" id="spinner-estudio4" style="color: #7fb3d5;">
         <span class="visually-hidden">Loading...</span>
     </div>
 
     <svg height="18" width="18" viewBox="0 0 24 24" class="sparkle">
-        <path d="M10,21.236,6.755,14.745.264,11.5,6.755,8.255,10,1.764l3.245,6.491L19.736,11.5l-6.491,3.245ZM18,21l1.5,3L21,21l3-1.5L21,18l-1.5-3L18,18l-3,1.5ZM19.333,4.667,20.5,7l1.167-2.333L24,3.5,21.667,2.333,20.5,0,19.333,2.333,17,3.5Z"></path>
+        <path d="M12,2.5L8.42,8.06L2,9.74L6.2,14.88L5.82,21.5L12,19.09L18.18,21.5L17.8,14.88L22,9.74L15.58,8.06L12,2.5z"></path>
     </svg>
     <span class="text">Generar</span>
 </button>
 
 <style>
     /* Estilos del botón */
-    #boton-generar {
+    #boton-generar-estudio {
         border: none;
-        width: 8em;
+        width: 10em;
         height: 3em;
         border-radius: 3em;
         display: flex;
@@ -38,55 +38,56 @@
         position: relative;
     }
 
-    #boton-generar .sparkle {
+    #boton-generar-estudio .sparkle {
         fill: #AAAAAA;
         transition: all 800ms ease;
     }
 
-    #boton-generar .text {
+    #boton-generar-estudio .text {
         font-weight: 600;
         color: #AAAAAA;
         font-size: medium;
     }
 
-    #boton-generar:hover {
-        background: linear-gradient(0deg,#A47CF3,#683FEA);
+    #boton-generar-estudio:hover {
+        background: linear-gradient(0deg, #7CA4F3, #3F68EA);
         box-shadow: inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4),
         inset 0px -4px 0px 0px rgba(0, 0, 0, 0.2),
         0px 0px 0px 4px rgba(255, 255, 255, 0.2),
-        0px 0px 180px 0px #9917FF;
+        0px 0px 180px 0px #1799FF;
         transform: translateY(-2px);
     }
 
-    #boton-generar:hover .text {
+    #boton-generar-estudio:hover .text {
         color: white;
     }
 
-    #boton-generar:hover .sparkle {
+    #boton-generar-estudio:hover .sparkle {
         fill: white;
-        transform: scale(1.2);
+        transform: scale(1.2) rotate(72deg);
     }
 
     /* Estilo del spinner */
-    #boton-generar .spinner {
+    #boton-generar-estudio .spinner {
         width: 25px;
         height: 25px;
         position: absolute;
         left: 10px;
+        margin-left: 20px;
     }
-    #boton-generar #spinner1 {
+    #boton-generar-estudio #spinner-estudio1 {
         left: 5px; /* Ajusta la posición horizontal del spinner 1 */
     }
 
-    #boton-generar #spinner2 {
+    #boton-generar-estudio #spinner-estudio2 {
         left: 32px; /* Ajusta la posición horizontal del spinner 2 */
     }
 
-    #boton-generar #spinner3 {
+    #boton-generar-estudio #spinner-estudio3 {
         left: 59px; /* Ajusta la posición horizontal del spinner 3 */
     }
 
-    #boton-generar #spinner4 {
+    #boton-generar-estudio #spinner-estudio4 {
         left: 86px; /* Ajusta la posición horizontal del spinner 4 */
     }
 </style>

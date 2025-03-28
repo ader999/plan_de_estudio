@@ -1,160 +1,712 @@
 {% load static %}
 
 <style>
-    #table-container {
-        overflow-x: auto; /* Permite el desplazamiento horizontal si es necesario */
-        max-width: 100%;  /* Asegura que no exceda el ancho del contenedor */
+    /* Variables locales para este componente */
+    .silabo-component {
+        --silabo-border-radius: 8px;
+        --silabo-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --silabo-transition: all 0.3s ease;
+        --silabo-azul-2: #1f618d;
+        --silabo-azul-3: #2e86c1;
+        --silabo-azul-oscuro: #2e4053;
+        --silabo-gris-claro: #f5f5f5;
+        --silabo-gris-borde: #e0e0e0;
     }
 
-    #custom-table {
+    .silabo-component .silabo-container {
+        background-color: white;
+        border-radius: var(--silabo-border-radius);
+        box-shadow: var(--silabo-box-shadow);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .silabo-component .silabo-header {
+        background: linear-gradient(135deg, var(--silabo-azul-2), var(--silabo-azul-3));
+        color: white;
+        padding: 1rem 1.5rem;
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .silabo-component .silabo-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .silabo-component .silabo-title::before {
+        content: "📚";
+        font-size: 1.5rem;
+    }
+    
+    /* Navegación principal */
+    .silabo-component .main-nav {
+        display: flex;
+        background-color: var(--silabo-gris-claro);
+        padding: 0;
+        border-bottom: 1px solid var(--silabo-gris-borde);
+        margin-bottom: 1rem;
+    }
+    
+    .silabo-component .main-tab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        cursor: pointer;
+        font-weight: 500;
+        color: var(--silabo-azul-oscuro);
+        border-bottom: 3px solid transparent;
+        transition: var(--silabo-transition);
+        position: relative;
+    }
+    
+    .silabo-component .main-tab.active {
+        color: var(--silabo-azul-3);
+        border-bottom: 3px solid var(--silabo-azul-3);
+        background-color: rgba(46, 134, 193, 0.05);
+    }
+    
+    .silabo-component .main-tab:hover {
+        background-color: rgba(46, 134, 193, 0.1);
+    }
+    
+    .silabo-component .tab-icon {
+        font-size: 1.2rem;
+    }
+    
+    .silabo-component .tab-text {
+        font-size: 0.95rem;
+    }
+    
+    /* Navegación de encuentros */
+    .silabo-component .encuentros-nav {
+        display: flex;
+        background-color: white;
+        overflow-x: auto;
+        padding: 10px;
+        gap: 8px;
+        border-bottom: 1px solid var(--silabo-gris-borde);
+    }
+    
+    .silabo-component .encuentro-tab {
+        background-color: var(--silabo-gris-claro);
+        border: 1px solid var(--silabo-gris-borde);
+        border-radius: 50px;
+        padding: 8px 16px;
+        min-width: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--silabo-transition);
+        font-weight: 600;
+        color: var(--silabo-azul-oscuro);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .silabo-component .encuentro-tab.active {
+        background-color: var(--silabo-azul-3);
+        color: white;
+        border-color: var(--silabo-azul-3);
+    }
+    
+    .silabo-component .encuentro-tab:hover:not(.active) {
+        background-color: rgba(46, 134, 193, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    /* Contenedores principales */
+    .silabo-component .main-content {
+        display: none;
+    }
+    
+    .silabo-component .main-content.active {
+        display: block;
+    }
+    
+    /* Contenido del encuentro */
+    .silabo-component .encuentro-content {
+        display: none;
+        padding: 20px;
+    }
+    
+    .silabo-component .encuentro-content.active {
+        display: block;
+    }
+    
+    /* Secciones de datos */
+    .silabo-component .data-section {
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--silabo-gris-borde);
+        padding-bottom: 20px;
+    }
+    
+    .silabo-component .data-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .silabo-component .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--silabo-azul-oscuro);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .silabo-component .section-title::before {
+        font-size: 1.2rem;
+    }
+    
+    .silabo-component .info-title::before {
+        content: "ℹ️";
+    }
+    
+    .silabo-component .objetivos-title::before {
+        content: "🎯";
+    }
+    
+    .silabo-component .momentos-title::before {
+        content: "⏱️";
+    }
+    
+    .silabo-component .contenidos-title::before {
+        content: "📝";
+    }
+    
+    .silabo-component .estrategias-title::before {
+        content: "🧠";
+    }
+    
+    /* Tarjetas de datos */
+    .silabo-component .data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+    
+    .silabo-component .data-card {
+        background-color: var(--silabo-gris-claro);
+        border-radius: var(--silabo-border-radius);
+        padding: 16px;
+    }
+    
+    .silabo-component .data-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--silabo-azul-oscuro);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .silabo-component .data-value {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: #333;
+    }
+    
+    /* Objetivos */
+    .silabo-component .objetivos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+    
+    .silabo-component .objetivo-card {
+        background-color: var(--silabo-gris-claro);
+        border-radius: var(--silabo-border-radius);
+        padding: 16px;
+        border-left: 4px solid var(--silabo-azul-3);
+    }
+    
+    .silabo-component .objetivo-conceptual {
+        border-left-color: #3498db;
+    }
+    
+    .silabo-component .objetivo-procedimental {
+        border-left-color: #2ecc71;
+    }
+    
+    .silabo-component .objetivo-actitudinal {
+        border-left-color: #e74c3c;
+    }
+    
+    /* Estudio independiente */
+    .silabo-component .estudio-independiente {
+        padding: 20px;
+    }
+    
+    .silabo-component .estudio-table {
         width: 100%;
-        border-collapse: collapse; /* Elimina el espacio entre los bordes de las celdas */
-        table-layout: fixed; /* Fija el ancho de las columnas según lo definido */
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 20px;
+        border-radius: var(--silabo-border-radius);
+        overflow: hidden;
+        box-shadow: var(--silabo-box-shadow);
     }
-
-    #custom-table th, #custom-table td {
-        border: 1px solid black; /* Bordes negros para todas las celdas */
-        padding: 12px; /* Espaciado para todos los th y td */
+    
+    .silabo-component .estudio-table th {
+        background-color: var(--silabo-azul-oscuro);
+        color: white;
         text-align: left;
-        overflow: hidden; /* Oculta contenido que excede el ancho */
-        text-overflow: ellipsis; /* Añade puntos suspensivos para el texto largo */
-        white-space: normal; /* Permite que el texto se envuelva a la siguiente línea */
+        padding: 12px 16px;
+        font-weight: 600;
+        font-size: 0.9rem;
     }
-
-    #custom-table th {
-        background-color: #e1e1e1; /* Fondo negro para los encabezados */
-        color: black; /* Color de texto blanco para los encabezados */
-        font-weight: bold;
+    
+    .silabo-component .estudio-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--silabo-gris-borde);
+        font-size: 0.95rem;
     }
-
-    /* Tamaños personalizados para columnas */
-    #th-small {
-        width: 50px;
+    
+    .silabo-component .estudio-table tr:nth-child(odd) {
+        background-color: white;
     }
-
-    #th-medium {
-        width: 100px;
+    
+    .silabo-component .estudio-table tr:nth-child(even) {
+        background-color: var(--silabo-gris-claro);
     }
-
-    #th-large {
-        width: 400px;
+    
+    /* Botones de navegación */
+    .silabo-component .btn-nav {
+        background: linear-gradient(135deg, var(--silabo-azul-2), var(--silabo-azul-3));
+        border: none;
+        border-radius: 6px;
+        color: white;
+        padding: 10px 16px;
+        font-size: 0.9rem;
+        transition: var(--silabo-transition);
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 16px;
+        cursor: pointer;
     }
-
-    #th-xlarge {
-        width: 500px;
+    
+    .silabo-component .btn-nav:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
-
-    /* Estilos para las filas de datos */
-    #custom-table tbody tr:nth-child(odd) {
-        background-color: #f9f9f9; /* Color para filas impares */
+    
+    .silabo-component .btn-ver-silabo::before {
+        content: "📋";
+        font-size: 1rem;
     }
-
-    #custom-table tbody tr:nth-child(even) {
-        background-color: #e5e5e5; /* Color para filas pares */
+    
+    /* Estilos para los botones de exportación */
+    .silabo-component .export-buttons {
+        padding: 16px;
+        background-color: var(--silabo-gris-claro);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        border-top: 1px solid var(--silabo-gris-borde);
+    }
+    
+    .silabo-component .export-btn {
+        background-color: white;
+        border: 1px solid var(--silabo-gris-borde);
+        border-radius: 6px;
+        color: var(--silabo-azul-oscuro);
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        transition: var(--silabo-transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .silabo-component .export-btn:hover {
+        background-color: var(--silabo-azul-oscuro);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--silabo-box-shadow);
+    }
+    
+    .silabo-component .export-btn img {
+        height: 24px;
+        transition: var(--silabo-transition);
+    }
+    
+    .silabo-component .export-btn:hover img {
+        filter: brightness(0) invert(1);
+    }
+    
+    /* Estilos responsivos */
+    @media (max-width: 768px) {
+        .silabo-component .silabo-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 0.8rem 1rem;
+        }
+        
+        .silabo-component .data-grid,
+        .silabo-component .objetivos-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .silabo-component .export-buttons {
+            justify-content: center;
+        }
+        
+        .silabo-component .main-nav {
+            flex-direction: column;
+            align-items: stretch;
+        }
     }
 </style>
 
-
-
-<div class="container">
+<div class="container silabo-component">
     {% for codigo, silabos_grupo in silabos_agrupados.items %}
-    <div id="table-container" class="mb-3">
-        <h2>  {{ silabos_grupo.asignatura }}</h2>
-        <table id="custom-table">
-            <thead class="border-top-color">
-
-
-
-
-                <tr>
-                    <th scope="col" id="th-medium">N Encuentro</th>
-                    <th scope="col" id="th-medium">Carrera</th>
-                    <th scope="col" id="th-large">Asignatura</th>
-                    <th scope="col" id="th-medium">Maestro</th>
-                    <th scope="col" id="th-medium">Fecha</th>
-                    <th scope="col" id="th-xlarge">Objetivo Conceptual</th>
-                    <th scope="col" id="th-xlarge">Objetivo Procedimental</th>
-                    <th scope="col" id="th-xlarge">Objetivo Actitudinal</th>
-                    <th scope="col" id="th-large">P Momento Didáctico</th>
-                    <th scope="col" id="th-large">S Momento Didáctico</th>
-                    <th scope="col" id="th-large">T Momento Didáctico</th>
-                    <th scope="col" id="th-medium">Unidad</th>
-                    <th scope="col" id="th-large">Detalle Unidad</th>
-                    <th scope="col" id="th-large">Contenido Temático</th>
-                    <th scope="col" id="th-large">Forma Organizativa</th>
-                    <th scope="col" id="th-medium">Tiempo</th>
-                    <th scope="col" id="th-large">Técnicas de Aprendizaje</th>
-                    <th scope="col" id="th-large">Estrategia Aprendizaje</th>
-                    <th scope="col" id="th-medium">Eje Transversal</th>
-                    <th scope="col" id="th-small">HP</th>
-                    <th scope="col" id="th-large">Estudio I</th>
-                </tr>
-            </thead>
-            <tbody class="table-group-divider">
-            {% for silabo in silabos_grupo %}
-                <tr class="align-top">
-                    <th><h4>{{ silabo.encuentros }}</h4></th>
-                    <td>{{ silabo.carrera }}</td>
-                    <td>{{ silabo.asignatura }}</td>
-                    <td>{{ silabo.maestro }}</td>
-                    <td>{{ silabo.fecha }}</td>
-                    <td>{{ silabo.objetivo_conceptual }}</td>
-                    <td>{{ silabo.objetivo_procedimental }}</td>
-                    <td>{{ silabo.objetivo_actitudinal }}</td>
-                    <td>{{ silabo.momento_didactico_primer }}</td>
-                    <td>{{ silabo.momento_didactico_segundo }}</td>
-                    <td>{{ silabo.momento_didactico_tercer }}</td>
-                    <td>{{ silabo.unidad }}</td>
-                    <td>{{ silabo.detalle_unidad }}</td>
-                    <td>{{ silabo.contenido_tematico }}</td>
-                    <td>{{ silabo.forma_organizativa }}</td>
-                    <td>{{ silabo.tiempo }}</td>
-                    <td>{{ silabo.tecnicas_aprendizaje }}</td>
-                    <td>{{ silabo.descripcion_estrategia }}</td>
-                    <td>{{ silabo.eje_transversal }}</td>
-                    <td>{{ silabo.hp }}</td>
-                    <td>
-                        {% include 'plan_estudio_template/detalle_estudioindependiente.html' %}
-
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tableModal">
-                            Ver Estudio Independiente
-                        </button>
-                    </td>
-                </tr>
+    <div class="silabo-container">
+        <div class="silabo-header">
+            <h2 class="silabo-title">{{ silabos_grupo.asignatura }}</h2>
+            <div>
+                <span>Total de encuentros: {{ silabos_grupo|length }}/12</span>
+            </div>
+        </div>
+        
+        <!-- Navegación principal entre sílabo y estudio independiente -->
+        <div class="main-nav">
+            <div class="main-tab silabo-tab active" data-view="silabo-view-{{ codigo }}">
+                <span class="tab-icon">📋</span>
+                <span class="tab-text">Sílabo</span>
+            </div>
+            <div class="main-tab estudio-tab" data-view="estudio-view-{{ codigo }}">
+                <span class="tab-icon">📝</span>
+                <span class="tab-text">Guía</span>
+            </div>
+        </div>
+        
+        <!-- Vista del Sílabo -->
+        <div class="main-content active" id="silabo-view-{{ codigo }}">
+            <!-- Navegación de encuentros -->
+            <div class="encuentros-nav">
+                {% for silabo in silabos_grupo %}
+                <div class="encuentro-tab {% if forloop.first %}active{% endif %}" data-target="encuentro-{{ silabo.encuentros }}-{{ codigo }}">
+                    {{ silabo.encuentros }}
+                </div>
                 {% endfor %}
-                <tr>
-                    <th colspan="30">
-                       <div class="d-flex align-items-center gap-3">
-                            <form method="post" action="{% url 'generar_excel' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
-                                <button type="submit" class="btn btn-secondary d-flex align-items-center">
-                                    <img src="{% static 'img/exel2.png' %}" alt="" style="height: 34px" class="me-2">Exportar en Excel
-                                </button>
-                            </form>
-
-                           <form method="post" action="{% url 'generar_excel_original' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
-                                <button type="submit" class="btn btn-secondary d-flex align-items-center">
-                                    <img src="{% static 'img/exel2.png' %}" alt="" style="height: 34px" class="me-2">Exportar Exel plantilla original
-                                </button>
-                            </form>
-
-                            <form method="post" action="{% url 'generar_docx' %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
-                                <button type="submit" class="btn btn-secondary d-flex align-items-center">
-                                    <img src="{% static 'img/doc.png' %}" alt="" style="height: 30px" class="me-2">Exportar en Word
-                                </button>
-                            </form>
+            </div>
+            
+            <!-- Contenido de cada encuentro -->
+            {% for silabo in silabos_grupo %}
+            <div class="encuentro-content {% if forloop.first %}active{% endif %}" id="encuentro-{{ silabo.encuentros }}-{{ codigo }}">
+                <!-- Información básica -->
+                <div class="data-section">
+                    <h3 class="section-title info-title">Información General</h3>
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <div class="data-label">Carrera</div>
+                            <div class="data-value">{{ silabo.carrera }}</div>
                         </div>
+                        <div class="data-card">
+                            <div class="data-label">Asignatura</div>
+                            <div class="data-value">{{ silabo.asignatura }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Maestro</div>
+                            <div class="data-value">{{ silabo.maestro }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Fecha</div>
+                            <div class="data-value">{{ silabo.fecha }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Objetivos -->
+                <div class="data-section">
+                    <h3 class="section-title objetivos-title">Objetivos</h3>
+                    <div class="objetivos-grid">
+                        <div class="objetivo-card objetivo-conceptual">
+                            <div class="data-label">Objetivo Conceptual</div>
+                            <div class="data-value">{{ silabo.objetivo_conceptual }}</div>
+                        </div>
+                        <div class="objetivo-card objetivo-procedimental">
+                            <div class="data-label">Objetivo Procedimental</div>
+                            <div class="data-value">{{ silabo.objetivo_procedimental }}</div>
+                        </div>
+                        <div class="objetivo-card objetivo-actitudinal">
+                            <div class="data-label">Objetivo Actitudinal</div>
+                            <div class="data-value">{{ silabo.objetivo_actitudinal }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Momentos Didácticos -->
+                <div class="data-section">
+                    <h3 class="section-title momentos-title">Momentos Didácticos</h3>
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <div class="data-label">Primer Momento</div>
+                            <div class="data-value">{{ silabo.momento_didactico_primer }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Segundo Momento</div>
+                            <div class="data-value">{{ silabo.momento_didactico_segundo }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Tercer Momento</div>
+                            <div class="data-value">{{ silabo.momento_didactico_tercer }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contenido y Unidad -->
+                <div class="data-section">
+                    <h3 class="section-title contenidos-title">Contenido y Unidad</h3>
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <div class="data-label">Unidad</div>
+                            <div class="data-value">{{ silabo.unidad }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Detalle Unidad</div>
+                            <div class="data-value">{{ silabo.detalle_unidad }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Contenido Temático</div>
+                            <div class="data-value">{{ silabo.contenido_tematico }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Forma Organizativa</div>
+                            <div class="data-value">{{ silabo.forma_organizativa }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Estrategias y Técnicas -->
+                <div class="data-section">
+                    <h3 class="section-title estrategias-title">Estrategias y Técnicas</h3>
+                    <div class="data-grid">
+                        <div class="data-card">
+                            <div class="data-label">Técnicas de Aprendizaje</div>
+                            <div class="data-value">{{ silabo.tecnicas_aprendizaje }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Estrategia Aprendizaje</div>
+                            <div class="data-value">{{ silabo.descripcion_estrategia }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Eje Transversal</div>
+                            <div class="data-value">{{ silabo.eje_transversal }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">Tiempo</div>
+                            <div class="data-value">{{ silabo.tiempo }}</div>
+                        </div>
+                        <div class="data-card">
+                            <div class="data-label">HP</div>
+                            <div class="data-value">{{ silabo.hp }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Vista del Estudio Independiente -->
+        <div class="main-content" id="estudio-view-{{ codigo }}">
+            <div class="encuentros-nav">
+                {% for silabo in silabos_grupo %}
+                <div class="encuentro-tab-guia {% if forloop.first %}active{% endif %}" data-target="guia-{{ silabo.encuentros }}-{{ codigo }}" data-silabo-id="{{ silabo.id }}">
+                    {{ silabo.encuentros }}
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div id="guia-container-{{ codigo }}">
+                <!-- El contenido se cargará mediante AJAX -->
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Cargando guía...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botones de exportación -->
+        <div class="export-buttons">
+            <form method="post" action="{% url 'generar_excel' %}">
+                {% csrf_token %}
+                <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
+                <button type="submit" class="export-btn">
+                    <img src="{% static 'img/exel2.png' %}" alt="">Excel
+                </button>
+            </form>
 
-                    </th>
+            <form method="post" action="{% url 'generar_excel_original' %}">
+                {% csrf_token %}
+                <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
+                <button type="submit" class="export-btn">
+                    <img src="{% static 'img/exel2.png' %}" alt="">Excel (plantilla original)
+                </button>
+            </form>
 
-                </tr>
-            </tbody>
-        </table>
+            <form method="post" action="{% url 'generar_docx' %}">
+                {% csrf_token %}
+                <input type="hidden" name="codigoSilabo" value="{{ codigo }}">
+                <button type="submit" class="export-btn">
+                    <img src="{% static 'img/doc.png' %}" alt="">Word
+                </button>
+            </form>
+        </div>
     </div>
     {% endfor %}
 </div>
+
+<script>
+    // JavaScript para la navegación entre encuentros y vistas principales
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener todas las pestañas de encuentros
+        const encuentroTabs = document.querySelectorAll('.encuentro-tab');
+        const encuentroContents = document.querySelectorAll('.encuentro-content');
+        const mainTabs = document.querySelectorAll('.main-tab');
+        const mainContents = document.querySelectorAll('.main-content');
+        
+        // Función para cambiar entre encuentros
+        function switchEncuentro(targetId, tabs, contents) {
+            // Remover clase active de todas las pestañas y contenidos
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Agregar clase active a la pestaña seleccionada
+            const selectedTab = document.querySelector(`[data-target="${targetId}"]`);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // Agregar clase active al contenido seleccionado
+            const selectedContent = document.getElementById(targetId);
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+            }
+        }
+        
+        // Función para cambiar entre vistas principales
+        function switchView(viewId, container) {
+            // Obtener todas las pestañas y contenidos en este contenedor
+            const tabs = container.querySelectorAll('.main-tab');
+            const contents = container.querySelectorAll('.main-content');
+            
+            // Desactivar todas las pestañas y contenidos
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Activar la pestaña y contenido seleccionados
+            container.querySelector(`[data-view="${viewId}"]`).classList.add('active');
+            container.querySelector(`#${viewId}`).classList.add('active');
+        }
+        
+        // Eventos para pestañas de encuentros
+        encuentroTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                switchEncuentro(targetId, encuentroTabs, encuentroContents);
+            });
+        });
+        
+        // Función para cargar guía mediante AJAX
+        function cargarGuia(silaboId, container) {
+            // Mostrar indicador de carga
+            container.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2">Cargando guía...</p></div>';
+            
+            // Hacer una petición AJAX para cargar la guía correspondiente
+            fetch(`/cargar_guia/${silaboId}/`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    container.innerHTML = html;
+                    console.log(`Guía cargada para sílabo ID: ${silaboId}`);
+                })
+                .catch(error => {
+                    console.error('Error al cargar la guía:', error);
+                    container.innerHTML = `<div class="alert alert-danger">Error al cargar la guía: ${error.message}</div>`;
+                });
+        }
+        
+        // Eventos para pestañas de encuentros en guías
+        document.querySelectorAll('.encuentro-tab-guia').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Desactivar todas las pestañas
+                const tabsContainer = this.closest('.encuentros-nav');
+                tabsContainer.querySelectorAll('.encuentro-tab-guia').forEach(t => {
+                    t.classList.remove('active');
+                });
+                
+                // Activar la pestaña actual
+                this.classList.add('active');
+                
+                // Obtener el ID del sílabo y el contenedor
+                const silaboId = this.getAttribute('data-silabo-id');
+                const codigo = this.getAttribute('data-target').split('-')[2];
+                const container = document.getElementById(`guia-container-${codigo}`);
+                
+                // Cargar la guía
+                console.log(`Cargando guía para sílabo ID: ${silaboId}`);
+                cargarGuia(silaboId, container);
+            });
+        });
+        
+        // Eventos para pestañas principales
+        mainTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const viewId = this.getAttribute('data-view');
+                const container = this.closest('.silabo-container');
+                
+                // Si estamos cambiando a la vista de guía, cargar la guía activa
+                if (viewId.includes('estudio-view')) {
+                    const codigo = viewId.split('-')[2];
+                    const activeGuiaTab = container.querySelector('.encuentro-tab-guia.active');
+                    if (activeGuiaTab) {
+                        const silaboId = activeGuiaTab.getAttribute('data-silabo-id');
+                        const guiaContainer = document.getElementById(`guia-container-${codigo}`);
+                        cargarGuia(silaboId, guiaContainer);
+                    }
+                }
+                
+                switchView(viewId, container);
+            });
+        });
+        
+        // Cargar las guías iniciales para cada grupo de sílabos
+        document.querySelectorAll('.silabo-container').forEach(container => {
+            const codigo = container.querySelector('.main-content').id.split('-')[2];
+            const firstGuiaTab = container.querySelector('.encuentro-tab-guia.active');
+            
+            if (firstGuiaTab) {
+                const silaboId = firstGuiaTab.getAttribute('data-silabo-id');
+                const guiaContainer = document.getElementById(`guia-container-${codigo}`);
+                cargarGuia(silaboId, guiaContainer);
+            }
+        });
+    });
+</script>

@@ -1,46 +1,257 @@
-<!-- Modal -->
-<div class="modal fade" id="tableModal" tabindex="-1" aria-labelledby="tableModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="tableModalLabel">Detalles de Estudio</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="table-container mb-3" style="overflow-x: auto;">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th scope="col">N°</th>
-                                <th scope="col">Contenido</th>
-                                <th scope="col">Técnica de Evaluación</th>
-                                <th scope="col">Instrumento de Evaluación</th>
-                                <th scope="col">Orientación</th>
-                                <th scope="col">Recursos Bibliográficos</th>
-                                <th scope="col">Enlace</th>
-                                <th scope="col">Tiempo de Estudio</th>
-                                <th scope="col">Fecha de Entrega</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <th scope="row">{{ silabo.estudio_independiente.id  }}</th>
-                                <td> {{ silabo.estudio_independiente.contenido }}</td>
-                                <td>{{ silabo.estudio_independiente.tecnica_evaluacion  }}</td>
-                                <td>{{ silabo.estudio_independiente.orientacion }}</td>
-                                <td>{{ silabo.estudio_independiente.recursos_bibliograficos }}</td>
-                                <td><a href="{{ silabo.estudio_independiente.enlace }}" target="_blank">{{ silabo.estudio_independiente.enlace }}</a></td>
-                                <td>{{ silabo.estudio_independiente.tiempo_estudio }}</td>
-                                <td>{{ silabo.estudio_independiente.fecha_entrega }}</td>
-                            </tr>
-
-                        </tbody>
-                    </table>
+<!-- Contenido del estudio independiente -->
+<div class="main-content active" id="estudio-view-{{ codigo }}">
+    {% if mensaje_error %}
+    <div class="alert alert-info">
+        <p class="text-center mb-0">{{ mensaje_error }}</p>
+    </div>
+    {% else %}
+        {% if guia %}
+        <!-- Contenido de la guía -->
+        <div class="encuentro-content active">
+            <!-- Información básica -->
+            <div class="data-section">
+                <h3 class="section-title info-title">Información General</h3>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <div class="data-label">Fecha</div>
+                        <div class="data-value">{{ guia.fecha }}</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Unidad</div>
+                        <div class="data-value">{{ guia.unidad }}</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Puntaje</div>
+                        <div class="data-value">{{ guia.puntaje|default:"No especificado" }}</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Fecha de Entrega</div>
+                        <div class="data-value">{{ guia.fecha_entrega|default:"No especificado" }}</div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            
+            <!-- Objetivos -->
+            <div class="data-section">
+                <h3 class="section-title objetivos-title">Objetivos</h3>
+                <div class="objetivos-grid">
+                    <div class="objetivo-card objetivo-conceptual">
+                        <div class="data-label">Objetivo Conceptual</div>
+                        <div class="data-value">{{ guia.objetivo_conceptual|default:"No especificado" }}</div>
+                    </div>
+                    <div class="objetivo-card objetivo-procedimental">
+                        <div class="data-label">Objetivo Procedimental</div>
+                        <div class="data-value">{{ guia.objetivo_procedimental|default:"No especificado" }}</div>
+                    </div>
+                    <div class="objetivo-card objetivo-actitudinal">
+                        <div class="data-label">Objetivo Actitudinal</div>
+                        <div class="data-value">{{ guia.objetivo_actitudinal|default:"No especificado" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contenido y Actividades -->
+            <div class="data-section">
+                <h3 class="section-title contenidos-title">Contenido y Actividades</h3>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <div class="data-label">Contenido Temático</div>
+                        <div class="data-value">{{ guia.contenido_tematico|default:"No especificado" }}</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Actividades</div>
+                        <div class="data-value">{{ guia.actividades|default:"No especificado" }}</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Recursos</div>
+                        <div class="data-value">{{ guia.recursos|default:"No especificado" }}</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Tiempo (minutos)</div>
+                        <div class="data-value">{{ guia.tiempo_minutos|default:"No especificado" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Evaluación -->
+            <div class="data-section">
+                <h3 class="section-title evaluacion-title">Evaluación</h3>
+                <div class="data-grid">
+                    <div class="data-card">
+                        <div class="data-label">Criterios de Evaluación</div>
+                        <div class="data-value">{{ guia.criterios_evaluacion|default:"No especificado" }}</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Evaluación Sumativa</div>
+                        <div class="data-value">
+                            {% if guia.evaluacion_sumativa %}
+                            <a href="{{ guia.evaluacion_sumativa }}" target="_blank">{{ guia.evaluacion_sumativa }}</a>
+                            {% else %}
+                            No especificado
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Instrumentos de Evaluación -->
+            <div class="data-section">
+                <h3 class="section-title instrumentos-title">Instrumentos de Evaluación</h3>
+                <div class="data-grid">
+                    {% if guia.instrumento_cuaderno %}
+                    <div class="data-card">
+                        <div class="data-label">Cuaderno</div>
+                        <div class="data-value">{{ guia.instrumento_cuaderno }}</div>
+                    </div>
+                    {% endif %}
+                    {% if guia.instrumento_organizador %}
+                    <div class="data-card">
+                        <div class="data-label">Organizador</div>
+                        <div class="data-value">{{ guia.instrumento_organizador }}</div>
+                    </div>
+                    {% endif %}
+                    {% if guia.instrumento_diario %}
+                    <div class="data-card">
+                        <div class="data-label">Diario</div>
+                        <div class="data-value">{{ guia.instrumento_diario }}</div>
+                    </div>
+                    {% endif %}
+                    {% if guia.instrumento_prueba %}
+                    <div class="data-card">
+                        <div class="data-label">Prueba</div>
+                        <div class="data-value">{{ guia.instrumento_prueba }}</div>
+                    </div>
+                    {% endif %}
+                    {% if not guia.instrumento_cuaderno and not guia.instrumento_organizador and not guia.instrumento_diario and not guia.instrumento_prueba %}
+                    <div class="data-card">
+                        <div class="data-label">Instrumentos</div>
+                        <div class="data-value">No especificado</div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
+        {% else %}
+        <div class="alert alert-info">
+            <p class="text-center mb-0">No hay guía de estudio independiente asociada a este sílabo</p>
+        </div>
+        {% endif %}
+    {% endif %}
 </div>
+
+<style>
+    /* Estilos para el estudio independiente */
+    .main-content {
+        display: none;
+        padding: 1.5rem;
+    }
+    
+    .main-content.active {
+        display: block;
+    }
+    
+    .data-section {
+        margin-bottom: 30px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 20px;
+    }
+    
+    .section-title {
+        color: var(--color-azul-oscuro);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--color-azul-3);
+        font-weight: 600;
+    }
+    
+    .info-title::before {
+        content: "📋";
+        margin-right: 8px;
+    }
+    
+    .objetivos-title::before {
+        content: "🎯";
+        margin-right: 8px;
+    }
+    
+    .contenidos-title::before {
+        content: "📚";
+        margin-right: 8px;
+    }
+    
+    .evaluacion-title::before {
+        content: "✅";
+        margin-right: 8px;
+    }
+    
+    .instrumentos-title::before {
+        content: "🔍";
+        margin-right: 8px;
+    }
+    
+    .data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+    }
+    
+    .data-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        border-left: 4px solid var(--color-azul-3);
+    }
+    
+    .data-label {
+        font-weight: 600;
+        color: var(--color-azul-oscuro);
+        margin-bottom: 5px;
+    }
+    
+    .data-value {
+        color: #333;
+        line-height: 1.5;
+    }
+    
+    .objetivos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+    }
+    
+    .objetivo-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .objetivo-conceptual {
+        border-left: 4px solid #2874a6;
+    }
+    
+    .objetivo-procedimental {
+        border-left: 4px solid #2e86c1;
+    }
+    
+    .objetivo-actitudinal {
+        border-left: 4px solid #1f618d;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .data-grid, .objetivos-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    // JavaScript para la navegación
+    document.addEventListener('DOMContentLoaded', function() {
+        // No hay navegación entre guías
+    });
+</script>

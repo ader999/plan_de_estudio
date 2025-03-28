@@ -1,91 +1,260 @@
 /* Archivo: estilos.css */
 :root {
-  --color-fondo:#C0C0C0 ;
-    --color-navar: #09799a ;
-    --color-fuente: black;
-    --color-fuente-navar: white;
+  --color-fondo: var(--color-gris-1);
+  --color-navar: var(--color-azul-2);
+  --color-fuente: white;
+  --color-fuente-navar: white;
   --tamano-texto: 16px;
+  
+  /* Nueva paleta de colores */
+  --color-azul-1: #2874a6;
+  --color-azul-2: #1f618d;
+  --color-azul-3: #2e86c1;
+  --color-gris-1: #717d7e;
+  --color-gris-2: #707b7c;
+  --color-azul-oscuro: #2e4053;
 }
 
 /* Estilos para el fondo y texto */
 body {
-    background-image: url("https://images.unsplash.com/photo-1486520299386-6d106b22014b?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
-
-    background-size: cover; /* Para cubrir toda la pantalla */
-    background-repeat: no-repeat;
+    background: linear-gradient(135deg, 
+        var(--color-azul-1), 
+        var(--color-azul-2), 
+        var(--color-azul-3), 
+        var(--color-gris-1), 
+        var(--color-gris-2), 
+        var(--color-azul-oscuro)
+    );
+    background-size: 400% 800%;
+    animation: gradientBG 30s ease infinite;
     color: var(--color-fuente); /* Color de texto */
     font-family: Arial, sans-serif; /* Fuente */
+    position: relative;
+    overflow-x: hidden;
+}
+
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Estilos para el contenido principal */
+main {
+    padding-bottom: 30px; /* Espacio para evitar que el contenido se pegue al footer */
 }
 
 #offcanvasNavbar{
-    background-color: var(--color-navar) !important;
-
+    background-color: var(--color-azul-oscuro) !important;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
 }
 
+/* Estilos mejorados para el menú offcanvas */
+.offcanvas-header {
+    border-bottom: 2px solid var(--color-azul-3);
+    padding: 2rem;
+}
+
+.offcanvas-title h5 {
+    margin-top: 20px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--color-azul-3);
+    font-size: 2rem;
+    text-shadow: 0 0 15px rgba(46, 134, 193, 0.8);
+    animation: pulsate 1.5s infinite alternate;
+}
+
+@keyframes pulsate {
+    0% { opacity: 0.7; transform: scale(1); text-shadow: 0 0 15px rgba(46, 134, 193, 0.5); }
+    100% { opacity: 1; transform: scale(1.1); text-shadow: 0 0 20px rgba(46, 134, 193, 1); }
+}
+
+.offcanvas-body {
+    padding: 2rem;
+}
 
 .nav-item {
-    border: 2px solid var(--color-fuente-navar); /* Borde de 2px con color transparente */
-    border-radius: 10px; /* Borde redondeado */
-    margin-top: 10px;
-    margin-left: 10px;
-    width: calc(300px - 4px); /* Ancho de 300px, considerando el grosor del borde */
-    box-sizing: border-box; /* Incluir el grosor del borde en el cálculo del ancho total */
-    color: white;
-
+    border: none;
+    border-radius: 15px;
+    margin: 18px 0;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background-color: rgba(255, 255, 255, 0.08);
+    width: 100%;
+    overflow: hidden;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
-.nav-link:active{
-    background-color: transparent;
+
+.nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(15px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), 0 0 30px var(--color-azul-3);
+}
+
+.nav-item.dropdown {
+    background-color: var(--color-azul-2);
 }
 
 .nav-link {
-     padding-left:20px;
-     width: 100%; /* El div se expandirá al 100% del ancho del contenedor */
+    padding: 20px 25px;
+    width: 100%;
     height: 100%;
+    display: flex;
+    align-items: center;
+    color: white !important;
+    font-weight: 600;
+    font-size: 1.4rem;
+    transition: all 0.4s ease;
 }
 
-.dropdown-menu{
-     background-color: var(--color-fondo);
+.nav-link i {
+    margin-right: 20px;
+    font-size: 2rem;
+    width: 40px;
+    text-align: center;
+    color: var(--color-azul-3);
+    transition: all 0.5s ease;
+    filter: drop-shadow(0 0 10px rgba(46, 134, 193, 0.7));
 }
 
+.nav-link:hover i {
+    color: white;
+    transform: scale(1.4) rotate(10deg);
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9));
+}
 
+.nav-link.active {
+    background-color: transparent;
+}
 
-/* -----------------Estilos para la barra de navegación */
+.nav-link:active {
+    background-color: var(--color-azul-1);
+    transform: scale(0.95);
+}
+
+.dropdown-menu {
+    background-color: var(--color-azul-oscuro);
+    border: 2px solid var(--color-azul-3);
+    padding: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+    color: white !important;
+    padding: 15px 20px;
+    border-radius: 10px;
+    font-size: 1.3rem;
+    transition: all 0.4s ease;
+}
+
+.dropdown-item i {
+    margin-right: 15px;
+    color: var(--color-azul-3);
+    font-size: 1.5rem;
+    transition: all 0.4s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--color-azul-2);
+    transform: translateX(10px);
+}
+
+.dropdown-item:hover i {
+    transform: scale(1.3) rotate(10deg);
+    color: white;
+}
+
+.dropdown-toggle::after {
+    margin-left: 15px;
+    vertical-align: middle;
+    border-top: 0.4em solid;
+    border-right: 0.4em solid transparent;
+    border-left: 0.4em solid transparent;
+}
+
+.btn-close {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    border-radius: 50%;
+    padding: 1rem;
+    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    transform-origin: center;
+}
+
+.btn-close:hover {
+    background-color: var(--color-azul-3) !important;
+    transform: rotate(360deg) scale(1.2);
+    box-shadow: 0 0 25px var(--color-azul-3);
+}
+
 .navbar {
-    background-color: var(--color-navar) !important; /* Color de fondo de la barra de navegación */
+    background-color: var(--color-azul-2) !important; /* Color de fondo de la barra de navegación */
     height:50px;
 }
 
 .navbar-brand {
-
     color: var(--color-fuente-navar) !important; /* Color del texto del enlace de la marca */
 }
 
-.navbar-toggler-icon {
-    color: var(--color-fuente-navar); /* Color del icono del botón de alternar */
+.navbar-toggler {
+    background-color: var(--color-azul-3) !important;
+    border: 1px solid var(--color-fuente-navar) !important;
+    padding: 0.25rem 0.5rem;
 }
 
-/* Estilos para los enlaces del menú de navegación */
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25) !important;
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+
 .navbar-nav .nav-link {
     color: var(--color-fuente-navar) !important; /* Color de texto de los enlaces del menú */
 }
 
-
-
-/* Estilos para el botón de alternar */
 .offcanvas-header .offcanvas-title {
     color: var(--color-fuente-navar); /* Color del título del offcanvas */
 }
 
 .offcanvas-header .btn-close {
-    color: #FFFFFF; /* Color del botón de cerrar del offcanvas */
+    color: var(--color-fuente-navar); /* Color del botón de cerrar del offcanvas */
+    background-color: var(--color-azul-3) !important;
+    opacity: 1;
+    padding: 0.5rem;
+    margin: 0.5rem;
+    border-radius: 50%;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") !important;
+}
+
+.offcanvas-header .btn-close:hover {
+    background-color: var(--color-azul-1) !important;
+    opacity: 1;
+}
+
+.offcanvas-header .btn-close:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25) !important;
+    opacity: 1;
 }
 
 /* Estilos para el pie de página */
 #page-footer {
-    margin-top:250px;
-    padding:50px;
-    background-color: var(--color-navar); /* Color de fondo del pie de página */
+    background-color: var(--color-azul-oscuro); /* Color de fondo del pie de página */
     color: var(--color-fuente-navar); /* Color de texto del pie de página */
+    padding: 30px 0;
 }
 
 /* Estilos para los botones de redes sociales */
@@ -97,13 +266,16 @@ body {
 }
 
 .btn-custom:hover {
-    background-color: #FFFFFF;
-    color: #4a975c !important;
+    background-color: var(--color-azul-3);
+    color: var(--color-fuente-navar) !important;
 }
 
 /* Estilos para el texto del pie de página */
 #page-footer p {
     font-size: 14px; /* Tamaño de fuente del texto del pie de página */
+    margin-bottom: 0;
 }
 
-
+.social-links {
+    margin-bottom: 15px;
+}
