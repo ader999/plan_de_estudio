@@ -6,7 +6,7 @@
   --color-fuente-navar: white;
   --tamano-texto: 16px;
   
-  /* Nueva paleta de colores */
+  /* Paleta de colores */
   --color-azul-1: #2874a6;
   --color-azul-2: #1f618d;
   --color-azul-3: #2e86c1;
@@ -15,7 +15,7 @@
   --color-azul-oscuro: #2e4053;
 }
 
-/* Estilos para el fondo y texto */
+/* Estilos base para el cuerpo */
 body {
     background: linear-gradient(135deg, 
         var(--color-azul-1), 
@@ -27,182 +27,52 @@ body {
     );
     background-size: 400% 800%;
     animation: gradientBG 30s ease infinite;
-    color: var(--color-fuente); /* Color de texto */
-    font-family: Arial, sans-serif; /* Fuente */
+    color: var(--color-fuente);
+    font-family: Arial, sans-serif;
     position: relative;
     overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes gradientBG {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* Estilos para el contenido principal */
 main {
-    padding-bottom: 30px; /* Espacio para evitar que el contenido se pegue al footer */
-}
-
-#offcanvasNavbar{
-    background-color: var(--color-azul-oscuro) !important;
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
-}
-
-/* Estilos mejorados para el menú offcanvas */
-.offcanvas-header {
-    border-bottom: 2px solid var(--color-azul-3);
-    padding: 1.5rem;
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-.offcanvas-title h5 {
-    margin-top: 15px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: white;
-    font-size: 1.5rem;
-    text-shadow: 0 0 15px rgba(46, 134, 193, 0.8);
-    animation: pulsate 1.5s infinite alternate;
-}
-
-@keyframes pulsate {
-    0% { opacity: 0.8; transform: scale(1); text-shadow: 0 0 15px rgba(46, 134, 193, 0.5); }
-    100% { opacity: 1; transform: scale(1.05); text-shadow: 0 0 20px rgba(46, 134, 193, 1); }
-}
-
-.offcanvas-body {
-    padding: 1.5rem;
-    background: linear-gradient(to bottom, var(--color-azul-oscuro), var(--color-azul-2));
-}
-
-.nav-item {
-    border-left: 3px solid transparent;
-    border-radius: 8px;
-    margin: 12px 0;
-    transition: all 0.3s ease;
-    background-color: rgba(255, 255, 255, 0.08);
-    width: 100%;
-    overflow: hidden;
-}
-
-.nav-item:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    transform: translateX(5px);
-    border-left: 3px solid var(--color-azul-3);
-}
-
-.nav-link {
-    padding: 14px 18px;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    color: white !important;
-    font-weight: 500;
-    font-size: 1.05rem;
-    transition: all 0.3s ease;
-}
-
-.nav-link i {
-    margin-right: 15px;
-    font-size: 1.2rem;
-    width: 25px;
-    text-align: center;
-    color: var(--color-azul-3);
-    transition: all 0.3s ease;
-}
-
-.nav-link:hover i {
-    color: white;
-    transform: translateX(3px);
-}
-
-.nav-link span {
+    flex-grow: 1;
+    padding-top: 85px; /* Espacio para la navbar fija */
+    padding-bottom: 30px;
     position: relative;
-    transition: all 0.3s ease;
+    z-index: 1;
 }
 
-.nav-link:hover span {
-    transform: translateX(3px);
-}
-
-.nav-link.active {
-    background-color: rgba(46, 134, 193, 0.2);
-}
-
-.dropdown-menu {
-    background-color: var(--color-azul-oscuro);
-    border: 1px solid var(--color-azul-3);
-    border-radius: 10px;
-    padding: 0.8rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.dropdown-item {
-    color: white !important;
-    padding: 10px 15px;
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    margin-bottom: 5px;
-}
-
-.dropdown-item i {
-    margin-right: 10px;
-    color: var(--color-azul-3);
-    font-size: 1.1rem;
-    transition: all 0.3s ease;
-}
-
-.dropdown-item:hover {
-    background-color: var(--color-azul-2);
-}
-
-.dropdown-item:hover i {
-    transform: translateX(3px);
-    color: white;
-}
-
-.dropdown-toggle::after {
-    margin-left: 8px;
-    vertical-align: middle;
-    opacity: 0.7;
-}
-
-.btn-close {
-    background-color: rgba(255, 255, 255, 0.2) !important;
-    border-radius: 50%;
-    padding: 0.8rem;
-    transition: all 0.3s ease;
-    opacity: 0.8;
-}
-
-.btn-close:hover {
-    background-color: var(--color-azul-3) !important;
-    opacity: 1;
-    transform: rotate(90deg);
-}
-
+/* NAVBAR PRINCIPAL - corrección completa */
 .navbar {
-    background-color: var(--color-azul-2) !important; /* Color de fondo de la barra de navegación */
+    background-color: var(--color-azul-2) !important;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    padding: 0.5rem 1rem;
     border-bottom: 2px solid var(--color-azul-3);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    height: 70px;
+    padding: 10px 15px;
 }
 
+.container-fluid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+/* Logo de la navbar */
 .navbar-brand {
     font-weight: 700;
     letter-spacing: 1px;
@@ -216,18 +86,15 @@ main {
 }
 
 .navbar-brand:hover {
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
 
 .navbar-brand img {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-    transition: all 0.3s ease;
+    height: 50px;
 }
 
-.navbar-brand:hover img {
-    filter: drop-shadow(0 0 8px var(--color-azul-3));
-}
-
+/* Botón toggler */
 .navbar-toggler {
     background-color: rgba(255, 255, 255, 0.1) !important;
     border: none !important;
@@ -235,6 +102,7 @@ main {
     padding: 0.5rem;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-left: auto;
 }
 
 .navbar-toggler:hover {
@@ -246,60 +114,246 @@ main {
     filter: brightness(2);
 }
 
-.navbar-nav .nav-link {
-    color: var(--color-fuente-navar) !important; /* Color de texto de los enlaces del menú */
+/* OFFCANVAS MENU - ajustes completos */
+.offcanvas {
+    background-color: var(--color-azul-oscuro) !important;
+    max-width: 350px;
+    width: 85% !important;
 }
 
-.offcanvas-header .offcanvas-title {
-    color: var(--color-fuente-navar); /* Color del título del offcanvas */
+#offcanvasNavbar {
+    background: linear-gradient(180deg, #2c3e50, #1e5799);
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+    position: fixed;
+    z-index: 1050;
 }
 
-.offcanvas-header .btn-close {
-    color: var(--color-fuente-navar); /* Color del botón de cerrar del offcanvas */
+/* Efecto de fondo con patrón de puntos */
+#offcanvasNavbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Encabezado del offcanvas */
+#offcanvasNavbar .offcanvas-header {
+    padding: 1.5rem 1rem;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Título dentro del offcanvas - contenedor simplificado */
+#offcanvasNavbar .offcanvas-title {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 260px;
+    padding: 1.2rem 0.8rem;
+    border: 2px solid var(--color-gris-1);
+    border-radius: 10px;
+    background-color: rgba(46, 64, 83, 0.7);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    margin-bottom: 15px;
+}
+
+#offcanvasNavbar .offcanvas-title h5 {
+    margin-top: 15px;
+    margin-bottom: 0;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: white;
+    font-size: 1.6rem;
+    text-shadow: 0 0 15px rgba(46, 134, 193, 0.8);
+}
+
+#offcanvasNavbar .offcanvas-title img {
+    filter: drop-shadow(0 0 15px rgba(46, 134, 193, 0.8));
+    height: 90px !important;
+}
+
+/* Botón para cerrar offcanvas */
+#offcanvasNavbar .btn-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50%;
+    padding: 0.6rem;
+    transition: all 0.3s ease;
+    opacity: 0.8;
+    z-index: 2;
+}
+
+#offcanvasNavbar .btn-close:hover {
     background-color: var(--color-azul-3) !important;
     opacity: 1;
-    padding: 0.5rem;
-    margin: 0.5rem;
-    border-radius: 50%;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") !important;
 }
 
-.offcanvas-header .btn-close:hover {
-    background-color: var(--color-azul-1) !important;
-    opacity: 1;
+/* Cuerpo del offcanvas */
+#offcanvasNavbar .offcanvas-body {
+    padding: 0 1rem;
+    position: relative;
+    z-index: 1;
 }
 
-.offcanvas-header .btn-close:focus {
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25) !important;
-    opacity: 1;
+/* Menú de navegación dentro del offcanvas */
+#offcanvasNavbar .navbar-nav {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
 }
 
-/* Estilos para el pie de página */
-#page-footer {
-    background-color: var(--color-azul-oscuro); /* Color de fondo del pie de página */
-    color: var(--color-fuente-navar); /* Color de texto del pie de página */
-    padding: 30px 0;
+#offcanvasNavbar .nav-item {
+    width: 260px;
+    margin: 0;
 }
 
-/* Estilos para los botones de redes sociales */
+/* Botones de navegación */
+#offcanvasNavbar .nav-link,
+#offcanvasNavbar .dropdown-toggle {
+    background-color: var(--color-gris-1) !important;
+    color: white !important;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-weight: 500;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    text-align: left;
+    width: 100%;
+    justify-content: flex-start;
+    border-left: 3px solid var(--color-azul-3);
+    border-right: 3px solid var(--color-azul-3);
+}
+
+#offcanvasNavbar .nav-link:hover,
+#offcanvasNavbar .dropdown-toggle:hover {
+    background-color: var(--color-gris-2) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+#offcanvasNavbar .nav-link.active,
+#offcanvasNavbar .dropdown-toggle.active {
+    background-color: var(--color-azul-oscuro) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    border-left: 3px solid var(--color-azul-1);
+}
+
+/* Iconos en los botones */
+#offcanvasNavbar .nav-link i,
+#offcanvasNavbar .dropdown-toggle i {
+    margin-right: 15px;
+    font-size: 1.1rem;
+    color: white;
+    width: 20px;
+    text-align: center;
+}
+
+/* Dropdown menu */
+#offcanvasNavbar .dropdown-menu {
+    width: 100%;
+    margin: 5px 0;
+    background-color: var(--color-azul-oscuro);
+    border: 1px solid var(--color-gris-1);
+    border-radius: 8px;
+    padding: 0.8rem;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+}
+
+#offcanvasNavbar .dropdown-item {
+    color: white !important;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    margin-bottom: 5px;
+    background-color: rgba(113, 125, 126, 0.2);
+}
+
+#offcanvasNavbar .dropdown-item:hover {
+    background-color: var(--color-gris-1);
+}
+
+#offcanvasNavbar .dropdown-item i {
+    margin-right: 10px;
+    color: white;
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* FOOTER */
+#page-footer, .footer {
+    background-color: var(--color-azul-oscuro);
+    color: white;
+    padding: 20px 0;
+    position: relative;
+    z-index: 1;
+    margin-top: auto;
+}
+
+/* Botones de redes sociales */
 .btn-custom {
     background-color: transparent;
-    border: 1px solid var(--color-fuente-navar);
-    color: var(--color-fuente-navar) !important;
+    border: 1px solid white;
+    color: white !important;
     margin: 5px;
+    transition: all 0.3s ease;
 }
 
 .btn-custom:hover {
     background-color: var(--color-azul-3);
-    color: var(--color-fuente-navar) !important;
-}
-
-/* Estilos para el texto del pie de página */
-#page-footer p {
-    font-size: 14px; /* Tamaño de fuente del texto del pie de página */
-    margin-bottom: 0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .social-links {
     margin-bottom: 15px;
+}
+
+/* Contenedor general */
+.container {
+    position: relative;
+    z-index: 1;
+}
+
+#page-content {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+/* Ajustes para dispositivos móviles */
+@media (max-width: 576px) {
+    .offcanvas {
+        max-width: 280px;
+    }
+    
+    #offcanvasNavbar .offcanvas-title img {
+        height: 70px !important;
+    }
+    
+    #offcanvasNavbar .offcanvas-title h5 {
+        font-size: 1.5rem;
+    }
+    
+    #offcanvasNavbar .nav-link,
+    #offcanvasNavbar .dropdown-toggle {
+        padding: 12px 14px;
+    }
 }
