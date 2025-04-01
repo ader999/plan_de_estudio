@@ -59,163 +59,191 @@ main {
 .offcanvas-header {
     border-bottom: 2px solid var(--color-azul-3);
     padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.1);
 }
 
 .offcanvas-title h5 {
     margin-top: 15px;
     font-weight: 800;
     letter-spacing: 2px;
-    color: var(--color-azul-3);
+    color: white;
     font-size: 1.5rem;
     text-shadow: 0 0 15px rgba(46, 134, 193, 0.8);
     animation: pulsate 1.5s infinite alternate;
 }
 
 @keyframes pulsate {
-    0% { opacity: 0.7; transform: scale(1); text-shadow: 0 0 15px rgba(46, 134, 193, 0.5); }
-    100% { opacity: 1; transform: scale(1.1); text-shadow: 0 0 20px rgba(46, 134, 193, 1); }
+    0% { opacity: 0.8; transform: scale(1); text-shadow: 0 0 15px rgba(46, 134, 193, 0.5); }
+    100% { opacity: 1; transform: scale(1.05); text-shadow: 0 0 20px rgba(46, 134, 193, 1); }
 }
 
 .offcanvas-body {
     padding: 1.5rem;
+    background: linear-gradient(to bottom, var(--color-azul-oscuro), var(--color-azul-2));
 }
 
 .nav-item {
-    border: none;
-    border-radius: 10px;
-    margin: 10px 0;
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-left: 3px solid transparent;
+    border-radius: 8px;
+    margin: 12px 0;
+    transition: all 0.3s ease;
     background-color: rgba(255, 255, 255, 0.08);
     width: 100%;
     overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .nav-item:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    transform: translateX(10px) scale(1.03);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4), 0 0 20px var(--color-azul-3);
+    background-color: rgba(255, 255, 255, 0.15);
+    transform: translateX(5px);
+    border-left: 3px solid var(--color-azul-3);
 }
 
 .nav-link {
-    padding: 12px 15px;
+    padding: 14px 18px;
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     color: white !important;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.4s ease;
+    font-weight: 500;
+    font-size: 1.05rem;
+    transition: all 0.3s ease;
 }
 
 .nav-link i {
     margin-right: 15px;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     width: 25px;
     text-align: center;
     color: var(--color-azul-3);
-    transition: all 0.5s ease;
-    filter: drop-shadow(0 0 10px rgba(46, 134, 193, 0.7));
+    transition: all 0.3s ease;
 }
 
 .nav-link:hover i {
     color: white;
-    transform: scale(1.2) rotate(5deg);
-    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9));
+    transform: translateX(3px);
+}
+
+.nav-link span {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover span {
+    transform: translateX(3px);
 }
 
 .nav-link.active {
-    background-color: transparent;
-}
-
-.nav-link:active {
-    background-color: var(--color-azul-1);
-    transform: scale(0.95);
+    background-color: rgba(46, 134, 193, 0.2);
 }
 
 .dropdown-menu {
     background-color: var(--color-azul-oscuro);
-    border: 2px solid var(--color-azul-3);
-    padding: 1rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid var(--color-azul-3);
+    border-radius: 10px;
+    padding: 0.8rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease;
 }
 
 @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-20px); }
+    from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 .dropdown-item {
     color: white !important;
     padding: 10px 15px;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 1rem;
-    transition: all 0.4s ease;
+    transition: all 0.3s ease;
+    margin-bottom: 5px;
 }
 
 .dropdown-item i {
     margin-right: 10px;
     color: var(--color-azul-3);
-    font-size: 1.2rem;
-    transition: all 0.4s ease;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
 }
 
 .dropdown-item:hover {
     background-color: var(--color-azul-2);
-    transform: translateX(5px);
 }
 
 .dropdown-item:hover i {
-    transform: scale(1.2) rotate(5deg);
+    transform: translateX(3px);
     color: white;
 }
 
 .dropdown-toggle::after {
-    margin-left: 10px;
+    margin-left: 8px;
     vertical-align: middle;
-    border-top: 0.3em solid;
-    border-right: 0.3em solid transparent;
-    border-left: 0.3em solid transparent;
+    opacity: 0.7;
 }
 
 .btn-close {
-    background-color: rgba(255, 255, 255, 0.15) !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
     border-radius: 50%;
-    padding: 1rem;
-    transition: all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-    transform-origin: center;
+    padding: 0.8rem;
+    transition: all 0.3s ease;
+    opacity: 0.8;
 }
 
 .btn-close:hover {
     background-color: var(--color-azul-3) !important;
-    transform: rotate(360deg) scale(1.2);
-    box-shadow: 0 0 25px var(--color-azul-3);
+    opacity: 1;
+    transform: rotate(90deg);
 }
 
 .navbar {
     background-color: var(--color-azul-2) !important; /* Color de fondo de la barra de navegación */
-    height:50px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 0.5rem 1rem;
+    border-bottom: 2px solid var(--color-azul-3);
 }
 
 .navbar-brand {
-    color: var(--color-fuente-navar) !important; /* Color del texto del enlace de la marca */
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: white !important;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+}
+
+.navbar-brand img {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover img {
+    filter: drop-shadow(0 0 8px var(--color-azul-3));
 }
 
 .navbar-toggler {
-    background-color: var(--color-azul-3) !important;
-    border: 1px solid var(--color-fuente-navar) !important;
-    padding: 0.25rem 0.5rem;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: none !important;
+    border-radius: 8px;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.navbar-toggler:focus {
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25) !important;
+.navbar-toggler:hover {
+    background-color: var(--color-azul-3) !important;
+    transform: scale(1.05);
 }
 
 .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    filter: brightness(2);
 }
 
 .navbar-nav .nav-link {

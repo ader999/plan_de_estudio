@@ -162,8 +162,17 @@ def generar_excel(request):
                 row_num = 11  # Fila en la que se insertarán los datos
 
                 for silabo in silabos:
-                    ws.cell(row=6, column=2, value=silabo.maestro.username)
-                    ws.cell(row=7, column=2, value=silabo.asignatura.asignatura.nombre)
+                    ws.cell(row=5, column=2, value=silabo.maestro.username)
+                    ws.cell(row=6, column=2, value=silabo.asignatura.asignatura.nombre)
+                    ws.cell(row=7, column=2, value=silabo.asignacion_plan.plan_de_estudio.carrera.nombre)
+                    ws.cell(row=5, column=4, value=silabo.asignacion_plan.plan_de_estudio.codigo)
+                    ws.cell(row=6, column=4, value=silabo.asignacion_plan.plan_de_estudio.año)
+                    ws.cell(row=7, column=4, value=silabo.asignacion_plan.plan_de_estudio.trimestre)
+                    ws.cell(row=5, column=6, value=silabo.fecha.year)  # Extraemos el año de la fecha del 
+                    ws.cell(row=6, column=6, value=silabo.asignacion_plan.plan_de_estudio.hp + silabo.asignacion_plan.plan_de_estudio.hti)  # Extraemos el mes de la fecha del
+                    ws.cell(row=7, column=6, value=silabo.asignacion_plan.plan_de_estudio.pr.nombre if silabo.asignacion_plan.plan_de_estudio.pr else "N/A")
+                    ws.cell(row=5, column=8, value=silabo.asignacion_plan.plan_de_estudio.pc.nombre if silabo.asignacion_plan.plan_de_estudio.pc else "N/A")
+                    ws.cell(row=6, column=8, value=silabo.asignacion_plan.plan_de_estudio.cr.nombre if silabo.asignacion_plan.plan_de_estudio.cr else "N/A")
                     ws.cell(row=row_num, column=1, value=silabo.encuentros)
                     ws.cell(row=row_num, column=2, value=silabo.fecha)
                     ws.cell(row=row_num, column=3, value=silabo.objetivo_conceptual)
@@ -181,14 +190,32 @@ def generar_excel(request):
                     ws.cell(row=row_num, column=15, value=silabo.eje_transversal)
                     ws.cell(row=row_num, column=16, value=silabo.hp)
 
-                    ws.cell(row=row_num, column=17, value=silabo.guia.numero_guia)
-                    ws.cell(row=row_num, column=18, value=silabo.guia.contenido_tematico)
-                    ws.cell(row=row_num, column=19, value=silabo.guia.criterios_evaluacion)
-                    ws.cell(row=row_num, column=20, value=silabo.guia.actividades)
-                    ws.cell(row=row_num, column=21, value=silabo.guia.recursos)
-                    ws.cell(row=row_num, column=22, value=silabo.guia.evaluacion_sumativa)
-                    ws.cell(row=row_num, column=23, value=silabo.guia.tiempo_minutos)
-                    ws.cell(row=row_num, column=24, value=silabo.guia.fecha_entrega)
+                    # Verificar si el sílabo tiene una guía asociada
+                    if hasattr(silabo, 'guia') and silabo.guia is not None:
+                        try:
+                            ws.cell(row=row_num+16, column=1, value=silabo.guia.numero_guia)
+                            ws.cell(row=row_num+16, column=2, value=silabo.guia.fecha)
+                            ws.cell(row=row_num+16, column=3, value=silabo.guia.unidad)
+                            #ws.cell(row=row_num+16, column=4, value=silabo.guia.nombre_de_la_unidad)
+                            ws.cell(row=row_num+16, column=5, value=silabo.guia.objetivo_procedimental)
+                            ws.cell(row=row_num+16, column=6, value=silabo.guia.objetivo_conceptual)
+                            ws.cell(row=row_num+16, column=7, value=silabo.guia.objetivo_actitudinal)
+                            ws.cell(row=row_num+16, column=8, value=silabo.guia.contenido_tematico)
+                            ws.cell(row=row_num+16, column=9, value=silabo.guia.actividades)
+                            ws.cell(row=row_num+16, column=10, value=silabo.guia.instrumento_cuaderno)
+                            ws.cell(row=row_num+16, column=11, value=silabo.guia.instrumento_organizador)
+                            ws.cell(row=row_num+16, column=12, value=silabo.guia.instrumento_diario)
+                            ws.cell(row=row_num+16, column=13, value=silabo.guia.instrumento_prueba)
+                            ws.cell(row=row_num+16, column=14, value=silabo.guia.criterios_evaluacion)
+                            ws.cell(row=row_num+16, column=15, value=silabo.guia.tiempo_minutos)
+                            ws.cell(row=row_num+16, column=16, value=silabo.guia.recursos)
+                            ws.cell(row=row_num+16, column=17, value=silabo.guia.puntaje)
+                            ws.cell(row=row_num+16, column=18, value=silabo.guia.evaluacion_sumativa)
+                            ws.cell(row=row_num+16, column=19, value=silabo.guia.fecha_entrega)
+
+                        except Exception as e:
+                            # Si hay un error al acceder a los datos de la guía, simplemente continuamos
+                            print(f"Error al procesar la guía del sílabo {silabo.id}: {str(e)}")
 
 
                     # Agrega los datos para otros campos aquí
@@ -326,63 +353,248 @@ def generar_docx(request):
                 # Encabezado para cada sílabo
                 document.add_heading(f'Sílabo: {silabo.codigo}', level=1)
 
-                # Agregar información del sílabo
-                document.add_paragraph().add_run('Maestro: ').bold = True
-                document.add_paragraph(silabo.maestro.username)
+                # Información general
+                document.add_paragraph().add_run('Información General').bold = True
+                
+                # Crear una tabla para la información general
+                table = document.add_table(rows=7, cols=2)
+                table.style = 'Table Grid'
+                
+                # Añadir datos a la tabla
+                cells = table.rows[0].cells
+                cells[0].text = 'Maestro'
+                cells[1].text = silabo.maestro.username
+                
+                cells = table.rows[1].cells
+                cells[0].text = 'Asignatura'
+                cells[1].text = silabo.asignatura.asignatura.nombre
+                
+                cells = table.rows[2].cells
+                cells[0].text = 'Carrera'
+                cells[1].text = silabo.asignacion_plan.plan_de_estudio.carrera.nombre
+                
+                cells = table.rows[3].cells
+                cells[0].text = 'Código Plan'
+                cells[1].text = silabo.asignacion_plan.plan_de_estudio.codigo
+                
+                cells = table.rows[4].cells
+                cells[0].text = 'Año'
+                cells[1].text = str(silabo.asignacion_plan.plan_de_estudio.año)
+                
+                cells = table.rows[5].cells
+                cells[0].text = 'Trimestre'
+                cells[1].text = silabo.asignacion_plan.plan_de_estudio.trimestre
+                
+                cells = table.rows[6].cells
+                cells[0].text = 'Horas Totales'
+                cells[1].text = str(silabo.asignacion_plan.plan_de_estudio.hp + silabo.asignacion_plan.plan_de_estudio.hti)
+                
+                document.add_paragraph()  # Espacio
 
-                document.add_paragraph().add_run('Asignatura: ').bold = True
-                document.add_paragraph(silabo.asignatura.asignatura.nombre)
-
-                document.add_paragraph().add_run('Encuentros: ').bold = True
-                document.add_paragraph(str(silabo.encuentros))
-
-                document.add_paragraph().add_run('Fecha: ').bold = True
-                document.add_paragraph(str(silabo.fecha))
-
-                document.add_paragraph().add_run('Unidad: ').bold = True
-                document.add_paragraph(silabo.unidad)
-
-                document.add_paragraph().add_run('Objetivos: ').bold = True
-                document.add_paragraph(
-                    f"Conceptual: {silabo.objetivo_conceptual}, "
-                    f"Procedimental: {silabo.objetivo_procedimental}, "
-                    f"Actitudinal: {silabo.objetivo_actitudinal}"
-                )
-
-                document.add_paragraph().add_run('Momentos Didácticos: ').bold = True
-                document.add_paragraph(
-                    f"Primer Momento: {silabo.momento_didactico_primer}, "
-                    f"Segundo Momento: {silabo.momento_didactico_segundo}, "
-                    f"Tercer Momento: {silabo.momento_didactico_tercer}"
-                )
-
-                document.add_paragraph().add_run('Contenido Temático: ').bold = True
-                document.add_paragraph(silabo.contenido_tematico)
-
-                document.add_paragraph().add_run('Forma Organizativa: ').bold = True
-                document.add_paragraph(silabo.forma_organizativa)
-
-                document.add_paragraph().add_run('Tiempo: ').bold = True
-                document.add_paragraph(str(silabo.tiempo))
-
-                document.add_paragraph().add_run('Técnicas de Aprendizaje: ').bold = True
-                document.add_paragraph(silabo.tecnicas_aprendizaje)
-
-                document.add_paragraph().add_run('Descripción Estrategia: ').bold = True
-                document.add_paragraph(silabo.descripcion_estrategia)
-
-                document.add_paragraph().add_run('Eje Transversal: ').bold = True
-                document.add_paragraph(silabo.eje_transversal)
-
-                document.add_paragraph().add_run('Horas Prácticas: ').bold = True
-                document.add_paragraph(str(silabo.hp))
+                # Detalles del sílabo
+                document.add_heading('Detalles del Sílabo', level=2)
+                
+                # Crear una tabla para los detalles
+                table = document.add_table(rows=12, cols=2)
+                table.style = 'Table Grid'
+                
+                cells = table.rows[0].cells
+                cells[0].text = 'Encuentros'
+                cells[1].text = str(silabo.encuentros)
+                
+                cells = table.rows[1].cells
+                cells[0].text = 'Fecha'
+                cells[1].text = str(silabo.fecha)
+                
+                cells = table.rows[2].cells
+                cells[0].text = 'Unidad'
+                cells[1].text = silabo.unidad
+                
+                cells = table.rows[3].cells
+                cells[0].text = 'Objetivo Conceptual'
+                cells[1].text = silabo.objetivo_conceptual
+                
+                cells = table.rows[4].cells
+                cells[0].text = 'Objetivo Procedimental'
+                cells[1].text = silabo.objetivo_procedimental
+                
+                cells = table.rows[5].cells
+                cells[0].text = 'Objetivo Actitudinal'
+                cells[1].text = silabo.objetivo_actitudinal
+                
+                cells = table.rows[6].cells
+                cells[0].text = 'Primer Momento Didáctico'
+                cells[1].text = silabo.momento_didactico_primer
+                
+                cells = table.rows[7].cells
+                cells[0].text = 'Segundo Momento Didáctico'
+                cells[1].text = silabo.momento_didactico_segundo
+                
+                cells = table.rows[8].cells
+                cells[0].text = 'Tercer Momento Didáctico'
+                cells[1].text = silabo.momento_didactico_tercer
+                
+                cells = table.rows[9].cells
+                cells[0].text = 'Contenido Temático'
+                cells[1].text = silabo.contenido_tematico
+                
+                cells = table.rows[10].cells
+                cells[0].text = 'Forma Organizativa'
+                cells[1].text = silabo.forma_organizativa
+                
+                cells = table.rows[11].cells
+                cells[0].text = 'Tiempo'
+                cells[1].text = str(silabo.tiempo)
+                
+                document.add_paragraph()  # Espacio
+                
+                # Información adicional
+                document.add_heading('Información Adicional', level=2)
+                
+                # Crear una tabla para la información adicional
+                table = document.add_table(rows=4, cols=2)
+                table.style = 'Table Grid'
+                
+                cells = table.rows[0].cells
+                cells[0].text = 'Técnicas de Aprendizaje'
+                cells[1].text = silabo.tecnicas_aprendizaje
+                
+                cells = table.rows[1].cells
+                cells[0].text = 'Descripción Estrategia'
+                cells[1].text = silabo.descripcion_estrategia
+                
+                cells = table.rows[2].cells
+                cells[0].text = 'Eje Transversal'
+                cells[1].text = silabo.eje_transversal
+                
+                cells = table.rows[3].cells
+                cells[0].text = 'Horas Prácticas'
+                cells[1].text = str(silabo.hp)
+                
+                # Verificar si el sílabo tiene una guía asociada
+                if hasattr(silabo, 'guia') and silabo.guia is not None:
+                    try:
+                        document.add_page_break()
+                        document.add_heading(f'Guía de Estudio Independiente: {silabo.codigo}', level=1)
+                        
+                        # Información general de la guía
+                        document.add_heading('Información General de la Guía', level=2)
+                        
+                        # Crear una tabla para la información general de la guía
+                        table = document.add_table(rows=4, cols=2)
+                        table.style = 'Table Grid'
+                        
+                        cells = table.rows[0].cells
+                        cells[0].text = 'Número de Guía'
+                        cells[1].text = str(silabo.guia.numero_guia)
+                        
+                        cells = table.rows[1].cells
+                        cells[0].text = 'Fecha'
+                        cells[1].text = str(silabo.guia.fecha)
+                        
+                        cells = table.rows[2].cells
+                        cells[0].text = 'Unidad'
+                        cells[1].text = silabo.guia.unidad
+                        
+                        cells = table.rows[3].cells
+                        cells[0].text = 'Contenido Temático'
+                        cells[1].text = silabo.guia.contenido_tematico
+                        
+                        document.add_paragraph()  # Espacio
+                        
+                        # Objetivos de la guía
+                        document.add_heading('Objetivos de la Guía', level=2)
+                        
+                        # Crear una tabla para los objetivos
+                        table = document.add_table(rows=3, cols=2)
+                        table.style = 'Table Grid'
+                        
+                        cells = table.rows[0].cells
+                        cells[0].text = 'Objetivo Conceptual'
+                        cells[1].text = silabo.guia.objetivo_conceptual
+                        
+                        cells = table.rows[1].cells
+                        cells[0].text = 'Objetivo Procedimental'
+                        cells[1].text = silabo.guia.objetivo_procedimental
+                        
+                        cells = table.rows[2].cells
+                        cells[0].text = 'Objetivo Actitudinal'
+                        cells[1].text = silabo.guia.objetivo_actitudinal
+                        
+                        document.add_paragraph()  # Espacio
+                        
+                        # Actividades y recursos
+                        document.add_heading('Actividades y Recursos', level=2)
+                        
+                        # Crear una tabla para actividades y recursos
+                        table = document.add_table(rows=3, cols=2)
+                        table.style = 'Table Grid'
+                        
+                        cells = table.rows[0].cells
+                        cells[0].text = 'Actividades'
+                        cells[1].text = silabo.guia.actividades
+                        
+                        cells = table.rows[1].cells
+                        cells[0].text = 'Recursos'
+                        cells[1].text = silabo.guia.recursos
+                        
+                        cells = table.rows[2].cells
+                        cells[0].text = 'Tiempo (minutos)'
+                        cells[1].text = str(silabo.guia.tiempo_minutos)
+                        
+                        document.add_paragraph()  # Espacio
+                        
+                        # Evaluación
+                        document.add_heading('Evaluación', level=2)
+                        
+                        # Crear una tabla para la evaluación
+                        table = document.add_table(rows=7, cols=2)
+                        table.style = 'Table Grid'
+                        
+                        cells = table.rows[0].cells
+                        cells[0].text = 'Instrumento Cuaderno'
+                        cells[1].text = silabo.guia.instrumento_cuaderno
+                        
+                        cells = table.rows[1].cells
+                        cells[0].text = 'Instrumento Organizador'
+                        cells[1].text = silabo.guia.instrumento_organizador
+                        
+                        cells = table.rows[2].cells
+                        cells[0].text = 'Instrumento Diario'
+                        cells[1].text = silabo.guia.instrumento_diario
+                        
+                        cells = table.rows[3].cells
+                        cells[0].text = 'Instrumento Prueba'
+                        cells[1].text = silabo.guia.instrumento_prueba
+                        
+                        cells = table.rows[4].cells
+                        cells[0].text = 'Criterios de Evaluación'
+                        cells[1].text = silabo.guia.criterios_evaluacion
+                        
+                        cells = table.rows[5].cells
+                        cells[0].text = 'Puntaje'
+                        cells[1].text = str(silabo.guia.puntaje)
+                        
+                        cells = table.rows[6].cells
+                        cells[0].text = 'Evaluación Sumativa'
+                        cells[1].text = silabo.guia.evaluacion_sumativa
+                        
+                        document.add_paragraph()  # Espacio
+                        
+                        # Fecha de entrega
+                        document.add_heading('Fecha de Entrega', level=2)
+                        document.add_paragraph(str(silabo.guia.fecha_entrega))
+                        
+                    except Exception as e:
+                        # Si hay un error al acceder a los datos de la guía, agregar un mensaje de error
+                        document.add_paragraph(f"Error al procesar la guía del sílabo {silabo.id}: {str(e)}")
 
                 # Separador para cada sílabo
                 document.add_page_break()
 
             # Preparar el archivo para descargar
             response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-            response['Content-Disposition'] = 'attachment; filename="silabo_generado.docx"'
+            response['Content-Disposition'] = 'attachment; filename="silabo_y_guia_generado.docx"'
             document.save(response)
 
             return response
@@ -393,33 +605,6 @@ def generar_docx(request):
     return redirect('plan_de_estudio')
 
 
-def obtener_estudios_independientes(asignacion_id):
-        # Paso 1: Obtener la asignación del plan de estudio
-        asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
-
-        # Paso 2: Obtener el plan de estudio relacionado con la asignación
-        plan_de_estudio = asignacion.plan_de_estudio
-
-        # Paso 3: Obtener la asignatura del plan de estudio
-        asignatura_nombre = plan_de_estudio.asignatura.nombre
-
-        # Imprime la asignatura encontrada para depuración
-        print("Asignatura encontrada:", asignatura_nombre)
-
-        # Paso 4: Filtrar las guías que estén relacionadas con sílabos de esta asignatura
-        # Nota: Ajustamos el filtro según la estructura actual del modelo
-        guias = Guia.objects.filter(
-            silabo__asignacion_plan__plan_de_estudio__asignatura__nombre=asignatura_nombre
-        ).distinct()
-
-        # Imprime las guías encontradas para depuración
-        print("Guías encontradas:", guias)
-
-        return guias
-
-
-
-
 @login_required
 def success_view(request):
     return render(request, 'exito.html', {
@@ -427,6 +612,25 @@ def success_view(request):
         'usuario': request.user.username,
     })
 
+
+
+def obtener_estudios_independientes(asignacion_id):
+    """
+    Función para obtener todas las guías de estudio independiente asociadas a una asignación.
+    
+    Args:
+        asignacion_id (int): ID de la asignación de plan de estudio
+        
+    Returns:
+        QuerySet: Conjunto de guías de estudio independiente relacionadas con la asignación
+    """
+    # Primero obtenemos los sílabos relacionados con esta asignación
+    silabos = Silabo.objects.filter(asignacion_plan_id=asignacion_id)
+    
+    # Luego obtenemos todas las guías asociadas a estos sílabos
+    guias = Guia.objects.filter(silabo__in=silabos)
+    
+    return guias
 
 
 @login_required
@@ -1278,8 +1482,6 @@ def generar_estudio_independiente(request):
             error_msg = f'Error inesperado: {str(e)}'
             logging.error(error_msg)
             return JsonResponse({'error': error_msg}, status=500)
-    
-    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 
 @login_required

@@ -205,19 +205,6 @@ class PlanTematico(models.Model):
     def __str__(self):
         return f'Unidad: {self.nombre_de_la_unidad} (ID: {self.id})'
 
-class Unidades(models.Model):
-    objetivo_especifico = models.CharField(max_length=555)
-    objetivo_procedimental = models.CharField(max_length=555)
-    objetivo_actitudinal = models.CharField(max_length=555)
-    plan_analitico = models.CharField(max_length=555)
-    recomendaciones_metodologicas = models.CharField(max_length=800)
-    forma_de_evaluacion = models.CharField(max_length=800)
-    relacion_eje_contenido_de_la_unidad = models.CharField(max_length=800)
-    plan_tematico = models.ForeignKey(PlanTematico, on_delete=models.CASCADE, related_name='unidades')
-
-    def __str__(self):
-        return f'Objetivo de la Unidad: {self.objetivo_especifico} (Plan Temático: {self.plan_tematico.nombre_de_la_unidad})'
-
 
 class Guia(models.Model):
     """
@@ -228,6 +215,7 @@ class Guia(models.Model):
     numero_guia = models.IntegerField(verbose_name="N° Guía")
     fecha = models.DateField()
     unidad = models.CharField(max_length=255, choices=Silabo.UNIDAD_LIST, verbose_name="N° de unidad")
+    """nombre_de_la_unidad = models.CharField(max_length=255, verbose_name="Nombre de la unidad")"""
     # Reemplazando el campo único de objetivo por campos específicos
     objetivo_procedimental = models.TextField(blank=True, null=True, verbose_name="Procedimental")
     objetivo_conceptual = models.TextField(blank=True, null=True, verbose_name="Conceptual")
