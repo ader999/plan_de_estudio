@@ -14,11 +14,11 @@
 </head>
 <body class="d-flex flex-column h-100">
     <header>
-        <nav class="navbar bg-body-tertiary fixed-top" style="min-height: 65px;">
-            <div class="container-fluid fixed-top" style="min-height: 70px;">
-                <a class="navbar-brand" href="{% url 'inicio' %}"><img src="{% static 'img/logouml.png' %}" alt="" style="height: 50px;">PLANEAUML</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+        <nav class="navbar bg-body-tertiary fixed-top" id="main-navbar" style="min-height: 65px;">
+            <div class="container-fluid fixed-top" id="navbar-container" style="min-height: 70px;">
+                <a class="navbar-brand" id="navbar-brand" href="{% url 'inicio' %}"><img src="{% static 'img/logouml.png' %}" alt="" style="height: 50px;">PLANEAUML</a>
+                <button class="navbar-toggler" id="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon" id="navbar-toggler-icon"></span>
                 </button>
                 <div class="offcanvas offcanvas-end align-items-center" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
                     <div class="offcanvas-header">
@@ -26,10 +26,10 @@
                             <img src="{% static 'img/logouml.png' %}" alt="" style="height: 120px; filter: drop-shadow(0 0 20px rgba(46, 134, 193, 0.9));">
                             <h5>PLANEAUML</h5>
                         </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                        <button type="button" class="btn-close" id="offcanvas-close-btn" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                     </div>
                     <div class="offcanvas-body">
-                        <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+                        <ul class="navbar-nav justify-content-end flex-grow-1 pe-3" id="offcanvas-nav">
                             <li class="nav-item dropdown" id="1p">
                                 <a class="nav-link dropdown-toggle" id="2p" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fas fa-user-circle fa-fw fa-lg"></i> <span>{{ usuario }}</span>
