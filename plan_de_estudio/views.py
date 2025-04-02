@@ -940,7 +940,7 @@ def generar_silabo(request):
             raise RuntimeError(f"Error inesperado: {e}")
 
 
-    def usar_modelo_deepseek(prompt_completo, max_tokens=1024, temperature=0.7):
+    def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7):
         """
         Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
 
@@ -956,6 +956,7 @@ def generar_silabo(request):
         load_dotenv()
         api_key = os.environ.get("deepseek_API_KEY")
         if not api_key:
+            logging.error("deepseek_API_KEY no está configurada en el archivo .env")
             raise ValueError("deepseek_API_KEY no está configurada en el archivo .env")
 
         api_url = "https://api.deepseek.com/v1/chat/completions"
@@ -970,11 +971,11 @@ def generar_silabo(request):
         data = {
             "model": "deepseek-chat",  # Usar el modelo correcto según la documentación
             "messages": [
-                {"role": "system", "content": "Asistente para crear sílabo y plan de clases."},
+                {"role": "system", "content": "Asistente para crear sílabo y plan de clases. Genera siempre respuestas en formato JSON válido."},
                 {"role": "user", "content": prompt_completo}
             ],
             "temperature": temperature,
-            "max_tokens": max_tokens
+            "max_tokens": max_tokens  # Usar el valor pasado como parámetro
         }
         
         try:
@@ -985,16 +986,23 @@ def generar_silabo(request):
             # Verificar si la solicitud fue exitosa
             if response.status_code == 200:
                 respuesta = response.json()
-                return respuesta['choices'][0]['message']['content']
+                resultado = respuesta['choices'][0]['message']['content']
+                logging.info("Respuesta de DeepSeek recibida correctamente")
+                logging.debug(f"Primeros 200 caracteres: {resultado[:200]}")
+                return resultado
             else:
                 error_message = f"Error en la API de DeepSeek: {response.status_code}, {response.text}"
                 logging.error(error_message)
                 raise RuntimeError(error_message)
                 
         except requests.RequestException as e:
-            raise RuntimeError(f"Error de conexión con DeepSeek: {e}")
+            error_msg = f"Error de conexión con DeepSeek: {e}"
+            logging.error(error_msg)
+            raise RuntimeError(error_msg)
         except Exception as e:
-            raise RuntimeError(f"Error inesperado con DeepSeek: {e}")
+            error_msg = f"Error inesperado con DeepSeek: {e}"
+            logging.error(error_msg)
+            raise RuntimeError(error_msg)
 
 
     def usar_modelo_openai(prompt_completo):
@@ -1241,12 +1249,14 @@ def generar_estudio_independiente(request):
             raise RuntimeError(f"Error inesperado: {e}")
 
 
-    def usar_modelo_deepseek(prompt_completo):
+    def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7):
         """
         Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
 
         Args:
             prompt_completo (str): Prompt que contiene las instrucciones y datos.
+            max_tokens (int): Número máximo de tokens en la respuesta.
+            temperature (float): Controla la creatividad (0-1).
 
         Returns:
             str: Respuesta generada por el modelo.
@@ -1255,6 +1265,7 @@ def generar_estudio_independiente(request):
         load_dotenv()
         api_key = os.environ.get("deepseek_API_KEY")
         if not api_key:
+            logging.error("deepseek_API_KEY no está configurada en el archivo .env")
             raise ValueError("deepseek_API_KEY no está configurada en el archivo .env")
 
         api_url = "https://api.deepseek.com/v1/chat/completions"
@@ -1269,11 +1280,11 @@ def generar_estudio_independiente(request):
         data = {
             "model": "deepseek-chat",  # Usar el modelo correcto según la documentación
             "messages": [
-                {"role": "system", "content": "Asistente para crear sílabo y plan de clases."},
+                {"role": "system", "content": "Asistente para crear sílabo y plan de clases. Genera siempre respuestas en formato JSON válido."},
                 {"role": "user", "content": prompt_completo}
             ],
-            "temperature": 0.7,
-            "max_tokens": 1024
+            "temperature": temperature,
+            "max_tokens": max_tokens  # Usar el valor pasado como parámetro
         }
         
         try:
@@ -1284,16 +1295,23 @@ def generar_estudio_independiente(request):
             # Verificar si la solicitud fue exitosa
             if response.status_code == 200:
                 respuesta = response.json()
-                return respuesta['choices'][0]['message']['content']
+                resultado = respuesta['choices'][0]['message']['content']
+                logging.info("Respuesta de DeepSeek recibida correctamente")
+                logging.debug(f"Primeros 200 caracteres: {resultado[:200]}")
+                return resultado
             else:
                 error_message = f"Error en la API de DeepSeek: {response.status_code}, {response.text}"
                 logging.error(error_message)
                 raise RuntimeError(error_message)
                 
         except requests.RequestException as e:
-            raise RuntimeError(f"Error de conexión con DeepSeek: {e}")
+            error_msg = f"Error de conexión con DeepSeek: {e}"
+            logging.error(error_msg)
+            raise RuntimeError(error_msg)
         except Exception as e:
-            raise RuntimeError(f"Error inesperado con DeepSeek: {e}")
+            error_msg = f"Error inesperado con DeepSeek: {e}"
+            logging.error(error_msg)
+            raise RuntimeError(error_msg)
 
 
     def usar_modelo_openai(prompt_completo):
@@ -1515,7 +1533,7 @@ def generar_estudio_independiente(request):
             respuesta_ai = generar_con_openai(prompt_completo)
         elif modelo_seleccionado == 'deepseek':
             try:
-                respuesta_ai = usar_modelo_deepseek(prompt_completo)
+                respuesta_ai = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7)
             except Exception as e:
                 error_msg = f'Error al generar con DeepSeek: {str(e)}'
                 logging.error(error_msg)
@@ -1561,8 +1579,20 @@ def generar_estudio_independiente(request):
                 
                 logging.debug(f"JSON extraído (primeros 200 caracteres): {json_str[:200]}...")
                 
-                # Convertir el texto a un objeto JSON
-                data = json.loads(json_str)
+                # Intentar convertir el texto a un objeto JSON
+                try:
+                    data = json.loads(json_str)
+                except json.JSONDecodeError as e:
+                    logging.error(f"Error inicial al decodificar JSON: {str(e)}")
+                    logging.debug(f"Intentando limpiar y reparar el JSON...")
+                    
+                    # Intento adicional: reemplazar comillas simples por dobles
+                    json_str = json_str.replace("'", '"')
+                    # Intento adicional: escapar comillas internas
+                    json_str = re.sub(r'(?<!")(".*?)(?<!")(")', r'\1\\"', json_str)
+                    
+                    # Último intento con la corrección
+                    data = json.loads(json_str)
                 
                 # Asegurarse de que los campos esperados estén presentes
                 expected_fields = ['descripcion', 'actividades', 'recursos', 'tiempo_estimado', 'criterios_evaluacion', 'puntaje', 'evaluacion_sumativa', 'objetivo_conceptual', 'objetivo_procedimental', 'objetivo_actitudinal', 'instrumento_cuaderno', 'instrumento_organizador', 'instrumento_diario', 'instrumento_prueba']
@@ -1582,10 +1612,32 @@ def generar_estudio_independiente(request):
                 logging.info("Datos procesados correctamente, enviando respuesta")
                 return JsonResponse({'guia_data': data})
             else:
-                error_msg = 'No se encontró un formato JSON válido en la respuesta'
-                logging.error(error_msg)
-                logging.debug(f"Respuesta completa que no contiene JSON: {respuesta_ai}")
-                return JsonResponse({'error': error_msg}, status=500)
+                # Si no hay formato JSON directo, intentar formatear la respuesta completa
+                logging.warning("No se encontró un formato JSON válido en la respuesta. Intentando procesar la respuesta completa.")
+                
+                # Eliminar cualquier markdown que pueda haber
+                clean_response = re.sub(r'```.*?```', '', respuesta_ai, flags=re.DOTALL).strip()
+                
+                # Crear un diccionario básico usando el texto completo como descripción
+                data = {
+                    'descripcion': clean_response[:500],  # Limitar a 500 caracteres
+                    'actividades': ["Revisar el material proporcionado"],
+                    'recursos': ["Material de estudio"],
+                    'tiempo_estimado': "60",
+                    'criterios_evaluacion': ["Comprensión del contenido"],
+                    'puntaje': "10",
+                    'evaluacion_sumativa': "Evaluación basada en la comprensión del contenido",
+                    'objetivo_conceptual': "Comprender los conceptos fundamentales del tema",
+                    'objetivo_procedimental': "Aplicar los conceptos aprendidos",
+                    'objetivo_actitudinal': "Valorar la importancia del tema estudiado",
+                    'instrumento_cuaderno': "Anotaciones en el cuaderno",
+                    'instrumento_organizador': "Crear un organizador gráfico",
+                    'instrumento_diario': "Registro diario de actividades",
+                    'instrumento_prueba': "Evaluación escrita sobre el tema"
+                }
+                
+                logging.info("Se generó una respuesta de emergencia al no encontrar JSON válido")
+                return JsonResponse({'guia_data': data})
                     
         except json.JSONDecodeError as e:
             error_msg = f'Error al decodificar JSON: {str(e)}'
@@ -1600,8 +1652,7 @@ def generar_estudio_independiente(request):
             error_msg = f'Error inesperado: {str(e)}'
             logging.error(error_msg)
             return JsonResponse({'error': error_msg}, status=500)
-
-
+        
 @login_required
 def cargar_guia(request, silabo_id):
     """
