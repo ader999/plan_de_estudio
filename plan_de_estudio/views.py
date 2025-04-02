@@ -940,6 +940,63 @@ def generar_silabo(request):
             raise RuntimeError(f"Error inesperado: {e}")
 
 
+    def usar_modelo_deepseek(prompt_completo, max_tokens=1024, temperature=0.7):
+        """
+        Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
+
+        Args:
+            prompt_completo (str): Prompt que contiene las instrucciones y datos.
+            max_tokens (int): Número máximo de tokens en la respuesta.
+            temperature (float): Controla la creatividad (0-1).
+
+        Returns:
+            str: Respuesta generada por el modelo.
+        """
+        # Cargar la clave API desde .env
+        load_dotenv()
+        api_key = os.environ.get("deepseek_API_KEY")
+        if not api_key:
+            raise ValueError("deepseek_API_KEY no está configurada en el archivo .env")
+
+        api_url = "https://api.deepseek.com/v1/chat/completions"
+        
+        # Headers de la solicitud
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        # Parámetros del cuerpo de la solicitud
+        data = {
+            "model": "deepseek-chat",  # Usar el modelo correcto según la documentación
+            "messages": [
+                {"role": "system", "content": "Asistente para crear sílabo y plan de clases."},
+                {"role": "user", "content": prompt_completo}
+            ],
+            "temperature": temperature,
+            "max_tokens": max_tokens
+        }
+        
+        try:
+            # Hacer la solicitud POST
+            import requests
+            response = requests.post(api_url, json=data, headers=headers)
+            
+            # Verificar si la solicitud fue exitosa
+            if response.status_code == 200:
+                respuesta = response.json()
+                return respuesta['choices'][0]['message']['content']
+            else:
+                error_message = f"Error en la API de DeepSeek: {response.status_code}, {response.text}"
+                logging.error(error_message)
+                raise RuntimeError(error_message)
+                
+        except requests.RequestException as e:
+            raise RuntimeError(f"Error de conexión con DeepSeek: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Error inesperado con DeepSeek: {e}")
+
+
     def usar_modelo_openai(prompt_completo):
         """
         Función para interactuar con OpenAI usando el cliente de chat basado en el script compartido.
@@ -1080,6 +1137,8 @@ def generar_silabo(request):
                 silabo_generado = usar_modelo_google(prompt_completo, generation_config)
             elif modelo_seleccionado == 'openai':
                 silabo_generado = usar_modelo_openai(prompt_completo)
+            elif modelo_seleccionado == 'deepseek':
+                silabo_generado = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7)
             else:
                 return JsonResponse({'error': 'Modelo no válido seleccionado.'}, status=400)
 
@@ -1137,6 +1196,8 @@ def generar_silabo(request):
     return JsonResponse({'error': 'Método no permitido.'}, status=405)
 
 
+
+
 @csrf_exempt
 def generar_estudio_independiente(request):
     """
@@ -1178,6 +1239,61 @@ def generar_estudio_independiente(request):
             raise RuntimeError(f"Error en la API de Gemini: {e}")
         except Exception as e:
             raise RuntimeError(f"Error inesperado: {e}")
+
+
+    def usar_modelo_deepseek(prompt_completo):
+        """
+        Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
+
+        Args:
+            prompt_completo (str): Prompt que contiene las instrucciones y datos.
+
+        Returns:
+            str: Respuesta generada por el modelo.
+        """
+        # Cargar la clave API desde .env
+        load_dotenv()
+        api_key = os.environ.get("deepseek_API_KEY")
+        if not api_key:
+            raise ValueError("deepseek_API_KEY no está configurada en el archivo .env")
+
+        api_url = "https://api.deepseek.com/v1/chat/completions"
+        
+        # Headers de la solicitud
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        # Parámetros del cuerpo de la solicitud
+        data = {
+            "model": "deepseek-chat",  # Usar el modelo correcto según la documentación
+            "messages": [
+                {"role": "system", "content": "Asistente para crear sílabo y plan de clases."},
+                {"role": "user", "content": prompt_completo}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1024
+        }
+        
+        try:
+            # Hacer la solicitud POST
+            import requests
+            response = requests.post(api_url, json=data, headers=headers)
+            
+            # Verificar si la solicitud fue exitosa
+            if response.status_code == 200:
+                respuesta = response.json()
+                return respuesta['choices'][0]['message']['content']
+            else:
+                error_message = f"Error en la API de DeepSeek: {response.status_code}, {response.text}"
+                logging.error(error_message)
+                raise RuntimeError(error_message)
+                
+        except requests.RequestException as e:
+            raise RuntimeError(f"Error de conexión con DeepSeek: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Error inesperado con DeepSeek: {e}")
 
 
     def usar_modelo_openai(prompt_completo):
@@ -1397,23 +1513,25 @@ def generar_estudio_independiente(request):
         
         if modelo_seleccionado == 'openai':
             respuesta_ai = generar_con_openai(prompt_completo)
+        elif modelo_seleccionado == 'deepseek':
+            try:
+                respuesta_ai = usar_modelo_deepseek(prompt_completo)
+            except Exception as e:
+                error_msg = f'Error al generar con DeepSeek: {str(e)}'
+                logging.error(error_msg)
+                return JsonResponse({'error': error_msg}, status=500)
         else:  # google por defecto
             try:
-                # Configurar el modelo
+                # Configurar el modelo usando el método correcto
                 generation_config = {
                     "temperature": 0.7,
                     "top_p": 0.95,
                     "top_k": 40,
+                    "max_output_tokens": 1524
                 }
                 
-                model = genai.GenerativeModel(
-                    model_name="gemini-pro",
-                    generation_config=generation_config
-                )
-                
-                # Generar respuesta
-                response = model.generate_content(prompt_completo)
-                respuesta_ai = response.text
+                # Usar la función adecuada para el modelo correcto
+                respuesta_ai = usar_modelo_google(prompt_completo, generation_config)
                 
             except Exception as e:
                 error_msg = f'Error al generar con Google AI: {str(e)}'

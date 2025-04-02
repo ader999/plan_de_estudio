@@ -185,25 +185,49 @@ class Silabo(models.Model):
 
 
 class PlanTematico(models.Model):
-    nombre_de_la_unidad = models.IntegerField()
-    clases_teoricas_s = models.IntegerField()
-    clases_teoricas_c = models.IntegerField()
-    tct = models.IntegerField()
-    clases_practicas_laboratorio = models.IntegerField()
-    clases_practicas_campo_trabajo = models.IntegerField()
-    clases_practicas_teoria = models.IntegerField()
-    clases_practicas_visitas_tc = models.IntegerField()
-    tcp = models.IntegerField()
-    evaluacion_final_examen = models.IntegerField()
-    evaluacion_final_trabajo_clase = models.IntegerField()
-    evaluacion_final_participacion_clase = models.IntegerField()
-    te = models.IntegerField()  # Total de evaluaciones
-    thp = models.IntegerField() # Total de horas prácticas
-    ti = models.IntegerField()  # Total de intervenciones
-    th = models.IntegerField()  # Total de horas
+    UNIDADES_NOMBRES = [
+        ('Primera unidad', 'Primera unidad'),
+        ('Segunda unidad', 'Segunda unidad'),
+        ('Tercera unidad', 'Tercera unidad'),
+        ('Cuarta unidad', 'Cuarta unidad'),
+    ]
+    
+    # Campo de relación
+    asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE, verbose_name='Asignatura', related_name='planes_tematicos')
+    
+    # Campos de unidad
+    unidades = models.CharField(max_length=50, choices=UNIDADES_NOMBRES, verbose_name='Unidades', null=False, blank=False)
+    nombre_de_la_unidad = models.CharField(max_length=300, verbose_name='Nombre de la unidad', null=False, blank=False)
+    objetivo_espesificos = models.TextField(max_length=1500, verbose_name='Objetivos específicos', null=False, blank=False)
+    plan_analitico = models.TextField(max_length=1500, verbose_name='Plan Analítico', null=False, blank=False)
+    recomendaciones_metodologicas = models.TextField(max_length=1500, verbose_name='Recomendaciones metodológicas', null=False, blank=False)
+    forma_de_evaluacion = models.TextField(max_length=1000, verbose_name='Forma de evaluación', null=False, blank=False) 
+    relacion_eje_contenido_launidad = models.TextField(max_length=1000, verbose_name='Relación eje contenido la unidad', null=False, blank=False)
+    
+    class Meta:
+        unique_together = ('asignatura', 'unidades')  # Evita duplicar la misma unidad para una asignatura
 
     def __str__(self):
-        return f'Unidad: {self.nombre_de_la_unidad} (ID: {self.id})'
+        return f'{self.unidades} - {self.asignatura}'
+        
+    def clean(self):
+        # Verificar si esta unidad ya existe para esta asignatura
+        if self.asignatura and self.unidades:
+            # Verificar si esta unidad específica ya existe para esta asignatura
+            existing_unit = PlanTematico.objects.filter(
+                asignatura=self.asignatura,
+                unidades=self.unidades
+            ).exclude(pk=self.pk).exists()
+            if existing_unit:
+                raise ValidationError(f"La {self.unidades} ya existe para esta asignatura.")
+                
+            # Verificar si ya existen las 4 unidades para esta asignatura
+            unit_count = PlanTematico.objects.filter(
+                asignatura=self.asignatura
+            ).exclude(pk=self.pk).count()
+            
+            if unit_count >= 4:
+                raise ValidationError("Esta asignatura ya tiene sus 4 unidades completas. No se pueden añadir más.")
 
 
 class Guia(models.Model):

@@ -8,6 +8,7 @@ from django.forms import DateInput
 from import_export.admin import ExportMixin
 from import_export import resources
 from django.utils.html import format_html
+from django.db.models import Count
 
 admin.site.site_header = 'PLANEAUML'
 admin.site.index_title = 'Bienbenidos al Panel de control del sitio'
@@ -120,6 +121,54 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     completado_icono.short_description = 'Completado'
 
 
+class CompletadoFilter(admin.SimpleListFilter):
+    title = 'Estado de Completado'
+    parameter_name = 'completado'
+    
+    def lookups(self, request, model_admin):
+        return (
+            ('si', 'Completados'),
+            ('no', 'Incompletos'),
+        )
+    
+    def queryset(self, request, queryset):
+        # Obtenemos todas las asignaturas que tienen 4 o más unidades
+        if self.value() == 'si':
+            # Encuentra asignaturas con 4 o más unidades
+            asignaturas_completas = PlanTematico.objects.values('asignatura').annotate(
+                count=Count('id')
+            ).filter(count__gte=4).values_list('asignatura', flat=True)
+            return queryset.filter(asignatura__in=asignaturas_completas)
+        
+        if self.value() == 'no':
+            # Encuentra asignaturas con menos de 4 unidades
+            asignaturas_incompletas = PlanTematico.objects.values('asignatura').annotate(
+                count=Count('id')
+            ).filter(count__lt=4).values_list('asignatura', flat=True)
+            return queryset.filter(asignatura__in=asignaturas_incompletas)
+
+
+class PlanTematicoAdmin(admin.ModelAdmin):
+    list_display = ('asignatura', 'unidades', 'nombre_de_la_unidad', 'completado_icono')
+    list_filter = ('asignatura', CompletadoFilter)
+    search_fields = ('asignatura__nombre', 'nombre_de_la_unidad')
+    
+    def completado_icono(self, obj):
+        # Cuenta cuántas unidades tiene esta asignatura
+        count = PlanTematico.objects.filter(asignatura=obj.asignatura).count()
+        # Retorna True si ya tiene las 4 unidades completas
+        return count >= 4
+    
+    completado_icono.boolean = True  # Indica que este es un campo booleano
+    completado_icono.short_description = 'Completado'
+
+    def get_queryset(self, request):
+        # Anotamos cada objeto con un conteo de unidades por asignatura
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(
+            unidades_count=Count('asignatura__planes_tematicos')
+        )
+        return queryset
 
 
 admin.site.register(Plan_de_estudio, PlanDeEstudioAdmin)
@@ -128,4 +177,4 @@ admin.site.register(Carrera)
 admin.site.register(Silabo, FiltarSilabo)
 admin.site.register(Guia, FiltrarGuia)
 admin.site.register(AsignacionPlanEstudio, AsignacionPlanEstudioAdmin)
-admin.site.register(PlanTematico)
+admin.site.register(PlanTematico, PlanTematicoAdmin)
