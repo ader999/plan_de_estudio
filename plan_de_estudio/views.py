@@ -1581,11 +1581,36 @@ def generar_estudio_independiente(request):
             respuesta_ai = generar_con_openai(prompt_completo)
         elif modelo_seleccionado == 'deepseek':
             try:
-                respuesta_ai = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7, timeout=25)
+                respuesta_ai = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7, timeout=15)
+                # Si llegamos aquí, la respuesta fue exitosa o se usó el fallback para timeout
+                logging.info("Respuesta de DeepSeek obtenida o se generó fallback")
             except Exception as e:
-                error_msg = f'Error al generar con DeepSeek: {str(e)}'
-                logging.error(error_msg)
-                return JsonResponse({'error': error_msg}, status=500)
+                if "timeout" in str(e).lower() or "timed out" in str(e).lower():
+                    # Si es un error de timeout, generar una respuesta de fallback
+                    logging.warning(f"Timeout detectado con DeepSeek: {str(e)}")
+                    respuesta_ai = """
+                    {
+                      "descripcion": "La generación automática no pudo completarse debido a problemas de red o tiempo de espera agotado. Esta es una guía provisional.",
+                      "actividades": ["Revisar material asignado", "Realizar lectura comprensiva", "Contestar preguntas de autoestudio"],
+                      "recursos": ["Material de clase", "Recursos online"],
+                      "tiempo_estimado": "60",
+                      "criterios_evaluacion": ["Comprensión del tema", "Participación en clase"],
+                      "puntaje": "10",
+                      "evaluacion_sumativa": "Evaluación basada en el tema estudiado",
+                      "objetivo_conceptual": "Comprender los conceptos fundamentales del tema",
+                      "objetivo_procedimental": "Aplicar los conceptos aprendidos",
+                      "objetivo_actitudinal": "Valorar la importancia del tema estudiado",
+                      "instrumento_cuaderno": "Anotaciones en el cuaderno",
+                      "instrumento_organizador": "Elaboración de un organizador gráfico",
+                      "instrumento_diario": "Registro de actividades realizadas",
+                      "instrumento_prueba": "Evaluación escrita sobre el tema"
+                    }
+                    """
+                else:
+                    # Para otros errores, mostrar el mensaje normal
+                    error_msg = f'Error al generar con DeepSeek: {str(e)}'
+                    logging.error(error_msg)
+                    return JsonResponse({'error': error_msg}, status=500)
         else:  # google por defecto
             try:
                 # Configurar el modelo usando el método correcto
