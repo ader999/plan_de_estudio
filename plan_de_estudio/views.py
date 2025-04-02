@@ -940,7 +940,7 @@ def generar_silabo(request):
             raise RuntimeError(f"Error inesperado: {e}")
 
 
-    def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7):
+    def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7, timeout=25):
         """
         Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
 
@@ -948,6 +948,7 @@ def generar_silabo(request):
             prompt_completo (str): Prompt que contiene las instrucciones y datos.
             max_tokens (int): Número máximo de tokens en la respuesta.
             temperature (float): Controla la creatividad (0-1).
+            timeout (int): Tiempo máximo en segundos para esperar la respuesta.
 
         Returns:
             str: Respuesta generada por el modelo.
@@ -979,9 +980,10 @@ def generar_silabo(request):
         }
         
         try:
-            # Hacer la solicitud POST
+            # Hacer la solicitud POST con timeout 
             import requests
-            response = requests.post(api_url, json=data, headers=headers)
+            logging.info(f"Iniciando solicitud a DeepSeek con timeout={timeout} segundos")
+            response = requests.post(api_url, json=data, headers=headers, timeout=timeout)
             
             # Verificar si la solicitud fue exitosa
             if response.status_code == 200:
@@ -995,7 +997,29 @@ def generar_silabo(request):
                 logging.error(error_message)
                 raise RuntimeError(error_message)
                 
-        except requests.RequestException as e:
+        except requests.exceptions.Timeout:
+            error_msg = f"Timeout al conectar con DeepSeek después de {timeout} segundos"
+            logging.error(error_msg)
+            # En lugar de lanzar un error, devolver una respuesta de fallback en formato JSON
+            return """
+            {
+              "descripcion": "La generación automática no pudo completarse debido a problemas de red o tiempo de espera agotado. Esta es una guía provisional.",
+              "actividades": ["Revisar material asignado", "Realizar lectura comprensiva", "Contestar preguntas de autoestudio"],
+              "recursos": ["Material de clase", "Recursos online"],
+              "tiempo_estimado": "60",
+              "criterios_evaluacion": ["Comprensión del tema", "Participación en clase"],
+              "puntaje": "10",
+              "evaluacion_sumativa": "Evaluación basada en el tema estudiado",
+              "objetivo_conceptual": "Comprender los conceptos fundamentales del tema",
+              "objetivo_procedimental": "Aplicar los conceptos aprendidos",
+              "objetivo_actitudinal": "Valorar la importancia del tema estudiado",
+              "instrumento_cuaderno": "Anotaciones en el cuaderno",
+              "instrumento_organizador": "Elaboración de un organizador gráfico",
+              "instrumento_diario": "Registro de actividades realizadas",
+              "instrumento_prueba": "Evaluación escrita sobre el tema"
+            }
+            """
+        except requests.exceptions.RequestException as e:
             error_msg = f"Error de conexión con DeepSeek: {e}"
             logging.error(error_msg)
             raise RuntimeError(error_msg)
@@ -1146,7 +1170,7 @@ def generar_silabo(request):
             elif modelo_seleccionado == 'openai':
                 silabo_generado = usar_modelo_openai(prompt_completo)
             elif modelo_seleccionado == 'deepseek':
-                silabo_generado = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7)
+                silabo_generado = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7, timeout=25)
             else:
                 return JsonResponse({'error': 'Modelo no válido seleccionado.'}, status=400)
 
@@ -1249,7 +1273,7 @@ def generar_estudio_independiente(request):
             raise RuntimeError(f"Error inesperado: {e}")
 
 
-    def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7):
+    def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7, timeout=25):
         """
         Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
 
@@ -1257,6 +1281,7 @@ def generar_estudio_independiente(request):
             prompt_completo (str): Prompt que contiene las instrucciones y datos.
             max_tokens (int): Número máximo de tokens en la respuesta.
             temperature (float): Controla la creatividad (0-1).
+            timeout (int): Tiempo máximo en segundos para esperar la respuesta.
 
         Returns:
             str: Respuesta generada por el modelo.
@@ -1288,9 +1313,10 @@ def generar_estudio_independiente(request):
         }
         
         try:
-            # Hacer la solicitud POST
+            # Hacer la solicitud POST con timeout 
             import requests
-            response = requests.post(api_url, json=data, headers=headers)
+            logging.info(f"Iniciando solicitud a DeepSeek con timeout={timeout} segundos")
+            response = requests.post(api_url, json=data, headers=headers, timeout=timeout)
             
             # Verificar si la solicitud fue exitosa
             if response.status_code == 200:
@@ -1304,7 +1330,29 @@ def generar_estudio_independiente(request):
                 logging.error(error_message)
                 raise RuntimeError(error_message)
                 
-        except requests.RequestException as e:
+        except requests.exceptions.Timeout:
+            error_msg = f"Timeout al conectar con DeepSeek después de {timeout} segundos"
+            logging.error(error_msg)
+            # En lugar de lanzar un error, devolver una respuesta de fallback en formato JSON
+            return """
+            {
+              "descripcion": "La generación automática no pudo completarse debido a problemas de red o tiempo de espera agotado. Esta es una guía provisional.",
+              "actividades": ["Revisar material asignado", "Realizar lectura comprensiva", "Contestar preguntas de autoestudio"],
+              "recursos": ["Material de clase", "Recursos online"],
+              "tiempo_estimado": "60",
+              "criterios_evaluacion": ["Comprensión del tema", "Participación en clase"],
+              "puntaje": "10",
+              "evaluacion_sumativa": "Evaluación basada en el tema estudiado",
+              "objetivo_conceptual": "Comprender los conceptos fundamentales del tema",
+              "objetivo_procedimental": "Aplicar los conceptos aprendidos",
+              "objetivo_actitudinal": "Valorar la importancia del tema estudiado",
+              "instrumento_cuaderno": "Anotaciones en el cuaderno",
+              "instrumento_organizador": "Elaboración de un organizador gráfico",
+              "instrumento_diario": "Registro de actividades realizadas",
+              "instrumento_prueba": "Evaluación escrita sobre el tema"
+            }
+            """
+        except requests.exceptions.RequestException as e:
             error_msg = f"Error de conexión con DeepSeek: {e}"
             logging.error(error_msg)
             raise RuntimeError(error_msg)
@@ -1533,7 +1581,7 @@ def generar_estudio_independiente(request):
             respuesta_ai = generar_con_openai(prompt_completo)
         elif modelo_seleccionado == 'deepseek':
             try:
-                respuesta_ai = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7)
+                respuesta_ai = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7, timeout=25)
             except Exception as e:
                 error_msg = f'Error al generar con DeepSeek: {str(e)}'
                 logging.error(error_msg)
