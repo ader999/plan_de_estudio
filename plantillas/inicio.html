@@ -78,22 +78,38 @@
 
                         <!-- Botón para llenar el silabo, solo aparece si no está completado -->
                         {% if asignacion.silabos_creados <= 12 %}
-                            <a href="{% url 'ver_formulario' asignacion_id=asignacion.id %}" class="btn btn-warning">
-                                <img src="{% static 'img/informe.png' %}" alt="" style="height: 34px">Generar Silabo
-                            </a>
-                    
+                            <div class="d-flex flex-column align-items-center mb-3">
+                                <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}" class="btn btn-warning mb-2 w-100 d-flex align-items-center justify-content-center py-2">
+                                    <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
+                                </a>
+                                
+                                <!-- Indicadores numéricos para sílabos -->
+                                <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
+                                    {% for i in rango %}
+                                        <div class="mx-1 my-1 div-custom {% if i <= asignacion.silabos_creados %}div-green{% else %}div-red{% endif %}">
+                                            <p class="text-center">{{ i }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex flex-column align-items-center">
+                                <!-- Botón para generar guía de estudio independiente -->
+                                <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}" class="btn btn-info mb-2 w-100 d-flex align-items-center justify-content-center py-2">
+                                    <i class="fas fa-book-reader fa-lg me-2"></i> Generar Guía
+                                </a>
+                                
+                                <!-- Indicadores numéricos para guías -->
+                                <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
+                                    {% for i in rango %}
+                                        <div class="mx-1 my-1 div-custom {% if i <= asignacion.guias_creadas|default:0 %}div-green{% else %}div-blue{% endif %}">
+                                            <p class="text-center">{{ i }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         {% endif %}
                         
-                        <!-- Indicadores numéricos -->
-                        <div class="d-flex flex-wrap justify-content-center align-items-center mt-3">
-                            {% for i in rango %}
-                                <div class="mx-1 my-1 div-custom {% if i <= asignacion.silabos_creados %}div-green{% else %}div-red{% endif %}">
-                                    <p class="text-center">{{ i }}</p>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
                         <!-- Añade estos estilos al archivo CSS -->
                         <style>
                             .div-red {
@@ -101,6 +117,9 @@
                             }
                             .div-green {
                                 background: #2ecc71; /* Color verde */
+                            }
+                            .div-blue {
+                                background: #3498db; /* Color azul para guías */
                             }
                             .div-custom {
                                 width: 30px;
@@ -130,7 +149,7 @@
                         }
 
                         </style>
-
+                    </div>
 
                         <!-- Footer de la tarjeta, muestra el estado de completado -->
                         <div class="card-footer text-muted d-flex justify-content-between">

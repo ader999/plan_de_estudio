@@ -1,3 +1,6 @@
+{% extends 'base.html' %}
+
+{% block content %}
 {% load static %}
 {% load widget_tweaks %}
 
@@ -6,14 +9,45 @@
     .oculto {
         display: none !important;
     }
+    
+    /* Estilo personalizado para las líneas divisorias */
+    .hr-blue {
+        height: 3px;
+        background-color: #0d6efd;
+        opacity: 1;
+        border: none;
+        border-radius: 2px;
+    }
 </style>
 
-<h2 class="text-center">Silabo</h2>
-<form id="silabo-form" method="POST" action="{% url 'generar_silabo' %}">
+<div class="container-fluid mt-3">
+    <div class="text-center">
+        <h1 class="mb-4 text-center">Llenar formularios</h1>
+        <h3>{{ asignacion.plan_de_estudio }}</h3>
+        <h3>Encuentro ({{ encuentro }})</h3>
+    </div>
+
+    <!-- Contenedor principal que contiene ambas secciones -->
+    <div class="container">
+        
+
+        <!-- Sección 1: Formulario Principal (Sílabo) -->
+        <div id="seccionFormularioPrincipal" style="display: block;">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10 col-sm-12">
+                    <div class="card shadow-lg">
+                        <div class="card-body">
+                            
+
+
+
+
+                            <h2 class="text-center">Silabo</h2>
+<form id="silabo-form" method="POST" action="{% url 'generar_silabo' %}" data-url-generar-silabo="{% url 'generar_silabo' %}" data-url-guardar-silabo="{% url 'guardar_silabo' asignacion.id %}" data-url-guardar-estudio-independiente="{% url 'generar_guia' %}">
     {% csrf_token %}
 
     <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">
-    <input type="hidden" id="plan" name="plan" value="{{ asignacion.plan_de_estudio }}">
+    <input type="hidden" id="plan" name="plan" value="{{ asignacion.id }}">
 
     <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
         <div class="d-flex align-items-center">
@@ -57,284 +91,437 @@
         {{ form.codigo|add_class:"form-control" }}
     </div>
 
-    <!-- Campo Carrera -->
-    <div class="mb-3 oculto">
-        <label for="carrera" class="form-label">Carrera</label>
-        {{ form.carrera|add_class:"form-control" }}
+    <!-- Sección 1: Información general del plan de estudio -->
+    <div class="card mb-4 mt-3">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Información General</h5>
+        </div>
+        <div class="card-body">
+            <!-- Campo Encuentros -->
+            <div class="mb-3 oculto">
+                <label for="encuentros" class="form-label">Encuentros</label>
+                {{ form.encuentros|add_class:"form-control" }}
+            </div>
+
+            <!-- Campo Fecha -->
+            <div class="mb-3">
+                <label for="fecha" class="form-label">Fecha</label>
+                {{ form.fecha|add_class:"form-control" }}
+            </div>
+
+            <!-- Campo Unidad -->
+            <div class="mb-3">
+                <label for="unidad" class="form-label">Unidad</label>
+                {{ form.unidad|add_class:"form-select" }}
+            </div>
+
+            <!-- Campo Nombre de la Unidad -->
+            <div class="mb-3">
+                <label for="nombre_de_la_unidad" class="form-label">Nombre de la Unidad</label>
+                {{ form.nombre_de_la_unidad|add_class:"form-control" }}
+            </div>
+
+            <!-- Campo Contenido Temático -->
+            <div class="mb-3">
+                <label for="contenido_tematico" class="form-label">Contenido Temático</label>
+                {{ form.contenido_tematico|add_class:"form-control" }}
+            </div>
+        </div>
     </div>
 
-    <!-- Campo Asignatura -->
-    <div class="mb-3 oculto">
-        <label for="asignatura" class="form-label">Asignatura (Plan de Estudio)</label>
-        {{ form.asignatura|add_class:"form-control" }}
+    <!-- Sección 2: Objetivos de la unidad -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Objetivos</h5>
+        </div>
+        <div class="card-body">
+            <!-- Campo Objetivo Conceptual -->
+            <div class="mb-3">
+                <label for="objetivo_conceptual" class="form-label">Objetivo Conceptual</label>
+                {{ form.objetivo_conceptual|add_class:"form-control" }}
+            </div>
+
+            <!-- Campo Objetivo Procedimental -->
+            <div class="mb-3">
+                <label for="objetivo_procedimental" class="form-label">Objetivo Procedimental</label>
+                {{ form.objetivo_procedimental|add_class:"form-control" }}
+            </div>
+
+            <!-- Campo Objetivo Actitudinal -->
+            <div class="mb-3">
+                <label for="objetivo_actitudinal" class="form-label">Objetivo Actitudinal</label>
+                {{ form.objetivo_actitudinal|add_class:"form-control" }}
+            </div>
+        </div>
     </div>
 
-    <!-- Campo Maestro -->
-    <div class="mb-3 oculto">
-        <label for="maestro" class="form-label">Maestro</label>
-        {{ form.maestro|add_class:"form-control" }}
+    <!-- Sección 3: Descripción de las fases del acto mental -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Descripción de las fases del acto mental</h5>
+        </div>
+        <div class="card-body">
+            <!-- Primer momento didáctico (fase entrada) -->
+            <h6>Primer Momento Didáctico (Fase Entrada)</h6>
+            <div class="mb-3">
+                <label for="tipo_primer_momento" class="form-label">Tipo de Enseñanza</label>
+                {{ form.tipo_primer_momento|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="detalle_primer_momento" class="form-label">Detalle</label>
+                {{ form.detalle_primer_momento|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="tiempo_primer_momento" class="form-label">Tiempo (minutos)</label>
+                {{ form.tiempo_primer_momento|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="recursos_primer_momento" class="form-label">Recursos Didácticos</label>
+                {{ form.recursos_primer_momento|add_class:"form-control" }}
+            </div>
+
+            <!-- Segundo momento didáctico (fase elaboración) -->
+            <h6 class="mt-4">Segundo Momento Didáctico (Fase Elaboración)</h6>
+            <div class="mb-3">
+                <label for="tipo_segundo_momento_claseteoria" class="form-label">Tipo de Enseñanza - Clase Teórica</label>
+                {{ form.tipo_segundo_momento_claseteoria|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="clase_teorica" class="form-label">Clase Teórica</label>
+                {{ form.clase_teorica|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="tipo_segundo_momento_practica" class="form-label">Tipo de Enseñanza - Clase Práctica</label>
+                {{ form.tipo_segundo_momento_practica|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="clase_practica" class="form-label">Clase Práctica</label>
+                {{ form.clase_practica|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="tiempo_segundo_momento" class="form-label">Tiempo (minutos)</label>
+                {{ form.tiempo_segundo_momento|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="recursos_segundo_momento" class="form-label">Recursos Didácticos</label>
+                {{ form.recursos_segundo_momento|add_class:"form-control" }}
+            </div>
+
+            <!-- Tercer momento didáctico (fase salida) -->
+            <h6 class="mt-4">Tercer Momento Didáctico (Fase Salida)</h6>
+            <div class="mb-3">
+                <label for="tipo_tercer_momento" class="form-label">Tipo de Enseñanza</label>
+                {{ form.tipo_tercer_momento|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="detalle_tercer_momento" class="form-label">Detalle</label>
+                {{ form.detalle_tercer_momento|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="tiempo_tercer_momento" class="form-label">Tiempo (minutos)</label>
+                {{ form.tiempo_tercer_momento|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="recursos_tercer_momento" class="form-label">Recursos Didácticos</label>
+                {{ form.recursos_tercer_momento|add_class:"form-control" }}
+            </div>
+
+            <!-- Ejes transversales -->
+            <h6>Ejes Transversales</h6>
+            <div class="mb-3">
+                <label for="eje_transversal" class="form-label">Eje Transversal</label>
+                {{ form.eje_transversal|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="detalle_eje_transversal" class="form-label">Detalle Eje Transversal</label>
+                {{ form.detalle_eje_transversal|add_class:"form-control" }}
+            </div>
+        </div>
     </div>
 
-    <!-- Campo Encuentros -->
-    <div class="mb-3 oculto">
-        <label for="encuentros" class="form-label">Encuentros</label>
-        {{ form.encuentros|add_class:"form-control" }}
+    <!-- Sección 4: Evaluación dinámica -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Evaluación Dinámica</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="actividad_aprendizaje" class="form-label">Actividad de Aprendizaje</label>
+                {{ form.actividad_aprendizaje|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="tecnica_evaluacion" class="form-label">Técnica de Evaluación</label>
+                {{ form.tecnica_evaluacion|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="tipo_evaluacion" class="form-label">Tipo de Evaluación</label>
+                {{ form.tipo_evaluacion|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="periodo_tiempo_programado" class="form-label">Periodo de Tiempo Programado</label>
+                {{ form.periodo_tiempo_programado|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="tiempo_minutos" class="form-label">Tiempo en Minutos</label>
+                {{ form.tiempo_minutos|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="agente_evaluador" class="form-label">Agente Evaluador</label>
+                {{ form.agente_evaluador|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="instrumento_evaluacion" class="form-label">Instrumento de Evaluación</label>
+                {{ form.instrumento_evaluacion|add_class:"form-select" }}
+            </div>
+            <div class="mb-3">
+                <label for="criterios_evaluacion" class="form-label">Criterios de Evaluación</label>
+                {{ form.criterios_evaluacion|add_class:"form-control" }}
+            </div>
+            <div class="mb-3">
+                <label for="puntaje" class="form-label">Puntaje</label>
+                {{ form.puntaje|add_class:"form-control" }}
+            </div>
+        </div>
     </div>
-
-    <!-- Campo Fecha -->
-    <div class="mb-3">
-        <label for="fecha" class="form-label">Fecha</label>
-        {{ form.fecha|add_class:"form-control" }}
-    </div>
-
-    <hr class="my-4">
-
-    <h5>Objetivos</h5>
-
-    <!-- Campo Objetivo Conceptual -->
-    <div class="mb-3">
-        <label for="objetivo_conceptual" class="form-label">Objetivo Conceptual</label>
-        {{ form.objetivo_conceptual|add_class:"form-control" }}
-    </div>
-
-    <!-- Campo Objetivo Procedimental -->
-    <div class="mb-3">
-        <label for="objetivo_procedimental" class="form-label">Objetivo Procedimental</label>
-        {{ form.objetivo_procedimental|add_class:"form-control" }}
-    </div>
-
-    <!-- Campo Objetivo Actitudinal -->
-    <div class="mb-3">
-        <label for="objetivo_actitudinal" class="form-label">Objetivo Actitudinal</label>
-        {{ form.objetivo_actitudinal|add_class:"form-control" }}
-    </div>
-
-    <hr class="my-4">
-
-    <h5>Momentos Didácticos</h5>
-
-    <!-- Campos Momentos Didácticos -->
-    <div class="mb-3">
-        <label for="momento_didactico_primer" class="form-label">Primer Momento Didáctico</label>
-        {{ form.momento_didactico_primer|add_class:"form-control" }}
-    </div>
-    <div class="mb-3">
-        <label for="momento_didactico_segundo" class="form-label">Segundo Momento Didáctico</label>
-        {{ form.momento_didactico_segundo|add_class:"form-control" }}
-    </div>
-    <div class="mb-3">
-        <label for="momento_didactico_tercer" class="form-label">Tercer Momento Didáctico</label>
-        {{ form.momento_didactico_tercer|add_class:"form-control" }}
-    </div>
-
-    <hr class="my-4">
-
-    <h5>Unidad y Contenido</h5>
-
-    <!-- Campos Unidad y Contenido -->
-    <div class="mb-3">
-        <label for="unidad" class="form-label">Unidad</label>
-        {{ form.unidad|add_class:"form-select" }}
-    </div>
-    <div class="mb-3">
-        <label for="detalle_unidad" class="form-label">Detalle de la Unidad</label>
-        {{ form.detalle_unidad|add_class:"form-control" }}
-    </div>
-    <div class="mb-3">
-        <label for="contenido_tematico" class="form-label">Contenido Temático</label>
-        {{ form.contenido_tematico|add_class:"form-control" }}
-    </div>
-
-    <!-- Campos Adicionales -->
-    <div class="mb-3">
-        <label for="forma_organizativa" class="form-label">Forma Organizativa</label>
-        {{ form.forma_organizativa|add_class:"form-select" }}
-    </div>
-    <div class="mb-3">
-        <label for="tiempo" class="form-label">Tiempo</label>
-        {{ form.tiempo|add_class:"form-control" }}
-    </div>
-    <div class="mb-3">
-        <label for="tecnicas_aprendizaje" class="form-label">Técnicas de Aprendizaje</label>
-        {{ form.tecnicas_aprendizaje|add_class:"form-select" }}
-    </div>
-    <div class="mb-3">
-        <label for="descripcion_estrategia" class="form-label">Descripción de Estrategia</label>
-        {{ form.descripcion_estrategia|add_class:"form-control" }}
-    </div>
-    <div class="mb-3">
-        <label for="eje_transversal" class="form-label">Eje Transversal</label>
-        {{ form.eje_transversal|add_class:"form-control" }}
-    </div>
-    <div class="mb-3">
-        <label for="hp" class="form-label">Horas Prácticas (HP)</label>
-        {{ form.hp|add_class:"form-control" }}
-    </div>
-
-    <!-- Eliminados los campos recursos y evaluación que no existen en el modelo -->
-    <!-- <div class="mb-3">
-        <label for="recursos" class="form-label">Recursos</label>
-        {{ form.recursos|add_class:"form-control" }}
-    </div>
-    <div class="mb-3">
-        <label for="evaluacion" class="form-label">Evaluación</label>
-        {{ form.evaluacion|add_class:"form-control" }}
-    </div> -->
-
-    <!-- Eliminado el botón de guardar, ahora está en el formulario principal -->
 </form>
 
-<script>
-    $(document).ready(function() {
-        // Inspeccionar los IDs de los campos del formulario
-        console.log('Inspeccionando IDs de los campos del formulario:');
-        $('#form-guardar-silabo input, #form-guardar-silabo textarea, #form-guardar-silabo select').each(function() {
-            console.log('Campo:', $(this).attr('name'), 'ID:', $(this).attr('id'), 'Tipo:', this.tagName);
-        });
-        
-        $('#silabo-form').on('submit', function (event) {
-            event.preventDefault();
-            
-            // Mostrar los spinners
-            mostrarSpinner();
-            
-            // Deshabilitar el botón
-            $('#boton-generar').prop('disabled', true);
-            
-            // Obtener el modelo seleccionado
-            const modeloSeleccionado = $('#modelo_select').val();
-            console.log('Modelo seleccionado:', modeloSeleccionado);
-            
-            // Crear un objeto FormData con los datos del formulario
-            const formData = new FormData(this);
-            
-            // Realizar la solicitud AJAX
-            $.ajax({
-                url: $(this).attr('action'),
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    console.log('Respuesta recibida completa:', response);
-                    
-                    // Rellenar los campos del formulario con los datos recibidos
-                    if (response.silabo_data) {
-                        const silabo = response.silabo_data;
-                        console.log('Datos del sílabo:', silabo);
-                        
-                        // Verificar los IDs de los campos
-                        console.log('IDs de campos en el formulario:');
-                        $('#form-guardar-silabo .form-control, #form-guardar-silabo .form-select').each(function() {
-                            console.log($(this).attr('name') + ' - ID:', $(this).attr('id'));
-                        });
-                        
-                        // Usar los IDs generados por Django para los campos del formulario
-                        $('#id_objetivo_conceptual').val(silabo.objetivo_conceptual || '');
-                        $('#id_objetivo_procedimental').val(silabo.objetivo_procedimental || '');
-                        $('#id_objetivo_actitudinal').val(silabo.objetivo_actitudinal || '');
-                        $('#id_momento_didactico_primer').val(silabo.momento_didactico_primer || '');
-                        $('#id_momento_didactico_segundo').val(silabo.momento_didactico_segundo || '');
-                        $('#id_momento_didactico_tercer').val(silabo.momento_didactico_tercer || '');
-                        $('#id_unidad').val(silabo.unidad || '');
-                        $('#id_detalle_unidad').val(silabo.detalle_unidad || '');
-                        $('#id_contenido_tematico').val(silabo.contenido_tematico || '');
-                        $('#id_forma_organizativa').val(silabo.forma_organizativa || '');
-                        $('#id_tiempo').val(silabo.tiempo || '');
-                        $('#id_tecnicas_aprendizaje').val(silabo.tecnicas_aprendizaje || '');
-                        $('#id_descripcion_estrategia').val(silabo.descripcion_estrategia || '');
-                        $('#id_eje_transversal').val(silabo.eje_transversal || '');
-                        $('#id_hp').val(silabo.hp || '');
-                        
-                        // Verificar si los valores se establecieron correctamente
-                        console.log('Valores establecidos:');
-                        console.log('objetivo_conceptual:', $('#id_objetivo_conceptual').val());
-                        console.log('objetivo_procedimental:', $('#id_objetivo_procedimental').val());
-                        console.log('objetivo_actitudinal:', $('#id_objetivo_actitudinal').val());
-                    } else {
-                        console.error('No se encontró silabo_data en la respuesta');
-                    }
-                },
-                error: function(xhr) {
-                    console.error('Error en la solicitud:', xhr.responseText);
-                    alert('Hubo un error al generar el sílabo. Por favor, intente nuevamente.');
-                },
-                complete: function() {
-                    // Restaurar el botón de generar y ocultar spinners
-                    $('#boton-generar').prop('disabled', false);
-                    $('.spinner').addClass('d-none');
-                    
-                    // Mostrar nuevamente el texto y el sparkle del botón
-                    $('#boton-generar .text, #boton-generar .sparkle').removeClass('d-none');
-                    
-                    // Resaltar los campos que han sido rellenados
-                    $('.form-control, .form-select').each(function() {
-                        if ($(this).val() && $(this).val().trim() !== '') {
-                            $(this).addClass('border-success');
-                        }
-                    });
-                }
-            });
-        });
-    });
-</script>
 
-<script>
-    function mostrarSpinner() {
-        // Mostrar los spinners quitando la clase d-none
-        $('.spinner').removeClass('d-none');
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         
-        // Ocultar el texto y el sparkle del botón
-        $('#boton-generar .text, #boton-generar .sparkle').addClass('d-none');
+
+        <div class="row justify-content-center mt-4">
+            <div class="col-lg-8 col-md-10 col-sm-12">
+                <div class="custom-alert">
+                    <div class="custom-alert-icon">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                    <div class="custom-alert-content">
+                        <h4 class="mb-2">¡Atención!</h4>
+                        <p class="mb-0">Esta IA puede cometer errores. Por favor, revise la información cuidadosamente antes de guardarla.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
         
-        return true;
+        <!-- Botón único para guardar ambos formularios -->
+        <div class="row justify-content-center mt-4 mb-5">
+            <div class="col-lg-4 col-md-8 col-sm-12 text-center">
+                <button type="button" class="btn btn-success w-100 save-btn transition-btn" id="guardarFormularioBtn">
+                    <i class="fas fa-save fa-lg me-2"></i> Guardar Formularios
+                    <div id="spinnerGuardar" class="spinner-border spinner-border-sm d-none ms-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        
+
+    </div>
+</div>
+
+
+
+
+
+<script src="{% static 'js/formulario_silabo.js' %}"></script>
+
+<style>
+    .transition-btn {
+        transition: all 0.3s ease;
+        border-radius: 25px;
+        padding: 10px 25px;
     }
-</script>
+    
+    .transition-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .transition-btn:active {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .save-btn {
+        font-size: 1.1rem;
+        font-weight: 500;
+        padding: 12px 25px;
+        background: linear-gradient(to right, #28a745, #20c997);
+        border: none;
+    }
+    
+    .save-btn:hover {
+        background: linear-gradient(to right, #20c997, #28a745);
+    }
+    
+    .custom-alert {
+        display: flex;
+        align-items: center;
+        background-color: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 20px;
+        padding: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+        animation: pulse 2s infinite;
+    }
+    
+    .custom-alert::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 5px;
+        height: 100%;
+        background-color: #ffc107;
+    }
+    
+    .custom-alert-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #ffc107;
+        color: #fff;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .custom-alert-content {
+        flex-grow: 1;
+    }
+    
+    .custom-alert-content h4 {
+        color: #856404;
+        font-weight: bold;
+        margin-top: 0;
+    }
+    
+    .custom-alert-content p {
+        color: #856404;
+        font-weight: 500;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+        }
+    }
+    
+    .mensaje-error-flotante {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #fff;
+        border: 2px solid var(--color-azul-2);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        animation: aparecer 0.3s ease-out;
+        min-width: 300px;
+        max-width: 80%;
+    }
+    
+    @keyframes aparecer {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -60%);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+        }
+    }
+    
+    .mensaje-error-contenido {
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .mensaje-error-icono {
+        color: var(--color-azul-3);
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .mensaje-error-texto {
+        flex-grow: 1;
+    }
+    
+    .mensaje-error-texto h4 {
+        margin-top: 0;
+        color: var(--color-azul-oscuro);
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .mensaje-error-texto p {
+        color: var(--color-gris-1);
+        margin-bottom: 0;
+    }
+    
+    .mensaje-error-cerrar {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 1.5rem;
+        background-color: transparent;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        color: var(--color-gris-2);
+        transition: color 0.2s;
+    }
+    
+    .mensaje-error-cerrar:hover {
+        color: var(--color-azul-oscuro);
+    }
+    
+    .campo-invalido {
+        border: 2px solid #ff9800 !important;
+        background-color: #fff8e1 !important;
+        box-shadow: 0 0 5px rgba(255, 152, 0, 0.5) !important;
+        animation: pulso-naranja 1.5s infinite;
+    }
+    
+    @keyframes pulso-naranja {
+        0% {
+            box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+        }
+        50% {
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.8);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+        }
+    }
+    
+    /* Añadir un icono de advertencia a los campos inválidos */
+    .campo-invalido:focus {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff9800" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 20px;
+        padding-right: 40px;
+    }
+</style>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Seleccionar todos los campos con la clase 'form-control' y 'form-select' SOLO en el formulario principal
-        const fields = document.querySelectorAll('#form-guardar-silabo .form-control, #form-guardar-silabo .form-select');
-        
-        // Función para verificar si el valor contiene letras
-        function containsLetters(value) {
-            return /[a-zA-Z]/.test(value);
-        }
-        
-        // Función para manejar el cambio de contenido
-        function handleInputChange(event) {
-            const field = event.target;
-            
-            // Verificar si el campo tiene contenido
-            if (field.value && field.value.trim() !== '') {
-                // Si contiene letras (no es solo números o caracteres especiales)
-                if (containsLetters(field.value)) {
-                    field.classList.add('border-success');
-                    field.classList.remove('border-danger');
-                }
-            } else {
-                field.classList.remove('border-success');
-                field.classList.remove('border-danger');
-            }
-        }
-        
-        // Agregar eventos a los campos de texto y select
-        fields.forEach(field => {
-            // Manejar el evento 'input' para campos de texto
-            if (field.tagName === 'INPUT' && field.type !== 'checkbox' && field.type !== 'radio') {
-                field.addEventListener('input', handleInputChange);
-            }
-            // Manejar el evento 'change' para selects y textareas
-            else if (field.tagName === 'SELECT' || field.tagName === 'TEXTAREA') {
-                field.addEventListener('change', handleInputChange);
-            }
-            
-            // Verificar el estado inicial
-            if (field.value && field.value.trim() !== '') {
-                if (containsLetters(field.value)) {
-                    field.classList.add('border-success');
-                }
-            }
-        });
-    });
-</script>
+{% endblock %}

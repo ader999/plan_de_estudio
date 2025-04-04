@@ -3,6 +3,8 @@ import os
 import re
 from dotenv import load_dotenv
 import logging
+import datetime  # Añadido para usar datetime.now()
+import traceback  # Añadido para mejor manejo de errores
 
 from django.db.models.functions import Lower
 from django.http import HttpResponse, request ,HttpResponseNotFound, JsonResponse
@@ -18,14 +20,8 @@ from .models import Silabo, Guia, AsignacionPlanEstudio, Asignatura, Plan_de_est
 
 from .forms import SilaboForm
 from django.views.decorators.csrf import csrf_exempt
-
-from openpyxl import load_workbook
 from django.db.models import Count
-
-from openpyxl.utils.dataframe import dataframe_to_rows
-import pandas as pd
-from docx import Document
-from docx.shared import Pt
+from django.urls import reverse
 
 # Importaciones para IA
 import openai  # Importar openai directamente, sin la clase OpenAI
@@ -135,474 +131,20 @@ def Plan_de_clase(request):
 
 @login_required
 def generar_excel(request):
-    print("Me estoy ejecutando")
-    if request.method == 'POST':
-        # Obtén el código de sílabo del formulario
-        codigo_silabo = request.POST.get('codigoSilabo')
-
-
-        if codigo_silabo:
-            # Si se proporcionó un código de sílabo, realiza la búsqueda
-            silabos = Silabo.objects.filter(codigo=codigo_silabo, maestro=request.user)
-
-            if silabos.exists():
-                # Si se encontraron sílabos, continúa con la lógica para generar el archivo Excel
-                # ...
-
-                # Ruta a la plantilla de Excel en tu proyecto
-                template_path = 'excel_templates/plantilla.xlsx'
-
-                # Carga la plantilla de Excel
-                wb = load_workbook(template_path)
-
-                # Selecciona una hoja de cálculo (worksheet) si es necesario
-                ws = wb.active  # O selecciona una hoja específica
-
-                # Inserta los datos en las celdas correspondientes
-                row_num = 11  # Fila en la que se insertarán los datos
-
-                for silabo in silabos:
-                    ws.cell(row=5, column=2, value=silabo.maestro.username)
-                    ws.cell(row=6, column=2, value=silabo.asignatura.asignatura.nombre)
-                    ws.cell(row=7, column=2, value=silabo.asignacion_plan.plan_de_estudio.carrera.nombre)
-                    ws.cell(row=5, column=4, value=silabo.asignacion_plan.plan_de_estudio.codigo)
-                    ws.cell(row=6, column=4, value=silabo.asignacion_plan.plan_de_estudio.año)
-                    ws.cell(row=7, column=4, value=silabo.asignacion_plan.plan_de_estudio.trimestre)
-                    ws.cell(row=5, column=6, value=silabo.fecha.year)  # Extraemos el año de la fecha del 
-                    ws.cell(row=6, column=6, value=silabo.asignacion_plan.plan_de_estudio.hp + silabo.asignacion_plan.plan_de_estudio.hti)  # Extraemos el mes de la fecha del
-                    ws.cell(row=7, column=6, value=silabo.asignacion_plan.plan_de_estudio.pr.nombre if silabo.asignacion_plan.plan_de_estudio.pr else "N/A")
-                    ws.cell(row=5, column=8, value=silabo.asignacion_plan.plan_de_estudio.pc.nombre if silabo.asignacion_plan.plan_de_estudio.pc else "N/A")
-                    ws.cell(row=6, column=8, value=silabo.asignacion_plan.plan_de_estudio.cr.nombre if silabo.asignacion_plan.plan_de_estudio.cr else "N/A")
-                    ws.cell(row=row_num, column=1, value=silabo.encuentros)
-                    ws.cell(row=row_num, column=2, value=silabo.fecha)
-                    ws.cell(row=row_num, column=3, value=silabo.objetivo_conceptual)
-                    ws.cell(row=row_num, column=4, value=silabo.objetivo_procedimental)
-                    ws.cell(row=row_num, column=5, value=silabo.objetivo_actitudinal)
-                    ws.cell(row=row_num, column=6, value=silabo.momento_didactico_primer)
-                    ws.cell(row=row_num, column=7, value=silabo.momento_didactico_segundo)
-                    ws.cell(row=row_num, column=8, value=silabo.momento_didactico_tercer)
-                    ws.cell(row=row_num, column=9, value=silabo.unidad)
-                    ws.cell(row=row_num, column=10, value=silabo.contenido_tematico)
-                    ws.cell(row=row_num, column=11, value=silabo.forma_organizativa)
-                    ws.cell(row=row_num, column=12, value=silabo.tiempo)
-                    ws.cell(row=row_num, column=13, value=silabo.tecnicas_aprendizaje)
-                    ws.cell(row=row_num, column=14, value=silabo.descripcion_estrategia)
-                    ws.cell(row=row_num, column=15, value=silabo.eje_transversal)
-                    ws.cell(row=row_num, column=16, value=silabo.hp)
-
-                    # Verificar si el sílabo tiene una guía asociada
-                    if hasattr(silabo, 'guia') and silabo.guia is not None:
-                        try:
-                            ws.cell(row=row_num+16, column=1, value=silabo.guia.numero_guia)
-                            ws.cell(row=row_num+16, column=2, value=silabo.guia.fecha)
-                            ws.cell(row=row_num+16, column=3, value=silabo.guia.unidad)
-                            #ws.cell(row=row_num+16, column=4, value=silabo.guia.nombre_de_la_unidad)
-                            ws.cell(row=row_num+16, column=5, value=silabo.guia.objetivo_procedimental)
-                            ws.cell(row=row_num+16, column=6, value=silabo.guia.objetivo_conceptual)
-                            ws.cell(row=row_num+16, column=7, value=silabo.guia.objetivo_actitudinal)
-                            ws.cell(row=row_num+16, column=8, value=silabo.guia.contenido_tematico)
-                            ws.cell(row=row_num+16, column=9, value=silabo.guia.actividades)
-                            ws.cell(row=row_num+16, column=10, value=silabo.guia.instrumento_cuaderno)
-                            ws.cell(row=row_num+16, column=11, value=silabo.guia.instrumento_organizador)
-                            ws.cell(row=row_num+16, column=12, value=silabo.guia.instrumento_diario)
-                            ws.cell(row=row_num+16, column=13, value=silabo.guia.instrumento_prueba)
-                            ws.cell(row=row_num+16, column=14, value=silabo.guia.criterios_evaluacion)
-                            ws.cell(row=row_num+16, column=15, value=silabo.guia.tiempo_minutos)
-                            ws.cell(row=row_num+16, column=16, value=silabo.guia.recursos)
-                            ws.cell(row=row_num+16, column=17, value=silabo.guia.puntaje)
-                            ws.cell(row=row_num+16, column=18, value=silabo.guia.evaluacion_sumativa)
-                            ws.cell(row=row_num+16, column=19, value=silabo.guia.fecha_entrega)
-
-                        except Exception as e:
-                            # Si hay un error al acceder a los datos de la guía, simplemente continuamos
-                            print(f"Error al procesar la guía del sílabo {silabo.id}: {str(e)}")
-
-
-                    # Agrega los datos para otros campos aquí
-                    row_num += 1  # Avanza a la siguiente fila
-
-                # Guarda el archivo Excel en memoria
-                response = HttpResponse(content_type='application/ms-excel')
-                response['Content-Disposition'] = 'attachment; filename=archivo_generado.xlsx'
-                wb.save(response)
-
-                return response
-
-    # Si no se proporcionó un código de sílabo o no se encontraron sílabos, redirige a la página principal
-    return redirect('plan_de_estudio')  # Reemplaza 'pagina_principal' con la URL de tu elección
-
-
+    from .document_generators import generar_excel as generate_excel_file
+    return generate_excel_file(request)
 
 
 @login_required
 def generar_excel_original(request):
-    print("Me estoy ejecutando")
-    if request.method == 'POST':
-        # Obtén el código de sílabo del formulario
-        codigo_silabo = request.POST.get('codigoSilabo')
-
-
-        if codigo_silabo:
-            # Si se proporcionó un código de sílabo, realiza la búsqueda
-            silabos = Silabo.objects.filter(codigo=codigo_silabo, maestro=request.user)
-
-            if silabos.exists():
-                # Si se encontraron sílabos, continúa con la lógica para generar el archivo Excel
-                # ...
-
-                # Ruta a la plantilla de Excel en tu proyecto
-                template_path = 'excel_templates/plantilla_original.xlsx'
-
-                # Carga la plantilla de Excel
-                wb = load_workbook(template_path)
-
-                # Selecciona una hoja de cálculo (worksheet) si es necesario
-                ws = wb.active  # O selecciona una hoja específica
-
-                # Inserta los datos en las celdas correspondientes
-                row_num = 0  # Fila en la que se insertarán los datos
-
-                for silabo in silabos:
-
-                    ws.cell(row=7, column=3, value=silabo.maestro.username)
-                    ws.cell(row=5, column=9, value=silabo.asignatura.asignatura.nombre)
-                    ws.cell(row=5, column=4, value=silabo.carrera.nombre)
-                    ws.cell(row=5, column=13, value=silabo.asignacion_plan.plan_de_estudio.trimestre)
-                    ws.cell(row=7, column=10,
-                            value=silabo.asignacion_plan.plan_de_estudio.pr.nombre if silabo.asignacion_plan.plan_de_estudio.pr else "N/A")
-                    ws.cell(row=7, column=12,
-                            value=silabo.asignacion_plan.plan_de_estudio.pc.nombre if silabo.asignacion_plan.plan_de_estudio.pc else "N/A")
-                    ws.cell(row=7, column=13,
-                            value=silabo.asignacion_plan.plan_de_estudio.cr.nombre if silabo.asignacion_plan.plan_de_estudio.cr else "N/A")
-
-                    ws.cell(row=12+row_num, column=3, value=silabo.unidad)
-                    ws.cell(row=13+ row_num, column=3, value=silabo.unidad)
-                    ws.cell(row=18+row_num, column=3, value=silabo.unidad)
-
-                    ws.cell(row=11+row_num, column=4, value=silabo.detalle_unidad)
-                    ws.cell(row=13+row_num, column=4, value=silabo.detalle_unidad)
-                    ws.cell(row=18+row_num, column=4, value=silabo.detalle_unidad)
-
-                    ws.cell(row=11+row_num, column=6, value=silabo.objetivo_conceptual)
-                    ws.cell(row=13+row_num, column=6, value=silabo.objetivo_procedimental)
-                    ws.cell(row=18+row_num, column=6, value=silabo.objetivo_actitudinal)
-                    ws.cell(row=11+row_num, column=7, value=silabo.contenido_tematico)
-
-                    ws.cell(row=12+row_num, column=9, value=silabo.momento_didactico_primer)
-                    ws.cell(row=14+row_num, column=9, value=silabo.momento_didactico_segundo)
-                    ws.cell(row=19+row_num, column=9, value=silabo.momento_didactico_tercer)
-
-                    ws.cell(row=12+row_num, column=10, value=silabo.tiempo)
-
-
-                    #Estudio independiente
-                    ws.cell(row=23 + row_num, column=3, value=silabo.unidad)
-                    ws.cell(row=23 + row_num, column=6, value=silabo.guia.contenido_tematico)
-                    ws.cell(row=23 + row_num, column=8, value=silabo.guia.criterios_evaluacion)
-                    ws.cell(row=23 + row_num, column=10, value=silabo.guia.tiempo_minutos)
-                    ws.cell(row=23 + row_num, column=11, value=silabo.guia.recursos)
-                    ws.cell(row=23 + row_num, column=12, value=silabo.guia.puntaje)
-                    ws.cell(row=23 + row_num, column=13, value=silabo.guia.evaluacion_sumativa)
-                    ws.cell(row=23 + row_num, column=14, value=silabo.guia.objetivo_conceptual)
-                    ws.cell(row=23 + row_num, column=15, value=silabo.guia.objetivo_procedimental)
-                    ws.cell(row=23 + row_num, column=16, value=silabo.guia.objetivo_actitudinal)
-                    ws.cell(row=23 + row_num, column=17, value=silabo.guia.instrumento_cuaderno)
-                    ws.cell(row=23 + row_num, column=18, value=silabo.guia.instrumento_organizador)
-                    ws.cell(row=23 + row_num, column=19, value=silabo.guia.instrumento_diario)
-                    ws.cell(row=23 + row_num, column=20, value=silabo.guia.instrumento_prueba)
-                    ws.cell(row=23 + row_num, column=21, value=silabo.guia.fecha_entrega)
-
-                    # Agrega los datos para otros campos aquí
-                    row_num += 23  # Avanza a la siguiente fila
-
-                # Guarda el archivo Excel en memoria
-                response = HttpResponse(content_type='application/ms-excel')
-                response['Content-Disposition'] = 'attachment; filename=archivo_generado.xlsx'
-                wb.save(response)
-
-                return response
-
-    # Si no se proporcionó un código de sílabo o no se encontraron sílabos, redirige a la página principal
-    return redirect('plan_de_estudio')  # Reemplaza 'pagina_principal' con la URL de tu elección
-
-
+    from .document_generators import generar_excel_original as generate_excel_original_file
+    return generate_excel_original_file(request)
 
 
 @login_required
 def generar_docx(request):
-    if request.method == 'POST':
-        codigo_silabo = request.POST.get('codigoSilabo', '')
-        if not codigo_silabo:
-            return JsonResponse({'error': 'El código de sílabo no se proporcionó.'}, status=400)
-
-        usuario = request.user
-        silabos = Silabo.objects.filter(codigo=codigo_silabo, maestro=usuario)
-
-        if not silabos.exists():
-            return JsonResponse({'error': 'No se encontraron sílabos para este usuario con el código especificado.'},
-                                status=404)
-
-        try:
-            # Crear un documento Word
-            document = Document()
-
-            # Título principal del documento
-            document.add_heading('Sílabo Generado', level=0)
-
-            for silabo in silabos:
-                # Encabezado para cada sílabo
-                document.add_heading(f'Sílabo: {silabo.codigo}', level=1)
-
-                # Información general
-                document.add_paragraph().add_run('Información General').bold = True
-                
-                # Crear una tabla para la información general
-                table = document.add_table(rows=7, cols=2)
-                table.style = 'Table Grid'
-                
-                # Añadir datos a la tabla
-                cells = table.rows[0].cells
-                cells[0].text = 'Maestro'
-                cells[1].text = silabo.maestro.username
-                
-                cells = table.rows[1].cells
-                cells[0].text = 'Asignatura'
-                cells[1].text = silabo.asignatura.asignatura.nombre
-                
-                cells = table.rows[2].cells
-                cells[0].text = 'Carrera'
-                cells[1].text = silabo.asignacion_plan.plan_de_estudio.carrera.nombre
-                
-                cells = table.rows[3].cells
-                cells[0].text = 'Código Plan'
-                cells[1].text = silabo.asignacion_plan.plan_de_estudio.codigo
-                
-                cells = table.rows[4].cells
-                cells[0].text = 'Año'
-                cells[1].text = str(silabo.asignacion_plan.plan_de_estudio.año)
-                
-                cells = table.rows[5].cells
-                cells[0].text = 'Trimestre'
-                cells[1].text = silabo.asignacion_plan.plan_de_estudio.trimestre
-                
-                cells = table.rows[6].cells
-                cells[0].text = 'Horas Totales'
-                cells[1].text = str(silabo.asignacion_plan.plan_de_estudio.hp + silabo.asignacion_plan.plan_de_estudio.hti)
-                
-                document.add_paragraph()  # Espacio
-
-                # Detalles del sílabo
-                document.add_heading('Detalles del Sílabo', level=2)
-                
-                # Crear una tabla para los detalles
-                table = document.add_table(rows=12, cols=2)
-                table.style = 'Table Grid'
-                
-                cells = table.rows[0].cells
-                cells[0].text = 'Encuentros'
-                cells[1].text = str(silabo.encuentros)
-                
-                cells = table.rows[1].cells
-                cells[0].text = 'Fecha'
-                cells[1].text = str(silabo.fecha)
-                
-                cells = table.rows[2].cells
-                cells[0].text = 'Unidad'
-                cells[1].text = silabo.unidad
-                
-                cells = table.rows[3].cells
-                cells[0].text = 'Objetivo Conceptual'
-                cells[1].text = silabo.objetivo_conceptual
-                
-                cells = table.rows[4].cells
-                cells[0].text = 'Objetivo Procedimental'
-                cells[1].text = silabo.objetivo_procedimental
-                
-                cells = table.rows[5].cells
-                cells[0].text = 'Objetivo Actitudinal'
-                cells[1].text = silabo.objetivo_actitudinal
-                
-                cells = table.rows[6].cells
-                cells[0].text = 'Primer Momento Didáctico'
-                cells[1].text = silabo.momento_didactico_primer
-                
-                cells = table.rows[7].cells
-                cells[0].text = 'Segundo Momento Didáctico'
-                cells[1].text = silabo.momento_didactico_segundo
-                
-                cells = table.rows[8].cells
-                cells[0].text = 'Tercer Momento Didáctico'
-                cells[1].text = silabo.momento_didactico_tercer
-                
-                cells = table.rows[9].cells
-                cells[0].text = 'Contenido Temático'
-                cells[1].text = silabo.contenido_tematico
-                
-                cells = table.rows[10].cells
-                cells[0].text = 'Forma Organizativa'
-                cells[1].text = silabo.forma_organizativa
-                
-                cells = table.rows[11].cells
-                cells[0].text = 'Tiempo'
-                cells[1].text = str(silabo.tiempo)
-                
-                document.add_paragraph()  # Espacio
-                
-                # Información adicional
-                document.add_heading('Información Adicional', level=2)
-                
-                # Crear una tabla para la información adicional
-                table = document.add_table(rows=4, cols=2)
-                table.style = 'Table Grid'
-                
-                cells = table.rows[0].cells
-                cells[0].text = 'Técnicas de Aprendizaje'
-                cells[1].text = silabo.tecnicas_aprendizaje
-                
-                cells = table.rows[1].cells
-                cells[0].text = 'Descripción Estrategia'
-                cells[1].text = silabo.descripcion_estrategia
-                
-                cells = table.rows[2].cells
-                cells[0].text = 'Eje Transversal'
-                cells[1].text = silabo.eje_transversal
-                
-                cells = table.rows[3].cells
-                cells[0].text = 'Horas Prácticas'
-                cells[1].text = str(silabo.hp)
-                
-                # Verificar si el sílabo tiene una guía asociada
-                if hasattr(silabo, 'guia') and silabo.guia is not None:
-                    try:
-                        document.add_page_break()
-                        document.add_heading(f'Guía de Estudio Independiente: {silabo.codigo}', level=1)
-                        
-                        # Información general de la guía
-                        document.add_heading('Información General de la Guía', level=2)
-                        
-                        # Crear una tabla para la información general de la guía
-                        table = document.add_table(rows=4, cols=2)
-                        table.style = 'Table Grid'
-                        
-                        cells = table.rows[0].cells
-                        cells[0].text = 'Número de Guía'
-                        cells[1].text = str(silabo.guia.numero_guia)
-                        
-                        cells = table.rows[1].cells
-                        cells[0].text = 'Fecha'
-                        cells[1].text = str(silabo.guia.fecha)
-                        
-                        cells = table.rows[2].cells
-                        cells[0].text = 'Unidad'
-                        cells[1].text = silabo.guia.unidad
-                        
-                        cells = table.rows[3].cells
-                        cells[0].text = 'Contenido Temático'
-                        cells[1].text = silabo.guia.contenido_tematico
-                        
-                        document.add_paragraph()  # Espacio
-                        
-                        # Objetivos de la guía
-                        document.add_heading('Objetivos de la Guía', level=2)
-                        
-                        # Crear una tabla para los objetivos
-                        table = document.add_table(rows=3, cols=2)
-                        table.style = 'Table Grid'
-                        
-                        cells = table.rows[0].cells
-                        cells[0].text = 'Objetivo Conceptual'
-                        cells[1].text = silabo.guia.objetivo_conceptual
-                        
-                        cells = table.rows[1].cells
-                        cells[0].text = 'Objetivo Procedimental'
-                        cells[1].text = silabo.guia.objetivo_procedimental
-                        
-                        cells = table.rows[2].cells
-                        cells[0].text = 'Objetivo Actitudinal'
-                        cells[1].text = silabo.guia.objetivo_actitudinal
-                        
-                        document.add_paragraph()  # Espacio
-                        
-                        # Actividades y recursos
-                        document.add_heading('Actividades y Recursos', level=2)
-                        
-                        # Crear una tabla para actividades y recursos
-                        table = document.add_table(rows=3, cols=2)
-                        table.style = 'Table Grid'
-                        
-                        cells = table.rows[0].cells
-                        cells[0].text = 'Actividades'
-                        cells[1].text = silabo.guia.actividades
-                        
-                        cells = table.rows[1].cells
-                        cells[0].text = 'Recursos'
-                        cells[1].text = silabo.guia.recursos
-                        
-                        cells = table.rows[2].cells
-                        cells[0].text = 'Tiempo (minutos)'
-                        cells[1].text = str(silabo.guia.tiempo_minutos)
-                        
-                        document.add_paragraph()  # Espacio
-                        
-                        # Evaluación
-                        document.add_heading('Evaluación', level=2)
-                        
-                        # Crear una tabla para la evaluación
-                        table = document.add_table(rows=7, cols=2)
-                        table.style = 'Table Grid'
-                        
-                        cells = table.rows[0].cells
-                        cells[0].text = 'Instrumento Cuaderno'
-                        cells[1].text = silabo.guia.instrumento_cuaderno
-                        
-                        cells = table.rows[1].cells
-                        cells[0].text = 'Instrumento Organizador'
-                        cells[1].text = silabo.guia.instrumento_organizador
-                        
-                        cells = table.rows[2].cells
-                        cells[0].text = 'Instrumento Diario'
-                        cells[1].text = silabo.guia.instrumento_diario
-                        
-                        cells = table.rows[3].cells
-                        cells[0].text = 'Instrumento Prueba'
-                        cells[1].text = silabo.guia.instrumento_prueba
-                        
-                        cells = table.rows[4].cells
-                        cells[0].text = 'Criterios de Evaluación'
-                        cells[1].text = silabo.guia.criterios_evaluacion
-                        
-                        cells = table.rows[5].cells
-                        cells[0].text = 'Puntaje'
-                        cells[1].text = str(silabo.guia.puntaje)
-                        
-                        cells = table.rows[6].cells
-                        cells[0].text = 'Evaluación Sumativa'
-                        cells[1].text = silabo.guia.evaluacion_sumativa
-                        
-                        document.add_paragraph()  # Espacio
-                        
-                        # Fecha de entrega
-                        document.add_heading('Fecha de Entrega', level=2)
-                        document.add_paragraph(str(silabo.guia.fecha_entrega))
-                        
-                    except Exception as e:
-                        # Si hay un error al acceder a los datos de la guía, agregar un mensaje de error
-                        document.add_paragraph(f"Error al procesar la guía del sílabo {silabo.id}: {str(e)}")
-
-                # Separador para cada sílabo
-                document.add_page_break()
-
-            # Preparar el archivo para descargar
-            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-            response['Content-Disposition'] = 'attachment; filename="silabo_y_guia_generado.docx"'
-            document.save(response)
-
-            return response
-
-        except Exception as e:
-            return JsonResponse({'error': f"Ocurrió un error al generar el documento Word: {e}"}, status=500)
-
-    return redirect('plan_de_estudio')
+    from .document_generators import generar_docx as generate_docx_file
+    return generate_docx_file(request)
 
 
 @login_required
@@ -634,10 +176,10 @@ def obtener_estudios_independientes(asignacion_id):
 
 
 @login_required
-def ver_formulario_silabo_guia(request, asignacion_id=None, id=None):
+def ver_formulario_silabo(request, asignacion_id=None, id=None):
     """
-    Función para mostrar el formulario de sílabo y guía.
-    Maneja la operación de mostrar el formulario para crear un sílabo o guía.
+    Función para mostrar el formulario de sílabo.
+    Maneja la operación de mostrar el formulario para crear un sílabo.
     """
     if asignacion_id or id:
         if asignacion_id:
@@ -654,12 +196,10 @@ def ver_formulario_silabo_guia(request, asignacion_id=None, id=None):
             'maestro': request.user,
             'encuentros': silabos_creados + 1,
         })
-        guias = obtener_estudios_independientes(asignacion.id)
-        form.fields['guia'].queryset = guias
 
         asignaturas = Asignatura.objects.all()
 
-        return render(request, 'formulario_principal.html', {
+        return render(request, 'formulario_silabo.html', {
             'form': form,
             'asignacion': asignacion,
             'usuario': nombre_de_usuario,
@@ -672,226 +212,262 @@ def ver_formulario_silabo_guia(request, asignacion_id=None, id=None):
     return JsonResponse({'error': 'Falta ID de asignación'}, status=400)
 
 @login_required
-def guardar_silabo_y_guia(request, asignacion_id=None, id=None):
+def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
     """
-    Función para guardar sílabos y guías de estudio independiente.
-    Maneja dos operaciones:
-    1. Guardar un nuevo sílabo (método POST con form data)
-    2. Agregar una guía de estudio independiente (método POST con JSON data)
+    Función para mostrar el formulario de guía de estudio independiente.
+    Maneja la operación de mostrar el formulario para crear una guía.
     """
-    print(f"guardar_silabo_y_guia llamada con asignacion_id={asignacion_id}, id={id}, método={request.method}")
+    print(f"Entrando a ver_formulario_guia con asignacion_id={asignacion_id}, id={id}, silabo_id={silabo_id}")
     
-    # Caso 1: Guardar guía de estudio y sílabo (POST con JSON)
-    if request.method == 'POST' and request.content_type == 'application/json':
-        try:
-            # Decodificar los datos JSON
-            data = json.loads(request.body)
-            print(f"Datos JSON recibidos: {data}")
-            
-            # Obtener el ID de asignación
-            asignacion_id = data.get('asignacion_id')
-            if not asignacion_id:
-                return JsonResponse({'error': 'No se proporcionó un ID de asignación válido'}, status=400)
-                
-            print(f"Procesando datos para asignacion_id={asignacion_id}")
-            
-            # Obtener la asignación
+    if asignacion_id or id:
+        if asignacion_id:
+            asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
+        else:
+            asignacion = get_object_or_404(AsignacionPlanEstudio, id=id)
+        nombre_de_usuario = request.user.username
+        silabos_creados = asignacion.silabo_set.count()
+        
+        print(f"Asignación encontrada: {asignacion}, Sílabos creados: {silabos_creados}")
+        
+        # Obtener el sílabo correspondiente al encuentro actual
+        # Primero intentamos encontrar si ya existe un sílabo para este encuentro
+        silabo = None
+        if silabo_id:
             try:
-                asignacion = AsignacionPlanEstudio.objects.get(id=asignacion_id)
-                print(f"Asignación encontrada: {asignacion}")
-            except AsignacionPlanEstudio.DoesNotExist:
-                return JsonResponse({'error': f'No se encontró la asignación con ID {asignacion_id}'}, status=404)
-            
-            # Procesar los datos del sílabo si están presentes
-            silabo_data = data.get('silabo_data', {})
-            print(f"Datos del sílabo: {silabo_data}")
-            
-            # Obtener el silabo actual o crear uno nuevo
-            silabo = None
-            if id:  # Si se está editando un sílabo existente
-                silabo = get_object_or_404(Silabo, id=id)
-            # Eliminamos la búsqueda del sílabo existente para siempre crear uno nuevo
-            # else:
-            #     # Buscar si ya existe un sílabo para esta asignación
-            #     silabo = Silabo.objects.filter(asignacion_plan=asignacion).order_by('-encuentros').first()
-                
-            # Si no existe un sílabo o tenemos datos para crear/actualizar uno
-            if not silabo or silabo_data:
-                # Si tenemos datos del sílabo, creamos o actualizamos
-                if silabo_data:
-                    # Crear un formulario con los datos recibidos
-                    if silabo and id:  # Solo actualizamos si se proporciona un ID específico
-                        # Actualizar el sílabo existente
-                        form = SilaboForm(silabo_data, instance=silabo)
-                    else:
-                        # Crear un nuevo sílabo
-                        form = SilaboForm(silabo_data)
-                    
-                    if form.is_valid():
-                        silabo = form.save(commit=False)
-                        silabo.asignacion_plan = asignacion
-                        silabo.maestro = request.user
-                        silabo.save()
-                        print(f"Sílabo guardado correctamente: {silabo.id}")
-                    else:
-                        print(f"Errores en el formulario del sílabo: {form.errors}")
-                        return JsonResponse({'error': 'Datos del sílabo inválidos', 'form_errors': form.errors}, status=400)
-                elif not silabo:
-                    # Si no hay sílabo y no tenemos datos, creamos uno con valores predeterminados
-                    try:
-                        silabo = Silabo.objects.create(
-                            codigo=asignacion.plan_de_estudio.codigo,
-                            carrera=asignacion.plan_de_estudio.carrera,
-                            asignatura=asignacion.plan_de_estudio,
-                            maestro=request.user,
-                            encuentros=1,
-                            fecha=data.get('fecha'),
-                            objetivo_conceptual="Objetivo conceptual generado automáticamente",
-                            objetivo_procedimental="Objetivo procedimental generado automáticamente",
-                            objetivo_actitudinal="Objetivo actitudinal generado automáticamente",
-                            momento_didactico_primer="Primer momento didáctico generado automáticamente",
-                            momento_didactico_segundo="Segundo momento didáctico generado automáticamente",
-                            momento_didactico_tercer="Tercer momento didáctico generado automáticamente",
-                            unidad=data.get('unidad', 'Unidad I'),
-                            detalle_unidad="Detalle de unidad generado automáticamente",
-                            contenido_tematico=data.get('contenido_tematico', 'Contenido temático generado automáticamente'),
-                            forma_organizativa="Conferencia",
-                            tiempo="60",
-                            tecnicas_aprendizaje="Trabajo colaborativo",
-                            descripcion_estrategia="Estrategia generada automáticamente",
-                            eje_transversal="Investigación",
-                            hp="2",
-                            asignacion_plan=asignacion
-                        )
-                        print(f"Sílabo creado automáticamente: {silabo.id}")
-                    except Exception as e:
-                        print(f"Error al crear el sílabo: {e}")
-                        return JsonResponse({'error': f'Error al crear el sílabo: {str(e)}'}, status=400)
-            
-            # Convertir el tiempo estimado a un float para el campo tiempo_minutos
-            try:
-                tiempo_minutos = float(data.get('tiempo_minutos', 60.0))
-            except (ValueError, TypeError):
-                tiempo_minutos = 60.0  # Valor predeterminado si hay un error
-                
-            # Convertir el puntaje a float si existe
-            try:
-                puntaje = float(data.get('puntaje')) if data.get('puntaje') else None
-            except (ValueError, TypeError):
-                puntaje = None
-            
-            # Mapear los datos recibidos a los campos del modelo Guia
-            try:
-                # Primero guardamos el sílabo sin asociarlo a una guía
-                silabo.guia = None  # Aseguramos que no haya una guía asociada inicialmente
-                silabo.save()
-                
-                # Ahora creamos la guía con referencia al sílabo
-                guia = Guia.objects.create(
-                    silabo=silabo,  # Asociamos la guía al sílabo
-                    numero_guia=int(data.get('numero_guia', 1)),
-                    fecha=data.get('fecha'),
-                    unidad=data.get('unidad', silabo.unidad),
-                    objetivo_conceptual=data.get('objetivo_conceptual', ''),
-                    objetivo_procedimental=data.get('objetivo_procedimental', ''),
-                    objetivo_actitudinal=data.get('objetivo_actitudinal', ''),
-                    contenido_tematico=data.get('contenido_tematico', ''),
-                    actividades=data.get('actividades', ''),
-                    instrumento_cuaderno=data.get('instrumento_cuaderno', ''),
-                    instrumento_organizador=data.get('instrumento_organizador', ''),
-                    instrumento_diario=data.get('instrumento_diario', ''),
-                    instrumento_prueba=data.get('instrumento_prueba', ''),
-                    criterios_evaluacion=data.get('criterios_evaluacion', ''),
-                    tiempo_minutos=tiempo_minutos,
-                    recursos=data.get('recursos', ''),
-                    puntaje=puntaje,
-                    evaluacion_sumativa=data.get('evaluacion_sumativa', ''),
-                    fecha_entrega=data.get('fecha_entrega')
-                )
-                print(f"Guía creada correctamente: {guia.id}")
-                
-                # Ahora actualizamos el sílabo para referenciar esta guía
-                silabo.guia = guia
-                silabo.save()
-                print(f"Sílabo actualizado con referencia a la guía")
-                
-                # Actualiza el conteo de sílabos creados
-                silabos_creados = Silabo.objects.filter(asignacion_plan=asignacion).count()
-                asignacion.silabos_creados = silabos_creados
-                asignacion.save()
-                
-                # Redirigir a la vista de éxito
-                response_data = {'success': True, 'redirect_url': '/success_view/'}
-                return JsonResponse(response_data)
-                
-            except Exception as e:
-                print(f"Error al crear la guía: {e}")
-                return JsonResponse({'error': f'Error al crear la guía: {str(e)}'}, status=400)
-        except json.JSONDecodeError as e:
-            print(f"Error al decodificar JSON: {e}")
-            return JsonResponse({'error': f'Error al decodificar JSON: {str(e)}'}, status=400)
-        except Exception as e:
-            print(f"Error general: {e}")
-            return JsonResponse({'error': f'Error general: {str(e)}'}, status=500)
+                silabo = Silabo.objects.get(id=silabo_id)
+                print(f"Sílabo encontrado por silabo_id {silabo_id}: {silabo}")
+                # No necesitamos acceder a asignacion para guardar la guía
+                # Lo que necesitamos es el sílabo, que ya tenemos
+                print(f"Sílabo ID: {silabo.id}")
+            except Silabo.DoesNotExist:
+                print(f"No se encontró sílabo con ID {silabo_id}")
+        
+        # Si no tenemos sílabo por ID, buscar por asignación y encuentro
+        if not silabo:
+            silabo = Silabo.objects.filter(
+                asignacion_plan=asignacion,
+                encuentros=silabos_creados + 1
+            ).first()
+            if silabo:
+                print(f"Sílabo encontrado para el encuentro {silabos_creados + 1}: {silabo}")
+            else:
+                print(f"No se encontró sílabo para el encuentro {silabos_creados + 1}")
+        
+        # Si todavía no tenemos sílabo, intentar obtener el último
+        if not silabo and silabos_creados > 0:
+            silabo = Silabo.objects.filter(
+                asignacion_plan=asignacion
+            ).order_by('-encuentros').first()
+            if silabo:
+                print(f"Último sílabo encontrado: {silabo}")
+            else:
+                print("No se encontró ningún sílabo para esta asignación")
+        
+        # Si aún no hay sílabo, verificar si necesitamos crear uno
+        if not silabo:
+            print("No se encontró ningún sílabo. Se pasará 'silabo=None' a la plantilla.")
+            # No creamos un sílabo aquí para evitar efectos secundarios,
+            # solo pasamos None a la plantilla
+        
+        # Obtener las guías existentes para esta asignación
+        guias = obtener_estudios_independientes(asignacion.id)
+        
+        # Obtener las opciones para los campos de selección desde el modelo Silabo
+        unidad_choices = Silabo.UNIDAD_LIST
+        tecnica_evaluacion_choices = Silabo.TECNICA_EVALUACION_LIST
+        tipo_evaluacion_choices = Silabo.TIPO_EVALUACION_LIST
+        instrumento_evaluacion_choices = Silabo.INSTRUMENTO_EVALUACION_LIST
+        agente_evaluador_choices = Silabo.AGENTE_EVALUADOR_LIST
+        periodo_tiempo_choices = Silabo.PERIODO_TIEMPO_LIST
+        tipo_objetivo_choices = Guia.TIPO_OBJETIVO_LIST
+
+        return render(request, 'formulario_estudio_independiente.html', {
+            'asignacion': asignacion,
+            'silabo': silabo,  # Pasar el sílabo a la plantilla
+            'usuario': nombre_de_usuario,
+            'silabos_creados': silabos_creados,
+            'encuentro': silabos_creados + 1,
+            'guias': guias,
+            'unidad_choices': unidad_choices,
+            'tecnica_evaluacion_choices': tecnica_evaluacion_choices,
+            'tipo_evaluacion_choices': tipo_evaluacion_choices,
+            'instrumento_evaluacion_choices': instrumento_evaluacion_choices,
+            'agente_evaluador_choices': agente_evaluador_choices,
+            'periodo_tiempo_choices': periodo_tiempo_choices,
+            'tipo_objetivo_choices': tipo_objetivo_choices,
+        })
     
-    # Caso 2: Guardar sílabo (POST con form data)
-    elif request.method == 'POST':
+    # Caso de error: falta asignacion_id
+    return JsonResponse({'error': 'Falta ID de asignación'}, status=400)
+
+@login_required
+def guardar_silabo(request, asignacion_id=None, id=None):
+    """
+    Función para guardar sílabos.
+    Maneja la operación de guardar un nuevo sílabo (método POST con form data).
+    """
+    if request.method == 'POST':
         if asignacion_id:
             asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
         else:
             asignacion = get_object_or_404(AsignacionPlanEstudio, id=id)
         
+        # Procesar el formulario de sílabo
         form = SilaboForm(request.POST)
         if form.is_valid():
-            # Guardar el sílabo
             silabo = form.save(commit=False)
-            silabo.asignacion_plan = asignacion
-            silabo.asignatura = asignacion.plan_de_estudio  # Aseguramos que se asigne la asignatura
+            silabo.asignacion_plan = asignacion  # Corregido: asignacion_plan en lugar de asignacion
             silabo.save()
-
-            # Actualiza el conteo de sílabos creados
-            silabos_creados = asignacion.silabo_set.count()
-            asignacion.silabos_creados = silabos_creados
+            
+            # Incrementar contador de sílabos creados
+            asignacion.silabos_creados += 1
             asignacion.save()
-
-            # Verificar si también se enviaron datos para la guía
-            if 'objetivo_conceptual_guia' in request.POST:
-                # Primero guardamos el sílabo sin asociarlo a una guía
-                silabo.guia = None
-                silabo.save()
-                
-                # Crear una guía asociada al sílabo
-                guia = Guia.objects.create(
-                    silabo=silabo,  # Asociamos la guía al sílabo
-                    numero_guia=1,  # Valor por defecto o ajustar según necesidad
-                    fecha=silabo.fecha,  # Usar la misma fecha del sílabo
-                    unidad=silabo.unidad,  # Usar la misma unidad del sílabo
-                    objetivo_conceptual=request.POST.get('objetivo_conceptual_guia', ''),
-                    objetivo_procedimental=request.POST.get('objetivo_procedimental_guia', ''),
-                    objetivo_actitudinal=request.POST.get('objetivo_actitudinal_guia', ''),
-                    contenido_tematico=request.POST.get('contenido_tematico_guia', silabo.contenido_tematico),
-                    actividades=request.POST.get('actividades', ''),
-                    instrumento_cuaderno=request.POST.get('instrumento_cuaderno', ''),
-                    instrumento_organizador=request.POST.get('instrumento_organizador', ''),
-                    instrumento_diario=request.POST.get('instrumento_diario', ''),
-                    instrumento_prueba=request.POST.get('instrumento_prueba', ''),
-                    criterios_evaluacion=request.POST.get('criterios_evaluacion', ''),
-                    tiempo_minutos=float(request.POST.get('tiempo_minutos', 60.0)),
-                    recursos=request.POST.get('recursos', ''),
-                    evaluacion_sumativa=request.POST.get('evaluacion_sumativa', ''),
-                    fecha_entrega=request.POST.get('fecha_entrega', silabo.fecha)
-                )
-                
-                # Actualizar el sílabo para referenciar esta guía
-                silabo.guia = guia
-                silabo.save()
-
-            messages.success(request, 'El sílabo ha sido creado correctamente.')
-            return redirect('success_view')
+            
+            messages.success(request, 'Sílabo guardado correctamente.')
+            return JsonResponse({
+                'success': True, 
+                'silabo_id': silabo.id,
+                'redirect_url': reverse('success_view')
+            })
         else:
-            messages.error(request, 'Hubo un error al crear el sílabo. Por favor, revise los datos.')
-            # Redirigir al formulario con los errores
-            return ver_formulario_silabo_guia(request, asignacion_id, id)
+            errors = {field: error[0] for field, error in form.errors.items()}
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+    
+    # Caso de error: método no permitido
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+@login_required
+def guardar_guia(request, silabo_id=None, asignacion_id=None, id=None):
+    """
+    Función para guardar guías de estudio independiente.
+    Maneja la operación de agregar una guía de estudio independiente (método POST con JSON data).
+    """
+    print(f"Entrando a guardar_guia con silabo_id={silabo_id}")
+    
+    if request.method == 'POST':
+        try:
+            # Obtener los datos JSON del cuerpo de la solicitud
+            data = json.loads(request.body)
+            print(f"Datos recibidos: {data}")
+            
+            # Si no recibimos silabo_id como parámetro, intentamos obtenerlo de los datos
+            if not silabo_id:
+                silabo_id = data.get('silabo_id')
+                print(f"Usando silabo_id de los datos del formulario: {silabo_id}")
+            
+            # Necesitamos un silabo_id válido
+            if not silabo_id:
+                error_msg = 'No se proporcionó un ID de sílabo válido'
+                print(error_msg)
+                return JsonResponse({'error': error_msg}, status=400)
+            
+            # Obtener el sílabo directamente por su ID
+            try:
+                silabo = Silabo.objects.get(id=silabo_id)
+                print(f"Sílabo encontrado: {silabo}")
+            except Silabo.DoesNotExist:
+                error_msg = f'No se encontró el sílabo con ID {silabo_id}'
+                print(error_msg)
+                return JsonResponse({'error': error_msg}, status=404)
+            except Exception as e:
+                error_msg = f'Error al obtener el sílabo: {str(e)}'
+                print(error_msg)
+                return JsonResponse({'error': error_msg}, status=500)
+            
+            # Crear o actualizar la guía
+            guia_id = data.get('guia_id')
+            if guia_id:
+                # Actualizar guía existente
+                guia = get_object_or_404(Guia, id=guia_id)
+            else:
+                # Crear nueva guía
+                guia = Guia()
+            
+            # Asignar los valores de los campos
+            guia.silabo = silabo
+            guia.numero_guia = data.get('numero_encuentro', silabo.encuentros)
+            guia.numero_encuentro = data.get('numero_encuentro', silabo.encuentros)
+            guia.fecha = data.get('fecha')
+            guia.unidad = data.get('unidad')
+            guia.nombre_de_la_unidad = data.get('nombre_de_la_unidad')
+            
+            # Tarea 1
+            guia.tipo_objetivo_1 = data.get('tipo_objetivo_1')
+            guia.objetivo_aprendizaje_1 = data.get('objetivo_aprendizaje_1')
+            guia.contenido_tematico_1 = data.get('contenido_tematico_1')
+            guia.actividad_aprendizaje_1 = data.get('actividad_aprendizaje_1')
+            guia.tecnica_evaluacion_1 = data.get('tecnica_evaluacion_1')
+            guia.tipo_evaluacion_1 = data.get('tipo_evaluacion_1')
+            guia.instrumento_evaluacion_1 = data.get('instrumento_evaluacion_1')
+            guia.criterios_evaluacion_1 = data.get('criterios_evaluacion_1')
+            guia.agente_evaluador_1 = data.get('agente_evaluador_1')
+            guia.tiempo_minutos_1 = data.get('tiempo_minutos_1')
+            guia.recursos_didacticos_1 = data.get('recursos_didacticos_1')
+            guia.periodo_tiempo_programado_1 = data.get('periodo_tiempo_programado_1')
+            guia.puntaje_1 = data.get('puntaje_1')
+            guia.fecha_entrega_1 = data.get('fecha_entrega_1')
+            
+            # Tarea 2
+            guia.tipo_objetivo_2 = data.get('tipo_objetivo_2')
+            guia.objetivo_aprendizaje_2 = data.get('objetivo_aprendizaje_2')
+            guia.contenido_tematico_2 = data.get('contenido_tematico_2')
+            guia.actividad_aprendizaje_2 = data.get('actividad_aprendizaje_2')
+            guia.tecnica_evaluacion_2 = data.get('tecnica_evaluacion_2')
+            guia.tipo_evaluacion_2 = data.get('tipo_evaluacion_2')
+            guia.instrumento_evaluacion_2 = data.get('instrumento_evaluacion_2')
+            guia.criterios_evaluacion_2 = data.get('criterios_evaluacion_2')
+            guia.agente_evaluador_2 = data.get('agente_evaluador_2')
+            guia.tiempo_minutos_2 = data.get('tiempo_minutos_2')
+            guia.recursos_didacticos_2 = data.get('recursos_didacticos_2')
+            guia.periodo_tiempo_programado_2 = data.get('periodo_tiempo_programado_2')
+            guia.puntaje_2 = data.get('puntaje_2')
+            guia.fecha_entrega_2 = data.get('fecha_entrega_2')
+            
+            # Tarea 3
+            guia.tipo_objetivo_3 = data.get('tipo_objetivo_3')
+            guia.objetivo_aprendizaje_3 = data.get('objetivo_aprendizaje_3')
+            guia.contenido_tematico_3 = data.get('contenido_tematico_3')
+            guia.actividad_aprendizaje_3 = data.get('actividad_aprendizaje_3')
+            guia.tecnica_evaluacion_3 = data.get('tecnica_evaluacion_3')
+            guia.tipo_evaluacion_3 = data.get('tipo_evaluacion_3')
+            guia.instrumento_evaluacion_3 = data.get('instrumento_evaluacion_3')
+            guia.criterios_evaluacion_3 = data.get('criterios_evaluacion_3')
+            guia.agente_evaluador_3 = data.get('agente_evaluador_3')
+            guia.tiempo_minutos_3 = data.get('tiempo_minutos_3')
+            guia.recursos_didacticos_3 = data.get('recursos_didacticos_3')
+            guia.periodo_tiempo_programado_3 = data.get('periodo_tiempo_programado_3')
+            guia.puntaje_3 = data.get('puntaje_3')
+            guia.fecha_entrega_3 = data.get('fecha_entrega_3')
+            
+            # Tarea 4
+            guia.tipo_objetivo_4 = data.get('tipo_objetivo_4')
+            guia.objetivo_aprendizaje_4 = data.get('objetivo_aprendizaje_4')
+            guia.contenido_tematico_4 = data.get('contenido_tematico_4')
+            guia.actividad_aprendizaje_4 = data.get('actividad_aprendizaje_4')
+            guia.tecnica_evaluacion_4 = data.get('tecnica_evaluacion_4')
+            guia.tipo_evaluacion_4 = data.get('tipo_evaluacion_4')
+            guia.instrumento_evaluacion_4 = data.get('instrumento_evaluacion_4')
+            guia.criterios_evaluacion_4 = data.get('criterios_evaluacion_4')
+            guia.agente_evaluador_4 = data.get('agente_evaluador_4')
+            guia.tiempo_minutos_4 = data.get('tiempo_minutos_4')
+            guia.recursos_didacticos_4 = data.get('recursos_didacticos_4')
+            guia.periodo_tiempo_programado_4 = data.get('periodo_tiempo_programado_4')
+            guia.puntaje_4 = data.get('puntaje_4')
+            guia.fecha_entrega_4 = data.get('fecha_entrega_4')
+            
+            # Guardar la guía
+            guia.save()
+            
+            return JsonResponse({
+                'success': True, 
+                'message': 'Guía guardada correctamente',
+                'guia_id': guia.id
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Formato JSON inválido'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
     
     # Caso de error: método no permitido
     return JsonResponse({'error': 'Método no permitido'}, status=405)
@@ -900,832 +476,385 @@ def guardar_silabo_y_guia(request, asignacion_id=None, id=None):
 @login_required
 def generar_silabo(request):
     """
-    Función para usar el modelo de Google
+    Función para generar un sílabo usando modelos de IA.
     """
-    def usar_modelo_google(prompt_completo, generation_config):
-        """
-        Usa el modelo de Google para generar una respuesta basada en el prompt dado.
-
-        Args:
-            prompt_completo (str): Prompt que contiene las instrucciones y datos.
-            generation_config (dict): Configuración para la generación del modelo.
-
-        Returns:
-            str: Respuesta generada por el modelo.
-        """
-        # Cargar la clave API desde .env
-        load_dotenv()
-        api_key = os.environ.get("GOOGLE_GENERATIVE_API_KEY")
-        if not api_key:
-            raise ValueError("GOOGLE_GENERATIVE_API_KEY no está configurada en el archivo .env")
-
-        try:
-            # Configurar la API
-            genai.configure(api_key=api_key)
-
-            # Crear el modelo y sesión de chat
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-pro-latest",
-                generation_config=generation_config
-            )
-            chat_session = model.start_chat()
-
-            # Generar respuesta
-            response = chat_session.send_message(prompt_completo)
-            return response.text.strip()
-
-        except genai.errors.GenerativeAIError as e:
-            raise RuntimeError(f"Error en la API de Gemini: {e}")
-        except Exception as e:
-            raise RuntimeError(f"Error inesperado: {e}")
-
-
-    def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7, timeout=25):
-        """
-        Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
-
-        Args:
-            prompt_completo (str): Prompt que contiene las instrucciones y datos.
-            max_tokens (int): Número máximo de tokens en la respuesta.
-            temperature (float): Controla la creatividad (0-1).
-            timeout (int): Tiempo máximo en segundos para esperar la respuesta.
-
-        Returns:
-            str: Respuesta generada por el modelo.
-        """
-        # Cargar la clave API desde .env
-        load_dotenv()
-        api_key = os.environ.get("deepseek_API_KEY")
-        if not api_key:
-            logging.error("deepseek_API_KEY no está configurada en el archivo .env")
-            raise ValueError("deepseek_API_KEY no está configurada en el archivo .env")
-
-        api_url = "https://api.deepseek.com/v1/chat/completions"
-        
-        # Headers de la solicitud
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        # Parámetros del cuerpo de la solicitud
-        data = {
-            "model": "deepseek-chat",  # Usar el modelo correcto según la documentación
-            "messages": [
-                {"role": "system", "content": "Asistente para crear sílabo y plan de clases. Genera siempre respuestas en formato JSON válido."},
-                {"role": "user", "content": prompt_completo}
-            ],
-            "temperature": temperature,
-            "max_tokens": max_tokens  # Usar el valor pasado como parámetro
-        }
-        
-        try:
-            # Hacer la solicitud POST con timeout 
-            import requests
-            logging.info(f"Iniciando solicitud a DeepSeek con timeout={timeout} segundos")
-            response = requests.post(api_url, json=data, headers=headers, timeout=timeout)
-            
-            # Verificar si la solicitud fue exitosa
-            if response.status_code == 200:
-                respuesta = response.json()
-                resultado = respuesta['choices'][0]['message']['content']
-                logging.info("Respuesta de DeepSeek recibida correctamente")
-                logging.debug(f"Primeros 200 caracteres: {resultado[:200]}")
-                return resultado
-            else:
-                error_message = f"Error en la API de DeepSeek: {response.status_code}, {response.text}"
-                logging.error(error_message)
-                raise RuntimeError(error_message)
-                
-        except requests.exceptions.Timeout:
-            error_msg = f"Timeout al conectar con DeepSeek después de {timeout} segundos"
-            logging.error(error_msg)
-            # En lugar de lanzar un error, devolver una respuesta de fallback en formato JSON
-            return """
-            {
-              "descripcion": "La generación automática no pudo completarse debido a problemas de red o tiempo de espera agotado. Esta es una guía provisional.",
-              "actividades": ["Revisar material asignado", "Realizar lectura comprensiva", "Contestar preguntas de autoestudio"],
-              "recursos": ["Material de clase", "Recursos online"],
-              "tiempo_estimado": "60",
-              "criterios_evaluacion": ["Comprensión del tema", "Participación en clase"],
-              "puntaje": "10",
-              "evaluacion_sumativa": "Evaluación basada en el tema estudiado",
-              "objetivo_conceptual": "Comprender los conceptos fundamentales del tema",
-              "objetivo_procedimental": "Aplicar los conceptos aprendidos",
-              "objetivo_actitudinal": "Valorar la importancia del tema estudiado",
-              "instrumento_cuaderno": "Anotaciones en el cuaderno",
-              "instrumento_organizador": "Elaboración de un organizador gráfico",
-              "instrumento_diario": "Registro de actividades realizadas",
-              "instrumento_prueba": "Evaluación escrita sobre el tema"
-            }
-            """
-        except requests.exceptions.RequestException as e:
-            error_msg = f"Error de conexión con DeepSeek: {e}"
-            logging.error(error_msg)
-            raise RuntimeError(error_msg)
-        except Exception as e:
-            error_msg = f"Error inesperado con DeepSeek: {e}"
-            logging.error(error_msg)
-            raise RuntimeError(error_msg)
-
-
-    def usar_modelo_openai(prompt_completo):
-        """
-        Función para interactuar con OpenAI usando el cliente de chat basado en el script compartido.
-        """
-        try:
-            # Limpiar variables de entorno de proxy que podrían estar causando el error
-            for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
-               if key in os.environ:
-                    del os.environ[key]
-            
-            # Configurar API key para OpenAI 0.28
-            api_key = os.environ.get("OPENAI_API_KEY")
-            if not api_key:
-                raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
-                
-            # Configurar la API key directamente (estilo OpenAI 0.28)
-            import openai
-            openai.api_key = api_key
-            
-            # Crear el mensaje con el modelo usando la API antigua (0.28)
-            completion = openai.ChatCompletion.create(
-                model="gpt-4o-mini",  # Especifica el modelo deseado
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Asistente para crear sílabo y plan de clases."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt_completo
-                    }
-                ]
-            )
-
-            # Extraer el contenido del mensaje generado
-            messages = completion.choices[0].message.content
-            print("-------------------------------------------------------------", messages)
-            return messages
-
-        except Exception as e:
-            print(f"Error detallado al usar OpenAI: {str(e)}")
-            raise RuntimeError(f"Error al generar respuesta con OpenAI: {str(e)}")
-
-
-    def generar_con_openai(prompt):
-        """Función interna para generar texto con OpenAI"""
-        try:
-            # Limpiar variables de entorno de proxy que podrían estar causando el error
-            for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
-               if key in os.environ:
-                    del os.environ[key]
-            
-            # Configurar API key para OpenAI 0.28
-            api_key = os.environ.get("OPENAI_API_KEY")
-            if not api_key:
-                raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
-                
-            # Configurar la API key directamente (estilo OpenAI 0.28)
-            import openai
-            openai.api_key = api_key
-            
-            # Crear el mensaje con el modelo usando la API antigua (0.28)
-            completion = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",  # Especifica el modelo deseado
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Asistente para generar guías de estudio."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            )
-            
-            # Extraer el contenido del mensaje
-            return completion.choices[0].message.content
-        except Exception as e:
-            logging.error(f"Error al generar con OpenAI: {str(e)}")
-            return None
+    from plan_de_estudio.ai_generators import generar_respuesta_ai, get_default_config
+    import json
+    from django.db.models import Q
+    from plan_de_estudio.models import AsignacionPlanEstudio, Silabo, PlanTematico
 
     if request.method == 'POST':
         # Obtener los datos del formulario
         encuentro = request.POST.get('encuentro')
-        plan = request.POST.get('plan')
+        plan_id = request.POST.get('plan')
         # Obtener el modelo seleccionado del formulario
-        modelo_seleccionado = request.POST.get('modelo_select')
+        modelo_seleccionado = request.POST.get('modelo', 'google')
         print("Imprimiendo el modelo selecionodao:::::::::::::::::: "+str(modelo_seleccionado))
-        # Ruta al archivo de datos de ejemplo
-        filepath = os.path.join(settings.BASE_DIR, 'static', 'data', 'datos_ejemplo.txt')
+        
+        try:
+            # Convertir a entero para asegurar que es un número válido
+            encuentro = int(encuentro)
+            if encuentro < 1 or encuentro > 12:
+                return JsonResponse({'error': 'El número de encuentro debe estar entre 1 y 12'}, status=400)
+        except ValueError:
+            return JsonResponse({'error': 'El número de encuentro debe ser un número válido'}, status=400)
+            
+        try:
+            # Obtener la asignación del plan de estudio
+            asignacion = AsignacionPlanEstudio.objects.get(id=plan_id)
+            
+            # Obtener el plan temático relacionado
+            plan_tematico = PlanTematico.objects.filter(plan_estudio=asignacion.plan_de_estudio).first()
+            if not plan_tematico:
+                return JsonResponse({'error': 'No se encontró un plan temático para esta asignación'}, status=400)
+                
+            # Obtener los sílabos ya generados para esta asignación
+            silabos_existentes = Silabo.objects.filter(asignacion_plan=asignacion).order_by('encuentros')
+            
+            # Convertir los sílabos existentes a un formato que podamos usar en el prompt
+            silabos_previos = []
+            for silabo in silabos_existentes:
+                if silabo.encuentros < encuentro:  # Solo considerar los encuentros previos
+                    silabo_dict = {
+                        'encuentro': silabo.encuentros,
+                        'unidad': silabo.unidad,
+                        'nombre_de_la_unidad': silabo.nombre_de_la_unidad,
+                        'contenido_tematico': silabo.contenido_tematico,
+                        'objetivo_conceptual': silabo.objetivo_conceptual,
+                        'objetivo_procedimental': silabo.objetivo_procedimental,
+                        'objetivo_actitudinal': silabo.objetivo_actitudinal
+                    }
+                    silabos_previos.append(silabo_dict)
+            
+            # Verificar si ya existe un sílabo para este encuentro
+            silabo_actual = Silabo.objects.filter(asignacion_plan=asignacion, encuentros=encuentro).first()
+            if silabo_actual:
+                return JsonResponse({'error': f'Ya existe un sílabo para el encuentro {encuentro}'}, status=400)
+                
+        except AsignacionPlanEstudio.DoesNotExist:
+            return JsonResponse({'error': 'No se encontró el plan de estudio especificado'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': f'Error al obtener datos del plan: {str(e)}'}, status=400)
+        
+        # Ruta al archivo de datos JSON con la estructura
+        json_filepath = os.path.join(settings.BASE_DIR, 'static', 'data', 'datos.json')
 
         try:
-            with open(filepath, 'r') as file:
-                datos_ejemplo = file.read()
-        except FileNotFoundError:
-            return JsonResponse({'error': f"Error: El archivo '{filepath}' no se encuentra."}, status=400)
+            with open(json_filepath, 'r', encoding='utf-8') as json_file:
+                datos_estructura = json.load(json_file)
+                
+            # Obtener la estructura del primer encuentro como ejemplo
+            primer_encuentro = datos_estructura.get('primer_encuentro', {})
+            # Obtener las listas de opciones
+            unidades = datos_estructura.get('unidades', [])
+            ejes_transversales = datos_estructura.get('ejes_transversales', [])
+            tipos_primer_momento = datos_estructura.get('tipos_primer_momento', [])
+            tipos_segundo_momento_teoria = datos_estructura.get('tipos_segundo_momento_teoria', [])
+            tipos_segundo_momento_practica = datos_estructura.get('tipos_segundo_momento_practica', [])
+            tipos_tercer_momento = datos_estructura.get('tipos_tercer_momento', [])
+            
+        except Exception as e:
+            return JsonResponse({'error': f"Error al cargar el archivo de estructura JSON: {str(e)}"}, status=400)
 
         # Crear el prompt completo
         prompt_completo = f"""
             Instrucciones: Crea un sílabo basado en la siguiente información y devuélvelo en formato JSON estructurado.
 
-            Datos de ejemplo (para tu referencia):
+            Estás creando el sílabo para el encuentro {encuentro} de 12 encuentros.
+            Plan de estudio: {str(asignacion.plan_de_estudio)}
+            Asignatura: {asignacion.plan_de_estudio.asignatura.nombre}
+            
+            INFORMACIÓN DEL PLAN TEMÁTICO:
+            Unidad: {plan_tematico.unidades}
+            Nombre de la unidad: {plan_tematico.nombre_de_la_unidad}
+            Objetivos específicos: {plan_tematico.objetivo_especificos}
+            Plan analítico: {plan_tematico.plan_analitico}
+            Recomendaciones metodológicas: {plan_tematico.recomendaciones_metodologicas}
+            
+            CONTENIDO TEMÁTICO COMPLETO:
+            {plan_tematico.plan_analitico}
+            
+            {"SÍLABOS PREVIOS YA GENERADOS:" if silabos_previos else "Este es el primer encuentro, no hay sílabos previos."}
+            {json.dumps(silabos_previos, indent=2, ensure_ascii=False) if silabos_previos else ""}
 
-            {datos_ejemplo}
+            Utiliza la siguiente estructura de datos y opciones disponibles:
 
-            el silabo que vas a crear espara el encuentro: {encuentro} de 12 encuentros
-            Plan de estudio: {plan}
+            UNIDADES DISPONIBLES:
+            {', '.join(unidades)}
 
-            Devuelve los datos como un diccionario JSON con las siguientes claves:
-            - objetivo_conceptual
-            - objetivo_procedimental
-            - objetivo_actitudinal
-            - momento_didactico_primer
-            - momento_didactico_segundo
-            - momento_didactico_tercer
-            - unidad
-            - detalle_unidad
-            - contenido_tematico
-            - forma_organizativa
-            - tiempo
-            - tecnicas_aprendizaje
-            - descripcion_estrategia
-            - eje_transversal
-            - hp
-            - estudio_independiente
+            EJES TRANSVERSALES DISPONIBLES:
+            {', '.join(ejes_transversales)}
+
+            TIPOS DE PRIMER MOMENTO DIDÁCTICO:
+            {', '.join(tipos_primer_momento)}
+
+            TIPOS DE SEGUNDO MOMENTO DIDÁCTICO (TEORÍA):
+            {', '.join(tipos_segundo_momento_teoria)}
+
+            TIPOS DE SEGUNDO MOMENTO DIDÁCTICO (PRÁCTICA):
+            {', '.join(tipos_segundo_momento_practica)}
+
+            TIPOS DE TERCER MOMENTO DIDÁCTICO:
+            {', '.join(tipos_tercer_momento)}
+
+            EJEMPLO DE ESTRUCTURA (primer encuentro):
+            ```
+            {json.dumps(primer_encuentro, indent=2, ensure_ascii=False)}
+            ```
+
+            INSTRUCCIONES ESPECÍFICAS:
+            1. Divide el contenido temático completo en 12 encuentros de manera coherente y progresiva.
+            2. Para el encuentro {encuentro}, selecciona la parte correspondiente del contenido temático.
+            3. NO repitas contenido que ya se ha cubierto en encuentros anteriores.
+            4. Si es el primer encuentro, comienza con una introducción general.
+            5. Si hay encuentros previos, continúa desde donde se quedaron.
+            6. Asegúrate de que haya una progresión lógica entre los encuentros.
+            7. Adapta los objetivos y actividades al contenido específico de este encuentro.
+            8. Usa la misma estructura JSON que el ejemplo proporcionado.
+
+            Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior,
+            pero adaptado al encuentro {encuentro} y al plan de estudio proporcionado.
+            
+            Asegúrate de que todos los campos tengan valores coherentes y apropiados para el encuentro {encuentro}.
+            Respeta las opciones disponibles para los campos que tienen listas predefinidas.
         """
         print("1111111111111111111111111111111111111111111111111", prompt_completo)
-
-        generation_config = {
-            "temperature": 0.7,
-            "max_output_tokens": 1524
-        }
-
-        try:
-            # Usar el modelo seleccionado
-            if modelo_seleccionado == 'google':
-                silabo_generado = usar_modelo_google(prompt_completo, generation_config)
-            elif modelo_seleccionado == 'openai':
-                silabo_generado = usar_modelo_openai(prompt_completo)
-            elif modelo_seleccionado == 'deepseek':
-                silabo_generado = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7, timeout=25)
-            else:
-                return JsonResponse({'error': 'Modelo no válido seleccionado.'}, status=400)
-
-            # Extraer contenido JSON de la respuesta generada
-            try:
-                # Agregar logging para diagnóstico
-                logging.info(f"Respuesta AI recibida (primeros 500 caracteres): {silabo_generado[:500]}...")
-                
-                # Buscar el bloque JSON con una expresión regular más robusta
-                # Busca tanto bloques de código markdown con JSON como JSON directo
-                match = re.search(r'```(?:json)?\s*(\{.*\})\s*```|(\{.*\})', silabo_generado, re.DOTALL)
-                
-                if not match:
-                    error_msg = 'No se encontró un bloque JSON válido en la respuesta.'
-                    logging.error(f"{error_msg} Respuesta completa: {silabo_generado}")
-                    return JsonResponse({'error': error_msg, 'respuesta_completa': silabo_generado[:1000]}, status=500)
-
-                # Extraer el JSON encontrado - puede estar en grupo 1 (dentro de ```) o grupo 2 (JSON directo)
-                if match.group(1):
-                    silabo_json_text = match.group(1).strip()
-                else:
-                    silabo_json_text = match.group(2).strip()
-                
-                logging.info(f"JSON extraído: {silabo_json_text[:200]}...")
-                
-                # Limpiar cualquier carácter especial o formato
-                silabo_json_text = re.sub(r'```json|```', '', silabo_json_text).strip()
-                
-                # Convertir el texto a un objeto JSON
-                try:
-                    silabo_data = json.loads(silabo_json_text)
-                except json.JSONDecodeError as json_error:
-                    # Intento de reparación de JSON si fallan las comillas
-                    try:
-                        # Reemplazar comillas simples por dobles si es necesario
-                        fixed_json = silabo_json_text.replace("'", '"')
-                        silabo_data = json.loads(fixed_json)
-                        logging.info("JSON reparado exitosamente reemplazando comillas simples por dobles")
-                    except json.JSONDecodeError:
-                        # Re-lanzar la excepción original si la reparación no funcionó
-                        raise json_error
-                        
-            except json.JSONDecodeError as e:
-                error_msg = f'Error al decodificar JSON: {str(e)}'
-                logging.error(f"{error_msg} - JSON texto: {silabo_json_text}")
-                return JsonResponse({'error': error_msg}, status=500)
-            
-            # Devolver el JSON como respuesta
-            return JsonResponse({'silabo_data': silabo_data})
-
-        except Exception as e:
-            print(e)
-            return JsonResponse({'error': f"Error general: {str(e)}"}, status=500)
-
-    return JsonResponse({'error': 'Método no permitido.'}, status=405)
-
-
-
-
-@csrf_exempt
-def generar_estudio_independiente(request):
-    """
-    Vista para generar una guía de estudio utilizando IA.
-    """
-    def usar_modelo_google(prompt_completo, generation_config):
-        """
-        Usa el modelo de Google para generar una respuesta basada en el prompt dado.
-
-        Args:
-            prompt_completo (str): Prompt que contiene las instrucciones y datos.
-            generation_config (dict): Configuración para la generación del modelo.
-
-        Returns:
-            str: Respuesta generada por el modelo.
-        """
-        # Cargar la clave API desde .env
-        load_dotenv()
-        api_key = os.environ.get("GOOGLE_GENERATIVE_API_KEY")
-        if not api_key:
-            raise ValueError("GOOGLE_GENERATIVE_API_KEY no está configurada en el archivo .env")
-
-        try:
-            # Configurar la API
-            genai.configure(api_key=api_key)
-
-            # Crear el modelo y sesión de chat
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-pro-latest",
-                generation_config=generation_config
-            )
-            chat_session = model.start_chat()
-
-            # Generar respuesta
-            response = chat_session.send_message(prompt_completo)
-            return response.text.strip()
-
-        except genai.errors.GenerativeAIError as e:
-            raise RuntimeError(f"Error en la API de Gemini: {e}")
-        except Exception as e:
-            raise RuntimeError(f"Error inesperado: {e}")
-
-
-    def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7, timeout=25):
-        """
-        Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
-
-        Args:
-            prompt_completo (str): Prompt que contiene las instrucciones y datos.
-            max_tokens (int): Número máximo de tokens en la respuesta.
-            temperature (float): Controla la creatividad (0-1).
-            timeout (int): Tiempo máximo en segundos para esperar la respuesta.
-
-        Returns:
-            str: Respuesta generada por el modelo.
-        """
-        # Cargar la clave API desde .env
-        load_dotenv()
-        api_key = os.environ.get("deepseek_API_KEY")
-        if not api_key:
-            logging.error("deepseek_API_KEY no está configurada en el archivo .env")
-            raise ValueError("deepseek_API_KEY no está configurada en el archivo .env")
-
-        api_url = "https://api.deepseek.com/v1/chat/completions"
-        
-        # Headers de la solicitud
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
-        
-        # Parámetros del cuerpo de la solicitud
-        data = {
-            "model": "deepseek-chat",  # Usar el modelo correcto según la documentación
-            "messages": [
-                {"role": "system", "content": "Asistente para crear sílabo y plan de clases. Genera siempre respuestas en formato JSON válido."},
-                {"role": "user", "content": prompt_completo}
-            ],
-            "temperature": temperature,
-            "max_tokens": max_tokens  # Usar el valor pasado como parámetro
-        }
         
         try:
-            # Hacer la solicitud POST con timeout 
-            import requests
-            logging.info(f"Iniciando solicitud a DeepSeek con timeout={timeout} segundos")
-            response = requests.post(api_url, json=data, headers=headers, timeout=timeout)
+            # Configurar parámetros específicos para el modelo seleccionado
+            config = get_default_config(modelo_seleccionado)
             
-            # Verificar si la solicitud fue exitosa
-            if response.status_code == 200:
-                respuesta = response.json()
-                resultado = respuesta['choices'][0]['message']['content']
-                logging.info("Respuesta de DeepSeek recibida correctamente")
-                logging.debug(f"Primeros 200 caracteres: {resultado[:200]}")
-                return resultado
-            else:
-                error_message = f"Error en la API de DeepSeek: {response.status_code}, {response.text}"
-                logging.error(error_message)
-                raise RuntimeError(error_message)
-                
-        except requests.exceptions.Timeout:
-            error_msg = f"Timeout al conectar con DeepSeek después de {timeout} segundos"
-            logging.error(error_msg)
-            # En lugar de lanzar un error, devolver una respuesta de fallback en formato JSON
-            return """
-            {
-              "descripcion": "La generación automática no pudo completarse debido a problemas de red o tiempo de espera agotado. Esta es una guía provisional.",
-              "actividades": ["Revisar material asignado", "Realizar lectura comprensiva", "Contestar preguntas de autoestudio"],
-              "recursos": ["Material de clase", "Recursos online"],
-              "tiempo_estimado": "60",
-              "criterios_evaluacion": ["Comprensión del tema", "Participación en clase"],
-              "puntaje": "10",
-              "evaluacion_sumativa": "Evaluación basada en el tema estudiado",
-              "objetivo_conceptual": "Comprender los conceptos fundamentales del tema",
-              "objetivo_procedimental": "Aplicar los conceptos aprendidos",
-              "objetivo_actitudinal": "Valorar la importancia del tema estudiado",
-              "instrumento_cuaderno": "Anotaciones en el cuaderno",
-              "instrumento_organizador": "Elaboración de un organizador gráfico",
-              "instrumento_diario": "Registro de actividades realizadas",
-              "instrumento_prueba": "Evaluación escrita sobre el tema"
-            }
-            """
-        except requests.exceptions.RequestException as e:
-            error_msg = f"Error de conexión con DeepSeek: {e}"
-            logging.error(error_msg)
-            raise RuntimeError(error_msg)
-        except Exception as e:
-            error_msg = f"Error inesperado con DeepSeek: {e}"
-            logging.error(error_msg)
-            raise RuntimeError(error_msg)
-
-
-    def usar_modelo_openai(prompt_completo):
-        """
-        Función para interactuar con OpenAI usando el cliente de chat basado en el script compartido.
-        """
-        try:
-            # Limpiar variables de entorno de proxy que podrían estar causando el error
-            for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
-               if key in os.environ:
-                    del os.environ[key]
+            # Generar respuesta usando la función centralizada
+            data = generar_respuesta_ai(prompt_completo, modelo_seleccionado, **config)
             
-            # Configurar API key para OpenAI 0.28
-            api_key = os.environ.get("OPENAI_API_KEY")
-            if not api_key:
-                raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
-                
-            # Configurar la API key directamente (estilo OpenAI 0.28)
-            import openai
-            openai.api_key = api_key
+            # Devolver la respuesta
+            return JsonResponse({'silabo_data': data})
             
-            # Crear el mensaje con el modelo usando la API antigua (0.28)
-            completion = openai.ChatCompletion.create(
-                model="gpt-4o-mini",  # Especifica el modelo deseado
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Asistente para crear sílabo y plan de clases."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt_completo
-                    }
-                ]
-            )
-
-            # Extraer el contenido del mensaje generado
-            messages = completion.choices[0].message.content
-            print("-------------------------------------------------------------", messages)
-            return messages
-
-        except Exception as e:
-            print(f"Error detallado al usar OpenAI: {str(e)}")
-            raise RuntimeError(f"Error al generar respuesta con OpenAI: {str(e)}")
-
-
-    def generar_con_openai(prompt):
-        """Función interna para generar texto con OpenAI"""
-        try:
-            # Limpiar variables de entorno de proxy que podrían estar causando el error
-            for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
-               if key in os.environ:
-                    del os.environ[key]
-            
-            # Configurar API key para OpenAI 0.28
-            api_key = os.environ.get("OPENAI_API_KEY")
-            if not api_key:
-                raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
-                
-            # Configurar la API key directamente (estilo OpenAI 0.28)
-            import openai
-            openai.api_key = api_key
-            
-            # Crear el mensaje con el modelo usando la API antigua (0.28)
-            completion = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",  # Especifica el modelo deseado
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Asistente para generar guías de estudio."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            )
-            
-            # Extraer el contenido del mensaje
-            return completion.choices[0].message.content
-        except Exception as e:
-            logging.error(f"Error al generar con OpenAI: {str(e)}")
-            return None
-
-    if request.method == 'POST':
-        asignacion_id = request.POST.get('asignacion_id')
-        modelo_seleccionado = request.POST.get('modelo_select', 'google')
-        
-        print(f"Recibida solicitud para generar guía de estudio. Asignación ID: {asignacion_id}, Modelo: {modelo_seleccionado}")
-
-        # Obtener la asignación y datos relacionados
-        asignacion = get_object_or_404(AsignacionPlanEstudio, id=asignacion_id)
-        plan_estudio = asignacion.plan_de_estudio
-        
-        # Buscar guías anteriores para usar como contexto principal
-        guias_anteriores = Guia.objects.filter(
-            silabo__asignacion_plan=asignacion
-        ).order_by('numero_guia')
-        
-        # Obtener el sílabo actual solo para información complementaria
-        silabo_actual = Silabo.objects.filter(
-            asignacion_plan=asignacion
-        ).order_by('-encuentros').first()
-        
-        # Construir contexto de guías anteriores
-        contexto_guias = ""
-        if guias_anteriores.exists():
-            for idx, guia in enumerate(guias_anteriores):
-                # Procesar actividades que pueden estar en formato JSON o texto
-                actividades_str = "No especificado"
-                if guia.actividades:
-                    try:
-                        if guia.actividades.startswith('['):
-                            actividades_list = json.loads(guia.actividades)
-                            actividades_str = ", ".join(actividades_list)
-                        else:
-                            actividades_str = guia.actividades
-                    except:
-                        actividades_str = guia.actividades
-                
-                # Procesar recursos que pueden estar en formato JSON o texto
-                recursos_str = "No especificado"
-                if guia.recursos:
-                    try:
-                        if guia.recursos.startswith('['):
-                            recursos_list = json.loads(guia.recursos)
-                            recursos_str = ", ".join(recursos_list)
-                        else:
-                            recursos_str = guia.recursos
-                    except:
-                        recursos_str = guia.recursos
-                
-                contexto_guias += f"""
-                Guía {idx+1}:
-                - Unidad: {guia.unidad}
-                - Contenido temático: {guia.contenido_tematico or "No especificado"}
-                - Actividades: {actividades_str}
-                - Recursos: {recursos_str}
-                - Tiempo estimado: {guia.tiempo_minutos or "No especificado"} minutos
-                - Puntaje: {guia.puntaje or "No especificado"}
-                - Evaluación sumativa: {guia.evaluacion_sumativa or "No especificado"}
-                - Objetivos: 
-                  * Conceptual: {guia.objetivo_conceptual or "No especificado"}
-                  * Procedimental: {guia.objetivo_procedimental or "No especificado"}
-                  * Actitudinal: {guia.objetivo_actitudinal or "No especificado"}
-                - Instrumentos de evaluación:
-                  * Cuaderno: {guia.instrumento_cuaderno or "No especificado"}
-                  * Organizador gráfico: {guia.instrumento_organizador or "No especificado"}
-                  * Diario de trabajo: {guia.instrumento_diario or "No especificado"}
-                  * Prueba escrita: {guia.instrumento_prueba or "No especificado"}
-                """
-        
-        # Determinar el número de la próxima guía
-        numero_proxima_guia = guias_anteriores.count() + 1
-        
-        # Crear el prompt completo basado en la información disponible
-        if not silabo_actual:
-            # Si no hay sílabo, crear un prompt básico con información del plan de estudio
-            prompt_completo = f"""
-            Instrucciones: Genera una descripción detallada de una guía de estudio inicial (Guía #{numero_proxima_guia}) basada en la siguiente información.
-            
-            Datos del Plan de Estudio:
-            - Asignatura: {plan_estudio.asignatura.nombre}
-            - Carrera: {plan_estudio.carrera.nombre}
-            - Código: {plan_estudio.codigo}
-            - Horas Prácticas (HP): {plan_estudio.hp}
-            - Horas de Trabajo Independiente (HTI): {plan_estudio.hti}
-            
-            {f"Contexto de guías anteriores:{chr(10)}{contexto_guias}" if contexto_guias else "Esta será la primera guía para esta asignación."}
-            """
-        else:
-            # Si hay sílabo, incluir su información
-            prompt_completo = f"""
-            Instrucciones: Genera una descripción detallada de una guía de estudio (Guía #{numero_proxima_guia}) basada en la siguiente información.
-            
-            Datos del Sílabo:
-            - Asignatura: {plan_estudio.asignatura.nombre}
-            - Carrera: {plan_estudio.carrera.nombre}
-            - Código: {plan_estudio.codigo}
-            - Encuentro actual: {silabo_actual.encuentros} de 12
-            - Horas Prácticas (HP): {plan_estudio.hp}
-            - Horas de Trabajo Independiente (HTI): {plan_estudio.hti}
-            - Unidad actual: {silabo_actual.unidad}
-            - Contenido temático: {silabo_actual.contenido_tematico}
-            
-            {f"Contexto de guías anteriores:{chr(10)}{contexto_guias}" if contexto_guias else "Esta será la primera guía para esta asignación."}
-            """
-        
-        # Añadir la estructura JSON esperada al prompt
-        prompt_completo += """
-        Por favor, genera una guía de estudio en formato JSON con la siguiente estructura:
-        {
-          "descripcion": "Una descripción detallada del contenido temático de la guía",
-          "actividades": ["Actividad 1", "Actividad 2", "Actividad 3"],
-          "recursos": ["Recurso 1", "Recurso 2", "Recurso 3"],
-          "tiempo_estimado": "Tiempo estimado en minutos",
-          "criterios_evaluacion": ["Criterio 1", "Criterio 2", "Criterio 3"],
-          "puntaje": "Puntaje sugerido para esta guía (valor numérico)",
-          "evaluacion_sumativa": "Descripción de la evaluación sumativa para esta guía",
-          "objetivo_conceptual": "Descripción detallada del objetivo conceptual",
-          "objetivo_procedimental": "Descripción detallada del objetivo procedimental",
-          "objetivo_actitudinal": "Descripción detallada del objetivo actitudinal",
-          "instrumento_cuaderno": "Descripción de cómo se utilizará el cuaderno del estudiante como instrumento de evaluación",
-          "instrumento_organizador": "Descripción de cómo se utilizará el organizador gráfico como instrumento de evaluación",
-          "instrumento_diario": "Descripción de cómo se utilizará el diario de trabajo como instrumento de evaluación",
-          "instrumento_prueba": "Descripción de cómo se utilizará la prueba escrita como instrumento de evaluación"
-        }
-        
-        Asegúrate de que el JSON sea válido y pueda ser parseado correctamente.
-        """
-        
-        print("Prompt generado, enviando a la API...")
-        logging.info("Prompt generado, enviando a la API...")
-        
-        # Generar respuesta según el modelo seleccionado
-        respuesta_ai = None
-        
-        if modelo_seleccionado == 'openai':
-            respuesta_ai = generar_con_openai(prompt_completo)
-        elif modelo_seleccionado == 'deepseek':
-            try:
-                respuesta_ai = usar_modelo_deepseek(prompt_completo, max_tokens=1524, temperature=0.7, timeout=15)
-                # Si llegamos aquí, la respuesta fue exitosa o se usó el fallback para timeout
-                logging.info("Respuesta de DeepSeek obtenida o se generó fallback")
-            except Exception as e:
-                if "timeout" in str(e).lower() or "timed out" in str(e).lower():
-                    # Si es un error de timeout, generar una respuesta de fallback
-                    logging.warning(f"Timeout detectado con DeepSeek: {str(e)}")
-                    respuesta_ai = """
-                    {
-                      "descripcion": "La generación automática no pudo completarse debido a problemas de red o tiempo de espera agotado. Esta es una guía provisional.",
-                      "actividades": ["Revisar material asignado", "Realizar lectura comprensiva", "Contestar preguntas de autoestudio"],
-                      "recursos": ["Material de clase", "Recursos online"],
-                      "tiempo_estimado": "60",
-                      "criterios_evaluacion": ["Comprensión del tema", "Participación en clase"],
-                      "puntaje": "10",
-                      "evaluacion_sumativa": "Evaluación basada en el tema estudiado",
-                      "objetivo_conceptual": "Comprender los conceptos fundamentales del tema",
-                      "objetivo_procedimental": "Aplicar los conceptos aprendidos",
-                      "objetivo_actitudinal": "Valorar la importancia del tema estudiado",
-                      "instrumento_cuaderno": "Anotaciones en el cuaderno",
-                      "instrumento_organizador": "Elaboración de un organizador gráfico",
-                      "instrumento_diario": "Registro de actividades realizadas",
-                      "instrumento_prueba": "Evaluación escrita sobre el tema"
-                    }
-                    """
-                else:
-                    # Para otros errores, mostrar el mensaje normal
-                    error_msg = f'Error al generar con DeepSeek: {str(e)}'
-                    logging.error(error_msg)
-                    return JsonResponse({'error': error_msg}, status=500)
-        else:  # google por defecto
-            try:
-                # Configurar el modelo usando el método correcto
-                generation_config = {
-                    "temperature": 0.7,
-                    "top_p": 0.95,
-                    "top_k": 40,
-                    "max_output_tokens": 1524
-                }
-                
-                # Usar la función adecuada para el modelo correcto
-                respuesta_ai = usar_modelo_google(prompt_completo, generation_config)
-                
-            except Exception as e:
-                error_msg = f'Error al generar con Google AI: {str(e)}'
-                logging.error(error_msg)
-                return JsonResponse({'error': error_msg}, status=500)
-        
-        if not respuesta_ai:
-            error_msg = 'No se pudo generar una respuesta'
-            logging.error(error_msg)
-            return JsonResponse({'error': error_msg}, status=500)
-        
-        print("Respuesta generada, procesando...")
-        logging.info("Respuesta generada, procesando...")
-        logging.debug(f"Respuesta AI (primeros 200 caracteres): {respuesta_ai[:200]}...")
-        
-        # Procesar la respuesta para extraer el JSON
-        try:
-            # Buscar el JSON en la respuesta
-            json_match = re.search(r'\{.*\}', respuesta_ai, re.DOTALL)
-            
-            if json_match:
-                # Extraer el JSON encontrado
-                json_str = json_match.group(0).strip()
-                
-                # Limpiar el string JSON (eliminar bloques de código markdown)
-                json_str = re.sub(r'```json|```', '', json_str).strip()
-                
-                logging.debug(f"JSON extraído (primeros 200 caracteres): {json_str[:200]}...")
-                
-                # Intentar convertir el texto a un objeto JSON
-                try:
-                    data = json.loads(json_str)
-                except json.JSONDecodeError as e:
-                    logging.error(f"Error inicial al decodificar JSON: {str(e)}")
-                    logging.debug(f"Intentando limpiar y reparar el JSON...")
-                    
-                    # Intento adicional: reemplazar comillas simples por dobles
-                    json_str = json_str.replace("'", '"')
-                    # Intento adicional: escapar comillas internas
-                    json_str = re.sub(r'(?<!")(".*?)(?<!")(")', r'\1\\"', json_str)
-                    
-                    # Último intento con la corrección
-                    data = json.loads(json_str)
-                
-                # Asegurarse de que los campos esperados estén presentes
-                expected_fields = ['descripcion', 'actividades', 'recursos', 'tiempo_estimado', 'criterios_evaluacion', 'puntaje', 'evaluacion_sumativa', 'objetivo_conceptual', 'objetivo_procedimental', 'objetivo_actitudinal', 'instrumento_cuaderno', 'instrumento_organizador', 'instrumento_diario', 'instrumento_prueba']
-                for field in expected_fields:
-                    if field not in data:
-                        data[field] = "" if field != 'tiempo_estimado' else "60"
-                        
-                    # Asegurarse de que los campos de lista sean realmente listas
-                    if field in ['actividades', 'recursos', 'criterios_evaluacion']:
-                        if not isinstance(data[field], list):
-                            if data[field]:  # Si no está vacío
-                                data[field] = [data[field]]
-                            else:
-                                data[field] = []
-                
-                print("Datos procesados correctamente, enviando respuesta")
-                logging.info("Datos procesados correctamente, enviando respuesta")
-                return JsonResponse({'guia_data': data})
-            else:
-                # Si no hay formato JSON directo, intentar formatear la respuesta completa
-                logging.warning("No se encontró un formato JSON válido en la respuesta. Intentando procesar la respuesta completa.")
-                
-                # Eliminar cualquier markdown que pueda haber
-                clean_response = re.sub(r'```.*?```', '', respuesta_ai, flags=re.DOTALL).strip()
-                
-                # Crear un diccionario básico usando el texto completo como descripción
-                data = {
-                    'descripcion': clean_response[:500],  # Limitar a 500 caracteres
-                    'actividades': ["Revisar el material proporcionado"],
-                    'recursos': ["Material de estudio"],
-                    'tiempo_estimado': "60",
-                    'criterios_evaluacion': ["Comprensión del contenido"],
-                    'puntaje': "10",
-                    'evaluacion_sumativa': "Evaluación basada en la comprensión del contenido",
-                    'objetivo_conceptual': "Comprender los conceptos fundamentales del tema",
-                    'objetivo_procedimental': "Aplicar los conceptos aprendidos",
-                    'objetivo_actitudinal': "Valorar la importancia del tema estudiado",
-                    'instrumento_cuaderno': "Anotaciones en el cuaderno",
-                    'instrumento_organizador': "Crear un organizador gráfico",
-                    'instrumento_diario': "Registro diario de actividades",
-                    'instrumento_prueba': "Evaluación escrita sobre el tema"
-                }
-                
-                logging.info("Se generó una respuesta de emergencia al no encontrar JSON válido")
-                return JsonResponse({'guia_data': data})
-                    
-        except json.JSONDecodeError as e:
-            error_msg = f'Error al decodificar JSON: {str(e)}'
-            logging.error(error_msg)
-            logging.debug(f"JSON con error: {json_str}")
-            return JsonResponse({'error': error_msg}, status=500)
-        except Exception as e:
-            error_msg = f'Error al procesar la respuesta: {str(e)}'
-            logging.error(error_msg)
-            return JsonResponse({'error': error_msg}, status=500)
         except Exception as e:
             error_msg = f'Error inesperado: {str(e)}'
             logging.error(error_msg)
             return JsonResponse({'error': error_msg}, status=500)
         
+@login_required
+def generar_estudio_independiente(request):
+    """
+    Vista para generar una guía de estudio utilizando IA.
+    """
+    from plan_de_estudio.ai_generators import generar_respuesta_ai, get_default_config
+    import traceback
+    import logging
+    
+    if request.method == 'POST':
+        silabo_id = request.POST.get('silabo_id')
+        asignacion_id = request.POST.get('asignacion_id')
+        encuentro = int(request.POST.get('encuentro', 1))  # Por defecto, primer encuentro
+        modelo_seleccionado = request.POST.get('modelo')
+        
+        print(f"Recibida solicitud para generar guía de estudio. Sílabo ID: {silabo_id}, Asignación ID: {asignacion_id}, Encuentro: {encuentro}, Modelo: {modelo_seleccionado}")
+        
+        # Log all POST parameters for debugging
+        print(f"POST parameters: {request.POST}")
+
+        try:
+            # Obtener el sílabo actual
+            silabo = None
+            asignacion = None
+            
+            # 1. Primero intentar obtener por silabo_id directo
+            if silabo_id and silabo_id != "null" and silabo_id != "":
+                try:
+                    silabo = Silabo.objects.get(id=silabo_id)
+                    print(f"Sílabo encontrado por silabo_id {silabo_id}: {silabo}")
+                    asignacion = silabo.asignacion_plan
+                except Silabo.DoesNotExist:
+                    print(f"No se encontró sílabo con ID {silabo_id}")
+            
+            # 2. Si no hay silabo pero sí hay asignacion_id, obtener la asignación
+            if not silabo and asignacion_id and asignacion_id != "null" and asignacion_id != "":
+                try:
+                    asignacion = AsignacionPlanEstudio.objects.get(id=asignacion_id)
+                    print(f"Asignación encontrada con ID {asignacion_id}: {asignacion}")
+                    
+                    # 3. Intentar encontrar sílabo por número de encuentro
+                    silabo = Silabo.objects.filter(
+                        asignacion_plan=asignacion,
+                        encuentros=encuentro
+                    ).first()
+                    
+                    if silabo:
+                        print(f"Sílabo encontrado para el encuentro {encuentro}: {silabo}")
+                    else:
+                        print(f"No se encontró sílabo para el encuentro {encuentro}")
+                        
+                        # 4. Si no se encuentra por encuentro específico, buscar el último
+                        silabo = Silabo.objects.filter(
+                            asignacion_plan=asignacion
+                        ).order_by('-encuentros').first()
+                        
+                        if silabo:
+                            print(f"Se usará el último sílabo disponible: {silabo}")
+                        else:
+                            print(f"No se encontraron sílabos para la asignación {asignacion_id}")
+                            return JsonResponse({'error': 'No hay sílabo disponible para esta asignación. Por favor, cree un sílabo primero.'}, status=400)
+                            
+                except AsignacionPlanEstudio.DoesNotExist:
+                    print(f"No se encontró asignación con ID {asignacion_id}")
+                    return JsonResponse({'error': f'No se encontró la asignación con ID {asignacion_id}'}, status=400)
+            
+            if not silabo:
+                print("No se pudo encontrar un sílabo después de intentar todas las opciones")
+                return JsonResponse({'error': 'No se pudo encontrar un sílabo para generar la guía.'}, status=400)
+                
+            if not asignacion:
+                asignacion = silabo.asignacion_plan
+            
+            print(f"Usando asignación: {asignacion}, Sílabo: {silabo}")
+            
+            # Verificar si ya existe una guía para este sílabo
+            guia_existente = Guia.objects.filter(silabo=silabo).first()
+            if guia_existente:
+                print(f"Ya existe una guía para el sílabo {silabo.id} (Encuentro {silabo.encuentros})")
+                return JsonResponse({'error': f'Ya existe una guía para este sílabo (Encuentro {silabo.encuentros})'}, status=400)
+            
+            # Continuar con el resto del código...
+            
+            # Obtener guías anteriores para otros sílabos de la misma asignación
+            guias_anteriores = Guia.objects.filter(
+                silabo__asignacion_plan=asignacion,
+                silabo__encuentros__lt=silabo.encuentros
+            ).order_by('silabo__encuentros')
+            
+            # Ruta al archivo de datos JSON con la estructura de la guía
+            json_filepath = os.path.join(settings.BASE_DIR, 'static', 'data', 'guia_ejemplo.json')
+
+            with open(json_filepath, 'r', encoding='utf-8') as json_file:
+                datos_estructura = json.load(json_file)
+                
+            # Obtener la estructura de ejemplo y las listas de opciones
+            ejemplo_guia = datos_estructura.get('ejemplo_guia', {})
+            tipos_objetivo = datos_estructura.get('tipos_objetivo', [])
+            tecnicas_evaluacion = datos_estructura.get('tecnicas_evaluacion', [])
+            tipos_evaluacion = datos_estructura.get('tipos_evaluacion', [])
+            instrumentos_evaluacion = datos_estructura.get('instrumentos_evaluacion', [])
+            agentes_evaluadores = datos_estructura.get('agentes_evaluadores', [])
+            periodos_tiempo = datos_estructura.get('periodos_tiempo', [])
+            
+            # Convertir las guías anteriores a un formato que podamos usar en el prompt
+            guias_previas = []
+            for guia in guias_anteriores:
+                guia_dict = {
+                    'numero_encuentro': guia.numero_encuentro,
+                    'fecha': guia.fecha.strftime('%Y-%m-%d') if guia.fecha else None,
+                    'unidad': guia.unidad,
+                    'nombre_de_la_unidad': guia.nombre_de_la_unidad,
+                    # Tarea 1
+                    'tipo_objetivo_1': guia.tipo_objetivo_1,
+                    'objetivo_aprendizaje_1': guia.objetivo_aprendizaje_1,
+                    'contenido_tematico_1': guia.contenido_tematico_1,
+                    'actividad_aprendizaje_1': guia.actividad_aprendizaje_1,
+                    'tecnica_evaluacion_1': guia.tecnica_evaluacion_1,
+                    'tipo_evaluacion_1': guia.tipo_evaluacion_1,
+                    'instrumento_evaluacion_1': guia.instrumento_evaluacion_1,
+                    'criterios_evaluacion_1': guia.criterios_evaluacion_1,
+                    'puntaje_1': guia.puntaje_1
+                }
+                guias_previas.append(guia_dict)
+            
+            # Crear el prompt completo
+            prompt_completo = f"""
+            Instrucciones: Crea una guía de estudio independiente basada en la siguiente información y devuélvela en formato JSON estructurado.
+
+            INFORMACIÓN DEL SÍLABO ACTUAL (Encuentro {silabo.encuentros}):
+            - Código: {silabo.codigo}
+            - Unidad: {silabo.unidad}
+            - Nombre de la unidad: {silabo.nombre_de_la_unidad}
+            - Contenido temático: {silabo.contenido_tematico}
+            - Objetivo conceptual: {silabo.objetivo_conceptual}
+            - Objetivo procedimental: {silabo.objetivo_procedimental}
+            - Objetivo actitudinal: {silabo.objetivo_actitudinal}
+            - Eje transversal: {silabo.eje_transversal} - {silabo.detalle_eje_transversal}
+            
+            MOMENTOS DIDÁCTICOS DEL SÍLABO:
+            - Primer momento: {silabo.tipo_primer_momento} - {silabo.detalle_primer_momento}
+            - Segundo momento (teoría): {silabo.tipo_segundo_momento_claseteoria} - {silabo.clase_teorica}
+            - Segundo momento (práctica): {silabo.tipo_segundo_momento_practica} - {silabo.clase_practica}
+            - Tercer momento: {silabo.tipo_tercer_momento} - {silabo.detalle_tercer_momento}
+            
+            EVALUACIÓN DEL SÍLABO:
+            - Actividad de aprendizaje: {silabo.actividad_aprendizaje}
+            - Técnica de evaluación: {silabo.tecnica_evaluacion}
+            - Tipo de evaluación: {silabo.tipo_evaluacion}
+            - Instrumento de evaluación: {silabo.instrumento_evaluacion}
+            - Criterios de evaluación: {silabo.criterios_evaluacion}
+            - Puntaje: {silabo.puntaje}
+            
+            {"GUÍAS DE ESTUDIO PREVIAS:" if guias_previas else "Esta es la primera guía para esta asignación."}
+            {json.dumps(guias_previas, indent=2, ensure_ascii=False) if guias_previas else ""}
+
+            TIPOS DE OBJETIVO DISPONIBLES:
+            {', '.join(tipos_objetivo)}
+
+            TÉCNICAS DE EVALUACIÓN DISPONIBLES:
+            {', '.join(tecnicas_evaluacion)}
+
+            TIPOS DE EVALUACIÓN DISPONIBLES:
+            {', '.join(tipos_evaluacion)}
+
+            INSTRUMENTOS DE EVALUACIÓN DISPONIBLES:
+            {', '.join(instrumentos_evaluacion)}
+
+            AGENTES EVALUADORES DISPONIBLES:
+            {', '.join(agentes_evaluadores)}
+
+            PERIODOS DE TIEMPO DISPONIBLES:
+            {', '.join(periodos_tiempo)}
+
+            EJEMPLO DE ESTRUCTURA DE GUÍA:
+            ```
+            {json.dumps(ejemplo_guia, indent=2, ensure_ascii=False)}
+            ```
+
+            INSTRUCCIONES ESPECÍFICAS:
+            1. Crea una guía de estudio independiente para el encuentro {silabo.encuentros} basada en el sílabo proporcionado.
+            2. La guía debe tener 4 tareas diferentes que el estudiante debe realizar como trabajo independiente.
+            3. Cada tarea debe estar relacionada con el contenido temático y los objetivos del sílabo.
+            4. Las tareas deben ser progresivas y complementarias entre sí.
+            5. Asigna fechas de entrega realistas (considera que la fecha actual es {datetime.datetime.now().strftime('%Y-%m-%d')}).
+            6. Distribuye el puntaje total entre las 4 tareas (el total debe sumar 100 puntos).
+            7. Utiliza diferentes tipos de objetivos, técnicas e instrumentos de evaluación para las tareas.
+            8. NO repitas actividades que ya se hayan asignado en guías anteriores.
+            9. Sigue exactamente la misma estructura JSON que el ejemplo proporcionado.
+
+            Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior,
+            adaptado al sílabo actual (encuentro {silabo.encuentros}).
+            
+            Asegúrate de que todos los campos tengan valores coherentes y apropiados.
+            Respeta las opciones disponibles para los campos que tienen listas predefinidas.
+            """
+            
+            print("Prompt generado, enviando a la API...")
+            logging.info("Prompt generado, enviando a la API...")
+            
+            # Configurar parámetros específicos para el modelo seleccionado
+            config = get_default_config(modelo_seleccionado)
+            
+            # Generar respuesta usando la función centralizada
+            data = generar_respuesta_ai(prompt_completo, modelo_seleccionado, **config)
+            
+            # Devolver la respuesta con la estructura que espera el frontend
+            return JsonResponse({
+                'success': True,
+                'datos': data
+            })
+            
+        except Silabo.DoesNotExist:
+            return JsonResponse({'error': 'No se encontró el sílabo especificado'}, status=400)
+        except Exception as e:
+            error_message = f"Error inesperado: {str(e)}"
+            logging.error(error_message)
+            print(error_message)
+            return JsonResponse({'error': error_message}, status=500)
+   
 @login_required
 def cargar_guia(request, silabo_id):
     """

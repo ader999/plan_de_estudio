@@ -45,8 +45,13 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
     readonly_fields = ('th',)  # 'th' es solo lectura en el formulario
 
     fieldsets = (
-        (None, {
+        ('Datos Generales', {
             'fields': ('carrera', 'año', 'trimestre', 'codigo', 'asignatura', 'pr', 'pc', 'cr', 'hp', 'hti', 'th')
+        }),
+        ('Documentos y Relaciones', {
+            'fields': ('plan_tematico', 'plan_tematico_ref', 'documento_adjunto'),
+            'classes': ('collapse',),
+            'description': 'Documentos adjuntos y relaciones con plan temático'
         }),
     )
 
@@ -63,26 +68,24 @@ class AsignaturaFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         # Obtener una lista de asignaturas únicas en los silabos
-        asignaturas = Silabo.objects.values_list('asignatura__id', 'asignatura__nombre').distinct()
+        asignaturas = Silabo.objects.values_list('asignacion_plan__plan_de_estudio__asignatura__id', 'asignacion_plan__plan_de_estudio__asignatura__nombre').distinct()
         return [(asignatura[0], asignatura[1]) for asignatura in asignaturas]
 
     def queryset(self, request, queryset):
         value = self.value()
         if value:
-            return queryset.filter(asignatura__id=value)
+            return queryset.filter(asignacion_plan__plan_de_estudio__asignatura__id=value)
         return queryset
 
 
 class FiltarSilabo(admin.ModelAdmin):
-    list_display = ('maestro', 'asignatura',)
+    list_display = ('id', 'fecha')
     list_filter = (
-        ('maestro', admin.RelatedOnlyFieldListFilter),
-        ('asignatura', admin.RelatedOnlyFieldListFilter),
-        ('codigo', admin.AllValuesFieldListFilter),
         ('fecha', admin.DateFieldListFilter),  # Utiliza el widget de fecha aquí
+        'codigo',
     )
 
-    exclude = ('maestro',)  # Excluir el campo maestro del formulario
+    exclude = ()  # No excluir campos innecesarios
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'encuentros':
             kwargs['widget'] = forms.NumberInput(attrs={'min': '1', 'max': '10', 'step': '1'})
@@ -93,23 +96,9 @@ class FiltarSilabo(admin.ModelAdmin):
         return super().formfield_for_dbfield(db_field, **kwargs)
 
 
-
-    def save_model(self, request, obj, form, change):
-        # Establecer el maestro como el usuario que está logueado actualmente
-        if not obj.maestro_id:
-            obj.maestro = request.user
-        obj.save()
-
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        # Filtrar los silabos por el maestro que está logueado
-        if request.user.is_superuser:
-            return queryset
-        else:
-            return queryset.filter(maestro=request.user)
-
 class FiltrarGuia(admin.ModelAdmin):
-      list_filter = ('silabo__asignatura',)
+    list_filter = ('silabo__codigo',)
+
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     list_display = ('usuario', 'plan_de_estudio', 'completado_icono')
@@ -122,53 +111,55 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
 
 
 class CompletadoFilter(admin.SimpleListFilter):
-    title = 'Estado de Completado'
-    parameter_name = 'completado'
+    title = 'Estado de Asignación'
+    parameter_name = 'asignado'
     
     def lookups(self, request, model_admin):
         return (
-            ('si', 'Completados'),
-            ('no', 'Incompletos'),
+            ('si', 'Asignados'),
+            ('no', 'No Asignados'),
         )
     
     def queryset(self, request, queryset):
-        # Obtenemos todas las asignaturas que tienen 4 o más unidades
         if self.value() == 'si':
-            # Encuentra asignaturas con 4 o más unidades
-            asignaturas_completas = PlanTematico.objects.values('asignatura').annotate(
-                count=Count('id')
-            ).filter(count__gte=4).values_list('asignatura', flat=True)
-            return queryset.filter(asignatura__in=asignaturas_completas)
+            # Encuentra planes temáticos que están asignados a algún plan de estudio
+            plan_tematicos_asignados = Plan_de_estudio.objects.filter(
+                plan_tematico_ref__isnull=False
+            ).values_list('plan_tematico_ref', flat=True)
+            return queryset.filter(id__in=plan_tematicos_asignados)
         
         if self.value() == 'no':
-            # Encuentra asignaturas con menos de 4 unidades
-            asignaturas_incompletas = PlanTematico.objects.values('asignatura').annotate(
-                count=Count('id')
-            ).filter(count__lt=4).values_list('asignatura', flat=True)
-            return queryset.filter(asignatura__in=asignaturas_incompletas)
+            # Encuentra planes temáticos que no están asignados a ningún plan de estudio
+            plan_tematicos_asignados = Plan_de_estudio.objects.filter(
+                plan_tematico_ref__isnull=False
+            ).values_list('plan_tematico_ref', flat=True)
+            return queryset.exclude(id__in=plan_tematicos_asignados)
 
 
 class PlanTematicoAdmin(admin.ModelAdmin):
-    list_display = ('asignatura', 'unidades', 'nombre_de_la_unidad', 'completado_icono')
-    list_filter = ('asignatura', CompletadoFilter)
-    search_fields = ('asignatura__nombre', 'nombre_de_la_unidad')
+    list_display = ('nombre_de_la_unidad', 'unidades', 'planes_de_estudio_related', 'completado_icono')
+    list_filter = (CompletadoFilter,)
+    search_fields = ('nombre_de_la_unidad',)
     
     def completado_icono(self, obj):
-        # Cuenta cuántas unidades tiene esta asignatura
-        count = PlanTematico.objects.filter(asignatura=obj.asignatura).count()
-        # Retorna True si ya tiene las 4 unidades completas
-        return count >= 4
+        # Verificamos si este PlanTematico está relacionado con algún Plan_de_estudio
+        return Plan_de_estudio.objects.filter(plan_tematico_ref=obj).exists()
     
     completado_icono.boolean = True  # Indica que este es un campo booleano
-    completado_icono.short_description = 'Completado'
+    completado_icono.short_description = 'Asignado'
+    
+    def planes_de_estudio_related(self, obj):
+        # Obtener todos los planes de estudio que referencian a este PlanTematico
+        planes = Plan_de_estudio.objects.filter(plan_tematico_ref=obj)
+        if planes.exists():
+            return ", ".join([str(plan) for plan in planes])
+        return "No asignado"
+    
+    planes_de_estudio_related.short_description = "Plan de Estudio"
 
     def get_queryset(self, request):
-        # Anotamos cada objeto con un conteo de unidades por asignatura
-        queryset = super().get_queryset(request)
-        queryset = queryset.annotate(
-            unidades_count=Count('asignatura__planes_tematicos')
-        )
-        return queryset
+        # Ya no necesitamos anotar con conteos basados en la relación anterior
+        return super().get_queryset(request)
 
 
 admin.site.register(Plan_de_estudio, PlanDeEstudioAdmin)

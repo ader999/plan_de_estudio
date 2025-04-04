@@ -19,11 +19,13 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('success_view/', views.success_view, name='success_view'),
     path('generar-silabo/', views.generar_silabo, name='generar_silabo'),
-    path('generar_guia/', views.generar_estudio_independiente, name='generar_guia'),
+    path('generar-estudio-independiente/', views.generar_estudio_independiente, name='generar_estudio_independiente'),
     
     # Rutas para formularios de sílabo y guía
-    path('formulario_silabo_guia/<int:asignacion_id>/', views.ver_formulario_silabo_guia, name='ver_formulario'),
-    path('guardar_silabo_guia/<int:asignacion_id>/', views.guardar_silabo_y_guia, name='guardar_silabo_guia'),
+    path('formulario_silabo/<int:asignacion_id>/', views.ver_formulario_silabo, name='ver_formulario_silabo'),
+    path('formulario_guia/<int:asignacion_id>/', views.ver_formulario_guia, name='ver_formulario_guia'),
+    path('guardar_silabo/<int:asignacion_id>/', views.guardar_silabo, name='guardar_silabo'),
+    path('guardar-guia/<int:silabo_id>/', views.guardar_guia, name='guardar_guia'),
     
     # Ruta para cargar guía específica de un sílabo
     path('cargar_guia/<int:silabo_id>/', views.cargar_guia, name='cargar_guia'),

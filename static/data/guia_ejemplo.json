@@ -1,0 +1,256 @@
+{
+  "unidades": [
+    "Unidad I",
+    "Unidad II",
+    "Unidad III",
+    "Unidad IV",
+    "Unidad V",
+    "Unidad VI"
+  ],
+  "tipos_objetivo": [
+    "Conceptual",
+    "Procedimental",
+    "Actitudinal"
+  ],
+  "tecnicas_evaluacion": [
+    "Observación",
+    "Preguntas",
+    "Debate",
+    "Trabajo en grupo",
+    "Presentación oral",
+    "Ensayo",
+    "Proyecto",
+    "Organizador gráfico",
+    "Otro"
+  ],
+  "tipos_evaluacion": [
+    "Diagnóstica",
+    "Formativa",
+    "Sumativa"
+  ],
+  "instrumentos_evaluacion": [
+    "Rúbrica",
+    "Listas de cotejo",
+    "Prueba oral",
+    "Prueba escrita",
+    "Registro anecdótico",
+    "Diario de aprendizaje",
+    "Portafolio",
+    "Cuaderno del estudiante",
+    "Escalas de valoración",
+    "Otros"
+  ],
+  "agentes_evaluadores": [
+    "Autoevaluación",
+    "Coevaluación",
+    "Heteroevaluación"
+  ],
+  "periodos_tiempo": [
+    "I Corte Evaluativo",
+    "II Corte Evaluativo",
+    "III Corte Evaluativo"
+  ],
+  "campos_guia": {
+    "numero_encuentro": {
+      "tipo": "integer",
+      "descripcion": "Número de encuentro",
+      "min_value": 1,
+      "max_value": 12
+    },
+    "fecha": {
+      "tipo": "date",
+      "descripcion": "Fecha del encuentro"
+    },
+    "unidad": {
+      "tipo": "string",
+      "descripcion": "Número de unidad",
+      "opciones": "unidades"
+    },
+    "nombre_de_la_unidad": {
+      "tipo": "string",
+      "descripcion": "Nombre de la unidad",
+      "max_length": 255
+    }
+  },
+  "campos_tarea": {
+    "tipo_objetivo": {
+      "tipo": "string",
+      "descripcion": "Tipo de objetivo",
+      "opciones": "tipos_objetivo"
+    },
+    "objetivo_aprendizaje": {
+      "tipo": "text",
+      "descripcion": "Objetivo de aprendizaje"
+    },
+    "contenido_tematico": {
+      "tipo": "text",
+      "descripcion": "Contenido temático"
+    },
+    "actividad_aprendizaje": {
+      "tipo": "text",
+      "descripcion": "Actividad de aprendizaje"
+    },
+    "tecnica_evaluacion": {
+      "tipo": "string",
+      "descripcion": "Técnica de evaluación",
+      "opciones": "tecnicas_evaluacion"
+    },
+    "tipo_evaluacion": {
+      "tipo": "string",
+      "descripcion": "Tipo de evaluación",
+      "opciones": "tipos_evaluacion"
+    },
+    "instrumento_evaluacion": {
+      "tipo": "string",
+      "descripcion": "Instrumento de evaluación",
+      "opciones": "instrumentos_evaluacion"
+    },
+    "criterios_evaluacion": {
+      "tipo": "text",
+      "descripcion": "Criterios de evaluación"
+    },
+    "agente_evaluador": {
+      "tipo": "string",
+      "descripcion": "Agente evaluador",
+      "opciones": "agentes_evaluadores"
+    },
+    "tiempo_minutos": {
+      "tipo": "integer",
+      "descripcion": "Tiempo en minutos"
+    },
+    "recursos_didacticos": {
+      "tipo": "text",
+      "descripcion": "Recursos didácticos"
+    },
+    "periodo_tiempo_programado": {
+      "tipo": "string",
+      "descripcion": "Periodo de tiempo programado",
+      "opciones": "periodos_tiempo"
+    },
+    "puntaje": {
+      "tipo": "integer",
+      "descripcion": "Puntaje de la evaluación"
+    },
+    "fecha_entrega": {
+      "tipo": "date",
+      "descripcion": "Fecha de entrega"
+    }
+  },
+  "estructura_guia": {
+    "seccion_1": {
+      "titulo": "Información General",
+      "campos": ["numero_encuentro", "fecha", "unidad", "nombre_de_la_unidad"]
+    },
+    "seccion_2": {
+      "titulo": "Tareas de Estudio Independiente",
+      "subsecciones": {
+        "tarea_1": {
+          "titulo": "Tarea 1",
+          "campos": [
+            "tipo_objetivo_1", "objetivo_aprendizaje_1", "contenido_tematico_1", 
+            "actividad_aprendizaje_1", "tecnica_evaluacion_1", "tipo_evaluacion_1", 
+            "instrumento_evaluacion_1", "criterios_evaluacion_1", "agente_evaluador_1", 
+            "tiempo_minutos_1", "recursos_didacticos_1", "periodo_tiempo_programado_1", 
+            "puntaje_1", "fecha_entrega_1"
+          ]
+        },
+        "tarea_2": {
+          "titulo": "Tarea 2",
+          "campos": [
+            "tipo_objetivo_2", "objetivo_aprendizaje_2", "contenido_tematico_2", 
+            "actividad_aprendizaje_2", "tecnica_evaluacion_2", "tipo_evaluacion_2", 
+            "instrumento_evaluacion_2", "criterios_evaluacion_2", "agente_evaluador_2", 
+            "tiempo_minutos_2", "recursos_didacticos_2", "periodo_tiempo_programado_2", 
+            "puntaje_2", "fecha_entrega_2"
+          ]
+        },
+        "tarea_3": {
+          "titulo": "Tarea 3",
+          "campos": [
+            "tipo_objetivo_3", "objetivo_aprendizaje_3", "contenido_tematico_3", 
+            "actividad_aprendizaje_3", "tecnica_evaluacion_3", "tipo_evaluacion_3", 
+            "instrumento_evaluacion_3", "criterios_evaluacion_3", "agente_evaluador_3", 
+            "tiempo_minutos_3", "recursos_didacticos_3", "periodo_tiempo_programado_3", 
+            "puntaje_3", "fecha_entrega_3"
+          ]
+        },
+        "tarea_4": {
+          "titulo": "Tarea 4",
+          "campos": [
+            "tipo_objetivo_4", "objetivo_aprendizaje_4", "contenido_tematico_4", 
+            "actividad_aprendizaje_4", "tecnica_evaluacion_4", "tipo_evaluacion_4", 
+            "instrumento_evaluacion_4", "criterios_evaluacion_4", "agente_evaluador_4", 
+            "tiempo_minutos_4", "recursos_didacticos_4", "periodo_tiempo_programado_4", 
+            "puntaje_4", "fecha_entrega_4"
+          ]
+        }
+      }
+    }
+  },
+  "ejemplo_guia": {
+    "numero_encuentro": 1,
+    "fecha": "2025-04-04",
+    "unidad": "Unidad I",
+    "nombre_de_la_unidad": "Introducción a la Programación",
+    
+    "tipo_objetivo_1": "Conceptual",
+    "objetivo_aprendizaje_1": "Comprender los fundamentos teóricos de los algoritmos y su importancia en la resolución de problemas",
+    "contenido_tematico_1": "Definición de algoritmo, características y representación",
+    "actividad_aprendizaje_1": "Lectura y análisis de material sobre algoritmos y su aplicación en la vida cotidiana",
+    "tecnica_evaluacion_1": "Ensayo",
+    "tipo_evaluacion_1": "Formativa",
+    "instrumento_evaluacion_1": "Rúbrica",
+    "criterios_evaluacion_1": "Comprensión del concepto, claridad en la exposición, ejemplos adecuados, redacción y ortografía",
+    "agente_evaluador_1": "Heteroevaluación",
+    "tiempo_minutos_1": 120,
+    "recursos_didacticos_1": "Libros de texto, artículos científicos, videos explicativos",
+    "periodo_tiempo_programado_1": "I Corte Evaluativo",
+    "puntaje_1": 15,
+    "fecha_entrega_1": "2025-04-11",
+    
+    "tipo_objetivo_2": "Procedimental",
+    "objetivo_aprendizaje_2": "Desarrollar algoritmos básicos utilizando pseudocódigo y diagramas de flujo",
+    "contenido_tematico_2": "Estructuras secuenciales, condicionales y repetitivas en algoritmos",
+    "actividad_aprendizaje_2": "Resolución de problemas matemáticos sencillos mediante algoritmos",
+    "tecnica_evaluacion_2": "Proyecto",
+    "tipo_evaluacion_2": "Sumativa",
+    "instrumento_evaluacion_2": "Listas de cotejo",
+    "criterios_evaluacion_2": "Correctitud del algoritmo, eficiencia, claridad en la documentación",
+    "agente_evaluador_2": "Coevaluación",
+    "tiempo_minutos_2": 180,
+    "recursos_didacticos_2": "Software de diagramación, ejemplos resueltos, guías de ejercicios",
+    "periodo_tiempo_programado_2": "I Corte Evaluativo",
+    "puntaje_2": 20,
+    "fecha_entrega_2": "2025-04-18",
+    
+    "tipo_objetivo_3": "Actitudinal",
+    "objetivo_aprendizaje_3": "Valorar el trabajo colaborativo en la resolución de problemas algorítmicos",
+    "contenido_tematico_3": "Metodologías de trabajo en equipo para el desarrollo de algoritmos",
+    "actividad_aprendizaje_3": "Desarrollo grupal de un algoritmo para resolver un problema de la vida real",
+    "tecnica_evaluacion_3": "Trabajo en grupo",
+    "tipo_evaluacion_3": "Formativa",
+    "instrumento_evaluacion_3": "Escalas de valoración",
+    "criterios_evaluacion_3": "Participación, aporte de ideas, respeto a las opiniones, cumplimiento de roles",
+    "agente_evaluador_3": "Autoevaluación",
+    "tiempo_minutos_3": 150,
+    "recursos_didacticos_3": "Guía de trabajo colaborativo, casos de estudio, plataforma de comunicación",
+    "periodo_tiempo_programado_3": "I Corte Evaluativo",
+    "puntaje_3": 10,
+    "fecha_entrega_3": "2025-04-25",
+    
+    "tipo_objetivo_4": "Procedimental",
+    "objetivo_aprendizaje_4": "Implementar algoritmos básicos en un lenguaje de programación",
+    "contenido_tematico_4": "Introducción a la sintaxis de un lenguaje de programación",
+    "actividad_aprendizaje_4": "Codificación de los algoritmos desarrollados previamente",
+    "tecnica_evaluacion_4": "Presentación oral",
+    "tipo_evaluacion_4": "Sumativa",
+    "instrumento_evaluacion_4": "Rúbrica",
+    "criterios_evaluacion_4": "Funcionalidad del código, claridad en la explicación, manejo de conceptos",
+    "agente_evaluador_4": "Heteroevaluación",
+    "tiempo_minutos_4": 200,
+    "recursos_didacticos_4": "Entorno de desarrollo integrado, documentación del lenguaje, ejemplos de código",
+    "periodo_tiempo_programado_4": "I Corte Evaluativo",
+    "puntaje_4": 25,
+    "fecha_entrega_4": "2025-05-02"
+  }
+}
