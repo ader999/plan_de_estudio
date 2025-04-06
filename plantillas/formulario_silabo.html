@@ -43,7 +43,7 @@
 
 
                             <h2 class="text-center">Silabo</h2>
-<form id="silabo-form" method="POST" action="{% url 'generar_silabo' %}" data-url-generar-silabo="{% url 'generar_silabo' %}" data-url-guardar-silabo="{% url 'guardar_silabo' asignacion.id %}" data-url-guardar-estudio-independiente="{% url 'generar_guia' %}">
+<form id="silabo-form" method="POST" action="{% url 'generar_silabo' %}" data-url-generar-silabo="{% url 'generar_silabo' %}" data-url-guardar-silabo="{% url 'guardar_silabo' asignacion.id %}" data-url-guardar-estudio-independiente="{% url 'generar_estudio_independiente' %}">
     {% csrf_token %}
 
     <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">

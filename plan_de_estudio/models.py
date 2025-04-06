@@ -91,10 +91,11 @@ class AsignacionPlanEstudio(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     plan_de_estudio = models.ForeignKey(Plan_de_estudio, on_delete=models.CASCADE)
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
-    silabos_creados = models.IntegerField(default=0)  # Nuevo campo para contar sílabos
+    silabos_creados = models.IntegerField(default=0)  
+    guias_creadas = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ('usuario', 'plan_de_estudio')  # Asegura que un usuario no pueda tener el mismo plan dos veces
+        unique_together = ('usuario', 'plan_de_estudio')  
 
     def __str__(self):
         return f"{self.usuario} - {self.plan_de_estudio}"

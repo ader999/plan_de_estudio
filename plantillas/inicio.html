@@ -79,7 +79,12 @@
                         <!-- Botón para llenar el silabo, solo aparece si no está completado -->
                         {% if asignacion.silabos_creados <= 12 %}
                             <div class="d-flex flex-column align-items-center mb-3">
-                                <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}" class="btn btn-warning mb-2 w-100 d-flex align-items-center justify-content-center py-2">
+                                <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente -->
+                                <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}" 
+                                   class="btn {% if asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                   {% if asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}
+                                   disabled title="Debe crear la guía del sílabo anterior antes de continuar"
+                                   {% endif %}>
                                     <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
                                 </a>
                                 
@@ -95,14 +100,20 @@
                             
                             <div class="d-flex flex-column align-items-center">
                                 <!-- Botón para generar guía de estudio independiente -->
-                                <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}" class="btn btn-info mb-2 w-100 d-flex align-items-center justify-content-center py-2">
+                                <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}" 
+                                   class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                   {% if asignacion.silabos_creados == 0 %}
+                                   disabled title="Debe crear al menos un sílabo primero"
+                                   {% elif asignacion.guias_creadas >= asignacion.silabos_creados %}
+                                   disabled title="Debe crear el siguiente sílabo antes de continuar con más guías"
+                                   {% endif %}>
                                     <i class="fas fa-book-reader fa-lg me-2"></i> Generar Guía
                                 </a>
                                 
                                 <!-- Indicadores numéricos para guías -->
                                 <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
                                     {% for i in rango %}
-                                        <div class="mx-1 my-1 div-custom {% if i <= asignacion.guias_creadas|default:0 %}div-green{% else %}div-blue{% endif %}">
+                                        <div class="mx-1 my-1 div-custom {% if i <= asignacion.guias_creadas|default:0 %}div-blue{% else %}div-yellow{% endif %}">
                                             <p class="text-center">{{ i }}</p>
                                         </div>
                                     {% endfor %}
@@ -119,7 +130,10 @@
                                 background: #2ecc71; /* Color verde */
                             }
                             .div-blue {
-                                background: #3498db; /* Color azul para guías */
+                                background: #3498db; /* Color azul para guías completadas */
+                            }
+                            .div-yellow {
+                                background: #f1c40f; /* Color amarillo para guías pendientes */
                             }
                             .div-custom {
                                 width: 30px;

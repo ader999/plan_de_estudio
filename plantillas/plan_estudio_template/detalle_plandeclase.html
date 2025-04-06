@@ -166,26 +166,57 @@
         border-radius: var(--plan-border-radius);
         padding: 16px;
         margin-bottom: 16px;
-        border-left: 4px solid var(--color-azul-3);
     }
     
-    /* Estilos responsivos */
-    @media (max-width: 768px) {
-        .plan-component .plan-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 0.8rem 1rem;
-        }
-        
-        .plan-component .data-grid {
-            grid-template-columns: 1fr;
-        }
+    .plan-component .content-item:last-child {
+        margin-bottom: 0;
     }
-
+    
+    /* Estilos para la tabla de actividades */
+    .plan-component .actividades-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        border: 1px solid var(--plan-gris-borde);
+    }
+    
+    .plan-component .actividades-table th,
+    .plan-component .actividades-table td {
+        border: 1px solid var(--plan-gris-borde);
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+    }
+    
+    .plan-component .actividades-table th {
+        background-color: var(--color-azul-3);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .plan-component .actividades-table tr:nth-child(even) {
+        background-color: var(--plan-gris-claro);
+    }
+    
+    .plan-component .actividades-table .subtable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .plan-component .actividades-table .subtable td {
+        border: none;
+        border-top: 1px solid var(--plan-gris-borde);
+        padding: 8px 0;
+    }
+    
+    .plan-component .actividades-table .subtable tr:first-child td {
+        border-top: none;
+    }
+    
+    /* Estilos para impresión */
     @media print {
-        .plan-component .encuentros-nav {
-            display: none !important;
+        .plan-component {
+            padding: 0;
         }
         
         .plan-component .plan-container {
@@ -207,17 +238,14 @@
         {% for codigo, silabos_grupo in silabos_agrupados.items %}
         <div class="accordion-item mb-4">
             <h2 class="accordion-header" id="heading-{{ codigo }}">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ codigo }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-{{ codigo }}">
-                    <div class="d-flex flex-column flex-md-row justify-content-between w-100">
-                        <div>
-                            <strong>📝 Plan de Clase: {{ codigo }}</strong>
-                        </div>
-                        <div class="d-flex gap-3">
-                            {% with primer_silabo=silabos_grupo.0 %}
-                            <span class="badge" style="background-color: var(--color-azul-2);">{{ primer_silabo.carrera }}</span>
-                            <span class="badge" style="background-color: var(--color-azul-3);">{{ primer_silabo.fecha|date:"d/m/Y" }}</span>
-                            <span class="badge" style="background-color: var(--color-azul-oscuro);">
-                                <i class="fas fa-calendar-check me-1"></i>
+                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ codigo }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-{{ codigo }}">
+                    <div class="d-flex justify-content-between w-100">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-book me-2"></i>
+                            <strong>{{ codigo }}</strong>
+                            {% with first_silabo=silabos_grupo|first %}
+                            - {{ first_silabo.asignatura.nombre }}
+                            <span class="badge bg-primary ms-2">
                                 Encuentros: {{ silabos_grupo|length }}/12
                             </span>
                             {% endwith %}
@@ -231,7 +259,7 @@
                         <!-- Navegación de encuentros -->
                         <div class="encuentros-nav">
                             {% for silabo in silabos_grupo|dictsort:"encuentros" %}
-                            <div class="encuentro-tab {% if forloop.first %}active{% endif %}" data-target="plan-{{ codigo }}-{{ silabo.encuentros }}">
+                            <div class="encuentro-tab {% if forloop.first %}active{% endif %}" data-target="plan-{{ codigo }}-{{ silabo.encuentros }}" data-silabo-id="{{ silabo.id }}">
                                 {{ silabo.encuentros }}
                             </div>
                             {% endfor %}
@@ -255,16 +283,16 @@
                                                     <td>{{ silabo.encuentros }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Municipio:</td>
-                                                    <td>JALAPA</td>
+                                                    <td>Fecha:</td>
+                                                    <td>{{ silabo.fecha|date:"d/m/Y" }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Año lectivo:</td>
-                                                    <td></td>
+                                                    <td>Sede:</td>
+                                                    <td>{{ silabo.sede }}</td>
                                                 </tr>
                                                 <tr>
                                                     <td>Carrera:</td>
-                                                    <td>{{ silabo.carrera }}</td>
+                                                    <td>{{ silabo.plan_de_estudio.carrera.nombre }}</td>
                                                 </tr>
                                                 <tr>
                                                     <td>Asignatura:</td>
@@ -274,109 +302,77 @@
                                                     <td>Facilitador:</td>
                                                     <td>{{ silabo.maestro }}</td>
                                                 </tr>
+                                                <tr>
+                                                    <td>Código:</td>
+                                                    <td>{{ silabo.plan_de_estudio.codigo }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Año académico:</td>
+                                                    <td>{{ silabo.año_lectivo }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Año:</td>
+                                                    <td>{{ silabo.plan_de_estudio.año }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Trimestre:</td>
+                                                    <td>{{ silabo.plan_de_estudio.trimestre }}</td>
+                                                </tr>
                                             </table>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <!-- Segunda columna -->
                                 <div class="col-md-6">
                                     <div class="data-section">
                                         <h3 class="section-title">
-                                            <i class="fas fa-calendar-week"></i>
-                                            Información Académica
+                                            <i class="fas fa-clipboard-list"></i>
+                                            Resumen
                                         </h3>
                                         <div class="data-card">
                                             <table class="data-table">
                                                 <tr>
-                                                    <td>Fecha:</td>
-                                                    <td>{{ silabo.fecha }}</td>
+                                                    <td>Unidad:</td>
+                                                    <td>{{ silabo.unidad }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Código grupo:</td>
-                                                    <td></td>
+                                                    <td>Tipo de clase:</td>
+                                                    <td>{{ silabo.tipo_de_clase }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Trimestre:</td>
-                                                    <td>{{ silabo.asignatura.trimestre }}</td>
+                                                    <td>Horas presenciales:</td>
+                                                    <td>{{ silabo.plan_de_estudio.hp }}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td>Año de la carrera:</td>
-                                                    <td>{{ silabo.asignatura.año }}</td>
+                                                    <td>Horas de trabajo independiente:</td>
+                                                    <td>{{ silabo.plan_de_estudio.hti }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Total de horas:</td>
+                                                    <td>{{ silabo.plan_de_estudio.hp|add:silabo.plan_de_estudio.hti }}</td>
                                                 </tr>
                                             </table>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <!-- Contenido principal -->
+                                <!-- Actividades de Aprendizaje -->
                                 <div class="col-12">
                                     <div class="data-section">
                                         <h3 class="section-title">
-                                            <i class="fas fa-bookmark"></i>
-                                            Unidad
+                                            <i class="fas fa-tasks"></i>
+                                            Actividades de Aprendizaje
                                         </h3>
-                                        <div class="content-item">
-                                            <h6>{{ silabo.unidad }}</h6>
-                                            <p>{{ silabo.detalle_unidad }}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="data-section">
-                                        <h3 class="section-title">
-                                            <i class="fas fa-list-ul"></i>
-                                            Contenido de la Clase
-                                        </h3>
-                                        <div class="content-item">
-                                            <p><strong>1)</strong> {{ silabo.contenido_tematico }}</p>
-                                        </div>
-                                        <div class="content-item">
-                                            <p><strong>2)</strong> {{ silabo.contenido_tematico }}</p>
-                                        </div>
-                                        <div class="content-item">
-                                            <p><strong>3)</strong> {{ silabo.contenido_tematico }}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="data-section">
-                                        <h3 class="section-title">
-                                            <i class="fas fa-bullseye"></i>
-                                            Objetivos de la Clase
-                                        </h3>
-                                        <div class="content-item">
-                                            <p><strong>Conceptual:</strong> {{ silabo.objetivo_conceptual }}</p>
-                                        </div>
-                                        <div class="content-item">
-                                            <p><strong>Procedimental:</strong> {{ silabo.objetivo_procedimental }}</p>
-                                        </div>
-                                        <div class="content-item">
-                                            <p><strong>Actitudinal:</strong> {{ silabo.objetivo_actitudinal }}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="data-section">
-                                        <h3 class="section-title">
-                                            <i class="fas fa-chalkboard"></i>
-                                            Estrategias de Enseñanza
-                                        </h3>
-                                        <div class="content-item">
-                                            <p><strong>Primer momento:</strong> {{ silabo.momento_didactico_primer }}</p>
-                                        </div>
-                                        <div class="content-item">
-                                            <p><strong>Segundo momento:</strong> {{ silabo.momento_didactico_segundo }}</p>
-                                        </div>
-                                        <div class="content-item">
-                                            <p><strong>Tercer momento:</strong> {{ silabo.momento_didactico_tercer }}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="data-section">
-                                        <h3 class="section-title">
-                                            <i class="fas fa-project-diagram"></i>
-                                            Aplicación de los Ejes
-                                        </h3>
-                                        <div class="content-item">
-                                            <p>{{ silabo.eje_transversal }}</p>
+                                        <div class="table-responsive">
+                                            <!-- Contenedor para la tabla de actividades -->
+                                            <div id="actividades-container-{{ codigo }}-{{ silabo.encuentros }}">
+                                                <div class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Cargando...</span>
+                                                    </div>
+                                                    <p class="mt-2">Cargando datos de la guía...</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -386,7 +382,7 @@
                                             Observaciones
                                         </h3>
                                         <div class="content-item">
-                                            <p></p>
+                                            <p>{{ silabo.observaciones|default:"" }}</p>
                                         </div>
                                         <div class="text-end mt-3">
                                             <p><strong>Revisado por:</strong> _______________________</p>
@@ -424,6 +420,24 @@
             // Activar el contenido seleccionado
             const selectedContent = document.getElementById(targetId);
             if (selectedContent) selectedContent.classList.add('active');
+            
+            // Cargar guía si es necesario
+            if (selectedTab) {
+                const silaboId = selectedTab.getAttribute('data-silabo-id');
+                const parts = targetId.split('-');
+                const codigo = parts[1];
+                const encuentro = parts[2];
+                
+                if (silaboId) {
+                    const actividadesContainer = document.getElementById(`actividades-container-${codigo}-${encuentro}`);
+                    if (actividadesContainer) {
+                        console.log(`Cargando guía para sílabo ID: ${silaboId}, encuentro: ${encuentro}`);
+                        cargarGuia(silaboId, actividadesContainer);
+                    } else {
+                        console.error(`No se encontró el contenedor para actividades: actividades-container-${codigo}-${encuentro}`);
+                    }
+                }
+            }
         }
         
         // Inicializar mostrar solo el primer encuentro al cargar la página
@@ -433,6 +447,21 @@
                 const firstTab = container.querySelector('.encuentro-tab');
                 if (firstTab) {
                     const targetId = firstTab.getAttribute('data-target');
+                    const silaboId = firstTab.getAttribute('data-silabo-id');
+                    
+                    // Cargar la guía para el primer tab
+                    if (silaboId) {
+                        const parts = targetId.split('-');
+                        const codigo = parts[1];
+                        const encuentro = parts[2];
+                        const actividadesContainer = document.getElementById(`actividades-container-${codigo}-${encuentro}`);
+                        
+                        if (actividadesContainer) {
+                            console.log(`Cargando guía inicial para sílabo ID: ${silaboId}, encuentro: ${encuentro}`);
+                            cargarGuia(silaboId, actividadesContainer);
+                        }
+                    }
+                    
                     switchEncuentro(targetId, container);
                 }
             }
@@ -446,27 +475,75 @@
                     const firstTab = container.querySelector('.encuentro-tab');
                     if (firstTab) {
                         const targetId = firstTab.getAttribute('data-target');
+                        const silaboId = firstTab.getAttribute('data-silabo-id');
+                        
+                        // Cargar la guía para el primer tab
+                        if (silaboId) {
+                            const parts = targetId.split('-');
+                            const codigo = parts[1];
+                            const encuentro = parts[2];
+                            const actividadesContainer = document.getElementById(`actividades-container-${codigo}-${encuentro}`);
+                            
+                            if (actividadesContainer) {
+                                console.log(`Cargando guía al abrir acordeón para sílabo ID: ${silaboId}, encuentro: ${encuentro}`);
+                                cargarGuia(silaboId, actividadesContainer);
+                            }
+                        }
+                        
                         switchEncuentro(targetId, container);
                     }
                 }
             });
         });
-        
-        // Usar delegación de eventos para las pestañas de encuentros
-        document.addEventListener('click', function(e) {
-            const tab = e.target.closest('.encuentro-tab');
-            if (!tab) return; // Si el clic no fue en una pestaña, salir
-            
-            const targetId = tab.getAttribute('data-target');
-            const container = tab.closest('.plan-container');
-            if (container && targetId) {
-                switchEncuentro(targetId, container);
-            }
+
+        // Escuchar clic en pestañas de encuentro
+        document.querySelectorAll('.encuentro-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const silaboId = this.getAttribute('data-silabo-id');
+                const container = this.closest('.plan-container');
+                
+                if (silaboId) {
+                    console.log(`Clic en pestaña: ${targetId}, Sílabo ID: ${silaboId}`);
+                }
+                
+                if (container) {
+                    switchEncuentro(targetId, container);
+                }
+            });
         });
         
-        // Función para imprimir el plan
-        window.imprimirPlan = function() {
-            window.print();
-        };
+        // Función para cargar guía mediante AJAX
+        function cargarGuia(silaboId, container) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Cargando datos de la guía...</p>
+                </div>
+            `;
+            
+            fetch(`/cargar_guia/${silaboId}/?only_table=true`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    container.innerHTML = html;
+                    console.log(`Guía cargada exitosamente para sílabo ID: ${silaboId}`);
+                })
+                .catch(error => {
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Error al cargar la guía: ${error.message}
+                        </div>
+                    `;
+                    console.error(`Error al cargar la guía para sílabo ID: ${silaboId}`, error);
+                });
+        }
     });
 </script>

@@ -103,16 +103,40 @@ def plan_estudio(request):
     # Obtiene el usuario autenticado
     usuario_autenticado = request.user
     nombre_de_usuario = request.user.username
-    # Filtra los silabos del maestro autenticado
-    silabos = Silabo.objects.filter(maestro=usuario_autenticado)
+    
+    # Primero obtenemos las asignaciones del usuario autenticado
+    asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
+    
+    # Luego obtenemos los silabos relacionados con esas asignaciones
+    silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones)
 
-    # Crear un diccionario para agrupar los silabos por código
+    # Crear un diccionario para agrupar los silabos por código de plan de estudio
     silabos_agrupados = {}
+    
     for silabo in silabos:
-        codigo = silabo.codigo
+        # Si el sílabo no tiene asignación de plan o plan de estudio, continuamos al siguiente
+        if not silabo.asignacion_plan or not silabo.asignacion_plan.plan_de_estudio:
+            continue
+            
+        # Usamos el código del plan de estudio como clave
+        codigo = silabo.asignacion_plan.plan_de_estudio.codigo
+        
+        # Si el código no existe en el diccionario, lo creamos
         if codigo not in silabos_agrupados:
             silabos_agrupados[codigo] = []
+        
+        # Añadimos información útil al silabo para su uso en las plantillas
+        silabo.asignatura = silabo.asignacion_plan.plan_de_estudio.asignatura
+        silabo.carrera = silabo.asignacion_plan.plan_de_estudio.carrera
+        silabo.plan_de_estudio = silabo.asignacion_plan.plan_de_estudio
+        
+        # Agregamos el sílabo a la lista correspondiente
         silabos_agrupados[codigo].append(silabo)
+    
+    # Para cada grupo de sílabos, añadimos información adicional
+    for codigo, grupo in silabos_agrupados.items():
+        # Ordenar por número de encuentro
+        grupo.sort(key=lambda s: s.encuentros)
 
     context = {
         'silabos_agrupados': silabos_agrupados,
@@ -124,9 +148,53 @@ def plan_estudio(request):
 
 @login_required
 def Plan_de_clase(request):
-    return render(request, 'plan_estudio_template/detalle_plandeclase.html')
+    # Obtiene el usuario autenticado
+    usuario_autenticado = request.user
+    nombre_de_usuario = request.user.username
+    
+    # Primero obtenemos las asignaciones del usuario autenticado
+    asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
+    
+    # Luego obtenemos los silabos relacionados con esas asignaciones
+    silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones).prefetch_related('guia')
 
+    # Crear un diccionario para agrupar los silabos por código de plan de estudio
+    silabos_agrupados = {}
+    
+    for silabo in silabos:
+        # Si el sílabo no tiene asignación de plan o plan de estudio, continuamos al siguiente
+        if not silabo.asignacion_plan or not silabo.asignacion_plan.plan_de_estudio:
+            continue
+            
+        # Usamos el código del plan de estudio como clave
+        codigo = silabo.asignacion_plan.plan_de_estudio.codigo
+        
+        # Si el código no existe en el diccionario, lo creamos
+        if codigo not in silabos_agrupados:
+            silabos_agrupados[codigo] = []
+        
+        # Añadimos información útil al silabo para su uso en las plantillas
+        silabo.asignatura = silabo.asignacion_plan.plan_de_estudio.asignatura
+        silabo.carrera = silabo.asignacion_plan.plan_de_estudio.carrera
+        silabo.plan_de_estudio = silabo.asignacion_plan.plan_de_estudio
+        
+        # Agregar información de depuración
+        print(f"Sílabo ID: {silabo.id}, Encuentro: {silabo.encuentros}, Guía asociada: {silabo.guia_id if hasattr(silabo, 'guia_id') else 'Ninguna'}")
+        
+        # Agregamos el sílabo a la lista correspondiente
+        silabos_agrupados[codigo].append(silabo)
+    
+    # Para cada grupo de sílabos, añadimos información adicional
+    for codigo, grupo in silabos_agrupados.items():
+        # Ordenar por número de encuentro
+        grupo.sort(key=lambda s: s.encuentros)
 
+    context = {
+        'silabos_agrupados': silabos_agrupados,
+        'usuario': nombre_de_usuario
+    }
+
+    return render(request, 'plan_estudio_template/detalle_plandeclase.html', context)
 
 
 @login_required
@@ -150,7 +218,7 @@ def generar_docx(request):
 @login_required
 def success_view(request):
     return render(request, 'exito.html', {
-        'message': '¡Gracias por llenar el silabo! Apreciamos el tiempo que has dedicado a completarlo.',
+        'message': '¡Gracias por llenar el formulario! Apreciamos el tiempo que has dedicado a completarlo.',
         'usuario': request.user.username,
     })
 
@@ -286,7 +354,7 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
             'silabo': silabo,  # Pasar el sílabo a la plantilla
             'usuario': nombre_de_usuario,
             'silabos_creados': silabos_creados,
-            'encuentro': silabos_creados + 1,
+            'encuentro': silabo.encuentros if silabo else silabos_creados + 1,
             'guias': guias,
             'unidad_choices': unidad_choices,
             'tecnica_evaluacion_choices': tecnica_evaluacion_choices,
@@ -365,112 +433,270 @@ def guardar_guia(request, silabo_id=None, asignacion_id=None, id=None):
             try:
                 silabo = Silabo.objects.get(id=silabo_id)
                 print(f"Sílabo encontrado: {silabo}")
-            except Silabo.DoesNotExist:
-                error_msg = f'No se encontró el sílabo con ID {silabo_id}'
-                print(error_msg)
-                return JsonResponse({'error': error_msg}, status=404)
-            except Exception as e:
-                error_msg = f'Error al obtener el sílabo: {str(e)}'
-                print(error_msg)
-                return JsonResponse({'error': error_msg}, status=500)
-            
-            # Crear o actualizar la guía
-            guia_id = data.get('guia_id')
-            if guia_id:
-                # Actualizar guía existente
-                guia = get_object_or_404(Guia, id=guia_id)
-            else:
-                # Crear nueva guía
-                guia = Guia()
-            
-            # Asignar los valores de los campos
-            guia.silabo = silabo
-            guia.numero_guia = data.get('numero_encuentro', silabo.encuentros)
-            guia.numero_encuentro = data.get('numero_encuentro', silabo.encuentros)
-            guia.fecha = data.get('fecha')
-            guia.unidad = data.get('unidad')
-            guia.nombre_de_la_unidad = data.get('nombre_de_la_unidad')
-            
-            # Tarea 1
-            guia.tipo_objetivo_1 = data.get('tipo_objetivo_1')
-            guia.objetivo_aprendizaje_1 = data.get('objetivo_aprendizaje_1')
-            guia.contenido_tematico_1 = data.get('contenido_tematico_1')
-            guia.actividad_aprendizaje_1 = data.get('actividad_aprendizaje_1')
-            guia.tecnica_evaluacion_1 = data.get('tecnica_evaluacion_1')
-            guia.tipo_evaluacion_1 = data.get('tipo_evaluacion_1')
-            guia.instrumento_evaluacion_1 = data.get('instrumento_evaluacion_1')
-            guia.criterios_evaluacion_1 = data.get('criterios_evaluacion_1')
-            guia.agente_evaluador_1 = data.get('agente_evaluador_1')
-            guia.tiempo_minutos_1 = data.get('tiempo_minutos_1')
-            guia.recursos_didacticos_1 = data.get('recursos_didacticos_1')
-            guia.periodo_tiempo_programado_1 = data.get('periodo_tiempo_programado_1')
-            guia.puntaje_1 = data.get('puntaje_1')
-            guia.fecha_entrega_1 = data.get('fecha_entrega_1')
-            
-            # Tarea 2
-            guia.tipo_objetivo_2 = data.get('tipo_objetivo_2')
-            guia.objetivo_aprendizaje_2 = data.get('objetivo_aprendizaje_2')
-            guia.contenido_tematico_2 = data.get('contenido_tematico_2')
-            guia.actividad_aprendizaje_2 = data.get('actividad_aprendizaje_2')
-            guia.tecnica_evaluacion_2 = data.get('tecnica_evaluacion_2')
-            guia.tipo_evaluacion_2 = data.get('tipo_evaluacion_2')
-            guia.instrumento_evaluacion_2 = data.get('instrumento_evaluacion_2')
-            guia.criterios_evaluacion_2 = data.get('criterios_evaluacion_2')
-            guia.agente_evaluador_2 = data.get('agente_evaluador_2')
-            guia.tiempo_minutos_2 = data.get('tiempo_minutos_2')
-            guia.recursos_didacticos_2 = data.get('recursos_didacticos_2')
-            guia.periodo_tiempo_programado_2 = data.get('periodo_tiempo_programado_2')
-            guia.puntaje_2 = data.get('puntaje_2')
-            guia.fecha_entrega_2 = data.get('fecha_entrega_2')
-            
-            # Tarea 3
-            guia.tipo_objetivo_3 = data.get('tipo_objetivo_3')
-            guia.objetivo_aprendizaje_3 = data.get('objetivo_aprendizaje_3')
-            guia.contenido_tematico_3 = data.get('contenido_tematico_3')
-            guia.actividad_aprendizaje_3 = data.get('actividad_aprendizaje_3')
-            guia.tecnica_evaluacion_3 = data.get('tecnica_evaluacion_3')
-            guia.tipo_evaluacion_3 = data.get('tipo_evaluacion_3')
-            guia.instrumento_evaluacion_3 = data.get('instrumento_evaluacion_3')
-            guia.criterios_evaluacion_3 = data.get('criterios_evaluacion_3')
-            guia.agente_evaluador_3 = data.get('agente_evaluador_3')
-            guia.tiempo_minutos_3 = data.get('tiempo_minutos_3')
-            guia.recursos_didacticos_3 = data.get('recursos_didacticos_3')
-            guia.periodo_tiempo_programado_3 = data.get('periodo_tiempo_programado_3')
-            guia.puntaje_3 = data.get('puntaje_3')
-            guia.fecha_entrega_3 = data.get('fecha_entrega_3')
-            
-            # Tarea 4
-            guia.tipo_objetivo_4 = data.get('tipo_objetivo_4')
-            guia.objetivo_aprendizaje_4 = data.get('objetivo_aprendizaje_4')
-            guia.contenido_tematico_4 = data.get('contenido_tematico_4')
-            guia.actividad_aprendizaje_4 = data.get('actividad_aprendizaje_4')
-            guia.tecnica_evaluacion_4 = data.get('tecnica_evaluacion_4')
-            guia.tipo_evaluacion_4 = data.get('tipo_evaluacion_4')
-            guia.instrumento_evaluacion_4 = data.get('instrumento_evaluacion_4')
-            guia.criterios_evaluacion_4 = data.get('criterios_evaluacion_4')
-            guia.agente_evaluador_4 = data.get('agente_evaluador_4')
-            guia.tiempo_minutos_4 = data.get('tiempo_minutos_4')
-            guia.recursos_didacticos_4 = data.get('recursos_didacticos_4')
-            guia.periodo_tiempo_programado_4 = data.get('periodo_tiempo_programado_4')
-            guia.puntaje_4 = data.get('puntaje_4')
-            guia.fecha_entrega_4 = data.get('fecha_entrega_4')
-            
-            # Guardar la guía
-            guia.save()
-            
-            return JsonResponse({
-                'success': True, 
-                'message': 'Guía guardada correctamente',
-                'guia_id': guia.id
-            })
-            
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Formato JSON inválido'}, status=400)
+                
+                # Verificar si ya existe una guía para este sílabo
+                # (asegurando la relación uno a uno)
+                existing_guia = Guia.objects.filter(silabo=silabo).first()
+                if existing_guia and not data.get('guia_id'):
+                    # Si ya existe una guía y estamos intentando crear una nueva (no actualizar),
+                    # actualicemos la existente en lugar de crear una nueva
+                    guia = existing_guia
+                    print(f"Ya existe una guía para este sílabo (ID: {guia.id}). Se actualizará esta en lugar de crear una nueva.")
+                else:
+                    # Crear o actualizar la guía
+                    guia_id = data.get('guia_id')
+                    if guia_id:
+                        # Actualizar guía existente
+                        guia = get_object_or_404(Guia, id=guia_id)
+                    else:
+                        # Crear nueva guía
+                        guia = Guia()
+                
+                # Asignar los valores de los campos
+                guia.silabo = silabo
+                guia.numero_guia = data.get('numero_encuentro', silabo.encuentros)
+                guia.numero_encuentro = data.get('numero_encuentro', silabo.encuentros)
+                guia.fecha = data.get('fecha')
+                guia.unidad = data.get('unidad')
+                guia.nombre_de_la_unidad = data.get('nombre_de_la_unidad')
+                
+                # Tarea 1
+                guia.tipo_objetivo_1 = data.get('tipo_objetivo_1')
+                guia.objetivo_aprendizaje_1 = data.get('objetivo_aprendizaje_1')
+                guia.contenido_tematico_1 = data.get('contenido_tematico_1')
+                guia.actividad_aprendizaje_1 = data.get('actividad_aprendizaje_1')
+                guia.tecnica_evaluacion_1 = data.get('tecnica_evaluacion_1')
+                guia.tipo_evaluacion_1 = data.get('tipo_evaluacion_1')
+                guia.instrumento_evaluacion_1 = data.get('instrumento_evaluacion_1')
+                guia.criterios_evaluacion_1 = data.get('criterios_evaluacion_1')
+                guia.agente_evaluador_1 = data.get('agente_evaluador_1')
+                guia.tiempo_minutos_1 = data.get('tiempo_minutos_1')
+                guia.recursos_didacticos_1 = data.get('recursos_didacticos_1')
+                guia.periodo_tiempo_programado_1 = data.get('periodo_tiempo_programado_1')
+                guia.puntaje_1 = data.get('puntaje_1')
+                guia.fecha_entrega_1 = data.get('fecha_entrega_1')
+                
+                # Tarea 2
+                guia.tipo_objetivo_2 = data.get('tipo_objetivo_2')
+                guia.objetivo_aprendizaje_2 = data.get('objetivo_aprendizaje_2')
+                guia.contenido_tematico_2 = data.get('contenido_tematico_2')
+                guia.actividad_aprendizaje_2 = data.get('actividad_aprendizaje_2')
+                guia.tecnica_evaluacion_2 = data.get('tecnica_evaluacion_2')
+                guia.tipo_evaluacion_2 = data.get('tipo_evaluacion_2')
+                guia.instrumento_evaluacion_2 = data.get('instrumento_evaluacion_2')
+                guia.criterios_evaluacion_2 = data.get('criterios_evaluacion_2')
+                guia.agente_evaluador_2 = data.get('agente_evaluador_2')
+                guia.tiempo_minutos_2 = data.get('tiempo_minutos_2')
+                guia.recursos_didacticos_2 = data.get('recursos_didacticos_2')
+                guia.periodo_tiempo_programado_2 = data.get('periodo_tiempo_programado_2')
+                guia.puntaje_2 = data.get('puntaje_2')
+                guia.fecha_entrega_2 = data.get('fecha_entrega_2')
+                
+                # Tarea 3
+                guia.tipo_objetivo_3 = data.get('tipo_objetivo_3')
+                guia.objetivo_aprendizaje_3 = data.get('objetivo_aprendizaje_3')
+                guia.contenido_tematico_3 = data.get('contenido_tematico_3')
+                guia.actividad_aprendizaje_3 = data.get('actividad_aprendizaje_3')
+                guia.tecnica_evaluacion_3 = data.get('tecnica_evaluacion_3')
+                guia.tipo_evaluacion_3 = data.get('tipo_evaluacion_3')
+                guia.instrumento_evaluacion_3 = data.get('instrumento_evaluacion_3')
+                guia.criterios_evaluacion_3 = data.get('criterios_evaluacion_3')
+                guia.agente_evaluador_3 = data.get('agente_evaluador_3')
+                guia.tiempo_minutos_3 = data.get('tiempo_minutos_3')
+                guia.recursos_didacticos_3 = data.get('recursos_didacticos_3')
+                guia.periodo_tiempo_programado_3 = data.get('periodo_tiempo_programado_3')
+                guia.puntaje_3 = data.get('puntaje_3')
+                guia.fecha_entrega_3 = data.get('fecha_entrega_3')
+                
+                # Tarea 4
+                guia.tipo_objetivo_4 = data.get('tipo_objetivo_4')
+                guia.objetivo_aprendizaje_4 = data.get('objetivo_aprendizaje_4')
+                guia.contenido_tematico_4 = data.get('contenido_tematico_4')
+                guia.actividad_aprendizaje_4 = data.get('actividad_aprendizaje_4')
+                guia.tecnica_evaluacion_4 = data.get('tecnica_evaluacion_4')
+                guia.tipo_evaluacion_4 = data.get('tipo_evaluacion_4')
+                guia.instrumento_evaluacion_4 = data.get('instrumento_evaluacion_4')
+                guia.criterios_evaluacion_4 = data.get('criterios_evaluacion_4')
+                guia.agente_evaluador_4 = data.get('agente_evaluador_4')
+                guia.tiempo_minutos_4 = data.get('tiempo_minutos_4')
+                guia.recursos_didacticos_4 = data.get('recursos_didacticos_4')
+                guia.periodo_tiempo_programado_4 = data.get('periodo_tiempo_programado_4')
+                guia.puntaje_4 = data.get('puntaje_4')
+                guia.fecha_entrega_4 = data.get('fecha_entrega_4')
+                
+                # Guardar la guía
+                guia.save()
+                
+                # Actualizar también el sílabo para establecer la relación bilateral
+                silabo.guia = guia
+                silabo.save()
+                
+                # Incrementar contador de guías creadas en la asignación
+                asignacion = silabo.asignacion_plan
+                asignacion.guias_creadas += 1
+                asignacion.save()
+                
+                # Verificar que la relación con el sílabo se haya establecido correctamente
+                silabo_actualizado = Silabo.objects.get(id=silabo_id)
+                guias_count = silabo_actualizado.guias.count()
+                
+                print(f"Guía guardada con éxito. ID: {guia.id}, Sílabo ID: {silabo_id}, Total guías asociadas: {guias_count}")
+                print(f"Relación bilateral establecida: Sílabo {silabo.id} apunta a Guía {guia.id}")
+                
+                # Generar URL para redirección a la página de éxito
+                success_url = reverse('success_view')
+                
+                return JsonResponse({
+                    'success': True, 
+                    'message': 'Guía guardada correctamente',
+                    'guia_id': guia.id,
+                    'silabo_id': silabo_id,
+                    'total_guias': guias_count,
+                    'redirect_url': success_url
+                })
+                
+            except json.JSONDecodeError:
+                return JsonResponse({'error': 'Formato JSON inválido'}, status=400)
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+             return JsonResponse({'error': str(e)}, status=500)
     
     # Caso de error: método no permitido
     return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+def get_matching_guia(silabo_id, encuentro_numero):
+    """
+    Función auxiliar para encontrar la guía correspondiente a un encuentro específico
+    de un sílabo, considerando varios métodos de coincidencia.
+    
+    Args:
+        silabo_id: ID del sílabo
+        encuentro_numero: Número de encuentro a buscar
+        
+    Returns:
+        Objeto Guia que coincide con el encuentro, o la primera guía si no hay coincidencia
+    """
+    from django.db.models import Value, IntegerField
+    
+    # Obtener todas las guías de este sílabo
+    guias = Guia.objects.filter(silabo_id=silabo_id).order_by('numero_encuentro')
+    
+    if not guias.exists():
+        print(f"No hay guías para el sílabo {silabo_id}")
+        return None
+    
+    # Imprimir detalles para diagnóstico
+    print(f"DEBUG: Buscando guía para sílabo {silabo_id}, encuentro {encuentro_numero}")
+    print(f"DEBUG: Tipo de dato del encuentro: {type(encuentro_numero)}")
+    
+    # Convertir encuentro_numero a texto para comparaciones uniformes
+    encuentro_str = str(encuentro_numero).strip()
+    print(f"DEBUG: Encuentro convertido a texto: '{encuentro_str}'")
+    
+    # 1. Método 1: Coincidencia directa
+    guia_match = guias.filter(numero_encuentro=encuentro_numero).first()
+    if guia_match:
+        print(f"DEBUG: Encontrada coincidencia DIRECTA - Guía ID: {guia_match.id}")
+        return guia_match
+    
+    # 2. Método 2: Coincidencia de cadena
+    for guia in guias:
+        guia_str = str(guia.numero_encuentro).strip()
+        print(f"DEBUG: Comparando '{guia_str}' con '{encuentro_str}'")
+        if guia_str == encuentro_str:
+            print(f"DEBUG: Encontrada coincidencia por STRING - Guía ID: {guia.id}")
+            return guia
+    
+    # 3. Método 3: Coincidencia numérica (por si hay problemas de tipo)
+    try:
+        encuentro_int = int(encuentro_str)
+        for guia in guias:
+            try:
+                guia_int = int(str(guia.numero_encuentro).strip())
+                if guia_int == encuentro_int:
+                    print(f"DEBUG: Encontrada coincidencia NUMÉRICA - Guía ID: {guia.id}")
+                    return guia
+            except ValueError:
+                pass
+    except ValueError:
+        pass
+    
+    # 4. Fallback: Devolver la primera guía disponible
+    guia_fallback = guias.first()
+    print(f"DEBUG: Sin coincidencia. Usando primera guía (ID: {guia_fallback.id}) como fallback")
+    return guia_fallback
+
+@login_required
+def cargar_guia(request, silabo_id):
+    """
+    Vista para cargar una guía específica de un sílabo mediante AJAX.
+    """
+    try:
+        # Obtener el sílabo específico
+        silabo = Silabo.objects.get(id=silabo_id)
+        
+        # Determinar si la solicitud viene de detalle_plandeclase.html
+        # Si hay un parámetro 'only_table' en la URL, se usará tabla_actividades.html
+        # En caso contrario, se usará el template detalle_estudioindependiente.html
+        template_name = 'plan_estudio_template/tabla_actividades.html' if request.GET.get('only_table', False) else 'plan_estudio_template/detalle_estudioindependiente.html'
+        
+        # Información de debugging inicial
+        debug_info = {
+            'silabo_id': silabo_id,
+            'silabo_encuentros': silabo.encuentros,
+            'silabo_codigo': silabo.codigo if hasattr(silabo, 'codigo') else 'No tiene código',
+            'asignatura': silabo.asignacion_plan.asignatura.nombre if hasattr(silabo, 'asignacion_plan') and hasattr(silabo.asignacion_plan, 'asignatura') else 'No asignada',
+            'request_type': 'Solo tabla' if request.GET.get('only_table', False) else 'Completo',
+            'template_usado': template_name
+        }
+        
+        print(f"DEBUG SILABO: {debug_info}")
+        
+        # Contar guías
+        guias_count = Guia.objects.filter(silabo_id=silabo_id).count()
+        print(f"Total de guías para el sílabo {silabo_id}: {guias_count}")
+        
+        # Si no hay guías asociadas
+        if guias_count == 0:
+            print(f"No se encontraron guías para el sílabo {silabo_id}")
+            return render(request, template_name, {
+                'silabo': silabo,
+                'mensaje_error': 'Este sílabo no tiene guía asociada.',
+                'debug_info': debug_info,
+                'codigo': silabo.codigo if hasattr(silabo, 'codigo') else ''
+            })
+        
+        # Usar la función helper para encontrar la guía correcta
+        guia = get_matching_guia(silabo_id, silabo.encuentros)
+        
+        if guia:
+            print(f"Guía encontrada - ID: {guia.id}, Encuentro: {guia.numero_encuentro}")
+        else:
+            print(f"No se encontró ninguna guía para el sílabo {silabo_id}")
+        
+        # Información de debugging completa
+        debug_info.update({
+            'guia_id': guia.id if guia else None,
+            'guia_numero_encuentro': guia.numero_encuentro if guia else None,
+            'total_guias': guias_count,
+        })
+        
+        print(f"DEBUG FINAL: {debug_info}")
+        
+        return render(request, template_name, {
+            'silabo': silabo,
+            'guia': guia,
+            'debug_info': debug_info,
+            'codigo': silabo.codigo if hasattr(silabo, 'codigo') else ''
+        })
+            
+    except Silabo.DoesNotExist:
+        print(f"Sílabo no encontrado: ID={silabo_id}")
+        return HttpResponse(f"Sílabo no encontrado (ID: {silabo_id})", status=404)
+    except Exception as e:
+        error_msg = f"Error al cargar la guía: {str(e)} (Sílabo ID: {silabo_id})"
+        print(f"ERROR: {error_msg}")
+        return HttpResponse(error_msg, status=500)
 
 
 @login_required
@@ -488,7 +714,7 @@ def generar_silabo(request):
         encuentro = request.POST.get('encuentro')
         plan_id = request.POST.get('plan')
         # Obtener el modelo seleccionado del formulario
-        modelo_seleccionado = request.POST.get('modelo', 'google')
+        modelo_seleccionado = request.POST.get('modelo_select', 'google')
         print("Imprimiendo el modelo selecionodao:::::::::::::::::: "+str(modelo_seleccionado))
         
         try:
@@ -864,61 +1090,63 @@ def cargar_guia(request, silabo_id):
         # Obtener el sílabo específico
         silabo = Silabo.objects.get(id=silabo_id)
         
+        # Determinar si la solicitud viene de detalle_plandeclase.html
+        # Si hay un parámetro 'only_table' en la URL, se usará tabla_actividades.html
+        # En caso contrario, se usará el template detalle_estudioindependiente.html
+        template_name = 'plan_estudio_template/tabla_actividades.html' if request.GET.get('only_table', False) else 'plan_estudio_template/detalle_estudioindependiente.html'
+        
         # Información de debugging inicial
         debug_info = {
             'silabo_id': silabo_id,
-            'silabo_encuentro': silabo.encuentros,
-            'asignatura': silabo.asignatura.asignatura if hasattr(silabo, 'asignatura') and silabo.asignatura else 'No asignada'
+            'silabo_encuentros': silabo.encuentros,
+            'silabo_codigo': silabo.codigo if hasattr(silabo, 'codigo') else 'No tiene código',
+            'asignatura': silabo.asignacion_plan.asignatura.nombre if hasattr(silabo, 'asignacion_plan') and hasattr(silabo.asignacion_plan, 'asignatura') else 'No asignada',
+            'request_type': 'Solo tabla' if request.GET.get('only_table', False) else 'Completo',
+            'template_usado': template_name
         }
         
-        print(f"DEBUG INFO SILABO: {debug_info}")
+        print(f"DEBUG SILABO: {debug_info}")
         
-        # Verificar cuántas guías hay asociadas a este sílabo
+        # Contar guías
         guias_count = Guia.objects.filter(silabo_id=silabo_id).count()
-        print(f"Cantidad de guías para el sílabo {silabo_id}: {guias_count}")
+        print(f"Total de guías para el sílabo {silabo_id}: {guias_count}")
         
+        # Si no hay guías asociadas
         if guias_count == 0:
-            return render(request, 'plan_estudio_template/detalle_estudioindependiente.html', {
+            print(f"No se encontraron guías para el sílabo {silabo_id}")
+            return render(request, template_name, {
                 'silabo': silabo,
                 'mensaje_error': 'Este sílabo no tiene guía asociada.',
-                'debug_info': debug_info
+                'debug_info': debug_info,
+                'codigo': silabo.codigo if hasattr(silabo, 'codigo') else ''
             })
-        elif guias_count > 1:
-            # Si hay múltiples guías, tomamos la específica para este encuentro
-            # o la primera en su defecto
-            print(f"Atención: Se encontraron {guias_count} guías para el sílabo {silabo_id}")
-            guias = Guia.objects.filter(silabo_id=silabo_id).order_by('numero_guia')
-            for g in guias:
-                print(f"Guía ID: {g.id}, Número: {g.numero_guia}, Silabo: {g.silabo_id}")
-            
-            # Intentamos hacer coincidir la guía con el número de encuentro del sílabo
-            try:
-                guia = guias.filter(numero_guia=silabo.encuentros).first()
-                if not guia:
-                    guia = guias.first()  # Si no hay coincidencia, usamos la primera
-            except Exception as e:
-                print(f"Error al filtrar por encuentro: {str(e)}")
-                guia = guias.first()
+        
+        # Usar la función helper para encontrar la guía correcta
+        guia = get_matching_guia(silabo_id, silabo.encuentros)
+        
+        if guia:
+            print(f"Guía encontrada - ID: {guia.id}, Encuentro: {guia.numero_encuentro}")
         else:
-            # Si hay exactamente una guía
-            guia = Guia.objects.get(silabo_id=silabo_id)
+            print(f"No se encontró ninguna guía para el sílabo {silabo_id}")
         
         # Información de debugging completa
         debug_info.update({
             'guia_id': guia.id if guia else None,
-            'guia_numero': guia.numero_guia if guia else None,
-            'total_guias': guias_count
+            'guia_numero_encuentro': guia.numero_encuentro if guia else None,
+            'total_guias': guias_count,
         })
         
-        print(f"DEBUG INFO COMPLETO: {debug_info}")
+        print(f"DEBUG FINAL: {debug_info}")
         
-        return render(request, 'plan_estudio_template/detalle_estudioindependiente.html', {
+        return render(request, template_name, {
             'silabo': silabo,
             'guia': guia,
-            'debug_info': debug_info
+            'debug_info': debug_info,
+            'codigo': silabo.codigo if hasattr(silabo, 'codigo') else ''
         })
             
     except Silabo.DoesNotExist:
+        print(f"Sílabo no encontrado: ID={silabo_id}")
         return HttpResponse(f"Sílabo no encontrado (ID: {silabo_id})", status=404)
     except Exception as e:
         error_msg = f"Error al cargar la guía: {str(e)} (Sílabo ID: {silabo_id})"

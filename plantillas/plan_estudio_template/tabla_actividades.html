@@ -1,0 +1,194 @@
+<!-- Tabla de actividades que se cargará dinámicamente -->
+<style>
+    .actividades-table th {
+        background-color: #4e73df;
+        color: rgb(185, 185, 185);
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
+    }
+    .secondary-header {
+        background-color: #4e73df;
+        color: white;
+        font-style: italic;
+        text-align: center;
+        vertical-align: middle;
+    }
+</style>
+
+<table class="actividades-table">
+    <thead>
+        <tr>
+            <th>Unidad</th>
+            <th>Objetivo</th>
+            <th>Contenido Temático</th>
+            <th>Descripción de la actividad de Aprendizaje</th>
+            <th>Evaluación de la actividad de Aprendizaje</th>
+            <th>Período</th>
+            <th>Tiempo en minutos</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Primera actividad (Primer momento) -->
+        <tr>
+            <td rowspan="2"><strong>{{ silabo.unidad }}</strong><br>{{ silabo.nombre_de_la_unidad }}</td>
+            <td>
+                Conceptual: 
+                {{ silabo.objetivo_conceptual }}
+            </td>
+            <td>
+                {{ silabo.contenido_tematico }}
+            </td>
+            <td>
+                {{ silabo.detalle_primer_momento }}
+            </td>
+            <td>
+                Tipo de evaluación: {{ silabo.tipo_primer_momento }}
+            </td>
+            <td>
+                {{ silabo.periodo_tiempo_programado }}
+            </td>
+            <td>
+                {{ silabo.tiempo_primer_momento }}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="secondary-header">Evaluación del Primer Momento</td>
+            <td class="secondary-header">
+                <strong>Instrumento de evaluación</strong><br>
+                {{ silabo.instrumento_evaluacion }}
+            </td>
+            <td class="secondary-header">
+                <strong>Recursos didácticos</strong><br>
+                {% if guia %}{{ guia.recursos_didacticos_1|default:"" }}{% else %}{{ silabo.recursos_primer_momento|default:"" }}{% endif %}
+            </td>
+            <td class="secondary-header">
+                <strong>Puntaje</strong><br>
+                {% if guia %}{{ guia.puntaje_1|default:"" }}{% else %}{{ silabo.puntaje|default:"" }}{% endif %}
+            </td>
+            <td class="secondary-header">
+                <strong>Fecha de Entrega</strong><br>
+                {% if guia %}{{ guia.fecha_entrega_1|default:"" }}{% else %}{{ silabo.fecha|default:"" }}{% endif %}
+            </td>
+        </tr>
+        
+        <!-- Segunda actividad (Segundo momento) -->
+        <tr>
+            <td rowspan="2"><strong>{{ silabo.unidad }}</strong><br>{{ silabo.nombre_de_la_unidad }}</td>
+            <td>
+                Procedimental: 
+                {{ silabo.objetivo_procedimental }}
+            </td>
+            <td>
+                {{ silabo.contenido_tematico }}
+            </td>
+            <td>
+                Teórica: {{ silabo.clase_teorica }}<br>
+                Práctica: {{ silabo.clase_practica }}
+            </td>
+            <td>
+                Tipo teórica: {{ silabo.tipo_segundo_momento_claseteoria }}<br>
+                Tipo práctica: {{ silabo.tipo_segundo_momento_practica }}
+            </td>
+            <td>
+                {{ silabo.periodo_tiempo_programado }}
+            </td>
+            <td>
+                {{ silabo.tiempo_segundo_momento }}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="secondary-header">Evaluación del Segundo Momento</td>
+            <td class="secondary-header">
+                <strong>Instrumento de evaluación</strong><br>
+                {{ silabo.instrumento_evaluacion }}
+            </td>
+            <td class="secondary-header">
+                <strong>Recursos didácticos</strong><br>
+                {% if guia %}{{ guia.recursos_didacticos_2|default:"" }}{% else %}{{ silabo.recursos_segundo_momento|default:"" }}{% endif %}
+            </td>
+            <td class="secondary-header">
+                <strong>Puntaje</strong><br>
+                {% if guia %}{{ guia.puntaje_2|default:"" }}{% else %}{{ silabo.puntaje|default:"" }}{% endif %}
+            </td>
+            <td class="secondary-header">
+                <strong>Fecha de Entrega</strong><br>
+                {% if guia %}{{ guia.fecha_entrega_2|default:"" }}{% else %}{{ silabo.fecha|default:"" }}{% endif %}
+            </td>
+        </tr>
+        
+        <!-- Tercera actividad (Tercer momento) -->
+        <tr>
+            <td rowspan="2"><strong>{{ silabo.unidad }}</strong><br>{{ silabo.nombre_de_la_unidad }}</td>
+            <td>
+                Actitudinal: 
+                {{ silabo.objetivo_actitudinal }}
+            </td>
+            <td>
+                {{ silabo.contenido_tematico }}
+            </td>
+            <td>
+                {{ silabo.detalle_tercer_momento }}
+            </td>
+            <td>
+                Tipo de evaluación: {{ silabo.tipo_tercer_momento }}
+            </td>
+            <td>
+                {{ silabo.periodo_tiempo_programado }}
+            </td>
+            <td>
+                {{ silabo.tiempo_tercer_momento }}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" class="secondary-header">Evaluación del Tercer Momento</td>
+            <td class="secondary-header">
+                <strong>Instrumento de evaluación</strong><br>
+                {{ silabo.instrumento_evaluacion }}
+            </td>
+            <td class="secondary-header">
+                <strong>Recursos didácticos</strong><br>
+                {% if guia %}{{ guia.recursos_didacticos_3|default:"" }}{% else %}{{ silabo.recursos_tercer_momento|default:"" }}{% endif %}
+            </td>
+            <td class="secondary-header">
+                <strong>Puntaje</strong><br>
+                {% if guia %}{{ guia.puntaje_3|default:"" }}{% else %}{{ silabo.puntaje|default:"" }}{% endif %}
+            </td>
+            <td class="secondary-header">
+                <strong>Fecha de Entrega</strong><br>
+                {% if guia %}{{ guia.fecha_entrega_3|default:"" }}{% else %}{{ silabo.fecha|default:"" }}{% endif %}
+            </td>
+        </tr>
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="5" class="text-end">Horas de estudio independiente:</td>
+            <td>{{ silabo.asignacion_plan.plan_de_estudio.hti }}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan="5" class="text-end">Puntaje en estudio independiente:</td>
+            <td>{% if guia %}{{ guia.puntaje_total|default:"15" }}{% else %}15{% endif %}</td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+
+<!-- Información de depuración (visible solo durante el desarrollo) -->
+{% if debug_info %}
+<div class="alert alert-info mt-3">
+    <h6><i class="fas fa-bug"></i> Información de depuración:</h6>
+    <ul class="mb-0">
+        <li>Sílabo ID: {{ debug_info.silabo_id }}</li>
+        <li>Encuentro: {{ debug_info.silabo_encuentros }}</li>
+        <li>Asignatura: {{ debug_info.asignatura }}</li>
+        {% if debug_info.guia_id %}
+        <li>Guía ID: {{ debug_info.guia_id }}</li>
+        <li>Encuentro de guía: {{ debug_info.guia_numero_encuentro }}</li>
+        {% else %}
+        <li>No se encontró guía</li>
+        {% endif %}
+        <li>Total de guías: {{ debug_info.total_guias }}</li>
+    </ul>
+</div>
+{% endif %}
