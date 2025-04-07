@@ -611,15 +611,35 @@
                         
                         <!-- Panel de herramientas (exportar, etc.) -->
                         <div class="toolbar-panel">
-                            <button class="export-btn" onclick="location.href='{% url 'generar_excel' %}?asignacion_id={{ codigo }}';"> 
+                            <button class="export-btn" id="excel-btn"> 
                                 <i class="fas fa-file-excel"></i>
                                 Exportar a Excel
                             </button>
-                            <button class="export-btn" onclick="location.href='{% url 'generar_docx' %}?asignacion_id={{ codigo }}';"> 
+                            <button class="export-btn" id="excel-original-btn"> 
+                                <i class="fas fa-file-excel"></i>
+                                Exportar Excel (Original)
+                            </button>
+                            <button class="export-btn" id="word-btn"> 
                                 <i class="fas fa-file-word"></i>
                                 Exportar a Word
                             </button>
                         </div>
+                        
+                        <!-- Formularios ocultos para los botones de exportación -->
+                        <form id="excel-form" action="{% url 'generar_excel' %}" method="post" style="display: none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="codigoSilabo" id="excel-codigo-silabo">
+                        </form>
+                        
+                        <form id="excel-original-form" action="{% url 'generar_excel_original' %}" method="post" style="display: none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="codigoSilabo" id="excel-original-codigo-silabo">
+                        </form>
+                        
+                        <form id="word-form" action="{% url 'generar_docx' %}" method="post" style="display: none;">
+                            {% csrf_token %}
+                            <input type="hidden" name="codigoSilabo" id="word-codigo-silabo">
+                        </form>
                     </div>
                 </div>
             </div>
@@ -834,6 +854,34 @@
                 }
             } else {
                 console.warn('No se encontró pestaña de encuentro activa');
+            }
+        });
+        
+        // Agregar eventos de clic a los botones de exportación
+        document.getElementById('excel-btn').addEventListener('click', function() {
+            const activeEncuentroTab = document.querySelector('.encuentro-tab.active');
+            if (activeEncuentroTab) {
+                const silaboId = activeEncuentroTab.getAttribute('data-silabo-id');
+                document.getElementById('excel-codigo-silabo').value = silaboId;
+                document.getElementById('excel-form').submit();
+            }
+        });
+        
+        document.getElementById('excel-original-btn').addEventListener('click', function() {
+            const activeEncuentroTab = document.querySelector('.encuentro-tab.active');
+            if (activeEncuentroTab) {
+                const silaboId = activeEncuentroTab.getAttribute('data-silabo-id');
+                document.getElementById('excel-original-codigo-silabo').value = silaboId;
+                document.getElementById('excel-original-form').submit();
+            }
+        });
+        
+        document.getElementById('word-btn').addEventListener('click', function() {
+            const activeEncuentroTab = document.querySelector('.encuentro-tab.active');
+            if (activeEncuentroTab) {
+                const silaboId = activeEncuentroTab.getAttribute('data-silabo-id');
+                document.getElementById('word-codigo-silabo').value = silaboId;
+                document.getElementById('word-form').submit();
             }
         });
     });
