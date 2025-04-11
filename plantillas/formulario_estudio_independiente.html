@@ -12,7 +12,7 @@
 
     <!-- Contenedor principal que contiene ambas secciones -->
     <div class="container">
-        
+
         <!-- Sección 2: Formulario de Estudio Independiente -->
         <div id="seccionEstudioIndependiente" style="display: none;">
             <div class="row justify-content-center">
@@ -31,7 +31,7 @@
     var ASIGNACION_ID = "{% if asignacion %}{{ asignacion.id|safe }}{% else %}null{% endif %}";
     var GUIA_ID = "{% if guia %}{{ guia.id|safe }}{% else %}null{% endif %}";
     var SILABO_ID = "{% if silabo %}{{ silabo.id|safe }}{% else %}null{% endif %}";
-    
+
     // Log para depuración
     console.log('Plantilla formulario_estudio_independiente.html cargada');
     console.log('ID de asignación recibido:', ASIGNACION_ID);
@@ -55,7 +55,7 @@
                 <option value="deepseek">DeepSeek - Chat</option>
             </select>
         </div>
-        
+
         {% include 'generar_plan_estudio/boton_generar_estudio.html' %}
     </div>
 
@@ -84,7 +84,7 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="nombre_de_la_unidad" class="form-label">Nombre de la Unidad</label>
                 <input type="text" class="form-control" id="nombre_de_la_unidad" name="nombre_de_la_unidad" value="{% if guia %}{{ guia.nombre_de_la_unidad }}{% endif %}" required>
@@ -106,22 +106,22 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="objetivo_aprendizaje_1" class="form-label">Objetivo de Aprendizaje</label>
                 <textarea class="form-control" id="objetivo_aprendizaje_1" name="objetivo_aprendizaje_1" rows="2" required>{% if guia %}{{ guia.objetivo_aprendizaje_1 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="contenido_tematico_1" class="form-label">Contenido Temático</label>
                 <textarea class="form-control" id="contenido_tematico_1" name="contenido_tematico_1" rows="3" required>{% if guia %}{{ guia.contenido_tematico_1 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="actividad_aprendizaje_1" class="form-label">Actividad de Aprendizaje</label>
                 <textarea class="form-control" id="actividad_aprendizaje_1" name="actividad_aprendizaje_1" rows="3" required>{% if guia %}{{ guia.actividad_aprendizaje_1 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="tecnica_evaluacion_1" class="form-label">Técnica de Evaluación</label>
                 <select class="form-select" id="tecnica_evaluacion_1" name="tecnica_evaluacion_1" required>
@@ -130,7 +130,7 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="tipo_evaluacion_1" class="form-label">Tipo de Evaluación</label>
                 <select class="form-select" id="tipo_evaluacion_1" name="tipo_evaluacion_1" required>
@@ -139,7 +139,7 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="instrumento_evaluacion_1" class="form-label">Instrumento de Evaluación</label>
                 <select class="form-select" id="instrumento_evaluacion_1" name="instrumento_evaluacion_1" required>
@@ -148,31 +148,43 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="criterios_evaluacion_1" class="form-label">Criterios de Evaluación</label>
                 <textarea class="form-control" id="criterios_evaluacion_1" name="criterios_evaluacion_1" rows="3" required>{% if guia %}{{ guia.criterios_evaluacion_1 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
-                <label for="agente_evaluador_1" class="form-label">Agente Evaluador</label>
-                <select class="form-select" id="agente_evaluador_1" name="agente_evaluador_1" required>
+                <label class="form-label">Agente Evaluador</label>
+                <div class="form-check">
                     {% for agente_choice in agente_evaluador_choices %}
-                        <option value="{{ agente_choice.0 }}" {% if guia and guia.agente_evaluador_1 == agente_choice.0 %}selected{% endif %}>{{ agente_choice.1 }}</option>
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                name="agente_evaluador_1[]"
+                                id="agente_{{ forloop.counter }}"
+                                value="{{ agente_choice.0 }}"
+                                {% if guia and agente_choice.0 in guia.agente_evaluador_1 %}checked{% endif %}>
+                            <label class="form-check-label" for="agente_{{ forloop.counter }}">
+                                {{ agente_choice.1 }}
+                            </label>
+                        </div>
                     {% endfor %}
-                </select>
+                </div>
             </div>
-            
+
+
+
             <div class="mb-3">
                 <label for="tiempo_minutos_1" class="form-label">Tiempo (minutos)</label>
                 <input type="number" class="form-control" id="tiempo_minutos_1" name="tiempo_minutos_1" value="{% if guia %}{{ guia.tiempo_minutos_1 }}{% endif %}" required>
             </div>
-            
+
             <div class="mb-3">
                 <label for="recursos_didacticos_1" class="form-label">Recursos Didácticos</label>
                 <textarea class="form-control" id="recursos_didacticos_1" name="recursos_didacticos_1" rows="3" required>{% if guia %}{{ guia.recursos_didacticos_1 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="periodo_tiempo_programado_1" class="form-label">Periodo de Tiempo Programado</label>
                 <select class="form-select" id="periodo_tiempo_programado_1" name="periodo_tiempo_programado_1" required>
@@ -181,12 +193,12 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="puntaje_1" class="form-label">Puntaje</label>
                 <input type="number" class="form-control puntaje" id="puntaje_1" name="puntaje_1" value="{% if guia %}{{ guia.puntaje_1 }}{% endif %}" required>
             </div>
-            
+
             <div class="mb-3">
                 <label for="fecha_entrega_1" class="form-label">Fecha de Entrega</label>
                 <input type="date" class="form-control" id="fecha_entrega_1" name="fecha_entrega_1" value="{% if guia %}{{ guia.fecha_entrega_1|date:'Y-m-d' }}{% endif %}" required>
@@ -208,22 +220,22 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="objetivo_aprendizaje_2" class="form-label">Objetivo de Aprendizaje</label>
                 <textarea class="form-control" id="objetivo_aprendizaje_2" name="objetivo_aprendizaje_2" rows="2" required>{% if guia %}{{ guia.objetivo_aprendizaje_2 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="contenido_tematico_2" class="form-label">Contenido Temático</label>
                 <textarea class="form-control" id="contenido_tematico_2" name="contenido_tematico_2" rows="3" required>{% if guia %}{{ guia.contenido_tematico_2 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="actividad_aprendizaje_2" class="form-label">Actividad de Aprendizaje</label>
                 <textarea class="form-control" id="actividad_aprendizaje_2" name="actividad_aprendizaje_2" rows="3" required>{% if guia %}{{ guia.actividad_aprendizaje_2 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="tecnica_evaluacion_2" class="form-label">Técnica de Evaluación</label>
                 <select class="form-select" id="tecnica_evaluacion_2" name="tecnica_evaluacion_2" required>
@@ -232,7 +244,7 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="tipo_evaluacion_2" class="form-label">Tipo de Evaluación</label>
                 <select class="form-select" id="tipo_evaluacion_2" name="tipo_evaluacion_2" required>
@@ -241,7 +253,7 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="instrumento_evaluacion_2" class="form-label">Instrumento de Evaluación</label>
                 <select class="form-select" id="instrumento_evaluacion_2" name="instrumento_evaluacion_2" required>
@@ -250,31 +262,42 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="criterios_evaluacion_2" class="form-label">Criterios de Evaluación</label>
                 <textarea class="form-control" id="criterios_evaluacion_2" name="criterios_evaluacion_2" rows="3" required>{% if guia %}{{ guia.criterios_evaluacion_2 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
-                <label for="agente_evaluador_2" class="form-label">Agente Evaluador</label>
-                <select class="form-select" id="agente_evaluador_2" name="agente_evaluador_2" required>
+                <label class="form-label">Agente Evaluador</label>
+                <div class="form-check">
                     {% for agente_choice in agente_evaluador_choices %}
-                        <option value="{{ agente_choice.0 }}" {% if guia and guia.agente_evaluador_2 == agente_choice.0 %}selected{% endif %}>{{ agente_choice.1 }}</option>
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                name="agente_evaluador_2[]"
+                                id="agente2_{{ forloop.counter }}"
+                                value="{{ agente_choice.0 }}"
+                                {% if guia and agente_choice.0 in guia.agente_evaluador_2 %}checked{% endif %}>
+                            <label class="form-check-label" for="agente2_{{ forloop.counter }}">
+                                {{ agente_choice.1 }}
+                            </label>
+                        </div>
                     {% endfor %}
-                </select>
+                </div>
             </div>
-            
+
+
             <div class="mb-3">
                 <label for="tiempo_minutos_2" class="form-label">Tiempo (minutos)</label>
                 <input type="number" class="form-control" id="tiempo_minutos_2" name="tiempo_minutos_2" value="{% if guia %}{{ guia.tiempo_minutos_2 }}{% endif %}" required>
             </div>
-            
+
             <div class="mb-3">
                 <label for="recursos_didacticos_2" class="form-label">Recursos Didácticos</label>
                 <textarea class="form-control" id="recursos_didacticos_2" name="recursos_didacticos_2" rows="3" required>{% if guia %}{{ guia.recursos_didacticos_2 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="periodo_tiempo_programado_2" class="form-label">Periodo de Tiempo Programado</label>
                 <select class="form-select" id="periodo_tiempo_programado_2" name="periodo_tiempo_programado_2" required>
@@ -283,12 +306,12 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="puntaje_2" class="form-label">Puntaje</label>
                 <input type="number" class="form-control puntaje" id="puntaje_2" name="puntaje_2" value="{% if guia %}{{ guia.puntaje_2 }}{% endif %}" required>
             </div>
-            
+
             <div class="mb-3">
                 <label for="fecha_entrega_2" class="form-label">Fecha de Entrega</label>
                 <input type="date" class="form-control" id="fecha_entrega_2" name="fecha_entrega_2" value="{% if guia %}{{ guia.fecha_entrega_2|date:'Y-m-d' }}{% endif %}" required>
@@ -310,22 +333,22 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="objetivo_aprendizaje_3" class="form-label">Objetivo de Aprendizaje</label>
                 <textarea class="form-control" id="objetivo_aprendizaje_3" name="objetivo_aprendizaje_3" rows="2" required>{% if guia %}{{ guia.objetivo_aprendizaje_3 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="contenido_tematico_3" class="form-label">Contenido Temático</label>
                 <textarea class="form-control" id="contenido_tematico_3" name="contenido_tematico_3" rows="3" required>{% if guia %}{{ guia.contenido_tematico_3 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="actividad_aprendizaje_3" class="form-label">Actividad de Aprendizaje</label>
                 <textarea class="form-control" id="actividad_aprendizaje_3" name="actividad_aprendizaje_3" rows="3" required>{% if guia %}{{ guia.actividad_aprendizaje_3 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="tecnica_evaluacion_3" class="form-label">Técnica de Evaluación</label>
                 <select class="form-select" id="tecnica_evaluacion_3" name="tecnica_evaluacion_3" required>
@@ -334,7 +357,7 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="tipo_evaluacion_3" class="form-label">Tipo de Evaluación</label>
                 <select class="form-select" id="tipo_evaluacion_3" name="tipo_evaluacion_3" required>
@@ -343,7 +366,7 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="instrumento_evaluacion_3" class="form-label">Instrumento de Evaluación</label>
                 <select class="form-select" id="instrumento_evaluacion_3" name="instrumento_evaluacion_3" required>
@@ -352,31 +375,42 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="criterios_evaluacion_3" class="form-label">Criterios de Evaluación</label>
                 <textarea class="form-control" id="criterios_evaluacion_3" name="criterios_evaluacion_3" rows="3" required>{% if guia %}{{ guia.criterios_evaluacion_3 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
-                <label for="agente_evaluador_3" class="form-label">Agente Evaluador</label>
-                <select class="form-select" id="agente_evaluador_3" name="agente_evaluador_3" required>
+                <label class="form-label">Agente Evaluador</label>
+                <div class="form-check">
                     {% for agente_choice in agente_evaluador_choices %}
-                        <option value="{{ agente_choice.0 }}" {% if guia and guia.agente_evaluador_3 == agente_choice.0 %}selected{% endif %}>{{ agente_choice.1 }}</option>
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                name="agente_evaluador_3[]"
+                                id="agente3_{{ forloop.counter }}"
+                                value="{{ agente_choice.0 }}"
+                                {% if guia and agente_choice.0 in guia.agente_evaluador_3 %}checked{% endif %}>
+                            <label class="form-check-label" for="agente3_{{ forloop.counter }}">
+                                {{ agente_choice.1 }}
+                            </label>
+                        </div>
                     {% endfor %}
-                </select>
+                </div>
             </div>
-            
+
+
             <div class="mb-3">
                 <label for="tiempo_minutos_3" class="form-label">Tiempo (minutos)</label>
                 <input type="number" class="form-control" id="tiempo_minutos_3" name="tiempo_minutos_3" value="{% if guia %}{{ guia.tiempo_minutos_3 }}{% endif %}" required>
             </div>
-            
+
             <div class="mb-3">
                 <label for="recursos_didacticos_3" class="form-label">Recursos Didácticos</label>
                 <textarea class="form-control" id="recursos_didacticos_3" name="recursos_didacticos_3" rows="3" required>{% if guia %}{{ guia.recursos_didacticos_3 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="periodo_tiempo_programado_3" class="form-label">Periodo de Tiempo Programado</label>
                 <select class="form-select" id="periodo_tiempo_programado_3" name="periodo_tiempo_programado_3" required>
@@ -385,12 +419,12 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="puntaje_3" class="form-label">Puntaje</label>
                 <input type="number" class="form-control puntaje" id="puntaje_3" name="puntaje_3" value="{% if guia %}{{ guia.puntaje_3 }}{% endif %}" required>
             </div>
-            
+
             <div class="mb-3">
                 <label for="fecha_entrega_3" class="form-label">Fecha de Entrega</label>
                 <input type="date" class="form-control" id="fecha_entrega_3" name="fecha_entrega_3" value="{% if guia %}{{ guia.fecha_entrega_3|date:'Y-m-d' }}{% endif %}" required>
@@ -412,22 +446,22 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="objetivo_aprendizaje_4" class="form-label">Objetivo de Aprendizaje</label>
                 <textarea class="form-control" id="objetivo_aprendizaje_4" name="objetivo_aprendizaje_4" rows="2" required>{% if guia %}{{ guia.objetivo_aprendizaje_4 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="contenido_tematico_4" class="form-label">Contenido Temático</label>
                 <textarea class="form-control" id="contenido_tematico_4" name="contenido_tematico_4" rows="3" required>{% if guia %}{{ guia.contenido_tematico_4 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="actividad_aprendizaje_4" class="form-label">Actividad de Aprendizaje</label>
                 <textarea class="form-control" id="actividad_aprendizaje_4" name="actividad_aprendizaje_4" rows="3" required>{% if guia %}{{ guia.actividad_aprendizaje_4 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="tecnica_evaluacion_4" class="form-label">Técnica de Evaluación</label>
                 <select class="form-select" id="tecnica_evaluacion_4" name="tecnica_evaluacion_4" required>
@@ -436,7 +470,7 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="tipo_evaluacion_4" class="form-label">Tipo de Evaluación</label>
                 <select class="form-select" id="tipo_evaluacion_4" name="tipo_evaluacion_4" required>
@@ -445,7 +479,7 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="instrumento_evaluacion_4" class="form-label">Instrumento de Evaluación</label>
                 <select class="form-select" id="instrumento_evaluacion_4" name="instrumento_evaluacion_4" required>
@@ -454,31 +488,42 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="criterios_evaluacion_4" class="form-label">Criterios de Evaluación</label>
                 <textarea class="form-control" id="criterios_evaluacion_4" name="criterios_evaluacion_4" rows="3" required>{% if guia %}{{ guia.criterios_evaluacion_4 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
-                <label for="agente_evaluador_4" class="form-label">Agente Evaluador</label>
-                <select class="form-select" id="agente_evaluador_4" name="agente_evaluador_4" required>
+                <label class="form-label">Agente Evaluador</label>
+                <div class="form-check">
                     {% for agente_choice in agente_evaluador_choices %}
-                        <option value="{{ agente_choice.0 }}" {% if guia and guia.agente_evaluador_4 == agente_choice.0 %}selected{% endif %}>{{ agente_choice.1 }}</option>
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                type="checkbox"
+                                name="agente_evaluador_4[]"
+                                id="agente4_{{ forloop.counter }}"
+                                value="{{ agente_choice.0 }}"
+                                {% if guia and agente_choice.0 in guia.agente_evaluador_4 %}checked{% endif %}>
+                            <label class="form-check-label" for="agente4_{{ forloop.counter }}">
+                                {{ agente_choice.1 }}
+                            </label>
+                        </div>
                     {% endfor %}
-                </select>
+                </div>
             </div>
-            
+
+
             <div class="mb-3">
                 <label for="tiempo_minutos_4" class="form-label">Tiempo (minutos)</label>
                 <input type="number" class="form-control" id="tiempo_minutos_4" name="tiempo_minutos_4" value="{% if guia %}{{ guia.tiempo_minutos_4 }}{% endif %}" required>
             </div>
-            
+
             <div class="mb-3">
                 <label for="recursos_didacticos_4" class="form-label">Recursos Didácticos</label>
                 <textarea class="form-control" id="recursos_didacticos_4" name="recursos_didacticos_4" rows="3" required>{% if guia %}{{ guia.recursos_didacticos_4 }}{% endif %}</textarea>
             </div>
-            
+
             <div class="mb-3">
                 <label for="periodo_tiempo_programado_4" class="form-label">Periodo de Tiempo Programado</label>
                 <select class="form-select" id="periodo_tiempo_programado_4" name="periodo_tiempo_programado_4" required>
@@ -487,12 +532,12 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
             <div class="mb-3">
                 <label for="puntaje_4" class="form-label">Puntaje</label>
                 <input type="number" class="form-control puntaje" id="puntaje_4" name="puntaje_4" value="{% if guia %}{{ guia.puntaje_4 }}{% endif %}" required>
             </div>
-            
+
             <div class="mb-3">
                 <label for="fecha_entrega_4" class="form-label">Fecha de Entrega</label>
                 <input type="date" class="form-control" id="fecha_entrega_4" name="fecha_entrega_4" value="{% if guia %}{{ guia.fecha_entrega_4|date:'Y-m-d' }}{% endif %}" required>
@@ -513,7 +558,7 @@
         </div>
     </div>
 
- 
+
 </form>
 
 
@@ -537,7 +582,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Botón único para guardar ambos formularios -->
         <div class="row justify-content-center mt-4 mb-5">
             <div class="col-lg-4 col-md-8 col-sm-12 text-center">
@@ -550,7 +595,7 @@
             </div>
         </div>
 
-        
+
 
     </div>
 </div>
@@ -563,17 +608,17 @@
         border-radius: 25px;
         padding: 10px 25px;
     }
-    
+
     .transition-btn:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
     }
-    
+
     .transition-btn:active {
         transform: translateY(-1px);
         box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
     }
-    
+
     .save-btn {
         font-size: 1.1rem;
         font-weight: 500;
@@ -581,11 +626,11 @@
         background: linear-gradient(to right, #28a745, #20c997);
         border: none;
     }
-    
+
     .save-btn:hover {
         background: linear-gradient(to right, #20c997, #28a745);
     }
-    
+
     .custom-alert {
         display: flex;
         align-items: center;
@@ -598,7 +643,7 @@
         overflow: hidden;
         animation: pulse 2s infinite;
     }
-    
+
     .custom-alert::before {
         content: '';
         position: absolute;
@@ -608,7 +653,7 @@
         height: 100%;
         background-color: #ffc107;
     }
-    
+
     .custom-alert-icon {
         display: flex;
         align-items: center;
@@ -621,22 +666,22 @@
         margin-right: 15px;
         flex-shrink: 0;
     }
-    
+
     .custom-alert-content {
         flex-grow: 1;
     }
-    
+
     .custom-alert-content h4 {
         color: #856404;
         font-weight: bold;
         margin-top: 0;
     }
-    
+
     .custom-alert-content p {
         color: #856404;
         font-weight: 500;
     }
-    
+
     @keyframes pulse {
         0% {
             box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
@@ -648,7 +693,7 @@
             box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
         }
     }
-    
+
     .mensaje-error-flotante {
         position: fixed;
         top: 50%;
@@ -664,7 +709,7 @@
         min-width: 300px;
         max-width: 80%;
     }
-    
+
     @keyframes aparecer {
         from {
             opacity: 0;
@@ -675,34 +720,34 @@
             transform: translate(-50%, -50%);
         }
     }
-    
+
     .mensaje-error-contenido {
         display: flex;
         align-items: flex-start;
     }
-    
+
     .mensaje-error-icono {
         color: var(--color-azul-3);
         margin-right: 15px;
         flex-shrink: 0;
     }
-    
+
     .mensaje-error-texto {
         flex-grow: 1;
     }
-    
+
     .mensaje-error-texto h4 {
         margin-top: 0;
         color: var(--color-azul-oscuro);
         font-weight: bold;
         margin-bottom: 10px;
     }
-    
+
     .mensaje-error-texto p {
         color: var(--color-gris-1);
         margin-bottom: 0;
     }
-    
+
     .mensaje-error-cerrar {
         position: absolute;
         top: 10px;
@@ -715,18 +760,18 @@
         color: var(--color-gris-2);
         transition: color 0.2s;
     }
-    
+
     .mensaje-error-cerrar:hover {
         color: var(--color-azul-oscuro);
     }
-    
+
     .campo-invalido {
         border: 2px solid #ff9800 !important;
         background-color: #fff8e1 !important;
         box-shadow: 0 0 5px rgba(255, 152, 0, 0.5) !important;
         animation: pulso-naranja 1.5s infinite;
     }
-    
+
     @keyframes pulso-naranja {
         0% {
             box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
@@ -738,7 +783,7 @@
             box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
         }
     }
-    
+
     /* Añadir un icono de advertencia a los campos inválidos */
     .campo-invalido:focus {
         background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff9800" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');

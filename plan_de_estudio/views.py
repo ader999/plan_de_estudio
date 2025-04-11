@@ -971,7 +971,6 @@ def generar_silabo(request):
             Asegúrate de que todos los campos tengan valores coherentes y apropiados para el encuentro {encuentro}.
             Respeta las opciones disponibles para los campos que tienen listas predefinidas.
         """
-        print("1111111111111111111111111111111111111111111111111", prompt_completo)
 
         try:
             # Configurar parámetros específicos para el modelo seleccionado

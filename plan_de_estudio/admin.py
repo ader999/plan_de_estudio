@@ -36,17 +36,17 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
     class PlanDeEstudioResource(resources.ModelResource):
         class Meta:
             model = Plan_de_estudio
-            fields = ('carrera__nombre', 'año', 'trimestre', 'codigo', 'asignatura__nombre', 'hp', 'hti','th')
+            fields = ('carrera__nombre', 'año', 'trimestre', 'codigo', 'asignatura__nombre', 'horas_presenciales', 'horas_estudio_independiente','total_horas')
 
     list_per_page = 20  # Limitar a 20 elementos por página
     list_display = ('carrera', 'año', 'trimestre', 'asignatura', 'pr')  # Mostrar los campos
     list_filter = (CarreraFilter, 'año', 'trimestre')  # Filtros en el panel de administración, incluyendo 'carrera'
     resource_class = PlanDeEstudioResource
-    readonly_fields = ('th',)  # 'th' es solo lectura en el formulario
+    readonly_fields = ('total_horas',)  # 'th' es solo lectura en el formulario
 
     fieldsets = (
         ('Datos Generales', {
-            'fields': ('carrera', 'año', 'trimestre', 'codigo', 'asignatura', 'pr', 'pc', 'cr', 'hp', 'hti', 'th')
+            'fields': ('carrera', 'año', 'trimestre', 'codigo', 'asignatura', 'pr', 'pc', 'cr', 'horas_presenciales', 'horas_estudio_independiente')
         }),
         ('Documentos y Relaciones', {
             'fields': ('plan_tematico', 'plan_tematico_ref', 'documento_adjunto'),
@@ -55,10 +55,10 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
         }),
     )
 
-    def th(self, obj):
+    def total_horas(self, obj):
         # Asegurarse de que hp y hti no sean None antes de sumar
-        if obj.hp is not None and obj.hti is not None:
-            return obj.hp + obj.hti
+        if obj.horas_presenciales is not None and obj.horas_estudio_independiente is not None:
+            return obj.horas_presenciales + obj.horas_estudio_independiente
         return 0  # Si alguno es None, devolver 0 o cualquier valor predeterminado
 
 
@@ -113,13 +113,13 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
 class CompletadoFilter(admin.SimpleListFilter):
     title = 'Estado de Asignación'
     parameter_name = 'asignado'
-    
+
     def lookups(self, request, model_admin):
         return (
             ('si', 'Asignados'),
             ('no', 'No Asignados'),
         )
-    
+
     def queryset(self, request, queryset):
         if self.value() == 'si':
             # Encuentra planes temáticos que están asignados a algún plan de estudio
@@ -127,7 +127,7 @@ class CompletadoFilter(admin.SimpleListFilter):
                 plan_tematico_ref__isnull=False
             ).values_list('plan_tematico_ref', flat=True)
             return queryset.filter(id__in=plan_tematicos_asignados)
-        
+
         if self.value() == 'no':
             # Encuentra planes temáticos que no están asignados a ningún plan de estudio
             plan_tematicos_asignados = Plan_de_estudio.objects.filter(
@@ -140,21 +140,21 @@ class PlanTematicoAdmin(admin.ModelAdmin):
     list_display = ('nombre_de_la_unidad', 'unidades', 'planes_de_estudio_related', 'completado_icono')
     list_filter = (CompletadoFilter,)
     search_fields = ('nombre_de_la_unidad',)
-    
+
     def completado_icono(self, obj):
         # Verificamos si este PlanTematico está relacionado con algún Plan_de_estudio
         return Plan_de_estudio.objects.filter(plan_tematico_ref=obj).exists()
-    
+
     completado_icono.boolean = True  # Indica que este es un campo booleano
     completado_icono.short_description = 'Asignado'
-    
+
     def planes_de_estudio_related(self, obj):
         # Obtener todos los planes de estudio que referencian a este PlanTematico
         planes = Plan_de_estudio.objects.filter(plan_tematico_ref=obj)
         if planes.exists():
             return ", ".join([str(plan) for plan in planes])
         return "No asignado"
-    
+
     planes_de_estudio_related.short_description = "Plan de Estudio"
 
     def get_queryset(self, request):

@@ -29,18 +29,18 @@
         align-items: center;
         justify-content: space-between;
     }
-    
+
     .plan-component .plan-title {
         display: flex;
         align-items: center;
         gap: 10px;
     }
-    
+
     .plan-component .plan-title::before {
         content: "📝";
         font-size: 1.5rem;
     }
-    
+
     /* Navegación de encuentros */
     .plan-component .encuentros-nav {
         display: flex;
@@ -50,7 +50,7 @@
         gap: 8px;
         border-bottom: 1px solid var(--plan-gris-borde);
     }
-    
+
     .plan-component .encuentro-tab {
         background-color: var(--plan-gris-claro);
         border: 1px solid var(--plan-gris-borde);
@@ -66,40 +66,40 @@
         align-items: center;
         justify-content: center;
     }
-    
+
     .plan-component .encuentro-tab.active {
         background-color: var(--color-azul-3);
         color: white;
         border-color: var(--color-azul-3);
     }
-    
+
     .plan-component .encuentro-tab:hover:not(.active) {
         background-color: rgba(46, 134, 193, 0.1);
         transform: translateY(-2px);
     }
-    
+
     /* Contenido del encuentro */
     .plan-component .encuentro-content {
         display: none;
         padding: 20px;
     }
-    
+
     .plan-component .encuentro-content.active {
         display: block;
     }
-    
+
     /* Secciones de datos */
     .plan-component .data-section {
         margin-bottom: 24px;
         border-bottom: 1px solid var(--plan-gris-borde);
         padding-bottom: 20px;
     }
-    
+
     .plan-component .data-section:last-child {
         border-bottom: none;
         margin-bottom: 0;
     }
-    
+
     .plan-component .section-title {
         font-size: 1.1rem;
         font-weight: 600;
@@ -109,23 +109,23 @@
         align-items: center;
         gap: 8px;
     }
-    
+
     .plan-component .section-title i {
         font-size: 1.2rem;
     }
-    
+
     .plan-component .data-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 16px;
     }
-    
+
     .plan-component .data-card {
         background-color: var(--plan-gris-claro);
         border-radius: var(--plan-border-radius);
         padding: 16px;
     }
-    
+
     .plan-component .data-label {
         font-weight: 600;
         font-size: 0.85rem;
@@ -134,13 +134,13 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
+
     .plan-component .data-value {
         font-size: 0.95rem;
         line-height: 1.5;
         color: #333;
     }
-    
+
     /* Estilos para la tabla de datos */
     .plan-component .data-table {
         width: 100%;
@@ -148,18 +148,18 @@
         border-spacing: 0;
         margin-bottom: 16px;
     }
-    
+
     .plan-component .data-table td:first-child {
         font-weight: 600;
         width: 35%;
         color: var(--color-azul-oscuro);
         padding: 8px 16px 8px 0;
     }
-    
+
     .plan-component .data-table td:last-child {
         padding: 8px 0;
     }
-    
+
     /* Estilos para contenido */
     .plan-component .content-item {
         background-color: var(--plan-gris-claro);
@@ -167,11 +167,11 @@
         padding: 16px;
         margin-bottom: 16px;
     }
-    
+
     .plan-component .content-item:last-child {
         margin-bottom: 0;
     }
-    
+
     /* Estilos para la tabla de actividades */
     .plan-component .actividades-table {
         width: 100%;
@@ -179,7 +179,7 @@
         margin-bottom: 20px;
         border: 1px solid var(--plan-gris-borde);
     }
-    
+
     .plan-component .actividades-table th,
     .plan-component .actividades-table td {
         border: 1px solid var(--plan-gris-borde);
@@ -187,45 +187,45 @@
         text-align: left;
         vertical-align: top;
     }
-    
+
     .plan-component .actividades-table th {
         background-color: var(--color-azul-3);
         color: white;
         font-weight: 600;
     }
-    
+
     .plan-component .actividades-table tr:nth-child(even) {
         background-color: var(--plan-gris-claro);
     }
-    
+
     .plan-component .actividades-table .subtable {
         width: 100%;
         border-collapse: collapse;
     }
-    
+
     .plan-component .actividades-table .subtable td {
         border: none;
         border-top: 1px solid var(--plan-gris-borde);
         padding: 8px 0;
     }
-    
+
     .plan-component .actividades-table .subtable tr:first-child td {
         border-top: none;
     }
-    
+
     /* Estilos para impresión */
     @media print {
         .plan-component {
             padding: 0;
         }
-        
+
         .plan-component .plan-container {
             box-shadow: none;
             break-inside: avoid;
             page-break-inside: avoid;
             margin-bottom: 30px;
         }
-        
+
         .plan-component .encuentro-content {
             display: block !important;
         }
@@ -264,7 +264,7 @@
                             </div>
                             {% endfor %}
                         </div>
-                        
+
                         <!-- Contenido de los planes de clase por encuentro -->
                         {% for silabo in silabos_grupo|dictsort:"encuentros" %}
                         <div class="encuentro-content {% if forloop.first %}active{% endif %}" id="plan-{{ codigo }}-{{ silabo.encuentros }}">
@@ -322,7 +322,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="col-md-6">
                                     <div class="data-section">
                                         <h3 class="section-title">
@@ -341,21 +341,21 @@
                                                 </tr>
                                                 <tr>
                                                     <td>Horas presenciales:</td>
-                                                    <td>{{ silabo.plan_de_estudio.hp }}</td>
+                                                    <td>{{ silabo.plan_de_estudio.horas_presenciales }}</td>
                                                 </tr>
                                                 <tr>
                                                     <td>Horas de trabajo independiente:</td>
-                                                    <td>{{ silabo.plan_de_estudio.hti }}</td>
+                                                    <td>{{ silabo.plan_de_estudio.horas_estudio_independiente }}</td>
                                                 </tr>
                                                 <tr>
                                                     <td>Total de horas:</td>
-                                                    <td>{{ silabo.plan_de_estudio.hp|add:silabo.plan_de_estudio.hti }}</td>
+                                                    <td>{{ silabo.plan_de_estudio.horas_presenciales|add:silabo.plan_de_estudio.horas_estudio_independiente }}</td>
                                                 </tr>
                                             </table>
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Actividades de Aprendizaje -->
                                 <div class="col-12">
                                     <div class="data-section">
@@ -375,7 +375,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="data-section">
                                         <h3 class="section-title">
                                             <i class="fas fa-comment"></i>
@@ -408,26 +408,26 @@
             // Obtener todos los tabs y contenidos de encuentros en el contenedor
             const tabs = container.querySelectorAll('.encuentro-tab');
             const contents = container.querySelectorAll('.encuentro-content');
-            
+
             // Desactivar todos los tabs y contenidos
             tabs.forEach(tab => tab.classList.remove('active'));
             contents.forEach(content => content.classList.remove('active'));
-            
+
             // Activar el tab seleccionado
             const selectedTab = container.querySelector(`.encuentro-tab[data-target="${targetId}"]`);
             if (selectedTab) selectedTab.classList.add('active');
-            
+
             // Activar el contenido seleccionado
             const selectedContent = document.getElementById(targetId);
             if (selectedContent) selectedContent.classList.add('active');
-            
+
             // Cargar guía si es necesario
             if (selectedTab) {
                 const silaboId = selectedTab.getAttribute('data-silabo-id');
                 const parts = targetId.split('-');
                 const codigo = parts[1];
                 const encuentro = parts[2];
-                
+
                 if (silaboId) {
                     const actividadesContainer = document.getElementById(`actividades-container-${codigo}-${encuentro}`);
                     if (actividadesContainer) {
@@ -439,7 +439,7 @@
                 }
             }
         }
-        
+
         // Inicializar mostrar solo el primer encuentro al cargar la página
         document.querySelectorAll('.accordion-collapse.show').forEach(function(accordion) {
             const container = accordion.querySelector('.plan-container');
@@ -448,25 +448,25 @@
                 if (firstTab) {
                     const targetId = firstTab.getAttribute('data-target');
                     const silaboId = firstTab.getAttribute('data-silabo-id');
-                    
+
                     // Cargar la guía para el primer tab
                     if (silaboId) {
                         const parts = targetId.split('-');
                         const codigo = parts[1];
                         const encuentro = parts[2];
                         const actividadesContainer = document.getElementById(`actividades-container-${codigo}-${encuentro}`);
-                        
+
                         if (actividadesContainer) {
                             console.log(`Cargando guía inicial para sílabo ID: ${silaboId}, encuentro: ${encuentro}`);
                             cargarGuia(silaboId, actividadesContainer);
                         }
                     }
-                    
+
                     switchEncuentro(targetId, container);
                 }
             }
         });
-        
+
         // Escuchar eventos de apertura de acordeones
         document.querySelectorAll('.accordion-collapse').forEach(function(accordion) {
             accordion.addEventListener('shown.bs.collapse', function() {
@@ -476,20 +476,20 @@
                     if (firstTab) {
                         const targetId = firstTab.getAttribute('data-target');
                         const silaboId = firstTab.getAttribute('data-silabo-id');
-                        
+
                         // Cargar la guía para el primer tab
                         if (silaboId) {
                             const parts = targetId.split('-');
                             const codigo = parts[1];
                             const encuentro = parts[2];
                             const actividadesContainer = document.getElementById(`actividades-container-${codigo}-${encuentro}`);
-                            
+
                             if (actividadesContainer) {
                                 console.log(`Cargando guía al abrir acordeón para sílabo ID: ${silaboId}, encuentro: ${encuentro}`);
                                 cargarGuia(silaboId, actividadesContainer);
                             }
                         }
-                        
+
                         switchEncuentro(targetId, container);
                     }
                 }
@@ -502,17 +502,17 @@
                 const targetId = this.getAttribute('data-target');
                 const silaboId = this.getAttribute('data-silabo-id');
                 const container = this.closest('.plan-container');
-                
+
                 if (silaboId) {
                     console.log(`Clic en pestaña: ${targetId}, Sílabo ID: ${silaboId}`);
                 }
-                
+
                 if (container) {
                     switchEncuentro(targetId, container);
                 }
             });
         });
-        
+
         // Función para cargar guía mediante AJAX
         function cargarGuia(silaboId, container) {
             container.innerHTML = `
@@ -523,7 +523,7 @@
                     <p class="mt-2">Cargando datos de la guía...</p>
                 </div>
             `;
-            
+
             fetch(`/cargar_guia/${silaboId}/?only_table=true`)
                 .then(response => {
                     if (!response.ok) {

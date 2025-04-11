@@ -63,9 +63,9 @@
                             <strong>Año:</strong> {{ asignacion.plan_de_estudio.año }}<br>
                             <strong>Trimestre:</strong> {{ asignacion.plan_de_estudio.trimestre }}<br>
                             <strong>Código de Asignatura:</strong> {{ asignacion.plan_de_estudio.codigo }}<br>
-                            <strong>Horas Prácticas:</strong> {{ asignacion.plan_de_estudio.hp }}<br>
-                            <strong>Horas Teóricas:</strong> {{ asignacion.plan_de_estudio.hti }}<br>
-                            <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.hp|add:asignacion.plan_de_estudio.hti }}<br>
+                            <strong>Horas Prácticas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales }}<br>
+                            <strong>Horas Teóricas:</strong> {{ asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
+                            <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
                         </p>
 
                         {% if asignacion.plan_tematico %}
@@ -80,14 +80,14 @@
                         {% if asignacion.silabos_creados <= 12 %}
                             <div class="d-flex flex-column align-items-center mb-3">
                                 <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente -->
-                                <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}" 
+                                <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"
                                    class="btn {% if asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
                                    {% if asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}
                                    disabled title="Debe crear la guía del sílabo anterior antes de continuar"
                                    {% endif %}>
                                     <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
                                 </a>
-                                
+
                                 <!-- Indicadores numéricos para sílabos -->
                                 <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
                                     {% for i in rango %}
@@ -97,10 +97,10 @@
                                     {% endfor %}
                                 </div>
                             </div>
-                            
+
                             <div class="d-flex flex-column align-items-center">
                                 <!-- Botón para generar guía de estudio independiente -->
-                                <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}" 
+                                <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"
                                    class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
                                    {% if asignacion.silabos_creados == 0 %}
                                    disabled title="Debe crear al menos un sílabo primero"
@@ -109,7 +109,7 @@
                                    {% endif %}>
                                     <i class="fas fa-book-reader fa-lg me-2"></i> Generar Guía
                                 </a>
-                                
+
                                 <!-- Indicadores numéricos para guías -->
                                 <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
                                     {% for i in rango %}
@@ -120,7 +120,7 @@
                                 </div>
                             </div>
                         {% endif %}
-                        
+
                         <!-- Añade estos estilos al archivo CSS -->
                         <style>
                             .div-red {
