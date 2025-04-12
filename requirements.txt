@@ -36,3 +36,4 @@ sqlparse==0.4.4
 tqdm==4.66.1
 tzdata==2023.3
 whitenoise==6.9.0
+django-multiselectfield==0.1.13

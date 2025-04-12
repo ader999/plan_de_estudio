@@ -3,12 +3,13 @@ from .models import Plan_de_estudio, Asignatura, Carrera, Silabo, Guia, Asignaci
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django import forms
-from django.contrib.admin.filters import DateFieldListFilter
+from django.contrib.admin import DateFieldListFilter, RelatedFieldListFilter, AllValuesFieldListFilter
 from django.forms import DateInput
 from import_export.admin import ExportMixin
 from import_export import resources
 from django.utils.html import format_html
 from django.db.models import Count
+from django.contrib.auth.models import User
 
 admin.site.site_header = 'PLANEAUML'
 admin.site.index_title = 'Bienbenidos al Panel de control del sitio'
@@ -78,14 +79,32 @@ class AsignaturaFilter(admin.SimpleListFilter):
         return queryset
 
 
+class UsuarioConSilabosFilter(admin.SimpleListFilter):
+    title = 'Usuario'
+    parameter_name = 'usuario_con_silabos'
+
+    def lookups(self, request, model_admin):
+        # Obtener usuarios que tienen sílabos
+        usuarios_con_silabos = Silabo.objects.values_list('asignacion_plan__usuario', flat=True).distinct()
+        return [(u.id, str(u)) for u in User.objects.filter(id__in=usuarios_con_silabos)]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(asignacion_plan__usuario_id=self.value())
+        return queryset
+
+
 class FiltarSilabo(admin.ModelAdmin):
-    list_display = ('id', 'fecha')
+    list_display = ('encuentros',  'asignacion_plan', 'fecha')
     list_filter = (
-        ('fecha', admin.DateFieldListFilter),  # Utiliza el widget de fecha aquí
-        'codigo',
+        ('fecha', DateFieldListFilter),  # Utiliza el widget de fecha aquí
+        ('asignacion_plan__plan_de_estudio__asignatura__nombre', admin.AllValuesFieldListFilter),  # Filtro por nombre de asignatura
+        UsuarioConSilabosFilter,  # Filtro personalizado para usuarios con sílabos
+        ('asignacion_plan__plan_de_estudio', RelatedFieldListFilter),  # Filtro para la asignación
     )
 
     exclude = ()  # No excluir campos innecesarios
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'encuentros':
             kwargs['widget'] = forms.NumberInput(attrs={'min': '1', 'max': '10', 'step': '1'})
@@ -95,13 +114,19 @@ class FiltarSilabo(admin.ModelAdmin):
             kwargs['widget'] = DateInput(attrs={'type': 'date'})
         return super().formfield_for_dbfield(db_field, **kwargs)
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # Filtra solo los usuarios que tienen sílabos creados
+        return qs.filter(asignacion_plan__usuario__in=Silabo.objects.values('asignacion_plan__usuario').distinct())
+
 
 class FiltrarGuia(admin.ModelAdmin):
     list_filter = ('silabo__codigo',)
 
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'plan_de_estudio', 'completado_icono')
+    list_display = ('usuario', 'plan_de_estudio','fecha_asignacion', 'completado_icono')
+    readonly_fields = ('silabos_creados', 'guias_creadas')
 
     def completado_icono(self, obj):
         # Retorna True si silabos_creados es igual a 12

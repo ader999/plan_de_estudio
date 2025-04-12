@@ -1,8 +1,8 @@
-{% extends 'base.html' %}
-
-{% block content %}
+{% extends 'base.html' %} 
 {% load static %}
 {% load widget_tweaks %}
+
+{% block content %}
 <div class="container-fluid mt-3">
     <div class="text-center">
         <h1 class="mb-4 text-center">Llenar formularios</h1>
@@ -12,557 +12,1180 @@
 
     <!-- Contenedor principal que contiene ambas secciones -->
     <div class="container">
-
         <!-- Sección 2: Formulario de Estudio Independiente -->
-        <div id="seccionEstudioIndependiente" style="display: none;">
+        <div id="seccionEstudioIndependiente" style="display: none">
             <div class="row justify-content-center">
                 <div class="col-lg-8 col-md-10 col-sm-12">
                     <div class="card shadow-lg">
                         <div class="card-body">
-
-
-
                             <!-- Contenido del Estudio Independiente -->
-<h2 class="text-center">Guía de Estudio Independiente</h2>
-
-<!-- Datos de Django para JavaScript -->
-<script type="text/javascript">
-    // Definir variables globales con los datos de Django
-    var ASIGNACION_ID = "{% if asignacion %}{{ asignacion.id|safe }}{% else %}null{% endif %}";
-    var GUIA_ID = "{% if guia %}{{ guia.id|safe }}{% else %}null{% endif %}";
-    var SILABO_ID = "{% if silabo %}{{ silabo.id|safe }}{% else %}null{% endif %}";
-
-    // Log para depuración
-    console.log('Plantilla formulario_estudio_independiente.html cargada');
-    console.log('ID de asignación recibido:', ASIGNACION_ID);
-    console.log('ID de guía recibido:', GUIA_ID);
-    console.log('ID de sílabo recibido:', SILABO_ID);
-</script>
-
-<form id="formEstudioIndependiente">
-    {% csrf_token %}
-    <!-- Campos ocultos para IDs -->
-    <input type="hidden" id="asignacion_id" name="asignacion_id" value="{{ asignacion.id }}">
-    <input type="hidden" id="silabo_id" name="silabo_id" value="{% if silabo %}{{ silabo.id }}{% endif %}">
-    {% if guia %}<input type="hidden" id="guia_id" name="guia_id" value="{{ guia.id }}">{% endif %}
-
-    <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap mb-3">
-        <div class="d-flex align-items-center">
-            <label for="modelo_select_estudio" class="form-label mb-0 me-2">Modelo:</label>
-            <select id="modelo_select_estudio" name="modelo_select" class="form-select" style="width: 200px;">
-                <option value="google">Google - Gemini</option>
-                <option value="openai">OpenAI - GPT</option>
-                <option value="deepseek">DeepSeek - Chat</option>
-            </select>
-        </div>
-
-        {% include 'generar_plan_estudio/boton_generar_estudio.html' %}
-    </div>
-
-    <!-- Información General -->
-    <div class="card mb-4 mt-3">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Información General</h5>
-        </div>
-        <div class="card-body">
-            <!-- Campo para Número de Encuentro (oculto) -->
-            <div class="mb-3 d-none">
-                <label for="numero_encuentro" class="form-label">Número de Encuentro</label>
-                <input type="number" class="form-control" id="numero_encuentro" name="numero_encuentro" value="{% if guia %}{{ guia.numero_encuentro }}{% else %}{{ encuentro }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="fecha" class="form-label">Fecha de la Guía</label>
-                <input type="date" class="form-control" id="fecha" name="fecha" value="{% if guia %}{{ guia.fecha|date:'Y-m-d' }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="unidad" class="form-label">Unidad</label>
-                <select class="form-select" id="unidad" name="unidad" required>
-                    {% for unidad_choice in unidad_choices %}
-                        <option value="{{ unidad_choice.0 }}" {% if guia and guia.unidad == unidad_choice.0 %}selected{% endif %}>{{ unidad_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="nombre_de_la_unidad" class="form-label">Nombre de la Unidad</label>
-                <input type="text" class="form-control" id="nombre_de_la_unidad" name="nombre_de_la_unidad" value="{% if guia %}{{ guia.nombre_de_la_unidad }}{% endif %}" required>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tarea 1 -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Tarea 1</h5>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="tipo_objetivo_1" class="form-label">Tipo de Objetivo</label>
-                <select class="form-select" id="tipo_objetivo_1" name="tipo_objetivo_1" required>
-                    {% for tipo_choice in tipo_objetivo_choices %}
-                        <option value="{{ tipo_choice.0 }}" {% if guia and guia.tipo_objetivo_1 == tipo_choice.0 %}selected{% endif %}>{{ tipo_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="objetivo_aprendizaje_1" class="form-label">Objetivo de Aprendizaje</label>
-                <textarea class="form-control" id="objetivo_aprendizaje_1" name="objetivo_aprendizaje_1" rows="2" required>{% if guia %}{{ guia.objetivo_aprendizaje_1 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="contenido_tematico_1" class="form-label">Contenido Temático</label>
-                <textarea class="form-control" id="contenido_tematico_1" name="contenido_tematico_1" rows="3" required>{% if guia %}{{ guia.contenido_tematico_1 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="actividad_aprendizaje_1" class="form-label">Actividad de Aprendizaje</label>
-                <textarea class="form-control" id="actividad_aprendizaje_1" name="actividad_aprendizaje_1" rows="3" required>{% if guia %}{{ guia.actividad_aprendizaje_1 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="tecnica_evaluacion_1" class="form-label">Técnica de Evaluación</label>
-                <select class="form-select" id="tecnica_evaluacion_1" name="tecnica_evaluacion_1" required>
-                    {% for tecnica_choice in tecnica_evaluacion_choices %}
-                        <option value="{{ tecnica_choice.0 }}" {% if guia and guia.tecnica_evaluacion_1 == tecnica_choice.0 %}selected{% endif %}>{{ tecnica_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="tipo_evaluacion_1" class="form-label">Tipo de Evaluación</label>
-                <select class="form-select" id="tipo_evaluacion_1" name="tipo_evaluacion_1" required>
-                    {% for tipo_eval_choice in tipo_evaluacion_choices %}
-                        <option value="{{ tipo_eval_choice.0 }}" {% if guia and guia.tipo_evaluacion_1 == tipo_eval_choice.0 %}selected{% endif %}>{{ tipo_eval_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="instrumento_evaluacion_1" class="form-label">Instrumento de Evaluación</label>
-                <select class="form-select" id="instrumento_evaluacion_1" name="instrumento_evaluacion_1" required>
-                    {% for instrumento_choice in instrumento_evaluacion_choices %}
-                        <option value="{{ instrumento_choice.0 }}" {% if guia and guia.instrumento_evaluacion_1 == instrumento_choice.0 %}selected{% endif %}>{{ instrumento_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="criterios_evaluacion_1" class="form-label">Criterios de Evaluación</label>
-                <textarea class="form-control" id="criterios_evaluacion_1" name="criterios_evaluacion_1" rows="3" required>{% if guia %}{{ guia.criterios_evaluacion_1 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Agente Evaluador</label>
-                <div class="form-check">
-                    {% for agente_choice in agente_evaluador_choices %}
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                type="checkbox"
-                                name="agente_evaluador_1[]"
-                                id="agente_{{ forloop.counter }}"
-                                value="{{ agente_choice.0 }}"
-                                {% if guia and agente_choice.0 in guia.agente_evaluador_1 %}checked{% endif %}>
-                            <label class="form-check-label" for="agente_{{ forloop.counter }}">
-                                {{ agente_choice.1 }}
-                            </label>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-
-
-            <div class="mb-3">
-                <label for="tiempo_minutos_1" class="form-label">Tiempo (minutos)</label>
-                <input type="number" class="form-control" id="tiempo_minutos_1" name="tiempo_minutos_1" value="{% if guia %}{{ guia.tiempo_minutos_1 }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="recursos_didacticos_1" class="form-label">Recursos Didácticos</label>
-                <textarea class="form-control" id="recursos_didacticos_1" name="recursos_didacticos_1" rows="3" required>{% if guia %}{{ guia.recursos_didacticos_1 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="periodo_tiempo_programado_1" class="form-label">Periodo de Tiempo Programado</label>
-                <select class="form-select" id="periodo_tiempo_programado_1" name="periodo_tiempo_programado_1" required>
-                    {% for periodo_choice in periodo_tiempo_choices %}
-                        <option value="{{ periodo_choice.0 }}" {% if guia and guia.periodo_tiempo_programado_1 == periodo_choice.0 %}selected{% endif %}>{{ periodo_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="puntaje_1" class="form-label">Puntaje</label>
-                <input type="number" class="form-control puntaje" id="puntaje_1" name="puntaje_1" value="{% if guia %}{{ guia.puntaje_1 }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="fecha_entrega_1" class="form-label">Fecha de Entrega</label>
-                <input type="date" class="form-control" id="fecha_entrega_1" name="fecha_entrega_1" value="{% if guia %}{{ guia.fecha_entrega_1|date:'Y-m-d' }}{% endif %}" required>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tarea 2 -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Tarea 2</h5>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="tipo_objetivo_2" class="form-label">Tipo de Objetivo</label>
-                <select class="form-select" id="tipo_objetivo_2" name="tipo_objetivo_2" required>
-                    {% for tipo_choice in tipo_objetivo_choices %}
-                        <option value="{{ tipo_choice.0 }}" {% if guia and guia.tipo_objetivo_2 == tipo_choice.0 %}selected{% endif %}>{{ tipo_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="objetivo_aprendizaje_2" class="form-label">Objetivo de Aprendizaje</label>
-                <textarea class="form-control" id="objetivo_aprendizaje_2" name="objetivo_aprendizaje_2" rows="2" required>{% if guia %}{{ guia.objetivo_aprendizaje_2 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="contenido_tematico_2" class="form-label">Contenido Temático</label>
-                <textarea class="form-control" id="contenido_tematico_2" name="contenido_tematico_2" rows="3" required>{% if guia %}{{ guia.contenido_tematico_2 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="actividad_aprendizaje_2" class="form-label">Actividad de Aprendizaje</label>
-                <textarea class="form-control" id="actividad_aprendizaje_2" name="actividad_aprendizaje_2" rows="3" required>{% if guia %}{{ guia.actividad_aprendizaje_2 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="tecnica_evaluacion_2" class="form-label">Técnica de Evaluación</label>
-                <select class="form-select" id="tecnica_evaluacion_2" name="tecnica_evaluacion_2" required>
-                    {% for tecnica_choice in tecnica_evaluacion_choices %}
-                        <option value="{{ tecnica_choice.0 }}" {% if guia and guia.tecnica_evaluacion_2 == tecnica_choice.0 %}selected{% endif %}>{{ tecnica_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="tipo_evaluacion_2" class="form-label">Tipo de Evaluación</label>
-                <select class="form-select" id="tipo_evaluacion_2" name="tipo_evaluacion_2" required>
-                    {% for tipo_eval_choice in tipo_evaluacion_choices %}
-                        <option value="{{ tipo_eval_choice.0 }}" {% if guia and guia.tipo_evaluacion_2 == tipo_eval_choice.0 %}selected{% endif %}>{{ tipo_eval_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="instrumento_evaluacion_2" class="form-label">Instrumento de Evaluación</label>
-                <select class="form-select" id="instrumento_evaluacion_2" name="instrumento_evaluacion_2" required>
-                    {% for instrumento_choice in instrumento_evaluacion_choices %}
-                        <option value="{{ instrumento_choice.0 }}" {% if guia and guia.instrumento_evaluacion_2 == instrumento_choice.0 %}selected{% endif %}>{{ instrumento_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="criterios_evaluacion_2" class="form-label">Criterios de Evaluación</label>
-                <textarea class="form-control" id="criterios_evaluacion_2" name="criterios_evaluacion_2" rows="3" required>{% if guia %}{{ guia.criterios_evaluacion_2 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Agente Evaluador</label>
-                <div class="form-check">
-                    {% for agente_choice in agente_evaluador_choices %}
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                type="checkbox"
-                                name="agente_evaluador_2[]"
-                                id="agente2_{{ forloop.counter }}"
-                                value="{{ agente_choice.0 }}"
-                                {% if guia and agente_choice.0 in guia.agente_evaluador_2 %}checked{% endif %}>
-                            <label class="form-check-label" for="agente2_{{ forloop.counter }}">
-                                {{ agente_choice.1 }}
-                            </label>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-
-            <div class="mb-3">
-                <label for="tiempo_minutos_2" class="form-label">Tiempo (minutos)</label>
-                <input type="number" class="form-control" id="tiempo_minutos_2" name="tiempo_minutos_2" value="{% if guia %}{{ guia.tiempo_minutos_2 }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="recursos_didacticos_2" class="form-label">Recursos Didácticos</label>
-                <textarea class="form-control" id="recursos_didacticos_2" name="recursos_didacticos_2" rows="3" required>{% if guia %}{{ guia.recursos_didacticos_2 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="periodo_tiempo_programado_2" class="form-label">Periodo de Tiempo Programado</label>
-                <select class="form-select" id="periodo_tiempo_programado_2" name="periodo_tiempo_programado_2" required>
-                    {% for periodo_choice in periodo_tiempo_choices %}
-                        <option value="{{ periodo_choice.0 }}" {% if guia and guia.periodo_tiempo_programado_2 == periodo_choice.0 %}selected{% endif %}>{{ periodo_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="puntaje_2" class="form-label">Puntaje</label>
-                <input type="number" class="form-control puntaje" id="puntaje_2" name="puntaje_2" value="{% if guia %}{{ guia.puntaje_2 }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="fecha_entrega_2" class="form-label">Fecha de Entrega</label>
-                <input type="date" class="form-control" id="fecha_entrega_2" name="fecha_entrega_2" value="{% if guia %}{{ guia.fecha_entrega_2|date:'Y-m-d' }}{% endif %}" required>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tarea 3 -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Tarea 3</h5>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="tipo_objetivo_3" class="form-label">Tipo de Objetivo</label>
-                <select class="form-select" id="tipo_objetivo_3" name="tipo_objetivo_3" required>
-                    {% for tipo_choice in tipo_objetivo_choices %}
-                        <option value="{{ tipo_choice.0 }}" {% if guia and guia.tipo_objetivo_3 == tipo_choice.0 %}selected{% endif %}>{{ tipo_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="objetivo_aprendizaje_3" class="form-label">Objetivo de Aprendizaje</label>
-                <textarea class="form-control" id="objetivo_aprendizaje_3" name="objetivo_aprendizaje_3" rows="2" required>{% if guia %}{{ guia.objetivo_aprendizaje_3 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="contenido_tematico_3" class="form-label">Contenido Temático</label>
-                <textarea class="form-control" id="contenido_tematico_3" name="contenido_tematico_3" rows="3" required>{% if guia %}{{ guia.contenido_tematico_3 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="actividad_aprendizaje_3" class="form-label">Actividad de Aprendizaje</label>
-                <textarea class="form-control" id="actividad_aprendizaje_3" name="actividad_aprendizaje_3" rows="3" required>{% if guia %}{{ guia.actividad_aprendizaje_3 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="tecnica_evaluacion_3" class="form-label">Técnica de Evaluación</label>
-                <select class="form-select" id="tecnica_evaluacion_3" name="tecnica_evaluacion_3" required>
-                    {% for tecnica_choice in tecnica_evaluacion_choices %}
-                        <option value="{{ tecnica_choice.0 }}" {% if guia and guia.tecnica_evaluacion_3 == tecnica_choice.0 %}selected{% endif %}>{{ tecnica_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="tipo_evaluacion_3" class="form-label">Tipo de Evaluación</label>
-                <select class="form-select" id="tipo_evaluacion_3" name="tipo_evaluacion_3" required>
-                    {% for tipo_eval_choice in tipo_evaluacion_choices %}
-                        <option value="{{ tipo_eval_choice.0 }}" {% if guia and guia.tipo_evaluacion_3 == tipo_eval_choice.0 %}selected{% endif %}>{{ tipo_eval_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="instrumento_evaluacion_3" class="form-label">Instrumento de Evaluación</label>
-                <select class="form-select" id="instrumento_evaluacion_3" name="instrumento_evaluacion_3" required>
-                    {% for instrumento_choice in instrumento_evaluacion_choices %}
-                        <option value="{{ instrumento_choice.0 }}" {% if guia and guia.instrumento_evaluacion_3 == instrumento_choice.0 %}selected{% endif %}>{{ instrumento_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="criterios_evaluacion_3" class="form-label">Criterios de Evaluación</label>
-                <textarea class="form-control" id="criterios_evaluacion_3" name="criterios_evaluacion_3" rows="3" required>{% if guia %}{{ guia.criterios_evaluacion_3 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Agente Evaluador</label>
-                <div class="form-check">
-                    {% for agente_choice in agente_evaluador_choices %}
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                type="checkbox"
-                                name="agente_evaluador_3[]"
-                                id="agente3_{{ forloop.counter }}"
-                                value="{{ agente_choice.0 }}"
-                                {% if guia and agente_choice.0 in guia.agente_evaluador_3 %}checked{% endif %}>
-                            <label class="form-check-label" for="agente3_{{ forloop.counter }}">
-                                {{ agente_choice.1 }}
-                            </label>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-
-            <div class="mb-3">
-                <label for="tiempo_minutos_3" class="form-label">Tiempo (minutos)</label>
-                <input type="number" class="form-control" id="tiempo_minutos_3" name="tiempo_minutos_3" value="{% if guia %}{{ guia.tiempo_minutos_3 }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="recursos_didacticos_3" class="form-label">Recursos Didácticos</label>
-                <textarea class="form-control" id="recursos_didacticos_3" name="recursos_didacticos_3" rows="3" required>{% if guia %}{{ guia.recursos_didacticos_3 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="periodo_tiempo_programado_3" class="form-label">Periodo de Tiempo Programado</label>
-                <select class="form-select" id="periodo_tiempo_programado_3" name="periodo_tiempo_programado_3" required>
-                    {% for periodo_choice in periodo_tiempo_choices %}
-                        <option value="{{ periodo_choice.0 }}" {% if guia and guia.periodo_tiempo_programado_3 == periodo_choice.0 %}selected{% endif %}>{{ periodo_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="puntaje_3" class="form-label">Puntaje</label>
-                <input type="number" class="form-control puntaje" id="puntaje_3" name="puntaje_3" value="{% if guia %}{{ guia.puntaje_3 }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="fecha_entrega_3" class="form-label">Fecha de Entrega</label>
-                <input type="date" class="form-control" id="fecha_entrega_3" name="fecha_entrega_3" value="{% if guia %}{{ guia.fecha_entrega_3|date:'Y-m-d' }}{% endif %}" required>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tarea 4 -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Tarea 4</h5>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="tipo_objetivo_4" class="form-label">Tipo de Objetivo</label>
-                <select class="form-select" id="tipo_objetivo_4" name="tipo_objetivo_4" required>
-                    {% for tipo_choice in tipo_objetivo_choices %}
-                        <option value="{{ tipo_choice.0 }}" {% if guia and guia.tipo_objetivo_4 == tipo_choice.0 %}selected{% endif %}>{{ tipo_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="objetivo_aprendizaje_4" class="form-label">Objetivo de Aprendizaje</label>
-                <textarea class="form-control" id="objetivo_aprendizaje_4" name="objetivo_aprendizaje_4" rows="2" required>{% if guia %}{{ guia.objetivo_aprendizaje_4 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="contenido_tematico_4" class="form-label">Contenido Temático</label>
-                <textarea class="form-control" id="contenido_tematico_4" name="contenido_tematico_4" rows="3" required>{% if guia %}{{ guia.contenido_tematico_4 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="actividad_aprendizaje_4" class="form-label">Actividad de Aprendizaje</label>
-                <textarea class="form-control" id="actividad_aprendizaje_4" name="actividad_aprendizaje_4" rows="3" required>{% if guia %}{{ guia.actividad_aprendizaje_4 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="tecnica_evaluacion_4" class="form-label">Técnica de Evaluación</label>
-                <select class="form-select" id="tecnica_evaluacion_4" name="tecnica_evaluacion_4" required>
-                    {% for tecnica_choice in tecnica_evaluacion_choices %}
-                        <option value="{{ tecnica_choice.0 }}" {% if guia and guia.tecnica_evaluacion_4 == tecnica_choice.0 %}selected{% endif %}>{{ tecnica_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="tipo_evaluacion_4" class="form-label">Tipo de Evaluación</label>
-                <select class="form-select" id="tipo_evaluacion_4" name="tipo_evaluacion_4" required>
-                    {% for tipo_eval_choice in tipo_evaluacion_choices %}
-                        <option value="{{ tipo_eval_choice.0 }}" {% if guia and guia.tipo_evaluacion_4 == tipo_eval_choice.0 %}selected{% endif %}>{{ tipo_eval_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="instrumento_evaluacion_4" class="form-label">Instrumento de Evaluación</label>
-                <select class="form-select" id="instrumento_evaluacion_4" name="instrumento_evaluacion_4" required>
-                    {% for instrumento_choice in instrumento_evaluacion_choices %}
-                        <option value="{{ instrumento_choice.0 }}" {% if guia and guia.instrumento_evaluacion_4 == instrumento_choice.0 %}selected{% endif %}>{{ instrumento_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="criterios_evaluacion_4" class="form-label">Criterios de Evaluación</label>
-                <textarea class="form-control" id="criterios_evaluacion_4" name="criterios_evaluacion_4" rows="3" required>{% if guia %}{{ guia.criterios_evaluacion_4 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Agente Evaluador</label>
-                <div class="form-check">
-                    {% for agente_choice in agente_evaluador_choices %}
-                        <div class="form-check">
-                            <input class="form-check-input"
-                                type="checkbox"
-                                name="agente_evaluador_4[]"
-                                id="agente4_{{ forloop.counter }}"
-                                value="{{ agente_choice.0 }}"
-                                {% if guia and agente_choice.0 in guia.agente_evaluador_4 %}checked{% endif %}>
-                            <label class="form-check-label" for="agente4_{{ forloop.counter }}">
-                                {{ agente_choice.1 }}
-                            </label>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-
-            <div class="mb-3">
-                <label for="tiempo_minutos_4" class="form-label">Tiempo (minutos)</label>
-                <input type="number" class="form-control" id="tiempo_minutos_4" name="tiempo_minutos_4" value="{% if guia %}{{ guia.tiempo_minutos_4 }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="recursos_didacticos_4" class="form-label">Recursos Didácticos</label>
-                <textarea class="form-control" id="recursos_didacticos_4" name="recursos_didacticos_4" rows="3" required>{% if guia %}{{ guia.recursos_didacticos_4 }}{% endif %}</textarea>
-            </div>
-
-            <div class="mb-3">
-                <label for="periodo_tiempo_programado_4" class="form-label">Periodo de Tiempo Programado</label>
-                <select class="form-select" id="periodo_tiempo_programado_4" name="periodo_tiempo_programado_4" required>
-                    {% for periodo_choice in periodo_tiempo_choices %}
-                        <option value="{{ periodo_choice.0 }}" {% if guia and guia.periodo_tiempo_programado_4 == periodo_choice.0 %}selected{% endif %}>{{ periodo_choice.1 }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="puntaje_4" class="form-label">Puntaje</label>
-                <input type="number" class="form-control puntaje" id="puntaje_4" name="puntaje_4" value="{% if guia %}{{ guia.puntaje_4 }}{% endif %}" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="fecha_entrega_4" class="form-label">Fecha de Entrega</label>
-                <input type="date" class="form-control" id="fecha_entrega_4" name="fecha_entrega_4" value="{% if guia %}{{ guia.fecha_entrega_4|date:'Y-m-d' }}{% endif %}" required>
-            </div>
-        </div>
-    </div>
-
-    <!-- Validación de puntajes -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Validación de Puntajes</h5>
-        </div>
-        <div class="card-body">
-            <div class="alert alert-info">
-                <p class="mb-0">La suma de los puntajes de las 4 tareas debe ser exactamente 100 puntos.</p>
-                <p class="fw-bold mt-2 mb-0" id="sumaPuntajes">Suma actual: 0 puntos</p>
-            </div>
-        </div>
-    </div>
-
-
-</form>
-
-
-
+                            <h2 class="text-center">
+                                Guía de Estudio Independiente
+                            </h2>
+
+                            <!-- Datos de Django para JavaScript -->
+                            <script type="text/javascript">
+                                // Definir variables globales con los datos de Django
+                                var ASIGNACION_ID =
+                                    "{% if asignacion %}{{ asignacion.id|safe }}{% else %}null{% endif %}";
+                                var GUIA_ID =
+                                    "{% if guia %}{{ guia.id|safe }}{% else %}null{% endif %}";
+                                var SILABO_ID =
+                                    "{% if silabo %}{{ silabo.id|safe }}{% else %}null{% endif %}";
+
+                                // Log para depuración
+                                console.log(
+                                    "Plantilla formulario_estudio_independiente.html cargada",
+                                );
+                                console.log(
+                                    "ID de asignación recibido:",
+                                    ASIGNACION_ID,
+                                );
+                                console.log("ID de guía recibido:", GUIA_ID);
+                                console.log(
+                                    "ID de sílabo recibido:",
+                                    SILABO_ID,
+                                );
+                            </script>
+
+                            <form id="formEstudioIndependiente">
+                                {% csrf_token %}
+                                <!-- Campos ocultos para IDs -->
+                                <input
+                                    type="hidden"
+                                    id="asignacion_id"
+                                    name="asignacion_id"
+                                    value="{{ asignacion.id }}"
+                                />
+                                <input
+                                    type="hidden"
+                                    id="silabo_id"
+                                    name="silabo_id"
+                                    value="{% if silabo %}{{ silabo.id }}{% endif %}"
+                                />
+                                {% if guia %}<input
+                                    type="hidden"
+                                    id="guia_id"
+                                    name="guia_id"
+                                    value="{{ guia.id }}"
+                                />{% endif %}
+
+                                <div
+                                    class="d-flex justify-content-center align-items-center gap-3 flex-wrap mb-3"
+                                >
+                                    <div class="d-flex align-items-center">
+                                        <label class="form-label mb-0 me-2" for="modelo_select_estudio">Modelo:</label>
+                                        <select
+                                            id="modelo_select_estudio"
+                                            name="modelo_select"
+                                            class="form-select"
+                                            style="width: 200px"
+                                        >
+                                            <option value="google">
+                                                Google - Gemini
+                                            </option>
+                                            <option value="openai">
+                                                OpenAI - GPT
+                                            </option>
+                                            <option value="deepseek">
+                                                DeepSeek - Chat
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    {% include 'generar_plan_estudio/boton_generar_estudio.html' %}
+                                </div>
+
+                                <!-- Información General -->
+                                <div class="card mb-4 mt-3">
+                                    <div
+                                        class="card-header bg-primary text-white"
+                                    >
+                                        <h5 class="mb-0">
+                                            Información General
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Campo para Número de Encuentro (oculto) -->
+                                        <div class="mb-3 d-none">
+                                            <label
+                                                for="numero_encuentro"
+                                                class="form-label"
+                                                >Número de Encuentro</label
+                                            >
+                                            <input
+                                                type="number"
+                                                class="form-control"
+                                                id="numero_encuentro"
+                                                name="numero_encuentro"
+                                                value="{% if guia %}{{ guia.numero_encuentro }}{% else %}{{ encuentro }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label
+                                                for="fecha"
+                                                class="form-label"
+                                                >Fecha de la Guía</label
+                                            >
+                                            <input
+                                                type="date"
+                                                class="form-control"
+                                                id="fecha"
+                                                name="fecha"
+                                                value="{% if guia %}{{ guia.fecha|date:'Y-m-d' }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label
+                                                for="unidad"
+                                                class="form-label"
+                                                >Unidad</label
+                                            >
+                                            <select
+                                                class="form-select"
+                                                id="unidad"
+                                                name="unidad"
+                                                required
+                                            >
+                                                {% for unidad_choice in unidad_choices %}
+                                                <option
+                                                    value="{{ unidad_choice.0 }}"
+                                                    {% if guia and guia.unidad == unidad_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ unidad_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label
+                                                for="nombre_de_la_unidad"
+                                                class="form-label"
+                                                >Nombre de la Unidad</label
+                                            >
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="nombre_de_la_unidad"
+                                                name="nombre_de_la_unidad"
+                                                value="{% if guia %}{{ guia.nombre_de_la_unidad }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tarea 1 -->
+                                <div class="card mb-4">
+                                    <div
+                                        class="card-header bg-primary text-white"
+                                    >
+                                        <h5 class="mb-0">Tarea 1</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label
+                                                for="tipo_objetivo_1"
+                                                class="form-label"
+                                                >Tipo de Objetivo</label
+                                            >
+                                            <select
+                                                class="form-select"
+                                                id="tipo_objetivo_1"
+                                                name="tipo_objetivo_1"
+                                                required
+                                            >
+                                                {% for tipo_choice in tipo_objetivo_choices %}
+                                                <option
+                                                    value="{{ tipo_choice.0 }}"
+                                                    {% if guia and guia.tipo_objetivo_1 == tipo_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tipo_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label
+                                                for="objetivo_aprendizaje_1"
+                                                class="form-label"
+                                                >Objetivo de Aprendizaje</label
+                                            >
+                                            <textarea
+                                                class="form-control"
+                                                id="objetivo_aprendizaje_1"
+                                                name="objetivo_aprendizaje_1"
+                                                rows="2"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.objetivo_aprendizaje_1 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label
+                                                for="contenido_tematico_1"
+                                                class="form-label"
+                                                >Contenido Temático</label
+                                            >
+                                            <textarea
+                                                class="form-control"
+                                                id="contenido_tematico_1"
+                                                name="contenido_tematico_1"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.contenido_tematico_1 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="actividad_aprendizaje_1">Actividad de Aprendizaje</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="actividad_aprendizaje_1"
+                                                name="actividad_aprendizaje_1"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.actividad_aprendizaje_1 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tecnica_evaluacion_1">Técnica de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="tecnica_evaluacion_1"
+                                                name="tecnica_evaluacion_1"
+                                                required
+                                            >
+                                                {% for tecnica_choice in tecnica_evaluacion_choices %}
+                                                <option
+                                                    value="{{ tecnica_choice.0 }}"
+                                                    {% if guia and guia.tecnica_evaluacion_1 == tecnica_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tecnica_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tipo_evaluacion_1">Tipo de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="tipo_evaluacion_1"
+                                                name="tipo_evaluacion_1"
+                                                required
+                                            >
+                                                {% for tipo_eval_choice in tipo_evaluacion_choices %}
+                                                <option
+                                                    value="{{ tipo_eval_choice.0 }}"
+                                                    {% if guia and guia.tipo_evaluacion_1 == tipo_eval_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tipo_eval_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="instrumento_evaluacion_1">Instrumento de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="instrumento_evaluacion_1"
+                                                name="instrumento_evaluacion_1"
+                                                required
+                                            >
+                                                {% for instrumento_choice in instrumento_evaluacion_choices %}
+                                                <option
+                                                    value="{{ instrumento_choice.0 }}"
+                                                    {% if guia and guia.instrumento_evaluacion_1 == instrumento_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ instrumento_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="criterios_evaluacion_1">Criterios de Evaluación</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="criterios_evaluacion_1"
+                                                name="criterios_evaluacion_1"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.criterios_evaluacion_1 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="agente_evaluador_1">Agente Evaluador 1</label>
+                                            <div class="form-check">
+                                                {% for agente_choice in agente_evaluador_choices %}
+                                                <div class="form-check">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="agente_evaluador_1[]"
+                                                        value="{{ agente_choice.0 }}"
+                                                        id="agente_1_{{ forloop.counter }}"
+                                                    />
+                                                    <label
+                                                        class="form-check-label"
+                                                        for="agente_1_{{ forloop.counter }}">
+                                                        {{ agente_choice.1 }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tiempo_minutos_1">Tiempo (minutos)</label>
+                                            <input
+                                                type="number"
+                                                class="form-control"
+                                                id="tiempo_minutos_1"
+                                                name="tiempo_minutos_1"
+                                                value="{% if guia %}{{ guia.tiempo_minutos_1 }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="recursos_didacticos_1">Recursos Didácticos</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="recursos_didacticos_1"
+                                                name="recursos_didacticos_1"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.recursos_didacticos_1 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="periodo_tiempo_programado_1">Periodo de Tiempo Programado</label>
+                                            <select
+                                                class="form-select"
+                                                id="periodo_tiempo_programado_1"
+                                                name="periodo_tiempo_programado_1"
+                                                required
+                                            >
+                                                {% for periodo_choice in periodo_tiempo_choices %}
+                                                <option
+                                                    value="{{ periodo_choice.0 }}"
+                                                    {% if guia and guia.periodo_tiempo_programado_1 == periodo_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ periodo_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="puntaje_1">Puntaje</label>
+                                            <input
+                                                type="number"
+                                                class="form-control puntaje"
+                                                id="puntaje_1"
+                                                name="puntaje_1"
+                                                value="{% if guia %}{{ guia.puntaje_1 }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="fecha_entrega_1">Fecha de Entrega</label>
+                                            <input
+                                                type="date"
+                                                class="form-control"
+                                                id="fecha_entrega_1"
+                                                name="fecha_entrega_1"
+                                                value="{% if guia %}{{ guia.fecha_entrega_1|date:'Y-m-d' }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tarea 2 -->
+                                <div class="card mb-4">
+                                    <div
+                                        class="card-header bg-primary text-white"
+                                    >
+                                        <h5 class="mb-0">Tarea 2</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tipo_objetivo_2">Tipo de Objetivo</label>
+                                            <select
+                                                class="form-select"
+                                                id="tipo_objetivo_2"
+                                                name="tipo_objetivo_2"
+                                                required
+                                            >
+                                                {% for tipo_choice in tipo_objetivo_choices %}
+                                                <option
+                                                    value="{{ tipo_choice.0 }}"
+                                                    {% if guia and guia.tipo_objetivo_2 == tipo_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tipo_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="objetivo_aprendizaje_2">Objetivo de Aprendizaje</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="objetivo_aprendizaje_2"
+                                                name="objetivo_aprendizaje_2"
+                                                rows="2"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.objetivo_aprendizaje_2 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="contenido_tematico_2">Contenido Temático</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="contenido_tematico_2"
+                                                name="contenido_tematico_2"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.contenido_tematico_2 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="actividad_aprendizaje_2">Actividad de Aprendizaje</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="actividad_aprendizaje_2"
+                                                name="actividad_aprendizaje_2"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.actividad_aprendizaje_2 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tecnica_evaluacion_2">Técnica de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="tecnica_evaluacion_2"
+                                                name="tecnica_evaluacion_2"
+                                                required
+                                            >
+                                                {% for tecnica_choice in tecnica_evaluacion_choices %}
+                                                <option
+                                                    value="{{ tecnica_choice.0 }}"
+                                                    {% if guia and guia.tecnica_evaluacion_2 == tecnica_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tecnica_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tipo_evaluacion_2">Tipo de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="tipo_evaluacion_2"
+                                                name="tipo_evaluacion_2"
+                                                required
+                                            >
+                                                {% for tipo_eval_choice in tipo_evaluacion_choices %}
+                                                <option
+                                                    value="{{ tipo_eval_choice.0 }}"
+                                                    {% if guia and guia.tipo_evaluacion_2 == tipo_eval_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tipo_eval_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="instrumento_evaluacion_2">Instrumento de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="instrumento_evaluacion_2"
+                                                name="instrumento_evaluacion_2"
+                                                required
+                                            >
+                                                {% for instrumento_choice in instrumento_evaluacion_choices %}
+                                                <option
+                                                    value="{{ instrumento_choice.0 }}"
+                                                    {% if guia and guia.instrumento_evaluacion_2 == instrumento_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ instrumento_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="criterios_evaluacion_2">Criterios de Evaluación</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="criterios_evaluacion_2"
+                                                name="criterios_evaluacion_2"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.criterios_evaluacion_2 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Agente Evaluador 2</label>
+                                            <div class="form-check">
+                                                {% for agente_choice in agente_evaluador_choices %}
+                                                <div class="form-check">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="agente_evaluador_2[]"
+                                                        value="{{ agente_choice.0 }}"
+                                                        id="agente_2_{{ forloop.counter }}"
+                                                    />
+                                                    <label
+                                                        class="form-check-label"
+                                                        for="agente_2_{{ forloop.counter }}"
+                                                    >
+                                                        {{ agente_choice.1 }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tiempo_minutos_2">Tiempo (minutos)</label>
+                                            <input
+                                                type="number"
+                                                class="form-control"
+                                                id="tiempo_minutos_2"
+                                                name="tiempo_minutos_2"
+                                                value="{% if guia %}{{ guia.tiempo_minutos_2 }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="recursos_didacticos_2">Recursos Didácticos</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="recursos_didacticos_2"
+                                                name="recursos_didacticos_2"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.recursos_didacticos_2 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="periodo_tiempo_programado_2">Periodo de Tiempo Programado</label>
+                                            <select
+                                                class="form-select"
+                                                id="periodo_tiempo_programado_2"
+                                                name="periodo_tiempo_programado_2"
+                                                required
+                                            >
+                                                {% for periodo_choice in periodo_tiempo_choices %}
+                                                <option
+                                                    value="{{ periodo_choice.0 }}"
+                                                    {% if guia and guia.periodo_tiempo_programado_2 == periodo_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ periodo_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="puntaje_2">Puntaje</label>
+                                            <input
+                                                type="number"
+                                                class="form-control puntaje"
+                                                id="puntaje_2"
+                                                name="puntaje_2"
+                                                value="{% if guia %}{{ guia.puntaje_2 }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="fecha_entrega_2">Fecha de Entrega</label>
+                                            <input
+                                                type="date"
+                                                class="form-control"
+                                                id="fecha_entrega_2"
+                                                name="fecha_entrega_2"
+                                                value="{% if guia %}{{ guia.fecha_entrega_2|date:'Y-m-d' }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tarea 3 -->
+                                <div class="card mb-4">
+                                    <div
+                                        class="card-header bg-primary text-white"
+                                    >
+                                        <h5 class="mb-0">Tarea 3</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tipo_objetivo_3">Tipo de Objetivo</label>
+                                            <select
+                                                class="form-select"
+                                                id="tipo_objetivo_3"
+                                                name="tipo_objetivo_3"
+                                                required
+                                            >
+                                                {% for tipo_choice in tipo_objetivo_choices %}
+                                                <option
+                                                    value="{{ tipo_choice.0 }}"
+                                                    {% if guia and guia.tipo_objetivo_3 == tipo_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tipo_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="objetivo_aprendizaje_3">Objetivo de Aprendizaje</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="objetivo_aprendizaje_3"
+                                                name="objetivo_aprendizaje_3"
+                                                rows="2"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.objetivo_aprendizaje_3 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="contenido_tematico_3">Contenido Temático</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="contenido_tematico_3"
+                                                name="contenido_tematico_3"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.contenido_tematico_3 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="contenido_tematico_3">Contenido Temático</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="contenido_tematico_3"
+                                                name="contenido_tematico_3"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.contenido_tematico_3 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="actividad_aprendizaje_3">Actividad de Aprendizaje</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="actividad_aprendizaje_3"
+                                                name="actividad_aprendizaje_3"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.actividad_aprendizaje_3 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tecnica_evaluacion_3">Técnica de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="tecnica_evaluacion_3"
+                                                name="tecnica_evaluacion_3"
+                                                required
+                                            >
+                                                {% for tecnica_choice in tecnica_evaluacion_choices %}
+                                                <option
+                                                    value="{{ tecnica_choice.0 }}"
+                                                    {% if guia and guia.tecnica_evaluacion_3 == tecnica_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tecnica_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tipo_evaluacion_3">Tipo de Evaluación</label>
+                                            <!-- Select form for choosing the evaluation type for the third activity -->
+                                            <!-- Includes options for written, oral, and practical evaluations -->
+                                            <select
+                                                class="form-select"
+                                                id="tipo_evaluacion_3"
+                                                name="tipo_evaluacion_3"
+                                                required
+                                            >
+                                                {% for tipo_eval_choice in tipo_evaluacion_choices %}
+                                                <option
+                                                    value="{{ tipo_eval_choice.0 }}"
+                                                    {% if guia and guia.tipo_evaluacion_3 == tipo_eval_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tipo_eval_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="instrumento_evaluacion_3">Instrumento de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="instrumento_evaluacion_3"
+                                                name="instrumento_evaluacion_3"
+                                                required
+                                            >
+                                                {% for instrumento_choice in instrumento_evaluacion_choices %}
+                                                <option
+                                                    value="{{ instrumento_choice.0 }}"
+                                                    {% if guia and guia.instrumento_evaluacion_3 == instrumento_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ instrumento_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="criterios_evaluacion_3">Criterios de Evaluación</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="criterios_evaluacion_3"
+                                                name="criterios_evaluacion_3"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.criterios_evaluacion_3 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Agente Evaluador 3</label>
+                                            <div class="form-check">
+                                                {% for agente_choice in agente_evaluador_choices %}
+                                                <div class="form-check">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="agente_evaluador_3[]"
+                                                        value="{{ agente_choice.0 }}"
+                                                        id="agente_3_{{ forloop.counter }}"
+                                                    />
+                                                    <label
+                                                        class="form-check-label"
+                                                        for="agente_3_{{ forloop.counter }}"
+                                                    >
+                                                        {{ agente_choice.1 }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tiempo_minutos_3">Tiempo (minutos)</label>
+                                            <input
+                                                type="number"
+                                                class="form-control"
+                                                id="tiempo_minutos_3"
+                                                name="tiempo_minutos_3"
+                                                value="{% if guia %}{{ guia.tiempo_minutos_3 }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="recursos_didacticos_3">Recursos Didácticos 3</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="recursos_didacticos_3"
+                                                name="recursos_didacticos_3"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.recursos_didacticos_3 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="periodo_tiempo_programado_3">Periodo de Tiempo Programado 3</label>
+                                            <select
+                                                class="form-select"
+                                                id="periodo_tiempo_programado_3"
+                                                name="periodo_tiempo_programado_3"
+                                                required
+                                            >
+                                                {% for periodo_choice in periodo_tiempo_choices %}
+                                                <option
+                                                    value="{{ periodo_choice.0 }}"
+                                                    {% if guia and guia.periodo_tiempo_programado_3 == periodo_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ periodo_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="puntaje_3">Puntaje 3</label>
+                                            <input
+                                                type="number"
+                                                class="form-control puntaje"
+                                                id="puntaje_3"
+                                                name="puntaje_3"
+                                                value="{% if guia %}{{ guia.puntaje_3 }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="fecha_entrega_3">Fecha de Entrega 3</label>
+                                            <input
+                                                type="date"
+                                                class="form-control"
+                                                id="fecha_entrega_3"
+                                                name="fecha_entrega_3"
+                                                value="{% if guia %}{{ guia.fecha_entrega_3|date:'Y-m-d' }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tarea 4 -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0">Tarea 4</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tipo_objetivo_4">Tipo de Objetivo 4</label>
+                                            <select
+                                                class="form-select"
+                                                id="tipo_objetivo_4"
+                                                name="tipo_objetivo_4"
+                                                required
+                                            >
+                                                {% for tipo_choice in tipo_objetivo_choices %}
+                                                <option
+                                                    value="{{ tipo_choice.0 }}"
+                                                    {% if guia and guia.tipo_objetivo_4 == tipo_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tipo_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="objetivo_aprendizaje_4">Objetivo de Aprendizaje</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="objetivo_aprendizaje_4"
+                                                name="objetivo_aprendizaje_4"
+                                                rows="2"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.objetivo_aprendizaje_4 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="contenido_tematico_4">Contenido Temático</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="contenido_tematico_4"
+                                                name="contenido_tematico_4"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.contenido_tematico_4 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="actividad_aprendizaje_4">Actividad de Aprendizaje</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="actividad_aprendizaje_4"
+                                                name="actividad_aprendizaje_4"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.actividad_aprendizaje_4 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tecnica_evaluacion_4">Técnica de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="tecnica_evaluacion_4"
+                                                name="tecnica_evaluacion_4"
+                                                required
+                                            >
+                                                {% for tecnica_choice in tecnica_evaluacion_choices %}
+                                                <option
+                                                    value="{{ tecnica_choice.0 }}"
+                                                    {% if guia and guia.tecnica_evaluacion_4 == tecnica_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tecnica_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tipo_evaluacion_4">Tipo de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="tipo_evaluacion_4"
+                                                name="tipo_evaluacion_4"
+                                                required
+                                            >
+                                                {% for tipo_eval_choice in tipo_evaluacion_choices %}
+                                                <option
+                                                    value="{{ tipo_eval_choice.0 }}"
+                                                    {% if guia and guia.tipo_evaluacion_4 == tipo_eval_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ tipo_eval_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="instrumento_evaluacion_4">Instrumento de Evaluación</label>
+                                            <select
+                                                class="form-select"
+                                                id="instrumento_evaluacion_4"
+                                                name="instrumento_evaluacion_4"
+                                                required
+                                            >
+                                                {% for instrumento_choice in instrumento_evaluacion_choices %}
+                                                <option
+                                                    value="{{ instrumento_choice.0 }}"
+                                                    {% if guia and guia.instrumento_evaluacion_4 == instrumento_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ instrumento_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="criterios_evaluacion_4">Criterios de Evaluación</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="criterios_evaluacion_4"
+                                                name="criterios_evaluacion_4"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.criterios_evaluacion_4 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Agente Evaluador 4</label>
+                                            <div class="form-check">
+                                                {% for agente_choice in agente_evaluador_choices %}
+                                                <div class="form-check">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="agente_evaluador_4[]"
+                                                        value="{{ agente_choice.0 }}"
+                                                        id="agente_4_{{ forloop.counter }}"
+                                                    />
+                                                    <label class="form-check-label" for="agente_4_{{ forloop.counter }}">
+                                                        {{ agente_choice.1 }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="tiempo_minutos_4">Tiempo (minutos)</label>
+                                            <input
+                                                type="number"
+                                                class="form-control"
+                                                id="tiempo_minutos_4"
+                                                name="tiempo_minutos_4"
+                                                value="{% if guia %}{{ guia.tiempo_minutos_4 }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="recursos_didacticos_4">Recursos Didácticos</label>
+                                            <textarea
+                                                class="form-control"
+                                                id="recursos_didacticos_4"
+                                                name="recursos_didacticos_4"
+                                                rows="3"
+                                                required
+                                            >
+                                                {% if guia %}{{ guia.recursos_didacticos_4 }}{% endif %}
+                                            </textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label
+                                                for="periodo_tiempo_programado_4"
+                                                class="form-label"
+                                                >Periodo de Tiempo
+                                                Programado</label
+                                            >
+                                            <select
+                                                class="form-select"
+                                                id="periodo_tiempo_programado_4"
+                                                name="periodo_tiempo_programado_4"
+                                                required
+                                            >
+                                                {% for periodo_choice in periodo_tiempo_choices %}
+                                                <option
+                                                    value="{{ periodo_choice.0 }}"
+                                                    {% if guia and guia.periodo_tiempo_programado_4 == periodo_choice.0 %}
+                                                    selected
+                                                    {% endif %}
+                                                >
+                                                    {{ periodo_choice.1 }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="puntaje_4">Puntaje 4</label>
+                                            <input
+                                                type="number"
+                                                class="form-control puntaje"
+                                                id="puntaje_4"
+                                                name="puntaje_4"
+                                                value="{% if guia %}{{ guia.puntaje_4 }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label" for="fecha_entrega_4">Fecha de Entrega 4</label>
+                                            <input
+                                                type="date"
+                                                class="form-control"
+                                                id="fecha_entrega_4"
+                                                name="fecha_entrega_4"
+                                                value="{% if guia %}{{ guia.fecha_entrega_4|date:'Y-m-d' }}{% endif %}"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Validación de puntajes -->
+                                <div class="card mb-4">
+                                    <div
+                                        class="card-header bg-primary text-white"
+                                    >
+                                        <h5 class="mb-0">
+                                            Validación de Puntajes
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-info">
+                                            <p class="mb-0">
+                                                La suma de los puntajes de las 4
+                                                tareas debe ser exactamente 100
+                                                puntos.
+                                            </p>
+                                            <p
+                                                class="fw-bold mt-2 mb-0"
+                                                id="sumaPuntajes"
+                                            >
+                                                Suma actual: 0 puntos
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -577,7 +1200,10 @@
                     </div>
                     <div class="custom-alert-content">
                         <h4 class="mb-2">¡Atención!</h4>
-                        <p class="mb-0">Esta IA puede cometer errores. Por favor, revise la información cuidadosamente antes de guardarla.</p>
+                        <p class="mb-0">
+                            Esta IA puede cometer errores. Por favor, revise la
+                            información cuidadosamente antes de guardarla.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -586,17 +1212,22 @@
         <!-- Botón único para guardar ambos formularios -->
         <div class="row justify-content-center mt-4 mb-5">
             <div class="col-lg-4 col-md-8 col-sm-12 text-center">
-                <button type="button" class="btn btn-success w-100 save-btn transition-btn" id="guardarFormularioBtn">
+                <button
+                    type="button"
+                    class="btn btn-success w-100 save-btn transition-btn"
+                    id="guardarFormularioBtn"
+                >
                     <i class="fas fa-save fa-lg me-2"></i> Guardar Formularios
-                    <div id="spinnerGuardar" class="spinner-border spinner-border-sm d-none ms-2" role="status">
+                    <div
+                        id="spinnerGuardar"
+                        class="spinner-border spinner-border-sm d-none ms-2"
+                        role="status"
+                    >
                         <span class="visually-hidden">Loading...</span>
                     </div>
                 </button>
             </div>
         </div>
-
-
-
     </div>
 </div>
 
@@ -645,7 +1276,7 @@
     }
 
     .custom-alert::before {
-        content: '';
+        content: "";
         position: absolute;
         top: 0;
         left: 0;

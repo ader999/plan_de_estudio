@@ -3,6 +3,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models.functions.text import CharField
 from django.utils.regex_helper import Choice
 from multiselectfield import MultiSelectField
 
@@ -34,7 +35,7 @@ class Carrera(models.Model):
         ('Artes y Humanidades', 'Artes y Humanidades'),
         ('Ciencias Sociales, Periodismo e información', 'Ciencias Sociales, Periodismo e información'),
         ('Administración de empresas y derecho', 'Administración de empresas y derecho'),
-        ('Tecnologíasde la información', 'Tecnologíasde la información'),
+        ('Tecnologías de la información', 'Tecnologías de la información'),
         ('Agricultura', 'Agricultura'),
         ('Salud y servicios sociales ', 'Salud y servicios sociales ')
     ]
@@ -392,7 +393,7 @@ class Guia(models.Model):
     contenido_tematico_1 = models.TextField(verbose_name="Contenido temático 1")
     actividad_aprendizaje_1 = models.TextField(verbose_name="Actividad aprendizaje 1")
     tecnica_evaluacion_1 = models.CharField(max_length=100, choices=Silabo.TECNICA_EVALUACION_LIST, verbose_name="Técnica evaluación 1")
-    tipo_evaluacion_1 = MultiSelectField(max_length=200, choices=Silabo.TIPO_EVALUACION_LIST, verbose_name="Tipo evaluación 1", max_choices=2)
+    tipo_evaluacion_1 = models.CharField(max_length=100, choices=Silabo.TIPO_EVALUACION_LIST, verbose_name="Tipo evaluación 1")
     instrumento_evaluacion_1 = models.CharField(max_length=100, choices=Silabo.INSTRUMENTO_EVALUACION_LIST, verbose_name="Instrumento evaluación 1")
     criterios_evaluacion_1 = models.TextField(verbose_name="Criterios evaluación 1")
     agente_evaluador_1 = MultiSelectField(max_length=200, choices=Silabo.AGENTE_EVALUADOR_LIST, verbose_name="Agente evaluador 1",  max_choices=2)
@@ -408,7 +409,7 @@ class Guia(models.Model):
     contenido_tematico_2 = models.TextField(verbose_name="Contenido temático 2")
     actividad_aprendizaje_2 = models.TextField(verbose_name="Actividad aprendizaje 2")
     tecnica_evaluacion_2 = models.CharField(max_length=100, choices=Silabo.TECNICA_EVALUACION_LIST, verbose_name="Técnica evaluación 2")
-    tipo_evaluacion_2 = MultiSelectField(max_length=200, choices=Silabo.TIPO_EVALUACION_LIST, verbose_name="Tipo evaluación 2", max_choices=2)
+    tipo_evaluacion_2 = models.CharField(max_length=100, choices=Silabo.TIPO_EVALUACION_LIST, verbose_name="Tipo evaluación 2")
     instrumento_evaluacion_2 = models.CharField(max_length=100, choices=Silabo.INSTRUMENTO_EVALUACION_LIST, verbose_name="Instrumento evaluación 2")
     criterios_evaluacion_2 = models.TextField(verbose_name="Criterios evaluación 2")
     agente_evaluador_2 = MultiSelectField(max_length=100, choices=Silabo.AGENTE_EVALUADOR_LIST, verbose_name="Agente evaluador 2", max_choices=2)
@@ -424,7 +425,7 @@ class Guia(models.Model):
     contenido_tematico_3 = models.TextField(verbose_name="Contenido temático 3")
     actividad_aprendizaje_3 = models.TextField(verbose_name="Actividad aprendizaje 3")
     tecnica_evaluacion_3 = models.CharField(max_length=100, choices=Silabo.TECNICA_EVALUACION_LIST, verbose_name="Técnica evaluación 3")
-    tipo_evaluacion_3 = MultiSelectField(max_length=200, choices=Silabo.TIPO_EVALUACION_LIST, verbose_name="Tipo evaluación 3", max_choices=2)
+    tipo_evaluacion_3 = models.CharField(max_length=100, choices=Silabo.TIPO_EVALUACION_LIST, verbose_name="Tipo evaluación 3")
     instrumento_evaluacion_3 = models.CharField(max_length=100, choices=Silabo.INSTRUMENTO_EVALUACION_LIST, verbose_name="Instrumento evaluación 3")
     criterios_evaluacion_3 = models.TextField(verbose_name="Criterios evaluación 3")
     agente_evaluador_3 = MultiSelectField(max_length=200, choices=Silabo.AGENTE_EVALUADOR_LIST, verbose_name="Agente evaluador 3", max_choices=2)
@@ -440,7 +441,7 @@ class Guia(models.Model):
     contenido_tematico_4 = models.TextField(verbose_name="Contenido temático 4")
     actividad_aprendizaje_4 = models.TextField(verbose_name="Actividad aprendizaje 4")
     tecnica_evaluacion_4 = models.CharField(max_length=100, choices=Silabo.TECNICA_EVALUACION_LIST, verbose_name="Técnica evaluación 4")
-    tipo_evaluacion_4 = MultiSelectField(max_length=200, choices=Silabo.TIPO_EVALUACION_LIST, verbose_name="Tipo evaluación 4", max_choices=2)
+    tipo_evaluacion_4 = models.CharField(max_length=200, choices=Silabo.TIPO_EVALUACION_LIST, verbose_name="Tipo evaluación 4")
     instrumento_evaluacion_4 = models.CharField(max_length=100, choices=Silabo.INSTRUMENTO_EVALUACION_LIST, verbose_name="Instrumento evaluación 4")
     criterios_evaluacion_4 = models.TextField(verbose_name="Criterios evaluación 4")
     agente_evaluador_4 = MultiSelectField(max_length=200, choices=Silabo.AGENTE_EVALUADOR_LIST, verbose_name="Agente evaluador 4", max_choices=2)

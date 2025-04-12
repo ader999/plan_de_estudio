@@ -171,8 +171,8 @@ def generar_excel_original(request):
             # Carga la plantilla de Excel
             wb = load_workbook(template_path)
 
-            # Selecciona una hoja de cálculo (worksheet) si es necesario
-            ws = wb.active  # O selecciona una hoja específica
+            # Selecciona la segunda hoja de cálculo
+            ws = wb.worksheets[1]  # Índice 1 para la segunda hoja
 
             # Datos generales del sílabo que solo se escriben una vez
             safe_write_cell(ws, 7, 4, silabo.asignacion_plan.usuario.first_name + " " + silabo.asignacion_plan.usuario.last_name)
@@ -180,9 +180,16 @@ def generar_excel_original(request):
             safe_write_cell(ws, 5, 11, silabo.asignacion_plan.plan_de_estudio.año)
             safe_write_cell(ws, 5, 12, silabo.asignacion_plan.plan_de_estudio.trimestre)
             safe_write_cell(ws, 5, 9, silabo.asignacion_plan.plan_de_estudio.asignatura.nombre)
+
             safe_write_cell(ws, 5, 6, silabo.asignacion_plan.plan_de_estudio.carrera.nombre)
             safe_write_cell(ws, 5, 3, silabo.asignacion_plan.plan_de_estudio.carrera.codigo)
+            safe_write_cell(ws, 5, 4, silabo.asignacion_plan.plan_de_estudio.carrera.cine_2011)
+            safe_write_cell(ws, 5, 5, silabo.asignacion_plan.plan_de_estudio.carrera.cine_2013)
+            safe_write_cell(ws, 5, 7, silabo.asignacion_plan.plan_de_estudio.carrera.area_formacion)
+            safe_write_cell(ws, 5, 8, silabo.asignacion_plan.plan_de_estudio.carrera.area_disiplinaria)
 
+            safe_write_cell(ws, 7, 7, silabo.asignacion_plan.plan_de_estudio.horas_presenciales)
+            safe_write_cell(ws, 7, 8, silabo.asignacion_plan.plan_de_estudio.horas_estudio_independiente)
 
             safe_write_cell(ws, 7, 10, silabo.asignacion_plan.plan_de_estudio.pr.nombre if silabo.asignacion_plan.plan_de_estudio.pr else "N/A")
             safe_write_cell(ws, 7, 11, silabo.asignacion_plan.plan_de_estudio.pc.nombre if silabo.asignacion_plan.plan_de_estudio.pc else "N/A")
@@ -228,24 +235,24 @@ def generar_excel_original(request):
                     safe_write_cell(ws, 17+row_num, 8, silabo_actual.tipo_segundo_momento_practica)
                     safe_write_cell(ws, 16+row_num, 9, silabo_actual.clase_practica)
                     safe_write_cell(ws, 14+row_num, 10, silabo_actual.tiempo_segundo_momento_teorica)
-                    safe_write_cell(ws, 15+row_num, 10, silabo_actual.tiempo_segundo_momento_practica)
+                    safe_write_cell(ws, 16+row_num, 10, silabo_actual.tiempo_segundo_momento_practica)
                     safe_write_cell(ws, 14+row_num, 11, silabo_actual.recursos_segundo_momento)
 
-                    safe_write_cell(ws, 19+row_num, 8, silabo_actual.tipo_tercer_momento[0] +", "+ silabo_actual.tipo_tercer_momento[1])
+                    safe_write_cell(ws, 19+row_num, 8, ", ".join(silabo_actual.tipo_tercer_momento[:2]))
                     safe_write_cell(ws, 19+row_num, 9, silabo_actual.detalle_tercer_momento)
                     safe_write_cell(ws, 19+row_num, 10, silabo_actual.tiempo_tercer_momento)
                     safe_write_cell(ws, 19+row_num, 11, silabo_actual.recursos_tercer_momento)
 
-                    safe_write_cell(ws, 11+row_num, 12, silabo_actual.eje_transversal[0] +", "+ silabo_actual.eje_transversal[1])
+                    safe_write_cell(ws, 11+row_num, 12, ", ".join(silabo_actual.eje_transversal[:2]))
                     safe_write_cell(ws, 12+row_num, 12, silabo_actual.detalle_eje_transversal)
 
                     #evaluacion dinamica
                     safe_write_cell(ws, 12+row_num, 14, silabo_actual.actividad_aprendizaje)
-                    safe_write_cell(ws, 13+row_num, 14, silabo_actual.tecnica_evaluacion[0] + ", " + silabo_actual.tecnica_evaluacion[1])
-                    safe_write_cell(ws, 14+row_num, 14, silabo_actual.tipo_evaluacion[0] + ", " + silabo_actual.tipo_evaluacion[1])
+                    safe_write_cell(ws, 13+row_num, 14, ", ".join(silabo_actual.tecnica_evaluacion[:2]))
+                    safe_write_cell(ws, 14+row_num, 14, ", ".join(silabo_actual.tipo_evaluacion[:2]))
                     safe_write_cell(ws, 15+row_num, 14, silabo_actual.periodo_tiempo_programado)
                     safe_write_cell(ws, 16+row_num, 14, silabo_actual.tiempo_minutos)
-                    safe_write_cell(ws, 17+row_num, 14, silabo_actual.agente_evaluador[0] + ", " + silabo_actual.agente_evaluador[1])
+                    safe_write_cell(ws, 17+row_num, 14, ", ".join(silabo_actual.agente_evaluador[:2]))
                     safe_write_cell(ws, 18+row_num, 14, silabo_actual.instrumento_evaluacion)
                     safe_write_cell(ws, 19+row_num, 14, silabo_actual.criterios_evaluacion)
                     safe_write_cell(ws, 20+row_num, 14, silabo_actual.puntaje)
@@ -270,7 +277,7 @@ def generar_excel_original(request):
                             safe_write_cell(ws, 26+row_num_guia, 9, guia.tipo_evaluacion_1)
                             safe_write_cell(ws, 27+row_num_guia, 9, guia.instrumento_evaluacion_1)
                             safe_write_cell(ws, 28+row_num_guia, 9, guia.criterios_evaluacion_1)
-                            safe_write_cell(ws, 29+row_num_guia, 9, guia.agente_evaluador_1[0] +", " + guia.agente_evaluador_1[1])
+                            safe_write_cell(ws, 29+row_num_guia, 9, ", ".join(guia.agente_evaluador_1[:2]))
                             safe_write_cell(ws, 23+row_num_guia, 10, guia.tiempo_minutos_1)
                             safe_write_cell(ws, 23+row_num_guia, 11, guia.recursos_didacticos_1)
                             safe_write_cell(ws, 23+row_num_guia, 13, guia.periodo_tiempo_programado_1)
@@ -285,7 +292,7 @@ def generar_excel_original(request):
                             safe_write_cell(ws, 34+row_num_guia, 9, guia.tipo_evaluacion_2)
                             safe_write_cell(ws, 35+row_num_guia, 9, guia.instrumento_evaluacion_2)
                             safe_write_cell(ws, 36+row_num_guia, 9, guia.criterios_evaluacion_2)
-                            safe_write_cell(ws, 37+row_num_guia, 9, guia.agente_evaluador_2[0] +", " + guia.agente_evaluador_2[1])
+                            safe_write_cell(ws, 37+row_num_guia, 9, ", ".join(guia.agente_evaluador_2[:2]))
                             safe_write_cell(ws, 31+row_num_guia, 10, guia.tiempo_minutos_2)
                             safe_write_cell(ws, 31+row_num_guia, 11, guia.recursos_didacticos_2)
                             safe_write_cell(ws, 31+row_num_guia, 13, guia.periodo_tiempo_programado_2)
@@ -300,7 +307,7 @@ def generar_excel_original(request):
                             safe_write_cell(ws, 42+row_num_guia, 9, guia.tipo_evaluacion_3)
                             safe_write_cell(ws, 43+row_num_guia, 9, guia.instrumento_evaluacion_3)
                             safe_write_cell(ws, 44+row_num_guia, 9, guia.criterios_evaluacion_3)
-                            safe_write_cell(ws, 45+row_num_guia, 9, guia.agente_evaluador_3[0] +", " + guia.agente_evaluador_3[1])
+                            safe_write_cell(ws, 45+row_num_guia, 9, ", ".join(guia.agente_evaluador_3[:2]))
                             safe_write_cell(ws, 39+row_num_guia, 10, guia.tiempo_minutos_3)
                             safe_write_cell(ws, 39+row_num_guia, 11, guia.recursos_didacticos_3)
                             safe_write_cell(ws, 39+row_num_guia, 13, guia.periodo_tiempo_programado_3)
@@ -315,7 +322,7 @@ def generar_excel_original(request):
                             safe_write_cell(ws, 50+row_num_guia, 9, guia.tipo_evaluacion_4)
                             safe_write_cell(ws, 51+row_num_guia, 9, guia.instrumento_evaluacion_4)
                             safe_write_cell(ws, 52+row_num_guia, 9, guia.criterios_evaluacion_4)
-                            safe_write_cell(ws, 53+row_num_guia, 9, guia.agente_evaluador_4[0] + ", "+ guia.agente_evaluador_4[1])
+                            safe_write_cell(ws, 53+row_num_guia, 9, ", ".join(guia.agente_evaluador_4[:2]))
                             safe_write_cell(ws, 47+row_num_guia, 10, guia.tiempo_minutos_4)
                             safe_write_cell(ws, 47+row_num_guia, 11, guia.recursos_didacticos_4)
                             safe_write_cell(ws, 47+row_num_guia, 13, guia.periodo_tiempo_programado_4)
@@ -333,7 +340,7 @@ def generar_excel_original(request):
                 print("Generando respuesta con el archivo Excel...")
                 # Guarda el archivo Excel en memoria
                 response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                response['Content-Disposition'] = f'attachment; filename=silabo_{silabo.codigo}.xlsx'
+                response['Content-Disposition'] = f'attachment; filename=silabo_{silabo.asignacion_plan.usuario.username+ " "+silabo.asignacion_plan.plan_de_estudio.asignatura.nombre}.xlsx'
                 wb.save(response)
                 print("Archivo Excel generado correctamente")
                 return response
