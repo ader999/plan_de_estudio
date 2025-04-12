@@ -261,10 +261,10 @@
                                             <tr>
                                                 <td width="5%">1</td>
                                                 <td width="20%">N° de encuentro</td>
-                                                <td width="25%">{{ silabo.encuentros }}</td>
+                                                <td width="25%">{{ silabo.numero_encuentro }}</td>
                                                 <td width="5%">7</td>
                                                 <td width="20%">Asignatura:</td>
-                                                <td width="25%">{{ silabo.asignatura.nombre }}</td>
+                                                <td width="25%">{{ silabo.asignacion_plan.plan_de_estudio.asignatura }}</td>
                                             </tr>
                                             <tr>
                                                 <td>2</td>
@@ -272,20 +272,20 @@
                                                 <td>{{ silabo.fecha }}</td>
                                                 <td>8</td>
                                                 <td>Cód. de asignatura:</td>
-                                                <td>{{ silabo.asignatura.codigo }}</td>
+                                                <td>{{ silabo.asignacion_plan.plan_de_estudio.codigo }}</td>
                                             </tr>
                                             <tr>
                                                 <td>3</td>
-                                                <td>Sede:</td>
-                                                <td>{{ silabo.asignacion.sede }}</td>
+                                                <td>Sede</td>
+                                                <td>{{ silabo.asignacion_plan.usuario.perfil.sede }} - Jalapa</td>
                                                 <td>9</td>
                                                 <td>Trimestre:</td>
-                                                <td>{{ silabo.asignacion.trimestre }}</td>
+                                                <td>{{ silabo.asignacion_plan.plan_de_estudio.trimestre }}</td>
                                             </tr>
                                             <tr>
                                                 <td>4</td>
                                                 <td>Carrera:</td>
-                                                <td>{{ silabo.asignacion.carrera }}</td>
+                                                <td>{{ silabo.asignacion_plan.plan_de_estudio.carrera }}</td>
                                                 <td>10</td>
                                                 <td>Año Lectivo:</td>
                                                 <td>{{ silabo.anio_lectivo }}</td>
@@ -293,15 +293,23 @@
                                             <tr>
                                                 <td>5</td>
                                                 <td>Año académico:</td>
-                                                <td>{{ silabo.asignatura.año }}</td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
+                                                <td>{{ silabo.asignacion_plan.plan_de_estudio.año }}</td>
+                                                <td>11</td>
+                                                <td>Unidad:</td>
+                                                <td>{{ silabo.unidad }}</td>
                                             </tr>
                                             <tr>
                                                 <td>6</td>
                                                 <td>Mediador:</td>
-                                                <td colspan="4">{{ silabo.maestro }}</td>
+                                                <td colspan="4">{{ silabo.asignacion_plan.usuario.get_full_name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>12</td>
+                                                <td>Hora:</td>
+                                                <td>{{ silabo.hora_inicio }} - {{ silabo.hora_fin }}</td>
+                                                <td>13</td>
+                                                <td>Salón:</td>
+                                                <td>{{ silabo.salon }}</td>
                                             </tr>
                                         </tbody>
                                     </table>

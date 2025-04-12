@@ -335,6 +335,10 @@ function generarEstudioIndependiente(asignacionId, silaboId) {
     url: "/generar-estudio-independiente/",
     type: "POST",
     data: requestData,
+    timeout: 120000, // 2 minutos
+    beforeSend: function(xhr) {
+      xhr.setRequestHeader('X-CSRFToken', $('input[name=csrfmiddlewaretoken]').val());
+    },
     success: function (response) {
       console.log("Respuesta recibida:", response);
 
@@ -455,8 +459,13 @@ function generarEstudioIndependiente(asignacionId, silaboId) {
     error: function (xhr, status, error) {
       console.error("Error en la solicitud AJAX:", error);
       ocultarSpinnerEstudio();
-      alert("Error al comunicarse con el servidor");
-    },
+      
+      if (status === "timeout") {
+        alert("La solicitud tomó demasiado tiempo. Por favor, intenta nuevamente.");
+      } else {
+        alert("Error al comunicarse con el servidor");
+      }
+    }
   });
 }
 
