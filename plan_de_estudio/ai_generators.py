@@ -10,6 +10,7 @@ import re
 import requests
 from dotenv import load_dotenv
 import google.generativeai as genai
+import time
 
 
 def usar_modelo_google(prompt_completo, generation_config):
@@ -80,82 +81,89 @@ def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7, time
     
     # Parámetros del cuerpo de la solicitud
     data = {
-        "model": "deepseek-chat",  # Usar el modelo correcto según la documentación
+        "model": "deepseek-chat",
         "messages": [
             {"role": "system", "content": "Asistente para crear sílabo y plan de clases. Genera siempre respuestas en formato JSON válido."},
             {"role": "user", "content": prompt_completo}
         ],
         "temperature": temperature,
-        "max_tokens": max_tokens  # Usar el valor pasado como parámetro
+        "max_tokens": max_tokens
     }
     
-    try:
-        # Hacer la solicitud POST con timeout 
-        logging.info(f"Iniciando solicitud a DeepSeek con timeout={timeout} segundos")
-        response = requests.post(api_url, json=data, headers=headers, timeout=timeout)
-        
-        # Verificar si la solicitud fue exitosa
-        if response.status_code == 200:
-            respuesta = response.json()
-            resultado = respuesta['choices'][0]['message']['content']
-            logging.info("Respuesta de DeepSeek recibida correctamente")
-            logging.debug(f"Primeros 200 caracteres: {resultado[:200]}")
-            return resultado
-        else:
-            error_message = f"Error en la API de DeepSeek: {response.status_code}, {response.text}"
-            logging.error(error_message)
-            raise RuntimeError(error_message)
+    MAX_RETRIES = 3
+    retry_count = 0
+    
+    while retry_count < MAX_RETRIES:
+        try:
+            logging.info(f"Intento {retry_count + 1} de {MAX_RETRIES} - Iniciando solicitud a DeepSeek con timeout={timeout} segundos")
+            response = requests.post(api_url, json=data, headers=headers, timeout=timeout)
             
-    except requests.exceptions.Timeout:
-        error_msg = f"Timeout al conectar con DeepSeek después de {timeout} segundos"
-        logging.error(error_msg)
-        # En lugar de lanzar un error, devolver una respuesta de fallback en formato JSON
-        return """
-        {
-          "codigo": "Fallback-Error",
-          "encuentros": 1,
-          "fecha": "2025-04-04",
-          "unidad": "Unidad I",
-          "nombre_de_la_unidad": "Error de conexión",
-          "contenido_tematico": "La generación automática no pudo completarse debido a problemas de red o tiempo de espera agotado.",
-          "objetivo_conceptual": "Comprender los conceptos fundamentales del tema",
-          "objetivo_procedimental": "Aplicar los conceptos aprendidos en ejercicios prácticos",
-          "objetivo_actitudinal": "Valorar la importancia del tema estudiado",
-          "tipo_primer_momento": "Evaluación diagnóstica",
-          "detalle_primer_momento": "Evaluación inicial para identificar conocimientos previos",
-          "tiempo_primer_momento": 20,
-          "recursos_primer_momento": "Cuestionario, pizarra, marcadores",
-          "tipo_segundo_momento_claseteoria": "Conferencia",
-          "clase_teorica": "Exposición sobre conceptos fundamentales del tema",
-          "tipo_segundo_momento_practica": "Taller",
-          "clase_practica": "Resolución de ejercicios prácticos relacionados con el tema",
-          "tiempo_segundo_momento": 60,
-          "recursos_segundo_momento": "Computadora, proyector, ejemplos impresos",
-          "tipo_tercer_momento": "Orientación del estudio independiente",
-          "detalle_tercer_momento": "Asignación de tareas para resolver en casa",
-          "tiempo_tercer_momento": 10,
-          "recursos_tercer_momento": "Guía de ejercicios, bibliografía recomendada",
-          "eje_transversal": "Tecnología de la información y comunicación",
-          "detalle_eje_transversal": "Aplicación de herramientas tecnológicas para el aprendizaje",
-          "actividad_aprendizaje": "Desarrollo de ejercicios prácticos sobre el tema",
-          "tecnica_evaluacion": "Trabajo en grupo",
-          "tipo_evaluacion": "Formativa",
-          "periodo_tiempo_programado": "I Corte Evaluativo",
-          "tiempo_minutos": 30,
-          "agente_evaluador": "Heteroevaluación",
-          "instrumento_evaluacion": "Rúbrica",
-          "criterios_evaluacion": "Comprensión del tema, participación, trabajo colaborativo",
-          "puntaje": 10
-        }
-        """
-    except requests.exceptions.RequestException as e:
-        error_msg = f"Error de conexión con DeepSeek: {e}"
-        logging.error(error_msg)
-        raise RuntimeError(error_msg)
-    except Exception as e:
-        error_msg = f"Error inesperado con DeepSeek: {e}"
-        logging.error(error_msg)
-        raise RuntimeError(error_msg)
+            if response.status_code == 200:
+                respuesta = response.json()
+                resultado = respuesta['choices'][0]['message']['content']
+                logging.info("Respuesta de DeepSeek recibida correctamente")
+                logging.debug(f"Primeros 200 caracteres: {resultado[:200]}")
+                return resultado
+            else:
+                error_message = f"Error en la API de DeepSeek: {response.status_code}, {response.text}"
+                logging.error(error_message)
+                raise RuntimeError(error_message)
+                
+        except requests.exceptions.Timeout:
+            retry_count += 1
+            if retry_count < MAX_RETRIES:
+                logging.warning(f"Timeout en intento {retry_count}. Esperando 2 segundos antes de reintentar...")
+                time.sleep(2)
+            else:
+                error_msg = f"Timeout después de {MAX_RETRIES} intentos"
+                logging.error(error_msg)
+                # Devolver respuesta de fallback
+                return """
+                {
+                  "codigo": "Fallback-Error",
+                  "encuentros": 1,
+                  "fecha": "2025-04-04",
+                  "unidad": "Unidad I",
+                  "nombre_de_la_unidad": "Error de conexión",
+                  "contenido_tematico": "La generación automática no pudo completarse debido a problemas de red o tiempo de espera agotado.",
+                  "objetivo_conceptual": "Comprender los conceptos fundamentales del tema",
+                  "objetivo_procedimental": "Aplicar los conceptos aprendidos en ejercicios prácticos",
+                  "objetivo_actitudinal": "Valorar la importancia del tema estudiado",
+                  "tipo_primer_momento": "Evaluación diagnóstica",
+                  "detalle_primer_momento": "Evaluación inicial para identificar conocimientos previos",
+                  "tiempo_primer_momento": 20,
+                  "recursos_primer_momento": "Cuestionario, pizarra, marcadores",
+                  "tipo_segundo_momento_claseteoria": "Conferencia",
+                  "clase_teorica": "Exposición sobre conceptos fundamentales del tema",
+                  "tipo_segundo_momento_practica": "Taller",
+                  "clase_practica": "Resolución de ejercicios prácticos relacionados con el tema",
+                  "tiempo_segundo_momento": 60,
+                  "recursos_segundo_momento": "Computadora, proyector, ejemplos impresos",
+                  "tipo_tercer_momento": "Orientación del estudio independiente",
+                  "detalle_tercer_momento": "Asignación de tareas para resolver en casa",
+                  "tiempo_tercer_momento": 10,
+                  "recursos_tercer_momento": "Guía de ejercicios, bibliografía recomendada",
+                  "eje_transversal": "Tecnología de la información y comunicación",
+                  "detalle_eje_transversal": "Aplicación de herramientas tecnológicas para el aprendizaje",
+                  "actividad_aprendizaje": "Desarrollo de ejercicios prácticos sobre el tema",
+                  "tecnica_evaluacion": "Trabajo en grupo",
+                  "tipo_evaluacion": "Formativa",
+                  "periodo_tiempo_programado": "I Corte Evaluativo",
+                  "tiempo_minutos": 30,
+                  "agente_evaluador": "Heteroevaluación",
+                  "instrumento_evaluacion": "Rúbrica",
+                  "criterios_evaluacion": "Comprensión del tema, participación, trabajo colaborativo",
+                  "puntaje": 10
+                }
+                """
+        except requests.exceptions.RequestException as e:
+            error_msg = f"Error de conexión con DeepSeek: {e}"
+            logging.error(error_msg)
+            raise RuntimeError(error_msg)
+        except Exception as e:
+            error_msg = f"Error inesperado con DeepSeek: {e}"
+            logging.error(error_msg)
+            raise RuntimeError(error_msg)
 
 
 def usar_modelo_openai(prompt_completo, model="gpt-4o-mini"):
