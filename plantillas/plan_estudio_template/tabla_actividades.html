@@ -174,21 +174,3 @@
     </tfoot>
 </table>
 
-<!-- Información de depuración (visible solo durante el desarrollo) -->
-{% if debug_info %}
-<div class="alert alert-info mt-3">
-    <h6><i class="fas fa-bug"></i> Información de depuración:</h6>
-    <ul class="mb-0">
-        <li>Sílabo ID: {{ debug_info.silabo_id }}</li>
-        <li>Encuentro: {{ debug_info.silabo_encuentros }}</li>
-        <li>Asignatura: {{ debug_info.asignatura }}</li>
-        {% if debug_info.guia_id %}
-        <li>Guía ID: {{ debug_info.guia_id }}</li>
-        <li>Encuentro de guía: {{ debug_info.guia_numero_encuentro }}</li>
-        {% else %}
-        <li>No se encontró guía</li>
-        {% endif %}
-        <li>Total de guías: {{ debug_info.total_guias }}</li>
-    </ul>
-</div>
-{% endif %}

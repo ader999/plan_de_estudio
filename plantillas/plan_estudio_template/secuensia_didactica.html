@@ -12,6 +12,39 @@
         --color-azul-2: #2874A6;
         --color-azul-3: #2E86C1;
     }
+    .tabla-scroll {
+    overflow-x: auto;
+    width: 100%;
+    }
+
+    .data-table {
+        min-width: 1200px; /* permite que sea más ancha si hace falta */
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .data-table th,
+    .data-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        vertical-align: top;
+        text-align: left;
+        word-wrap: break-word; /* para que el texto largo se divida */
+        word-break: break-word;
+        white-space: normal; /* permite que el texto haga salto de línea */
+    }
+
+    .data-table th {
+        background-color: #f5f5f5;
+    }
+
+    /* Anchos de columnas */
+    .col-tema { width: 15%; }
+    .col-fase { width: 10%; }
+    .col-forma { width: 15%; }
+    .col-descripcion { width: 35%; }
+    .col-recursos { width: 15%; }
+    .col-tiempo { width: 10%; }
     
     /* Contenedor principal */
     .guia-container {
@@ -254,74 +287,72 @@
                                 <h3 class="text-center mb-4">SECUENCIA DIDÁCTICA</h3>
                                 
                                 <!-- Datos Generales del Sílabo -->
-                                <h4 class="mt-4 mb-3">DATOS GENERALES</h4>
-                                <div class="table-container">
-                                    <table class="data-table">
-                                        <tbody>
+                                <div class="data-section">
+                                    <h3 class="section-title">
+                                        <i class="fas fa-info-circle"></i>
+                                        Datos Generales
+                                    </h3>
+                                    <div class="data-card">
+                                        <table class="data-table">
                                             <tr>
-                                                <td width="5%">1</td>
-                                                <td width="20%">N° de encuentro</td>
-                                                <td width="25%">{{ silabo.numero_encuentro }}</td>
-                                                <td width="5%">7</td>
-                                                <td width="20%">Asignatura:</td>
-                                                <td width="25%">{{ silabo.asignacion_plan.plan_de_estudio.asignatura }}</td>
+                                                <td>N° de guia:</td>
+                                                <td>{{ silabo.encuentros }}</td>
                                             </tr>
                                             <tr>
-                                                <td>2</td>
                                                 <td>Fecha:</td>
-                                                <td>{{ silabo.fecha }}</td>
-                                                <td>8</td>
-                                                <td>Cód. de asignatura:</td>
-                                                <td>{{ silabo.asignacion_plan.plan_de_estudio.codigo }}</td>
+                                                <td>{{ silabo.fecha|date:"d/m/Y" }}</td>
                                             </tr>
                                             <tr>
-                                                <td>3</td>
-                                                <td>Sede</td>
-                                                <td>{{ silabo.asignacion_plan.usuario.perfil.sede }} - Jalapa</td>
-                                                <td>9</td>
-                                                <td>Trimestre:</td>
-                                                <td>{{ silabo.asignacion_plan.plan_de_estudio.trimestre }}</td>
+                                                <td>Sede:</td>
+                                                <td>Jalapa</td>
                                             </tr>
                                             <tr>
-                                                <td>4</td>
                                                 <td>Carrera:</td>
-                                                <td>{{ silabo.asignacion_plan.plan_de_estudio.carrera }}</td>
-                                                <td>10</td>
-                                                <td>Año Lectivo:</td>
-                                                <td>{{ silabo.anio_lectivo }}</td>
+                                                <td>{{ silabo.plan_de_estudio.carrera.nombre }}</td>
                                             </tr>
+                                            
                                             <tr>
-                                                <td>5</td>
-                                                <td>Año académico:</td>
-                                                <td>{{ silabo.asignacion_plan.plan_de_estudio.año }}</td>
-                                                <td>11</td>
-                                                <td>Unidad:</td>
-                                                <td>{{ silabo.unidad }}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>6</td>
                                                 <td>Mediador:</td>
-                                                <td colspan="4">{{ silabo.asignacion_plan.usuario.get_full_name }}</td>
+                                                <td>{{ usuario }}</td>
                                             </tr>
+                                            
                                             <tr>
-                                                <td>12</td>
-                                                <td>Hora:</td>
-                                                <td>{{ silabo.hora_inicio }} - {{ silabo.hora_fin }}</td>
-                                                <td>13</td>
-                                                <td>Salón:</td>
-                                                <td>{{ silabo.salon }}</td>
+                                                <td>Año académico:</td>
+                                                <td>{{ silabo.plan_de_estudio.año }}</td>
                                             </tr>
-                                        </tbody>
-                                    </table>
+
+                                            <tr>
+                                                <td>Asignatura:</td>
+                                                <td>{{ silabo.plan_de_estudio.asignatura }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>Cód. de asignatura:</td>
+                                                <td>{{ silabo.plan_de_estudio.codigo }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>Trimestre:</td>
+                                                <td>{{ silabo.plan_de_estudio.trimestre }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>Año Lectivo:</td>
+                                                <td>{{ año_actual }}</td>
+                                            </tr>
+                                            
+                                        </table>
+                                    </div>
                                 </div>
-                                
+
+
                                 <!-- Nombre de la Unidad -->
                                 <h4 class="mt-4 mb-3 text-center">Nombre de la Unidad</h4>
                                 <div class="table-container">
                                     <table class="data-table">
                                         <tbody>
                                             <tr>
-                                                <td colspan="2">UNIDAD {{ silabo.unidad }}. {{ silabo.detalle_unidad }}</td>
+                                                <td colspan="2" class="text-center">{{ silabo.unidad }}. {{ silabo.nombre_de_la_unidad }}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -350,72 +381,79 @@
                                 
                                 <!-- MEDIACIÓN PEDAGÓGICA -->
                                 <h4 class="mt-4 mb-3 text-center">MEDIACIÓN PEDAGÓGICA</h4>
-                                <div class="table-container">
+                                <div class="tabla-scroll">
                                     <table class="data-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Contenido temático</th>
-                                                <th>Fases</th>
-                                                <th>Forma organizativa</th>
-                                                <th>Descripción de la forma organizativa</th>
-                                                <th>Recursos didácticos</th>
-                                                <th>Tiempo en minutos</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td rowspan="2">
-                                                    {% if silabo.contenido_tematico %}
-                                                        {{ silabo.contenido_tematico|safe }}
-                                                    {% else %}
-                                                        <span style="color: #FDA172;">SinDatos</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td>{% if silabo.fase_entrada %}{{ silabo.fase_entrada }}{% else %}Primer momento didáctico (Fase Entrada){% endif %}</td>
-                                                <td>{% if silabo.forma_organizativa_entrada %}{{ silabo.forma_organizativa_entrada }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.descripcion_forma_entrada %}{{ silabo.descripcion_forma_entrada }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.recursos_didacticos_entrada %}{{ silabo.recursos_didacticos_entrada }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.tiempo_entrada %}{{ silabo.tiempo_entrada }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td></td>
-                                                <td>{% if silabo.forma_organizativa_entrada_adicional %}{{ silabo.forma_organizativa_entrada_adicional }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.descripcion_forma_entrada_adicional %}{{ silabo.descripcion_forma_entrada_adicional }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.recursos_didacticos_entrada_adicional %}{{ silabo.recursos_didacticos_entrada_adicional }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.tiempo_entrada_adicional %}{{ silabo.tiempo_entrada_adicional }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td></td>
-                                                <td>{% if silabo.fase_elaboracion %}{{ silabo.fase_elaboracion }}{% else %}Segundo momento didáctico (Fase Elaboración){% endif %}</td>
-                                                <td>{% if silabo.forma_organizativa_elaboracion %}{{ silabo.forma_organizativa_elaboracion }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>
-                                                    {% if silabo.descripcion_forma_elaboracion %}
-                                                        {{ silabo.descripcion_forma_elaboracion|safe }}
-                                                    {% else %}
-                                                        <span style="color: #FDA172;">SinDatos</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td>{% if silabo.recursos_didacticos_elaboracion %}{{ silabo.recursos_didacticos_elaboracion }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.tiempo_elaboracion %}{{ silabo.tiempo_elaboracion }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td></td>
-                                                <td>{% if silabo.fase_salida %}{{ silabo.fase_salida }}{% else %}Tercer momento didáctico (Fase Salida){% endif %}</td>
-                                                <td>{% if silabo.forma_organizativa_salida %}{{ silabo.forma_organizativa_salida }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>
-                                                    {% if silabo.descripcion_forma_salida %}
-                                                        {{ silabo.descripcion_forma_salida|safe }}
-                                                    {% else %}
-                                                        <span style="color: #FDA172;">SinDatos</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td>{% if silabo.recursos_didacticos_salida %}{{ silabo.recursos_didacticos_salida }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.tiempo_salida %}{{ silabo.tiempo_salida }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                            </tr>
-                                        </tbody>
+                                      <thead>
+                                        <tr>
+                                          <th class="col-tema">Contenido temático</th>
+                                          <th class="col-fase">Fases</th>
+                                          <th class="col-forma">Forma organizativa</th>
+                                          <th class="col-descripcion">Descripción de la forma organizativa</th>
+                                          <th class="col-recursos">Recursos didácticos</th>
+                                          <th class="col-tiempo">Tiempo</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr>
+                                          <td rowspan="5">
+                                            {{ silabo.contenido_tematico }}
+                                          </td>
+                                          <td rowspan="2"><strong>Primer momento</strong><br>(Entrada)</td>
+                                          <td>{{ silabo.tipo_primer_momento }}</td>
+                                          <td>
+                                            {{ silabo.detalle_primer_momento }}
+                                          </td>
+                                          <td>{{ silabo.recursos_primer_momento }}</td>
+                                          <td>{{ silabo.tiempo_primer_momento }}</td>
+                                        </tr>
+                                        
+                                        <tr>
+                                          <td>—</td>
+                                          <td>—</td>
+                                          <td>—</td>
+                                          <td>—</td>
+                                        </tr>
+
+                                        <tr>
+                                          <td rowspan="2"><strong>Segundo momento</strong><br>(Elaboración)</td>
+                                          <td>Clases teóricas - {{ silabo.tipo_segundo_momento_claseteoria }}</td>
+                                          <td>
+                                            {{ silabo.clase_teorica }}
+                                          </td>
+                                          <td rowspan="2">Computadora, guía, video</td>
+                                          <td>30</td>
+                                        </tr>
+
+                                        
+
+                                        <tr>
+                                          <td>Clases prácticas - Evaluación formativa</td>
+                                          <td>
+                                            Trabajo en grupos: ejercicios prácticos sobre arquitecturas.
+                                          </td>
+                                          <td>20</td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                          </tr>
+
+                                        <tr>
+                                          <td><strong>Tercer momento</strong><br>(Salida)</td>
+                                          <td>Realimentación y orientación</td>
+                                          <td>
+                                            Resumen del tema, aclaración de dudas, tareas para autoestudio.
+                                          </td>
+                                          <td>Pizarra, guía</td>
+                                          <td>20</td>
+                                        </tr>
+                                      </tbody>
                                     </table>
-                                </div>
-                                
+                                  </div>
                                 
                                 
                                 <h4 class="mt-4 mb-3">Orientaciones de las actividades de aprendizaje</h4>

@@ -270,91 +270,65 @@
                         <div class="encuentro-content {% if forloop.first %}active{% endif %}" id="plan-{{ codigo }}-{{ silabo.encuentros }}">
                             <div class="row g-4">
                                 <!-- Datos generales -->
-                                <div class="col-md-6">
-                                    <div class="data-section">
-                                        <h3 class="section-title">
-                                            <i class="fas fa-info-circle"></i>
-                                            Datos Generales
-                                        </h3>
-                                        <div class="data-card">
-                                            <table class="data-table">
-                                                <tr>
-                                                    <td>N° de encuentro:</td>
-                                                    <td>{{ silabo.encuentros }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Fecha:</td>
-                                                    <td>{{ silabo.fecha|date:"d/m/Y" }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Sede:</td>
-                                                    <td>{{ silabo.sede }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Carrera:</td>
-                                                    <td>{{ silabo.plan_de_estudio.carrera.nombre }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Asignatura:</td>
-                                                    <td>{{ silabo.asignatura.asignatura }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Facilitador:</td>
-                                                    <td>{{ silabo.maestro }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Código:</td>
-                                                    <td>{{ silabo.plan_de_estudio.codigo }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Año académico:</td>
-                                                    <td>{{ silabo.año_lectivo }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Año:</td>
-                                                    <td>{{ silabo.plan_de_estudio.año }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Trimestre:</td>
-                                                    <td>{{ silabo.plan_de_estudio.trimestre }}</td>
-                                                </tr>
-                                            </table>
-                                        </div>
+                                <div class="data-section">
+                                    <h3 class="section-title">
+                                        <i class="fas fa-info-circle"></i>
+                                        Datos Generales
+                                    </h3>
+                                    <div class="data-card">
+                                        <table class="data-table">
+                                            <tr>
+                                                <td>N° de encuentro:</td>
+                                                <td>{{ silabo.encuentros }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Fecha:</td>
+                                                <td>{{ silabo.fecha|date:"d/m/Y" }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Sede:</td>
+                                                <td>Jalapa</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Carrera:</td>
+                                                <td>{{ silabo.plan_de_estudio.carrera.nombre }}</td>
+                                            </tr>
+                                            
+                                            <tr>
+                                                <td>Mediador:</td>
+                                                <td>{{ usuario }}</td>
+                                            </tr>
+                                            
+                                            <tr>
+                                                <td>Año académico:</td>
+                                                <td>{{ silabo.plan_de_estudio.año }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>Asignatura:</td>
+                                                <td>{{ silabo.plan_de_estudio.asignatura }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>Cód. de asignatura:</td>
+                                                <td>{{ silabo.plan_de_estudio.codigo }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>Trimestre:</td>
+                                                <td>{{ silabo.plan_de_estudio.trimestre }}</td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>Año Lectivo:</td>
+                                                <td>{{ año_actual }}</td>
+                                            </tr>
+                                            
+                                        </table>
                                     </div>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <div class="data-section">
-                                        <h3 class="section-title">
-                                            <i class="fas fa-clipboard-list"></i>
-                                            Resumen
-                                        </h3>
-                                        <div class="data-card">
-                                            <table class="data-table">
-                                                <tr>
-                                                    <td>Unidad:</td>
-                                                    <td>{{ silabo.unidad }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Tipo de clase:</td>
-                                                    <td>{{ silabo.tipo_de_clase }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Horas presenciales:</td>
-                                                    <td>{{ silabo.plan_de_estudio.horas_presenciales }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Horas de trabajo independiente:</td>
-                                                    <td>{{ silabo.plan_de_estudio.horas_estudio_independiente }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Total de horas:</td>
-                                                    <td>{{ silabo.plan_de_estudio.horas_presenciales|add:silabo.plan_de_estudio.horas_estudio_independiente }}</td>
-                                                </tr>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
+                        
 
                                 <!-- Actividades de Aprendizaje -->
                                 <div class="col-12">
@@ -376,18 +350,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="data-section">
-                                        <h3 class="section-title">
-                                            <i class="fas fa-comment"></i>
-                                            Observaciones
-                                        </h3>
-                                        <div class="content-item">
-                                            <p>{{ silabo.observaciones|default:"" }}</p>
-                                        </div>
-                                        <div class="text-end mt-3">
-                                            <p><strong>Revisado por:</strong> _______________________</p>
-                                        </div>
-                                    </div>
+                                    
                                 </div>
                             </div>
                         </div>

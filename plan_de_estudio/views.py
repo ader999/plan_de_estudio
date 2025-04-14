@@ -117,7 +117,7 @@ def logout_view(request):
 def plan_estudio(request):
     # Obtiene el usuario autenticado
     usuario_autenticado = request.user
-    nombre_de_usuario = request.user.username
+    nombre_de_usuario = request.user.get_full_name()
 
     # Primero obtenemos las asignaciones del usuario autenticado
     asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
@@ -153,7 +153,10 @@ def plan_estudio(request):
         # Ordenar por número de encuentro
         grupo.sort(key=lambda s: s.encuentros)
 
-    context = {"silabos_agrupados": silabos_agrupados, "usuario": nombre_de_usuario}
+    # Obtener el año actual
+    año_actual = datetime.datetime.now().year
+
+    context = {"silabos_agrupados": silabos_agrupados, "usuario": nombre_de_usuario, "año_actual": año_actual}
 
     return render(request, "plan_estudio.html", context)
 
