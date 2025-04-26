@@ -4,3 +4,7 @@ __pycache__
 .env
 .env.temp
 media
+.idea
+/.idea
+plan_de_estudio/.idea
+/plan_de_estudio/.idea

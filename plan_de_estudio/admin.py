@@ -10,6 +10,8 @@ from import_export import resources
 from django.utils.html import format_html
 from django.db.models import Count
 from django.contrib.auth.models import User
+from .document_generators import generar_excel_admin
+from django.urls import path, reverse
 
 admin.site.site_header = 'PLANEAUML'
 admin.site.index_title = 'Bienbenidos al Panel de control del sitio'
@@ -125,14 +127,41 @@ class FiltrarGuia(admin.ModelAdmin):
 
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'plan_de_estudio','fecha_asignacion', 'completado_icono')
+    # Añade 'exportar_excel_boton' a list_display
+    list_display = ('usuario', 'plan_de_estudio','fecha_asignacion', 'completado_icono', 'exportar_excel_boton')
     readonly_fields = ('silabos_creados', 'guias_creadas')
+    list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'usuario') # Añadir filtros útiles
 
     def completado_icono(self, obj):
         # Retorna True si silabos_creados es igual a 12
-        return obj.silabos_creados == 12
-    completado_icono.boolean = True  # Indica que este es un campo booleano
+        # Ajusta el número 12 si el total esperado de sílabos es diferente
+        total_esperado = 12 # O obtén esto dinámicamente si es variable
+        return obj.silabos_creados >= total_esperado # Usar >= por si acaso
+    completado_icono.boolean = True
     completado_icono.short_description = 'Completado'
+
+    # Método para generar el botón de exportar
+    def exportar_excel_boton(self, obj):
+        # Crea la URL para la vista de exportación específica para este objeto (obj)
+        url = reverse('admin:plan_de_estudio_asignacionplanestudio_exportar_excel', args=[obj.pk])
+        # Retorna el HTML del botón como un enlace
+        return format_html('<a class="button" href="{}">Exportar Excel</a>', url)
+    exportar_excel_boton.short_description = 'Exportar Sílabos/Guías' # Nombre de la columna
+    exportar_excel_boton.allow_tags = True # Necesario para renderizar HTML (aunque format_html es preferido)
+
+    # Método para añadir URLs personalizadas al admin de este modelo
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            # Define la URL que coincide con la usada en 'reverse' dentro de exportar_excel_boton
+            path(
+                '<int:asignacion_id>/exportar_excel/', # La URL que captura el ID
+                self.admin_site.admin_view(generar_excel_admin), # Llama a la vista importada, protegida por admin
+                name='plan_de_estudio_asignacionplanestudio_exportar_excel' # Nombre para usar en 'reverse'
+            )
+        ]
+        # Añade las URLs personalizadas ANTES que las URLs por defecto
+        return custom_urls + urls
 
 
 class CompletadoFilter(admin.SimpleListFilter):
