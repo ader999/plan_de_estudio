@@ -68,12 +68,18 @@
                             <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
                         </p>
 
-                        {% if asignacion.plan_tematico %}
-                            <a href="{{ asignacion.plan_tematico.url }}" class="btn btn-primary" target="_blank">
-                                <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Descargar Plan Temático
+                        {% if asignacion.plan_de_estudio.plan_tematico %}
+                            <a href="{{ asignacion.plan_de_estudio.plan_tematico.url }}" class="btn btn-primary mb-2" target="_blank">
+                                <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Plan Temático
                             </a>
                         {% else %}
                             <p class="text-muted">No se ha asignado un plan temático.</p>
+                        {% endif %}
+
+                        {% if asignacion.plan_de_estudio.documento_adjunto %}
+                            <a href="{{ asignacion.plan_de_estudio.documento_adjunto.url }}" class="btn btn-success mb-2" target="_blank">
+                                <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Documento Adjunto
+                            </a>
                         {% endif %}
 
                         <!-- Botón para llenar el silabo, solo aparece si no está completado -->
