@@ -1,18 +1,201 @@
 <!-- Tabla de actividades que se cargará dinámicamente -->
 <style>
+    /* Estilos generales de la tabla */
+    .actividades-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    /* Encabezados principales */
     .actividades-table th {
-        background-color: #4e73df;
-        color: rgb(185, 185, 185);
-        font-weight: bold;
+        background: linear-gradient(135deg, #4e73df, #2e59d9);
+        color: white !important;
+        font-weight: 600;
         text-align: center;
         vertical-align: middle;
+        padding: 15px 10px;
+        border: 1px solid #2e59d9;
+        position: relative;
+        font-size: 0.9em;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
     }
+    
+    /* Encabezados secundarios */
     .secondary-header {
-        background-color: #4e73df;
-        color: white;
+        background: linear-gradient(135deg, #3a5bcc, #2e59d9);
+        color: white !important;
         font-style: italic;
         text-align: center;
         vertical-align: middle;
+        padding: 12px 8px;
+        border: 1px solid #2e59d9;
+    }
+    
+    /* Todo el texto dentro de encabezados debe ser blanco */
+    .actividades-table th *,
+    .secondary-header *,
+    .secondary-header strong,
+    .secondary-header span,
+    .secondary-header div,
+    .secondary-header a,
+    .secondary-header p {
+        color: white !important;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Para plantillas Django en encabezados */
+    .secondary-header:not(:empty) {
+        color: white !important;
+    }
+    
+    /* Celdas de datos */
+    .actividades-table tbody td {
+        padding: 12px 10px;
+        border: 1px solid #e3e6f0;
+        vertical-align: top;
+        transition: background-color 0.2s ease;
+        font-size: 0.9em;
+        color: #5a5c69;
+        background-color: #fff;
+    }
+    
+    /* Efecto hover en filas */
+    .actividades-table tbody tr:hover td:not(.secondary-header) {
+        background-color: #f8f9fc;
+    }
+    
+    /* Columna de unidad */
+    .actividades-table tbody td:first-child {
+        font-weight: 600;
+        background-color: #f8f9fc;
+        border-right: 2px solid #4e73df;
+    }
+    
+    /* Estilos para texto importante */
+    .actividades-table strong {
+        font-weight: 700;
+        color: #2e59d9;
+    }
+    
+    /* Estilos específicos para texto sobre fondo azul */
+    .secondary-header strong {
+        color: white;
+        font-weight: 700;
+    }
+    
+    /* Aseguramos que todo texto en celdas de cabecera secundaria sea blanco */
+    .secondary-header * {
+        color: white !important;
+    }
+    
+    /* Estilos para el pie de tabla */
+    .actividades-table tfoot {
+        background: linear-gradient(to right, #f8f9fc, #eaecf4);
+        border-top: 3px solid #4e73df;
+    }
+    
+    .actividades-table tfoot tr {
+        height: 60px;
+        transition: all 0.3s ease;
+    }
+    
+    .actividades-table tfoot tr:hover {
+        background: linear-gradient(to right, #eaecf4, #d1d3e2);
+    }
+    
+    .actividades-table tfoot td {
+        padding: 15px 20px;
+        vertical-align: middle;
+        border: 1px solid #e3e6f0;
+        background-color: transparent;
+    }
+    
+    .actividades-table tfoot .text-end {
+        font-weight: 600;
+        color: #2e59d9;
+        position: relative;
+        padding-right: 25px;
+        text-align: right;
+        font-size: 1.05em;
+    }
+    
+    .actividades-table tfoot .text-end::after {
+        content: "";
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 8px;
+        height: 8px;
+        background-color: #4e73df;
+        border-radius: 50%;
+    }
+    
+    .actividades-table tfoot .valor-destacado {
+        font-weight: 700;
+        font-size: 1.1em;
+        color: #2e59d9;
+        background-color: rgba(78, 115, 223, 0.1);
+        border-radius: 6px;
+        padding: 8px 15px;
+        box-shadow: 0 2px 6px rgba(46, 89, 217, 0.15);
+        display: inline-block;
+        min-width: 60px;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    
+    .actividades-table tfoot .valor-destacado:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(46, 89, 217, 0.2);
+    }
+    
+    /* Estilos para dispositivos móviles */
+    @media (max-width: 992px) {
+        .actividades-table {
+            font-size: 0.9em;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .actividades-table th, 
+        .actividades-table td {
+            padding: 10px 8px;
+        }
+        
+        .actividades-table tfoot .text-end {
+            padding-right: 15px;
+        }
+        
+        .actividades-table tfoot .text-end::after {
+            right: 5px;
+            width: 6px;
+            height: 6px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .actividades-table tfoot tr {
+            height: auto;
+        }
+        
+        .actividades-table tfoot td {
+            padding: 12px;
+        }
+        
+        .actividades-table tfoot .text-end::after {
+            display: none;
+        }
+        
+        .actividades-table {
+            border-radius: 6px;
+        }
     }
 </style>
 
@@ -163,14 +346,30 @@
     <tfoot>
         <tr>
             <td colspan="5" class="text-end">Horas de estudio independiente:</td>
-            <td>{{ silabo.asignacion_plan.plan_de_estudio.hti }}</td>
+            <td>
+                <span class="valor-destacado">
+                {% with total_minutos=silabo.guia.tiempo_minutos_1|add:silabo.guia.tiempo_minutos_2|add:silabo.guia.tiempo_minutos_3|add:silabo.guia.tiempo_minutos_4 %}
+                                                                {% widthratio total_minutos 60 1 as horas_decimal %}
+                                                                {{ horas_decimal|floatformat:2 }}
+                                                                {% endwith %}
+                </span>
+            </td>
             <td></td>
         </tr>
         <tr>
             <td colspan="5" class="text-end">Puntaje en estudio independiente:</td>
-            <td>{% if guia %}{{ guia.puntaje_total|default:"15" }}{% else %}15{% endif %}</td>
+            <td>
+                <span class="valor-destacado">
+                {% with total_puntaje_independiente=silabo.guia.puntaje_1|add:silabo.guia.puntaje_2|add:silabo.guia.puntaje_3|add:silabo.guia.puntaje_4 %}
+                                                                    {% if total_puntaje_independiente > 0 %}
+                                                                        {{ total_puntaje_independiente }}
+                                                                    {% else %}
+                                                                            <span style="color: #FDA172;">SinDatos</span>
+                                                                    {% endif %}
+                                                                {% endwith %}
+                </span>
+            </td>
             <td></td>
         </tr>
     </tfoot>
 </table>
-

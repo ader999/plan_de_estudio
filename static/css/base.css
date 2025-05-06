@@ -25,7 +25,7 @@ body {
         var(--color-gris-2), 
         var(--color-azul-oscuro)
     );
-    background-size: 400% 1600%;
+    background-size: 400% 1800%;
     animation: gradientBG 30s ease infinite;
     color: var(--color-fuente);
     font-family: Arial, sans-serif;

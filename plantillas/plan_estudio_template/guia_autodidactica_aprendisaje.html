@@ -1,5 +1,8 @@
 {% load static %}
 
+<!-- Meta tag para viewport responsive -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
     /* Variables locales para este componente */
     .plan-component {
@@ -8,6 +11,7 @@
         --plan-transition: all 0.3s ease;
         --plan-gris-claro: #f5f5f5;
         --plan-gris-borde: #e0e0e0;
+        --plan-hover-color: rgba(46, 134, 193, 0.1);
     }
 
     .plan-component .plan-container {
@@ -49,6 +53,22 @@
         padding: 10px;
         gap: 8px;
         border-bottom: 1px solid var(--plan-gris-borde);
+        -webkit-overflow-scrolling: touch; /* Mejora el desplazamiento en iOS */
+        scrollbar-width: thin; /* Para Firefox */
+    }
+
+    /* Personalizar barra de desplazamiento para navegación de encuentros */
+    .plan-component .encuentros-nav::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .plan-component .encuentros-nav::-webkit-scrollbar-track {
+        background: var(--plan-gris-claro);
+    }
+    
+    .plan-component .encuentros-nav::-webkit-scrollbar-thumb {
+        background-color: var(--color-azul-3);
+        border-radius: 20px;
     }
 
     .plan-component .encuentro-tab {
@@ -65,6 +85,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0; /* Evita que las pestañas se reduzcan demasiado */
     }
 
     .plan-component .encuentro-tab.active {
@@ -120,10 +141,18 @@
         gap: 16px;
     }
 
+    /* Estilo mejorado para la tarjeta de datos */
     .plan-component .data-card {
-        background-color: var(--plan-gris-claro);
+        background-color: white;
         border-radius: var(--plan-border-radius);
-        padding: 16px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: var(--plan-transition);
+        border: 1px solid var(--plan-gris-borde);
+    }
+
+    .plan-component .data-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
     .plan-component .data-label {
@@ -141,64 +170,91 @@
         color: #333;
     }
 
-    /* Estilos para la tabla de datos */
+    /* Estilos mejorados para la tabla de datos */
     .plan-component .data-table {
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
-        margin-bottom: 16px;
+        margin-bottom: 0;
+        overflow: hidden;
+    }
+
+    .plan-component .data-table tr {
+        transition: var(--plan-transition);
+    }
+
+    .plan-component .data-table tr:hover {
+        background-color: var(--plan-hover-color);
+    }
+
+    .plan-component .data-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--plan-gris-borde);
+    }
+
+    .plan-component .data-table tr:last-child td {
+        border-bottom: none;
     }
 
     .plan-component .data-table td:first-child {
         font-weight: 600;
         width: 35%;
         color: var(--color-azul-oscuro);
-        padding: 8px 16px 8px 0;
-    }
-
-    .plan-component .data-table td:last-child {
-        padding: 8px 0;
+        background-color: rgba(46, 134, 193, 0.05);
+        border-right: 1px solid var(--plan-gris-borde);
     }
 
     /* Estilos para contenido */
     .plan-component .content-item {
-        background-color: var(--plan-gris-claro);
+        background-color: white;
         border-radius: var(--plan-border-radius);
-        padding: 16px;
+        padding: 20px;
         margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--plan-gris-borde);
+        transition: var(--plan-transition);
+    }
+
+    .plan-component .content-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
     .plan-component .content-item:last-child {
         margin-bottom: 0;
     }
 
-    /* Estilos para la tabla de actividades */
-    .plan-component .actividades-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-        border: 1px solid var(--plan-gris-borde);
+    .plan-component .indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--color-azul-oscuro);
     }
 
-    .plan-component .actividades-table th,
-    .plan-component .actividades-table td {
-        border: 1px solid var(--plan-gris-borde);
-        padding: 10px;
-        text-align: left;
-        vertical-align: top;
+    .plan-component .indicator i {
+        font-size: 1rem;
     }
 
-    .plan-component .actividades-table th {
+    .plan-component .indicador-detalles {
+        line-height: 1.5;
+        white-space: pre-line;
+        margin-bottom: 16px;
+    }
+
+    .plan-component .tag {
         background-color: var(--color-azul-3);
         color: white;
-        font-weight: 600;
+        border-radius: 30px;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        display: inline-block;
+        margin-right: 6px;
+        margin-bottom: 6px;
     }
 
-    .plan-component .actividades-table tr:nth-child(even) {
-        background-color: var(--plan-gris-claro);
-    }
-
-    .plan-component .actividades-table .subtable {
+    /* Tabla de actividades */
+    .plan-component .actividades-table {
         width: 100%;
         border-collapse: collapse;
     }
@@ -230,9 +286,102 @@
             display: block !important;
         }
     }
+    
+    /* Media queries para dispositivos móviles */
+    @media (max-width: 768px) {
+        .plan-component {
+            padding: 0;
+        }
+        
+        .plan-component .encuentros-nav {
+            padding: 8px;
+        }
+        
+        .plan-component .encuentro-tab {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .plan-component .encuentro-content {
+            padding: 15px;
+        }
+        
+        .plan-component .section-title {
+            font-size: 1rem;
+        }
+        
+        .plan-component .data-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        /* Estilos de tabla responsiva solo para móviles */
+        @supports (display: block) {
+            .plan-component .data-table.mobile-responsive,
+            .plan-component .data-table.mobile-responsive tbody,
+            .plan-component .data-table.mobile-responsive tr,
+            .plan-component .data-table.mobile-responsive td {
+                display: block;
+                width: 100%;
+            }
+            
+            .plan-component .data-table.mobile-responsive tr {
+                margin-bottom: 12px;
+                border-bottom: 1px solid var(--plan-gris-borde);
+                padding-bottom: 8px;
+                border-radius: var(--plan-border-radius);
+                overflow: hidden;
+            }
+            
+            .plan-component .data-table.mobile-responsive tr:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+            
+            .plan-component .data-table.mobile-responsive td:first-child {
+                width: 100%;
+                padding: 8px 12px;
+                margin-bottom: 0;
+                background-color: rgba(46, 134, 193, 0.1);
+                border-right: none;
+                color: var(--color-azul-oscuro);
+                font-weight: 600;
+            }
+            
+            .plan-component .data-table.mobile-responsive td:last-child {
+                padding: 8px 12px;
+                border-bottom: none;
+                background-color: white;
+            }
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .plan-component .plan-header {
+            padding: 0.8rem 1rem;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .plan-component .data-card {
+            padding: 12px;
+        }
+        
+        .plan-component .content-item {
+            padding: 12px;
+        }
+        
+        .plan-component .accordion-button {
+            padding: 12px;
+            font-size: 0.95rem;
+        }
+        
+        .plan-component .encuentro-content {
+            padding: 12px;
+        }
+    }
 </style>
 
-<div class="container mt-4 plan-component">
+<div class="container-fluid mt-4 plan-component">
     <!-- Acordeón -->
     <div class="accordion" id="accordionSilabos">
         {% for codigo, silabos_grupo in silabos_agrupados.items %}
@@ -276,7 +425,7 @@
                                         Datos Generales
                                     </h3>
                                     <div class="data-card">
-                                        <table class="data-table">
+                                        <table class="data-table mobile-responsive">
                                             <tr>
                                                 <td>N° de encuentro:</td>
                                                 <td>{{ silabo.encuentros }}</td>

@@ -1153,6 +1153,7 @@ def generar_estudio_independiente(request):
                     "instrumento_evaluacion_1": guia.instrumento_evaluacion_1,
                     "criterios_evaluacion_1": guia.criterios_evaluacion_1,
                     "puntaje_1": guia.puntaje_1,
+                    "fecha_entrega_1": guia.fecha_entrega_1,
                 }
                 guias_previas.append(guia_dict)
 
@@ -1347,3 +1348,48 @@ def cargar_guia(request, silabo_id):
         error_msg = f"Error al cargar la guía: {str(e)} (Sílabo ID: {silabo_id})"
         print(f"ERROR: {error_msg}")
         return HttpResponse(error_msg, status=500)
+
+
+@login_required
+def descargar_secuencia_didactica(request):
+    """
+    Vista para descargar la secuencia didáctica en formato documento.
+    Genera un documento DOCX que incluye todos los encuentros de la secuencia didáctica.
+    """
+    from .documento_secuencia_didactica import generar_documento_secuencia_didactica
+    
+    # Obtener el usuario autenticado
+    usuario_autenticado = request.user
+    nombre_de_usuario = request.user.get_full_name() or request.user.username
+    
+    # Obtener las asignaciones del usuario autenticado
+    asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
+    
+    # Obtener los silabos relacionados con esas asignaciones
+    silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones)
+    
+    # Crear un diccionario para agrupar los silabos por código de plan de estudio
+    silabos_agrupados = {}
+    
+    for silabo in silabos:
+        # Obtener el código del plan de estudio
+        codigo = silabo.asignacion_plan.plan_de_estudio.codigo
+        
+        # Si el código no está en el diccionario, crear una lista vacía
+        if codigo not in silabos_agrupados:
+            silabos_agrupados[codigo] = []
+        
+        # Agregar el sílabo a la lista correspondiente
+        silabos_agrupados[codigo].append(silabo)
+    
+    # Obtener el año actual
+    año_actual = datetime.datetime.now().year
+    
+    # Generar el documento
+    output = generar_documento_secuencia_didactica(silabos_agrupados, nombre_de_usuario, año_actual)
+    
+    # Crear la respuesta HTTP con el documento
+    response = HttpResponse(output.getvalue(), content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    response['Content-Disposition'] = 'attachment; filename=secuencia_didactica.docx'
+    
+    return response

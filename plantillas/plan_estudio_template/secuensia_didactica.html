@@ -13,14 +13,30 @@
         --color-azul-3: #2E86C1;
     }
     .tabla-scroll {
-    overflow-x: auto;
-    width: 100%;
+        overflow-x: auto;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    /* Agregamos estilos responsivos para todas las tablas */
+    .table-container {
+        overflow-x: auto;
+        width: 100%;
+        margin-bottom: 15px;
     }
 
     .data-table {
-        min-width: 1200px; /* permite que sea más ancha si hace falta */
+        min-width: 100%;
+        width: 100%;
         border-collapse: collapse;
         table-layout: fixed;
+    }
+
+    /* En dispositivos pequeños */
+    @media (max-width: 768px) {
+        .data-table {
+            min-width: 800px; /* Ancho mínimo para asegurar scroll en móviles */
+        }
     }
 
     .data-table th,
@@ -40,7 +56,7 @@
 
     /* Anchos de columnas */
     .col-tema { width: 15%; }
-    .col-fase { width: 10%; }
+    .col-fase { width: 16%; }
     .col-forma { width: 15%; }
     .col-descripcion { width: 35%; }
     .col-recursos { width: 15%; }
@@ -243,6 +259,9 @@
 </style>
 
 <div class="container mt-4 guia-component">
+    <!-- Botón para descargar documento completo -->
+ 
+    
     <!-- Acordeón -->
     <div class="accordion" id="guiaAccordion">
         {% for codigo, silabos_grupo in silabos_agrupados.items %}
@@ -251,7 +270,12 @@
                 <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ codigo }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-{{ codigo }}">
                     <div class="d-flex flex-column flex-md-row justify-content-between w-100">
                         <div>
-                            <strong>📚 Guía para el Estudio Independiente: {{ codigo }}</strong>
+                            <a href="{% url 'descargar_secuencia_didactica' %}" class="btn btn-primary">
+                                <i class="fas fa-file-word"></i> 
+                                {% with first_silabo=silabos_grupo|first %}
+                                {{ first_silabo.asignatura.nombre }}
+                                {% endwith %}
+                            </a>
                         </div>
                         <div class="d-flex gap-3">
                             {% with primer_silabo=silabos_grupo.0 %}
@@ -293,55 +317,57 @@
                                         Datos Generales
                                     </h3>
                                     <div class="data-card">
-                                        <table class="data-table">
-                                            <tr>
-                                                <td>N° de guia:</td>
-                                                <td>{{ silabo.encuentros }}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Fecha:</td>
-                                                <td>{{ silabo.fecha|date:"d/m/Y" }}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Sede:</td>
-                                                <td>Jalapa</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Carrera:</td>
-                                                <td>{{ silabo.plan_de_estudio.carrera.nombre }}</td>
-                                            </tr>
-                                            
-                                            <tr>
-                                                <td>Mediador:</td>
-                                                <td>{{ usuario }}</td>
-                                            </tr>
-                                            
-                                            <tr>
-                                                <td>Año académico:</td>
-                                                <td>{{ silabo.plan_de_estudio.año }}</td>
-                                            </tr>
+                                        <div class="table-container">
+                                            <table class="data-table">
+                                                <tr>
+                                                    <td>N° de guia:</td>
+                                                    <td>{{ silabo.encuentros }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Fecha:</td>
+                                                    <td>{{ silabo.fecha|date:"d/m/Y" }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Sede:</td>
+                                                    <td>Jalapa</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Carrera:</td>
+                                                    <td>{{ silabo.plan_de_estudio.carrera.nombre }}</td>
+                                                </tr>
+                                                
+                                                <tr>
+                                                    <td>Mediador:</td>
+                                                    <td>{{ usuario }}</td>
+                                                </tr>
+                                                
+                                                <tr>
+                                                    <td>Año académico:</td>
+                                                    <td>{{ silabo.plan_de_estudio.año }}</td>
+                                                </tr>
 
-                                            <tr>
-                                                <td>Asignatura:</td>
-                                                <td>{{ silabo.plan_de_estudio.asignatura }}</td>
-                                            </tr>
+                                                <tr>
+                                                    <td>Asignatura:</td>
+                                                    <td>{{ silabo.plan_de_estudio.asignatura }}</td>
+                                                </tr>
 
-                                            <tr>
-                                                <td>Cód. de asignatura:</td>
-                                                <td>{{ silabo.plan_de_estudio.codigo }}</td>
-                                            </tr>
+                                                <tr>
+                                                    <td>Cód. de asignatura:</td>
+                                                    <td>{{ silabo.plan_de_estudio.codigo }}</td>
+                                                </tr>
 
-                                            <tr>
-                                                <td>Trimestre:</td>
-                                                <td>{{ silabo.plan_de_estudio.trimestre }}</td>
-                                            </tr>
+                                                <tr>
+                                                    <td>Trimestre:</td>
+                                                    <td>{{ silabo.plan_de_estudio.trimestre }}</td>
+                                                </tr>
 
-                                            <tr>
-                                                <td>Año Lectivo:</td>
-                                                <td>{{ año_actual }}</td>
-                                            </tr>
-                                            
-                                        </table>
+                                                <tr>
+                                                    <td>Año Lectivo:</td>
+                                                    <td>{{ año_actual }}</td>
+                                                </tr>
+                                                
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -352,7 +378,7 @@
                                     <table class="data-table">
                                         <tbody>
                                             <tr>
-                                                <td colspan="2" class="text-center">{{ silabo.unidad }}. {{ silabo.nombre_de_la_unidad }}</td>
+                                                <td colspan="2" class="text-center"><strong>{{ silabo.unidad }}. {{ silabo.nombre_de_la_unidad }}</strong></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -381,12 +407,12 @@
                                 
                                 <!-- MEDIACIÓN PEDAGÓGICA -->
                                 <h4 class="mt-4 mb-3 text-center">MEDIACIÓN PEDAGÓGICA</h4>
-                                <div class="tabla-scroll">
+                                <div class="tabla-scroll" style="overflow-x: auto; max-width: 100%;">
                                     <table class="data-table">
                                       <thead>
                                         <tr>
                                           <th class="col-tema">Contenido temático</th>
-                                          <th class="col-fase">Fases</th>
+                                          <th class="col-fase" style="width: 16%;">Fases</th>
                                           <th class="col-forma">Forma organizativa</th>
                                           <th class="col-descripcion">Descripción de la forma organizativa</th>
                                           <th class="col-recursos">Recursos didácticos</th>
@@ -395,7 +421,7 @@
                                       </thead>
                                       <tbody>
                                         <tr>
-                                          <td rowspan="5">
+                                          <td rowspan="6">
                                             {{ silabo.contenido_tematico }}
                                           </td>
                                           <td rowspan="2"><strong>Primer momento</strong><br>(Entrada)</td>
@@ -435,12 +461,12 @@
                                         </tr>
 
                                         <tr>
-                                            <td>—</td>
-                                            <td>—</td>
-                                            <td>—</td>
-                                            <td>—</td>
-                                            <td>—</td>
-                                          </tr>
+                                          <td>—</td>
+                                          <td>—</td>
+                                          <td>—</td>
+                                          <td>—</td>
+                                          <td>—</td>
+                                        </tr>
 
                                         <tr>
                                           <td><strong>Tercer momento</strong><br>(Salida)</td>
@@ -459,7 +485,7 @@
                                 <h4 class="mt-4 mb-3">Orientaciones de las actividades de aprendizaje</h4>
                                 
                                 <!-- Actividad de Aprendizaje -->
-                                <div class="table-container">
+                                <div class="table-container" style="overflow-x: auto; max-width: 100%;">
                                     <table class="data-table">
                                         <thead>
                                             <tr>
@@ -471,20 +497,22 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td>{% if silabo.estudio_independiente.descripcion_actividad %}{{ silabo.estudio_independiente.descripcion_actividad }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.actividad_aprendizaje %}{{ silabo.actividad_aprendizaje }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                 <td>
-                                                    Tipo de Evaluación:<br>
-                                                    {% if silabo.estudio_independiente.tipo_evaluacion %}{{ silabo.estudio_independiente.tipo_evaluacion }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    <strong>Tipo de Evaluación</strong><br>
+                                                    {% if silabo.tipo_evaluacion %}{{ silabo.tipo_evaluacion }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
                                                     <strong>Instrumento de evaluación</strong><br><br>
-                                                    {% if silabo.estudio_independiente.instrumento_evaluacion %}{{ silabo.estudio_independiente.instrumento_evaluacion }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.instrumento_evaluacion %}{{ silabo.instrumento_evaluacion }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
                                                 <td>
-                                                    {% if silabo.periodo %}{{ silabo.periodo }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    {% if silabo.estudio_independiente.tecnica_evaluacion %}{{ silabo.estudio_independiente.tecnica_evaluacion }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.periodo_tiempo_programado %}{{ silabo.periodo_tiempo_programado }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    <strong>Tecnica evaluacion</strong><br>
+                                                    {% if silabo.tecnica_evaluacion %}{{ silabo.tecnica_evaluacion }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
                                                 <td>
-                                                    Puntaje<br><br>
-                                                    {% if silabo.estudio_independiente.puntaje %}{{ silabo.estudio_independiente.puntaje }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.tiempo_minutos %}{{ silabo.tiempo_minutos }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                   <strong>Puntaje</strong><br>
+                                                    {% if silabo.puntaje %}{{ silabo.puntaje }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -496,7 +524,12 @@
                                         <tbody>
                                             <tr>
                                                 <td style="text-align: center;"><strong>TOTAL HORAS</strong></td>
-                                                <td width="10%"><strong>{% if silabo.estudio_independiente.total_horas %}{{ silabo.estudio_independiente.total_horas }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</strong></td>
+                                                <td width="10%"><strong>
+                                                {% with total_minutos=silabo.tiempo_primer_momento|add:silabo.tiempo_segundo_momento_teorica|add:silabo.tiempo_segundo_momento_practica|add:silabo.tiempo_tercer_momento|add:silabo.tiempo_minutos %}
+                                                    {% widthratio total_minutos 60 1 as horas_decimal %}
+                                                    {{ horas_decimal|floatformat:2 }}
+                                                {% endwith %}
+                                                </strong></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -513,10 +546,10 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td>{% if silabo.estudio_independiente.eje_transversal %}{{ silabo.estudio_independiente.eje_transversal }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td><strong>{% if silabo.eje_transversal %}{{ silabo.eje_transversal }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</strong></td>
                                                 <td>
-                                                    {% if silabo.estudio_independiente.descripcion_eje %}
-                                                        {{ silabo.estudio_independiente.descripcion_eje|safe }}
+                                                    {% if silabo.detalle_eje_transversal %}
+                                                        {{ silabo.detalle_eje_transversal|safe }}
                                                     {% else %}
                                                         <span style="color: #FDA172;">SinDatos</span>
                                                     {% endif %}
@@ -530,7 +563,7 @@
                                 <h3 class="mt-5 mb-3 text-center">GUÍA AUTODIDÁCTICA DE APRENDIZAJE</h3>
                                 
                                 <!-- Tarea 1 -->
-                                <h4 class="mt-4 mb-3">Tarea 1</h4>
+                                <h4 class="mt-4 mb-3">Actividad de Aprendizaje 1</h4>
                                 <div class="table-container">
                                     <table class="data-table">
                                         <thead>
@@ -570,7 +603,7 @@
                                 </div>
                                 
                                 <!-- Tarea 2 -->
-                                <h4 class="mt-4 mb-3">Tarea 2</h4>
+                                <h4 class="mt-4 mb-3">Actividad de Aprendizaje 2</h4>
                                 <div class="table-container">
                                     <table class="data-table">
                                         <thead>
@@ -610,7 +643,7 @@
                                 </div>
                                 
                                 <!-- Tarea 3 -->
-                                <h4 class="mt-4 mb-3">Tarea 3</h4>
+                                <h4 class="mt-4 mb-3">Actividad de Aprendizaje 3</h4>
                                 <div class="table-container">
                                     <table class="data-table">
                                         <thead>
@@ -650,7 +683,7 @@
                                 </div>
                                 
                                 <!-- Tarea 4 -->
-                                <h4 class="mt-4 mb-3">Tarea 4</h4>
+                                <h4 class="mt-4 mb-3">Actividad de Aprendizaje 4</h4>
                                 <div class="table-container">
                                     <table class="data-table">
                                         <thead>
@@ -700,22 +733,33 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>Horas presenciales:</td>
-                                                            <td width="15%">{% if silabo.horas_presenciales %}{{ silabo.horas_presenciales }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                            <td width="20%">
+                                                                {% with total_minutos=silabo.tiempo_primer_momento|add:silabo.tiempo_segundo_momento_teorica|add:silabo.tiempo_segundo_momento_practica|add:silabo.tiempo_tercer_momento|add:silabo.tiempo_minutos %}
+                                                                {% widthratio total_minutos 60 1 as horas_decimal %}
+                                                                {{ horas_decimal|floatformat:2 }}
+                                                                {% endwith %}
+                                                            </td>
                                                         </tr>
                                                         <tr>
                                                             <td>Horas de estudio independiente:</td>
-                                                            <td>{% if silabo.horas_estudio_independiente %}{{ silabo.horas_estudio_independiente }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                            <td>
+                                                                {% with total_minutos=silabo.guia.tiempo_minutos_1|add:silabo.guia.tiempo_minutos_2|add:silabo.guia.tiempo_minutos_3|add:silabo.guia.tiempo_minutos_4 %}
+                                                                {% widthratio total_minutos 60 1 as horas_decimal %}
+                                                                {{ horas_decimal|floatformat:2 }}
+                                                                {% endwith %}
+                                                            </td>
                                                         </tr>
                                                         <tr>
                                                             <td><strong>Total de horas:</strong></td>
                                                             <td>
-                                                                <strong>
-                                                                    {% if silabo.horas_presenciales or silabo.horas_estudio_independiente %}
-                                                                        {{ silabo.horas_presenciales|default:0|add:silabo.horas_estudio_independiente|default:0 }}
-                                                                    {% else %}
-                                                                        <span style="color: #FDA172;">SinDatos</span>
-                                                                    {% endif %}
-                                                                </strong>
+                                                                {% with presencial_minutos=silabo.tiempo_primer_momento|add:silabo.tiempo_segundo_momento_teorica|add:silabo.tiempo_segundo_momento_practica|add:silabo.tiempo_tercer_momento|add:silabo.tiempo_minutos %}
+                                                                {% with independiente_minutos=silabo.guia.tiempo_minutos_1|add:silabo.guia.tiempo_minutos_2|add:silabo.guia.tiempo_minutos_3|add:silabo.guia.tiempo_minutos_4 %}
+                                                                {% with total_minutos=presencial_minutos|add:independiente_minutos %}
+                                                                {% widthratio total_minutos 60 1 as horas_decimal %}
+                                                                {{ horas_decimal|floatformat:2 }}
+                                                                {% endwith %}
+                                                                {% endwith %}
+                                                                {% endwith %}
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -728,22 +772,34 @@
                                                     <tbody>
                                                         <tr>
                                                             <td>Puntaje en actividad de aprendizaje presencial:</td>
-                                                            <td width="15%">{% if silabo.puntaje_actividad_presencial %}{{ silabo.puntaje_actividad_presencial }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                            <td width="20%">{% if silabo.puntaje %}{{ silabo.puntaje }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                         </tr>
                                                         <tr>
                                                             <td>Puntaje en estudio independiente:</td>
-                                                            <td>{% if silabo.puntaje_estudio_independiente %}{{ silabo.puntaje_estudio_independiente }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td><strong>Puntaje Total</strong></td>
                                                             <td>
-                                                                <strong>
-                                                                    {% if silabo.puntaje_actividad_presencial or silabo.puntaje_estudio_independiente %}
-                                                                        {{ silabo.puntaje_actividad_presencial|default:0|add:silabo.puntaje_estudio_independiente|default:0 }}
+                                                                {% with total_puntaje_independiente=silabo.guia.puntaje_1|add:silabo.guia.puntaje_2|add:silabo.guia.puntaje_3|add:silabo.guia.puntaje_4 %}
+                                                                    {% if total_puntaje_independiente > 0 %}
+                                                                        {{ total_puntaje_independiente }}
                                                                     {% else %}
                                                                         <span style="color: #FDA172;">SinDatos</span>
                                                                     {% endif %}
-                                                                </strong>
+                                                                {% endwith %}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Puntaje Total:</strong></td>
+                                                            <td>
+                                                                
+                                                                    {% with total_puntaje_independiente=silabo.guia.puntaje_1|add:silabo.guia.puntaje_2|add:silabo.guia.puntaje_3|add:silabo.guia.puntaje_4 %}
+                                                                    {% with puntaje_total=silabo.puntaje|add:total_puntaje_independiente %}
+                                                                        {% if puntaje_total > 0 %}
+                                                                            {{ puntaje_total }}
+                                                                        {% else %}
+                                                                            <span style="color: #FDA172;">SinDatos</span>
+                                                                        {% endif %}
+                                                                    {% endwith %}
+                                                                    {% endwith %}
+                                                                
                                                             </td>
                                                         </tr>
                                                     </tbody>

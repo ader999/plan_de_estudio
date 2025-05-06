@@ -74,6 +74,7 @@
         position: absolute;
         left: 10px;
         margin-left: 20px;
+        opacity: 1 !important; /* Make spinners fully opaque/solid */
     }
     #boton-generar-estudio #spinner-estudio1 {
         left: 5px; /* Ajusta la posición horizontal del spinner 1 */
@@ -90,4 +91,35 @@
     #boton-generar-estudio #spinner-estudio4 {
         left: 86px; /* Ajusta la posición horizontal del spinner 4 */
     }
+
+    #boton-generar-estudio.d-none .sparkle, #boton-generar-estudio.d-none .text {
+        display: none;
+    }
 </style>
+
+<script>
+    // Script para controlar la visibilidad del texto durante la animación
+    $(document).ready(function() {
+        // Guardar referencia al botón original
+        const botonOriginal = $("#boton-generar-estudio");
+        
+        // Observar cuando los spinners cambian de clase (mostrar/ocultar)
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    // Si cualquier spinner está visible, ocultar texto y sparkle
+                    if (!$("#spinner-estudio1").hasClass('d-none')) {
+                        $("#boton-generar-estudio .text, #boton-generar-estudio .sparkle").hide();
+                    } else {
+                        $("#boton-generar-estudio .text, #boton-generar-estudio .sparkle").show();
+                    }
+                }
+            });
+        });
+        
+        // Configurar la observación en el primer spinner
+        observer.observe(document.getElementById('spinner-estudio1'), {
+            attributes: true
+        });
+    });
+</script>
