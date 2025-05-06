@@ -27,6 +27,7 @@ from django.urls import reverse
 import openai  # Importar openai directamente, sin la clase OpenAI
 import google.generativeai as genai
 import httpx
+from .ai_generators import DateTimeEncoder  # Importar el encoder personalizado
 
 # Cargar variables de entorno
 load_dotenv()
@@ -1186,7 +1187,7 @@ def generar_estudio_independiente(request):
             - Puntaje: {silabo.puntaje}
 
             {"GUÍAS DE ESTUDIO PREVIAS:" if guias_previas else "Esta es la primera guía para esta asignación."}
-            {json.dumps(guias_previas, indent=2, ensure_ascii=False) if guias_previas else ""}
+            {json.dumps(guias_previas, indent=2, ensure_ascii=False, cls=DateTimeEncoder) if guias_previas else ""}
 
             TIPOS DE OBJETIVO DISPONIBLES:
             {', '.join(tipos_objetivo)}
@@ -1208,7 +1209,7 @@ def generar_estudio_independiente(request):
 
             EJEMPLO DE ESTRUCTURA DE GUÍA:
             ```
-            {json.dumps(ejemplo_guia, indent=2, ensure_ascii=False)}
+            {json.dumps(ejemplo_guia, indent=2, ensure_ascii=False, cls=DateTimeEncoder)}
             ```
 
             INSTRUCCIONES ESPECÍFICAS:

@@ -11,6 +11,14 @@ import requests
 from dotenv import load_dotenv
 import google.generativeai as genai
 import time
+import datetime
+
+# Añadir un encoder personalizado para manejar objetos de fecha
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        return super(DateTimeEncoder, self).default(obj)
 
 
 def usar_modelo_google(prompt_completo, generation_config):
