@@ -104,7 +104,7 @@ class FiltarSilabo(admin.ModelAdmin):
         UsuarioConSilabosFilter,  # Filtro personalizado para usuarios con sílabos
         ('asignacion_plan__plan_de_estudio', RelatedFieldListFilter),  # Filtro para la asignación
     )
-
+    readonly_fields = ('codigo', 'encuentros', 'fecha', 'guia', 'asignacion_plan')  # Campos que solo serán de lectura
     exclude = ()  # No excluir campos innecesarios
 
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -124,6 +124,7 @@ class FiltarSilabo(admin.ModelAdmin):
 
 class FiltrarGuia(admin.ModelAdmin):
     list_filter = ('silabo__codigo',)
+    readonly_fields = ('silabo', 'numero_encuentro', 'fecha')  # Campos que solo serán de lectura
 
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
