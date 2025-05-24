@@ -579,24 +579,24 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td>{% if silabo.guia.nombre_de_la_unidad %}{{ silabo.guia.nombre_de_la_unidad }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.nombre_de_la_unidad }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                 <td>
-                                                    {% if silabo.guia.tipo_objetivo_1 %}{{ silabo.guia.tipo_objetivo_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}:<br>
-                                                    {% if silabo.guia.objetivo_aprendizaje_1 %}{{ silabo.guia.objetivo_aprendizaje_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.guia %}{{ silabo.guia.tipo_objetivo_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}:<br>
+                                                    {% if silabo.guia %}{{ silabo.guia.objetivo_aprendizaje_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
-                                                <td>{% if silabo.guia.contenido_tematico_1 %}{{ silabo.guia.contenido_tematico_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.guia.actividad_aprendizaje_1 %}{{ silabo.guia.actividad_aprendizaje_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.contenido_tematico_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.actividad_aprendizaje_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                 <td>
-                                                    Tipo de evaluación: {% if silabo.guia.tipo_evaluacion_1 %}{{ silabo.guia.tipo_evaluacion_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Instrumento de evaluación: {% if silabo.guia.instrumento_evaluacion_1 %}{{ silabo.guia.instrumento_evaluacion_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Recursos didácticos: {% if silabo.guia.recursos_didacticos_1 %}{{ silabo.guia.recursos_didacticos_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    Tipo de evaluación: {% if silabo.guia %}{{ silabo.guia.tipo_evaluacion_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Instrumento de evaluación: {% if silabo.guia %}{{ silabo.guia.instrumento_evaluacion_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Recursos didácticos: {% if silabo.guia %}{{ silabo.guia.recursos_didacticos_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
                                                 <td>
-                                                    {% if silabo.guia.periodo_tiempo_programado_1 %}{{ silabo.guia.periodo_tiempo_programado_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Puntaje: {% if silabo.guia.puntaje_1 %}{{ silabo.guia.puntaje_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Fecha de entrega: {% if silabo.guia.fecha_entrega_1 %}{{ silabo.guia.fecha_entrega_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.guia %}{{ silabo.guia.periodo_tiempo_programado_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Puntaje: {% if silabo.guia %}{{ silabo.guia.puntaje_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Fecha de entrega: {% if silabo.guia %}{{ silabo.guia.fecha_entrega_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
-                                                <td>{% if silabo.guia.tiempo_minutos_1 %}{{ silabo.guia.tiempo_minutos_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.tiempo_minutos_1 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -619,24 +619,24 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td>{% if silabo.guia.nombre_de_la_unidad %}{{ silabo.guia.nombre_de_la_unidad }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.nombre_de_la_unidad }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                 <td>
-                                                    {% if silabo.guia.tipo_objetivo_2 %}{{ silabo.guia.tipo_objetivo_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}:<br>
-                                                    {% if silabo.guia.objetivo_aprendizaje_2 %}{{ silabo.guia.objetivo_aprendizaje_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.guia %}{{ silabo.guia.tipo_objetivo_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}:<br>
+                                                    {% if silabo.guia %}{{ silabo.guia.objetivo_aprendizaje_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
-                                                <td>{% if silabo.guia.contenido_tematico_2 %}{{ silabo.guia.contenido_tematico_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.guia.actividad_aprendizaje_2 %}{{ silabo.guia.actividad_aprendizaje_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.contenido_tematico_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.actividad_aprendizaje_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                 <td>
-                                                    Tipo de evaluación: {% if silabo.guia.tipo_evaluacion_2 %}{{ silabo.guia.tipo_evaluacion_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Instrumento de evaluación: {% if silabo.guia.instrumento_evaluacion_2 %}{{ silabo.guia.instrumento_evaluacion_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Recursos didácticos: {% if silabo.guia.recursos_didacticos_2 %}{{ silabo.guia.recursos_didacticos_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    Tipo de evaluación: {% if silabo.guia %}{{ silabo.guia.tipo_evaluacion_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Instrumento de evaluación: {% if silabo.guia %}{{ silabo.guia.instrumento_evaluacion_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Recursos didácticos: {% if silabo.guia %}{{ silabo.guia.recursos_didacticos_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
                                                 <td>
-                                                    {% if silabo.guia.periodo_tiempo_programado_2 %}{{ silabo.guia.periodo_tiempo_programado_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Puntaje: {% if silabo.guia.puntaje_2 %}{{ silabo.guia.puntaje_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Fecha de entrega: {% if silabo.guia.fecha_entrega_2 %}{{ silabo.guia.fecha_entrega_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.guia %}{{ silabo.guia.periodo_tiempo_programado_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Puntaje: {% if silabo.guia %}{{ silabo.guia.puntaje_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Fecha de entrega: {% if silabo.guia %}{{ silabo.guia.fecha_entrega_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
-                                                <td>{% if silabo.guia.tiempo_minutos_2 %}{{ silabo.guia.tiempo_minutos_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.tiempo_minutos_2 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -659,24 +659,24 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td>{% if silabo.guia.nombre_de_la_unidad %}{{ silabo.guia.nombre_de_la_unidad }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.nombre_de_la_unidad }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                 <td>
-                                                    {% if silabo.guia.tipo_objetivo_3 %}{{ silabo.guia.tipo_objetivo_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}:<br>
-                                                    {% if silabo.guia.objetivo_aprendizaje_3 %}{{ silabo.guia.objetivo_aprendizaje_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.guia %}{{ silabo.guia.tipo_objetivo_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}:<br>
+                                                    {% if silabo.guia %}{{ silabo.guia.objetivo_aprendizaje_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
-                                                <td>{% if silabo.guia.contenido_tematico_3 %}{{ silabo.guia.contenido_tematico_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.guia.actividad_aprendizaje_3 %}{{ silabo.guia.actividad_aprendizaje_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.contenido_tematico_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.actividad_aprendizaje_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                 <td>
-                                                    Tipo de evaluación: {% if silabo.guia.tipo_evaluacion_3 %}{{ silabo.guia.tipo_evaluacion_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Instrumento de evaluación: {% if silabo.guia.instrumento_evaluacion_3 %}{{ silabo.guia.instrumento_evaluacion_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Recursos didácticos: {% if silabo.guia.recursos_didacticos_3 %}{{ silabo.guia.recursos_didacticos_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    Tipo de evaluación: {% if silabo.guia %}{{ silabo.guia.tipo_evaluacion_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Instrumento de evaluación: {% if silabo.guia %}{{ silabo.guia.instrumento_evaluacion_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Recursos didácticos: {% if silabo.guia %}{{ silabo.guia.recursos_didacticos_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
                                                 <td>
-                                                    {% if silabo.guia.periodo_tiempo_programado_3 %}{{ silabo.guia.periodo_tiempo_programado_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Puntaje: {% if silabo.guia.puntaje_3 %}{{ silabo.guia.puntaje_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Fecha de entrega: {% if silabo.guia.fecha_entrega_3 %}{{ silabo.guia.fecha_entrega_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.guia %}{{ silabo.guia.periodo_tiempo_programado_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Puntaje: {% if silabo.guia %}{{ silabo.guia.puntaje_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Fecha de entrega: {% if silabo.guia %}{{ silabo.guia.fecha_entrega_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
-                                                <td>{% if silabo.guia.tiempo_minutos_3 %}{{ silabo.guia.tiempo_minutos_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.tiempo_minutos_3 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -699,24 +699,24 @@
                                         </thead>
                                         <tbody>
                                             <tr>
-                                                <td>{% if silabo.guia.nombre_de_la_unidad %}{{ silabo.guia.nombre_de_la_unidad }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.nombre_de_la_unidad }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                 <td>
-                                                    {% if silabo.guia.tipo_objetivo_4 %}{{ silabo.guia.tipo_objetivo_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}:<br>
-                                                    {% if silabo.guia.objetivo_aprendizaje_4 %}{{ silabo.guia.objetivo_aprendizaje_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.guia %}{{ silabo.guia.tipo_objetivo_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}:<br>
+                                                    {% if silabo.guia %}{{ silabo.guia.objetivo_aprendizaje_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
-                                                <td>{% if silabo.guia.contenido_tematico_4 %}{{ silabo.guia.contenido_tematico_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
-                                                <td>{% if silabo.guia.actividad_aprendizaje_4 %}{{ silabo.guia.actividad_aprendizaje_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.contenido_tematico_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.actividad_aprendizaje_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                                 <td>
-                                                    Tipo de evaluación: {% if silabo.guia.tipo_evaluacion_4 %}{{ silabo.guia.tipo_evaluacion_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Instrumento de evaluación: {% if silabo.guia.instrumento_evaluacion_4 %}{{ silabo.guia.instrumento_evaluacion_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Recursos didácticos: {% if silabo.guia.recursos_didacticos_4 %}{{ silabo.guia.recursos_didacticos_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    Tipo de evaluación: {% if silabo.guia %}{{ silabo.guia.tipo_evaluacion_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Instrumento de evaluación: {% if silabo.guia %}{{ silabo.guia.instrumento_evaluacion_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Recursos didácticos: {% if silabo.guia %}{{ silabo.guia.recursos_didacticos_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
                                                 <td>
-                                                    {% if silabo.guia.periodo_tiempo_programado_4 %}{{ silabo.guia.periodo_tiempo_programado_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Puntaje: {% if silabo.guia.puntaje_4 %}{{ silabo.guia.puntaje_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
-                                                    Fecha de entrega: {% if silabo.guia.fecha_entrega_4 %}{{ silabo.guia.fecha_entrega_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
+                                                    {% if silabo.guia %}{{ silabo.guia.periodo_tiempo_programado_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Puntaje: {% if silabo.guia %}{{ silabo.guia.puntaje_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}<br><br>
+                                                    Fecha de entrega: {% if silabo.guia %}{{ silabo.guia.fecha_entrega_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}
                                                 </td>
-                                                <td>{% if silabo.guia.tiempo_minutos_4 %}{{ silabo.guia.tiempo_minutos_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
+                                                <td>{% if silabo.guia %}{{ silabo.guia.tiempo_minutos_4 }}{% else %}<span style="color: #FDA172;">SinDatos</span>{% endif %}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -743,22 +743,35 @@
                                                         <tr>
                                                             <td>Horas de estudio independiente:</td>
                                                             <td>
-                                                                {% with total_minutos=silabo.guia.tiempo_minutos_1|add:silabo.guia.tiempo_minutos_2|add:silabo.guia.tiempo_minutos_3|add:silabo.guia.tiempo_minutos_4 %}
-                                                                {% widthratio total_minutos 60 1 as horas_decimal %}
-                                                                {{ horas_decimal|floatformat:2 }}
-                                                                {% endwith %}
+                                                                {% if silabo.guia %}
+                                                                    {% with total_minutos=silabo.guia.tiempo_minutos_1|default_if_none:0|add:silabo.guia.tiempo_minutos_2|default_if_none:0|add:silabo.guia.tiempo_minutos_3|default_if_none:0|add:silabo.guia.tiempo_minutos_4|default_if_none:0 %}
+                                                                    {% widthratio total_minutos 60 1 as horas_decimal %}
+                                                                    {{ horas_decimal|floatformat:2 }}
+                                                                    {% endwith %}
+                                                                {% else %}
+                                                                    0.00
+                                                                {% endif %}
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td><strong>Total de horas:</strong></td>
                                                             <td>
                                                                 {% with presencial_minutos=silabo.tiempo_primer_momento|add:silabo.tiempo_segundo_momento_teorica|add:silabo.tiempo_segundo_momento_practica|add:silabo.tiempo_tercer_momento|add:silabo.tiempo_minutos %}
-                                                                {% with independiente_minutos=silabo.guia.tiempo_minutos_1|add:silabo.guia.tiempo_minutos_2|add:silabo.guia.tiempo_minutos_3|add:silabo.guia.tiempo_minutos_4 %}
-                                                                {% with total_minutos=presencial_minutos|add:independiente_minutos %}
-                                                                {% widthratio total_minutos 60 1 as horas_decimal %}
-                                                                {{ horas_decimal|floatformat:2 }}
-                                                                {% endwith %}
-                                                                {% endwith %}
+                                                                {% if silabo.guia %}
+                                                                    {% with independiente_minutos=silabo.guia.tiempo_minutos_1|default_if_none:0|add:silabo.guia.tiempo_minutos_2|default_if_none:0|add:silabo.guia.tiempo_minutos_3|default_if_none:0|add:silabo.guia.tiempo_minutos_4|default_if_none:0 %}
+                                                                    {% with total_minutos=presencial_minutos|add:independiente_minutos %}
+                                                                    {% widthratio total_minutos 60 1 as horas_decimal %}
+                                                                    {{ horas_decimal|floatformat:2 }}
+                                                                    {% endwith %}
+                                                                    {% endwith %}
+                                                                {% else %}
+                                                                    {% with independiente_minutos=0 %}
+                                                                    {% with total_minutos=presencial_minutos|add:independiente_minutos %}
+                                                                    {% widthratio total_minutos 60 1 as horas_decimal %}
+                                                                    {{ horas_decimal|floatformat:2 }}
+                                                                    {% endwith %}
+                                                                    {% endwith %}
+                                                                {% endif %}
                                                                 {% endwith %}
                                                             </td>
                                                         </tr>
@@ -777,28 +790,42 @@
                                                         <tr>
                                                             <td>Puntaje en estudio independiente:</td>
                                                             <td>
-                                                                {% with total_puntaje_independiente=silabo.guia.puntaje_1|add:silabo.guia.puntaje_2|add:silabo.guia.puntaje_3|add:silabo.guia.puntaje_4 %}
-                                                                    {% if total_puntaje_independiente > 0 %}
-                                                                        {{ total_puntaje_independiente }}
-                                                                    {% else %}
-                                                                        <span style="color: #FDA172;">SinDatos</span>
-                                                                    {% endif %}
-                                                                {% endwith %}
+                                                                {% if silabo.guia %}
+                                                                    {% with total_puntaje_independiente=silabo.guia.puntaje_1|default_if_none:0|add:silabo.guia.puntaje_2|default_if_none:0|add:silabo.guia.puntaje_3|default_if_none:0|add:silabo.guia.puntaje_4|default_if_none:0 %}
+                                                                        {% if total_puntaje_independiente > 0 %}
+                                                                            {{ total_puntaje_independiente }}
+                                                                        {% else %}
+                                                                            <span style="color: #FDA172;">SinDatos</span>
+                                                                        {% endif %}
+                                                                    {% endwith %}
+                                                                {% else %}
+                                                                    <span style="color: #FDA172;">SinDatos</span>
+                                                                {% endif %}
                                                             </td>
                                                         </tr>
                                                         <tr>
                                                             <td><strong>Puntaje Total:</strong></td>
                                                             <td>
                                                                 
-                                                                    {% with total_puntaje_independiente=silabo.guia.puntaje_1|add:silabo.guia.puntaje_2|add:silabo.guia.puntaje_3|add:silabo.guia.puntaje_4 %}
-                                                                    {% with puntaje_total=silabo.puntaje|add:total_puntaje_independiente %}
-                                                                        {% if puntaje_total > 0 %}
-                                                                            {{ puntaje_total }}
-                                                                        {% else %}
-                                                                            <span style="color: #FDA172;">SinDatos</span>
-                                                                        {% endif %}
-                                                                    {% endwith %}
-                                                                    {% endwith %}
+                                                                    {% if silabo.guia %}
+                                                                        {% with total_puntaje_independiente=silabo.guia.puntaje_1|default_if_none:0|add:silabo.guia.puntaje_2|default_if_none:0|add:silabo.guia.puntaje_3|default_if_none:0|add:silabo.guia.puntaje_4|default_if_none:0 %}
+                                                                        {% with puntaje_total=silabo.puntaje|add:total_puntaje_independiente %}
+                                                                            {% if puntaje_total > 0 %}
+                                                                                {{ puntaje_total }}
+                                                                            {% else %}
+                                                                                <span style="color: #FDA172;">SinDatos</span>
+                                                                            {% endif %}
+                                                                        {% endwith %}
+                                                                        {% endwith %}
+                                                                    {% else %}
+                                                                        {% with puntaje_total=silabo.puntaje %}
+                                                                            {% if puntaje_total > 0 %}
+                                                                                {{ puntaje_total }}
+                                                                            {% else %}
+                                                                                <span style="color: #FDA172;">SinDatos</span>
+                                                                            {% endif %}
+                                                                        {% endwith %}
+                                                                    {% endif %}
                                                                 
                                                             </td>
                                                         </tr>
