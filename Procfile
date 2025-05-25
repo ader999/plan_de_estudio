@@ -1,1 +1,1 @@
-web: gunicorn plan_de_estudio.wsgi
+web: gunicorn --timeout 120 plan_de_estudio.wsgi
