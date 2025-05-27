@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'plan_de_estudio',
     'widget_tweaks',
     'import_export',
+    'minio_storage',
 
 ]
 
@@ -168,3 +169,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/plan_de_estudio/'  # Cambia esto según tu necesidad
+
+DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
+
+MINIO_STORAGE_ENDPOINT = os.environ.get('MINIO_S3_ENDPOINT_URL')
+MINIO_STORAGE_ACCESS_KEY = os.environ.get('MINIO_ACCESS_KEY_ID')
+MINIO_STORAGE_SECRET_KEY = os.environ.get('MINIO_SECRET_ACCESS_KEY')
+MINIO_STORAGE_BUCKET_NAME = os.environ.get('MINIO_BUCKET_NAME')
+MINIO_STORAGE_USE_HTTPS = True
+MINIO_STORAGE_AUTO_CREATE_BUCKET = True
+MINIO_STORAGE_AUTO_CREATE_POLICY = True
+MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
