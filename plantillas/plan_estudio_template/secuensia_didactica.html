@@ -1,6 +1,7 @@
 {% load static %}
 
 <style>
+/* Definimos selectores más específicos para evitar conflictos con otros componentes */
     /* Variables */
     :root {
         --guia-gris-claro: #f5f8fa;
@@ -71,16 +72,16 @@
         overflow: hidden;
     }
     
-    .guia-component .main-content {
+    #secuencia-didactica-component .main-content {
         display: none;
     }
     
-    .guia-component .main-content.active {
+    #secuencia-didactica-component .main-content.active {
         display: block;
     }
     
     /* Navegación de encuentros */
-    .guia-component .encuentros-nav {
+    #secuencia-didactica-component .encuentros-nav {
         display: flex;
         background-color: white;
         overflow-x: auto;
@@ -89,7 +90,7 @@
         border-bottom: 1px solid var(--guia-gris-borde);
     }
     
-    .guia-component .encuentro-tab {
+    #secuencia-didactica-component .encuentro-tab {
         background-color: var(--guia-gris-claro);
         border: 1px solid var(--guia-gris-borde);
         border-radius: 50px;
@@ -105,40 +106,40 @@
         justify-content: center;
     }
     
-    .guia-component .encuentro-tab.active {
+    #secuencia-didactica-component .encuentro-tab.active {
         background-color: var(--color-azul-3);
         color: white;
         border-color: var(--color-azul-3);
     }
     
-    .guia-component .encuentro-tab:hover:not(.active) {
+    #secuencia-didactica-component .encuentro-tab:hover:not(.active) {
         background-color: rgba(46, 134, 193, 0.1);
         transform: translateY(-2px);
     }
     
     /* Contenido del encuentro */
-    .guia-component .encuentro-content {
+    #secuencia-didactica-component .encuentro-content {
         display: none;
         padding: 20px;
     }
     
-    .guia-component .encuentro-content.active {
+    #secuencia-didactica-component .encuentro-content.active {
         display: block;
     }
     
     /* Secciones de datos */
-    .guia-component .data-section {
+    #secuencia-didactica-component .data-section {
         margin-bottom: 24px;
         border-bottom: 1px solid var(--guia-gris-borde);
         padding-bottom: 20px;
     }
     
-    .guia-component .data-section:last-child {
+    #secuencia-didactica-component .data-section:last-child {
         border-bottom: none;
         margin-bottom: 0;
     }
     
-    .guia-component .section-title {
+    #secuencia-didactica-component .section-title {
         font-size: 1.1rem;
         font-weight: 600;
         color: var(--color-azul-oscuro);
@@ -148,42 +149,42 @@
         gap: 8px;
     }
     
-    .guia-component .section-title i {
+    #secuencia-didactica-component .section-title i {
         font-size: 1.2rem;
     }
     
-    .guia-component .data-grid {
+    #secuencia-didactica-component .data-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 16px;
     }
     
-    .guia-component .data-card {
+    #secuencia-didactica-component .data-card {
         background-color: var(--guia-gris-claro);
         border-radius: var(--guia-border-radius);
         padding: 12px 16px;
     }
     
-    .guia-component .card-title {
+    #secuencia-didactica-component .card-title {
         color: var(--color-azul-2);
         font-size: 0.85rem;
         font-weight: 600;
         margin-bottom: 4px;
     }
     
-    .guia-component .card-value {
+    #secuencia-didactica-component .card-value {
         font-weight: 500;
         color: #333;
     }
     
     /* Tablas */
-    .guia-component .data-table {
+    #secuencia-didactica-component .data-table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 16px;
     }
     
-    .guia-component .data-table th {
+    #secuencia-didactica-component .data-table th {
         background-color: var(--guia-gris-claro);
         color: var(--color-azul-oscuro);
         font-weight: 600;
@@ -192,22 +193,22 @@
         border: 1px solid var(--guia-gris-borde);
     }
     
-    .guia-component .data-table td {
+    #secuencia-didactica-component .data-table td {
         padding: 10px 16px;
         border: 1px solid var(--guia-gris-borde);
         vertical-align: top;
     }
     
-    .guia-component .data-table tr:nth-child(even) {
+    #secuencia-didactica-component .data-table tr:nth-child(even) {
         background-color: rgba(245, 248, 250, 0.5);
     }
     
-    .guia-component .data-table tr:hover {
+    #secuencia-didactica-component .data-table tr:hover {
         background-color: rgba(46, 134, 193, 0.05);
     }
     
     /* Botón para imprimir */
-    .guia-component .print-button {
+    #secuencia-didactica-component .print-button {
         background-color: var(--color-azul-3);
         color: white;
         border: none;
@@ -221,14 +222,14 @@
         transition: var(--guia-transition);
     }
     
-    .guia-component .print-button:hover {
+    #secuencia-didactica-component .print-button:hover {
         background-color: var(--color-azul-2);
         transform: translateY(-2px);
     }
     
     /* Responsive */
     @media (max-width: 768px) {
-        .guia-component .data-grid {
+        #secuencia-didactica-component .data-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -241,27 +242,40 @@
             --guia-box-shadow: none;
         }
         
-        .guia-component .main-content,
-        .guia-component .encuentro-content {
+        #secuencia-didactica-component .main-content,
+        #secuencia-didactica-component .encuentro-content {
             display: block !important;
         }
         
-        .guia-component table th,
-        .guia-component table td {
+        #secuencia-didactica-component table th,
+        #secuencia-didactica-component table td {
             border: 1px solid #ddd;
         }
         
-        .guia-component .print-button,
-        .guia-component .encuentros-nav {
+        #secuencia-didactica-component .print-button,
+        #secuencia-didactica-component .encuentros-nav {
             display: none !important;
         }
     }
 </style>
 
-<div class="container mt-4 guia-component">
+<div id="secuencia-didactica-component" class="container mt-4 guia-component">
     <!-- Botón para descargar documento completo -->
  
+    <!-- Depurador -->
+    <div class="debug-info" style="background-color: #f8f9fa; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;">
+        <h5>Información de depuración:</h5>
+        <p>silabos_agrupados está {% if silabos_agrupados %}presente (tiene {{silabos_agrupados|length}} elementos){% else %}vacío{% endif %}</p>
+        {% if silabos_agrupados %}
+            <p>Códigos disponibles: 
+            {% for codigo, grupo in silabos_agrupados.items %}
+                {{ codigo }} ({{ grupo|length }} sílabos), 
+            {% endfor %}
+            </p>
+        {% endif %}
+    </div>
     
+    {% if silabos_agrupados %}
     <!-- Acordeón -->
     <div class="accordion" id="guiaAccordion">
         {% for codigo, silabos_grupo in silabos_agrupados.items %}
@@ -844,11 +858,17 @@
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> No hay datos disponibles para mostrar en la secuencia didáctica. Por favor, asegúrate de que has creado sílabos con sus respectivos encuentros.
+    </div>
+    {% endif %}
 </div>
 
 <script>
     // JavaScript para la navegación entre encuentros y vistas principales
     document.addEventListener('DOMContentLoaded', function() {
+        console.log("Inicializando secuencia didáctica...");
         // Función para cambiar entre encuentros
         function switchEncuentro(targetId, tabs, contents) {
             // Desactivar todas las pestañas y contenidos
@@ -866,7 +886,7 @@
         }
         
         // Usar delegación de eventos para las pestañas de encuentros
-        document.querySelectorAll('.encuentros-nav').forEach(nav => {
+        document.querySelectorAll('#secuencia-didactica-component .encuentros-nav').forEach(nav => {
             nav.addEventListener('click', function(e) {
                 const tab = e.target.closest('.encuentro-tab');
                 if (!tab) return; // Si el clic no fue en una pestaña, salir
@@ -881,7 +901,7 @@
         });
         
         // Inicializar para el primer acordeón si está abierto
-        const firstAccordion = document.querySelector('.accordion-collapse.show');
+        const firstAccordion = document.querySelector('#secuencia-didactica-component .accordion-collapse.show');
         if (firstAccordion) {
             const container = firstAccordion.querySelector('.guia-container');
             const firstTab = container.querySelector('.encuentro-tab.active');
@@ -896,7 +916,7 @@
         }
         
         // Manejar eventos de acordeón para cargar el contenido apropiado cuando se abre
-        document.querySelectorAll('.accordion-button').forEach(button => {
+        document.querySelectorAll('#secuencia-didactica-component .accordion-button').forEach(button => {
             button.addEventListener('click', function() {
                 const isExpanded = this.getAttribute('aria-expanded') === 'true';
                 if (!isExpanded) { // Si se está expandiendo ahora
