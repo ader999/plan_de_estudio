@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from openpyxl import load_workbook
 from docx import Document
 from .models import Guia, Silabo, AsignacionPlanEstudio
+from .template_utils import get_excel_template
 
 from django.contrib.admin.views.decorators import staff_member_required # Importar
 
@@ -25,11 +26,8 @@ def generar_excel(request):
                 # Generamos el Excel para este sílabo
                 print(f"Generando Excel para el sílabo ID={silabo.id}")
 
-                # Ruta a la plantilla de Excel en tu proyecto
-                template_path = 'excel_templates/plantilla.xlsx'
-
-                # Carga la plantilla de Excel
-                wb = load_workbook(template_path)
+                # Carga la plantilla de Excel desde storage
+                wb = get_excel_template('plantilla.xlsx')
 
                 # Selecciona una hoja de cálculo (worksheet) si es necesario
                 ws = wb.active  # O selecciona una hoja específica
@@ -167,11 +165,8 @@ def generar_excel_original(request):
             # Generamos el Excel para este sílabo
             print(f"Generando Excel para el sílabo ID={silabo.id}")
 
-            # Ruta a la plantilla de Excel en tu proyecto
-            template_path = 'excel_templates/plantilla_original.xlsx'
-
-            # Carga la plantilla de Excel
-            wb = load_workbook(template_path)
+            # Carga la plantilla de Excel desde storage
+            wb = get_excel_template('plantilla_original.xlsx')
 
             # Selecciona la segunda hoja de cálculo
             ws = wb.worksheets[1]  # Índice 1 para la segunda hoja
@@ -504,11 +499,8 @@ def generar_excel_admin(request, asignacion_id):
 
         # --- Lógica de generación de Excel (adaptada de generar_excel_original) ---
 
-        # Ruta a la plantilla de Excel en tu proyecto
-        template_path = 'excel_templates/plantilla_original.xlsx' # Asegúrate que esta es la plantilla correcta
-
-        # Carga la plantilla de Excel
-        wb = load_workbook(template_path)
+        # Carga la plantilla de Excel desde storage
+        wb = get_excel_template('plantilla_original.xlsx')
 
         # Selecciona la segunda hoja de cálculo (o la que necesites)
         ws = wb.worksheets[1]  # Índice 1 para la segunda hoja

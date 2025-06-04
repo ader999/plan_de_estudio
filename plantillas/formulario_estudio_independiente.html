@@ -542,8 +542,8 @@
                                                 class="form-select"
                                                 id="tipo_objetivo_2"
                                                 name="tipo_objetivo_2"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for tipo_choice in tipo_objetivo_choices %}
                                                 <option
                                                     value="{{ tipo_choice.0 }}"
@@ -564,7 +564,6 @@
                                                 id="objetivo_aprendizaje_2"
                                                 name="objetivo_aprendizaje_2"
                                                 rows="2"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.objetivo_aprendizaje_2 }}{% endif %}
                                             </textarea>
@@ -577,7 +576,6 @@
                                                 id="contenido_tematico_2"
                                                 name="contenido_tematico_2"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.contenido_tematico_2 }}{% endif %}
                                             </textarea>
@@ -590,7 +588,6 @@
                                                 id="actividad_aprendizaje_2"
                                                 name="actividad_aprendizaje_2"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.actividad_aprendizaje_2 }}{% endif %}
                                             </textarea>
@@ -602,8 +599,8 @@
                                                 class="form-select"
                                                 id="tecnica_evaluacion_2"
                                                 name="tecnica_evaluacion_2"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for tecnica_choice in tecnica_evaluacion_choices %}
                                                 <option
                                                     value="{{ tecnica_choice.0 }}"
@@ -623,8 +620,8 @@
                                                 class="form-select"
                                                 id="tipo_evaluacion_2"
                                                 name="tipo_evaluacion_2"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for tipo_eval_choice in tipo_evaluacion_choices %}
                                                 <option
                                                     value="{{ tipo_eval_choice.0 }}"
@@ -644,8 +641,8 @@
                                                 class="form-select"
                                                 id="instrumento_evaluacion_2"
                                                 name="instrumento_evaluacion_2"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for instrumento_choice in instrumento_evaluacion_choices %}
                                                 <option
                                                     value="{{ instrumento_choice.0 }}"
@@ -666,7 +663,6 @@
                                                 id="criterios_evaluacion_2"
                                                 name="criterios_evaluacion_2"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.criterios_evaluacion_2 }}{% endif %}
                                             </textarea>
@@ -702,7 +698,6 @@
                                                 id="tiempo_minutos_2"
                                                 name="tiempo_minutos_2"
                                                 value="{% if guia %}{{ guia.tiempo_minutos_2 }}{% endif %}"
-                                                required
                                             />
                                         </div>
 
@@ -713,7 +708,6 @@
                                                 id="recursos_didacticos_2"
                                                 name="recursos_didacticos_2"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.recursos_didacticos_2 }}{% endif %}
                                             </textarea>
@@ -725,8 +719,8 @@
                                                 class="form-select"
                                                 id="periodo_tiempo_programado_2"
                                                 name="periodo_tiempo_programado_2"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for periodo_choice in periodo_tiempo_choices %}
                                                 <option
                                                     value="{{ periodo_choice.0 }}"
@@ -748,7 +742,6 @@
                                                 id="puntaje_2"
                                                 name="puntaje_2"
                                                 value="{% if guia %}{{ guia.puntaje_2 }}{% endif %}"
-                                                required
                                             />
                                         </div>
 
@@ -760,7 +753,6 @@
                                                 id="fecha_entrega_2"
                                                 name="fecha_entrega_2"
                                                 value="{% if guia %}{{ guia.fecha_entrega_2|date:'Y-m-d' }}{% endif %}"
-                                                required
                                             />
                                         </div>
                                     </div>
@@ -790,8 +782,8 @@
                                                 class="form-select"
                                                 id="tipo_objetivo_3"
                                                 name="tipo_objetivo_3"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for tipo_choice in tipo_objetivo_choices %}
                                                 <option
                                                     value="{{ tipo_choice.0 }}"
@@ -816,7 +808,6 @@
                                                 id="objetivo_aprendizaje_3"
                                                 name="objetivo_aprendizaje_3"
                                                 rows="2"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.objetivo_aprendizaje_3 }}{% endif %}
                                             </textarea>
@@ -833,7 +824,6 @@
                                                 id="contenido_tematico_3"
                                                 name="contenido_tematico_3"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.contenido_tematico_3 }}{% endif %}
                                             </textarea>
@@ -846,7 +836,6 @@
                                                 id="actividad_aprendizaje_3"
                                                 name="actividad_aprendizaje_3"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.actividad_aprendizaje_3 }}{% endif %}
                                             </textarea>
@@ -858,8 +847,8 @@
                                                 class="form-select"
                                                 id="tecnica_evaluacion_3"
                                                 name="tecnica_evaluacion_3"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for tecnica_choice in tecnica_evaluacion_choices %}
                                                 <option
                                                     value="{{ tecnica_choice.0 }}"
@@ -879,8 +868,8 @@
                                                 class="form-select"
                                                 id="tipo_evaluacion_3"
                                                 name="tipo_evaluacion_3"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for tipo_eval_choice in tipo_evaluacion_choices %}
                                                 <option
                                                     value="{{ tipo_eval_choice.0 }}"
@@ -900,8 +889,8 @@
                                                 class="form-select"
                                                 id="instrumento_evaluacion_3"
                                                 name="instrumento_evaluacion_3"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for instrumento_choice in instrumento_evaluacion_choices %}
                                                 <option
                                                     value="{{ instrumento_choice.0 }}"
@@ -922,7 +911,6 @@
                                                 id="criterios_evaluacion_3"
                                                 name="criterios_evaluacion_3"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.criterios_evaluacion_3 }}{% endif %}
                                             </textarea>
@@ -958,7 +946,6 @@
                                                 id="tiempo_minutos_3"
                                                 name="tiempo_minutos_3"
                                                 value="{% if guia %}{{ guia.tiempo_minutos_3 }}{% endif %}"
-                                                required
                                             />
                                         </div>
 
@@ -969,7 +956,6 @@
                                                 id="recursos_didacticos_3"
                                                 name="recursos_didacticos_3"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.recursos_didacticos_3 }}{% endif %}
                                             </textarea>
@@ -981,8 +967,8 @@
                                                 class="form-select"
                                                 id="periodo_tiempo_programado_3"
                                                 name="periodo_tiempo_programado_3"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for periodo_choice in periodo_tiempo_choices %}
                                                 <option
                                                     value="{{ periodo_choice.0 }}"
@@ -1004,7 +990,6 @@
                                                 id="puntaje_3"
                                                 name="puntaje_3"
                                                 value="{% if guia %}{{ guia.puntaje_3 }}{% endif %}"
-                                                required
                                             />
                                         </div>
 
@@ -1016,7 +1001,6 @@
                                                 id="fecha_entrega_3"
                                                 name="fecha_entrega_3"
                                                 value="{% if guia %}{{ guia.fecha_entrega_3|date:'Y-m-d' }}{% endif %}"
-                                                required
                                             />
                                         </div>
                                     </div>
@@ -1038,8 +1022,8 @@
                                                 class="form-select"
                                                 id="tipo_objetivo_4"
                                                 name="tipo_objetivo_4"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for tipo_choice in tipo_objetivo_choices %}
                                                 <option
                                                     value="{{ tipo_choice.0 }}"
@@ -1060,7 +1044,6 @@
                                                 id="objetivo_aprendizaje_4"
                                                 name="objetivo_aprendizaje_4"
                                                 rows="2"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.objetivo_aprendizaje_4 }}{% endif %}
                                             </textarea>
@@ -1073,7 +1056,6 @@
                                                 id="contenido_tematico_4"
                                                 name="contenido_tematico_4"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.contenido_tematico_4 }}{% endif %}
                                             </textarea>
@@ -1086,7 +1068,6 @@
                                                 id="actividad_aprendizaje_4"
                                                 name="actividad_aprendizaje_4"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.actividad_aprendizaje_4 }}{% endif %}
                                             </textarea>
@@ -1098,8 +1079,8 @@
                                                 class="form-select"
                                                 id="tecnica_evaluacion_4"
                                                 name="tecnica_evaluacion_4"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for tecnica_choice in tecnica_evaluacion_choices %}
                                                 <option
                                                     value="{{ tecnica_choice.0 }}"
@@ -1119,8 +1100,8 @@
                                                 class="form-select"
                                                 id="tipo_evaluacion_4"
                                                 name="tipo_evaluacion_4"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for tipo_eval_choice in tipo_evaluacion_choices %}
                                                 <option
                                                     value="{{ tipo_eval_choice.0 }}"
@@ -1140,8 +1121,8 @@
                                                 class="form-select"
                                                 id="instrumento_evaluacion_4"
                                                 name="instrumento_evaluacion_4"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for instrumento_choice in instrumento_evaluacion_choices %}
                                                 <option
                                                     value="{{ instrumento_choice.0 }}"
@@ -1162,7 +1143,6 @@
                                                 id="criterios_evaluacion_4"
                                                 name="criterios_evaluacion_4"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.criterios_evaluacion_4 }}{% endif %}
                                             </textarea>
@@ -1195,7 +1175,6 @@
                                                 id="tiempo_minutos_4"
                                                 name="tiempo_minutos_4"
                                                 value="{% if guia %}{{ guia.tiempo_minutos_4 }}{% endif %}"
-                                                required
                                             />
                                         </div>
 
@@ -1206,7 +1185,6 @@
                                                 id="recursos_didacticos_4"
                                                 name="recursos_didacticos_4"
                                                 rows="3"
-                                                required
                                             >
                                                 {% if guia %}{{ guia.recursos_didacticos_4 }}{% endif %}
                                             </textarea>
@@ -1223,8 +1201,8 @@
                                                 class="form-select"
                                                 id="periodo_tiempo_programado_4"
                                                 name="periodo_tiempo_programado_4"
-                                                required
                                             >
+                                                <option value="" selected>-- Seleccione una opción --</option>
                                                 {% for periodo_choice in periodo_tiempo_choices %}
                                                 <option
                                                     value="{{ periodo_choice.0 }}"
@@ -1246,7 +1224,6 @@
                                                 id="puntaje_4"
                                                 name="puntaje_4"
                                                 value="{% if guia %}{{ guia.puntaje_4 }}{% endif %}"
-                                                required
                                             />
                                         </div>
 
@@ -1258,7 +1235,6 @@
                                                 id="fecha_entrega_4"
                                                 name="fecha_entrega_4"
                                                 value="{% if guia %}{{ guia.fecha_entrega_4|date:'Y-m-d' }}{% endif %}"
-                                                required
                                             />
                                         </div>
                                     </div>
