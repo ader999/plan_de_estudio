@@ -236,7 +236,7 @@ class Silabo(models.Model):
     )
 
     # Datos existentes (mantener)
-    codigo = models.CharField(max_length=10)
+    codigo = models.CharField(max_length=20)
 
     # Sección 1: Información general del plan de estudio (según imagen 1)
     encuentros = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])

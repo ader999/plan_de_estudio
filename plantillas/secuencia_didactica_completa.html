@@ -1,0 +1,438 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/shared_styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/blog_style.css' %}">
+
+<div class="container main-page-container blog-post-style">
+    <!-- Botón de regreso -->
+    <div class="back-button mb-4">
+        <a href="{% url 'plan_de_estudio' %}" class="btn btn-outline-secondary btn-sm">
+            « Volver al Plan de Estudio
+        </a>
+    </div>
+
+    <!-- Encabezado de la página -->
+    <header class="page-main-header mb-5 text-center">
+        {% if silabos_agrupados %}
+            {% for codigo, silabos in silabos_agrupados.items %}
+                {% if forloop.first %}
+                {% with first_silabo=silabos|first %}
+                <h1 class="display-5 fw-bold">Secuencia Didáctica</h1>
+                <p class="lead text-muted">{{ first_silabo.asignatura.nombre }} - {{ codigo }}</p>
+                <p class="meta-info">{{ first_silabo.carrera.nombre }}</p>
+                <p class="meta-info">
+                    {{ silabos|length }} encuentro{{ silabos|length|pluralize }} disponible{{ silabos|length|pluralize }}
+                </p>
+                {% endwith %}
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <h1 class="display-5 fw-bold">Secuencia Didáctica</h1>
+            <p class="lead text-muted">Planificación detallada de actividades de aprendizaje</p>
+        {% endif %}
+    </header>
+
+    <!-- Contenido principal -->
+    <div id="secuencia-didactica-component">
+        {% for codigo_grupo, silabos_lista in silabos_agrupados.items %}
+        <div class="content-component-wrapper mb-5" data-codigo-grupo="{{ codigo_grupo }}">
+            
+            {% if silabos_lista %}
+                <!-- Paginación de Encuentros (Arriba) -->
+                <nav aria-label="Encuentro navigation {{ codigo_grupo }}" class="mb-4">
+                    <ul class="pagination justify-content-center" id="encuentro-pagination-secuencia-{{ codigo_grupo }}">
+                        <!-- Ítems de paginación generados por JS -->
+                    </ul>
+                </nav>
+
+                <!-- Contenido de cada encuentro -->
+                {% for silabo in silabos_lista|dictsort:"encuentros" %}
+                <article id="secuencia-panel-{{ codigo_grupo }}-{{ forloop.counter0 }}" class="encuentro-content-panel secuencia-panel post-article {% if forloop.first %}active{% else %}d-none{% endif %}" data-encuentro-index="{{ forloop.counter0 }}">
+                    <header class="post-header text-center mb-4">
+                        <h2 class="h3">Secuencia Didáctica: Encuentro {{ silabo.encuentros }}</h2>
+                        <p class="post-meta text-muted">
+                            {{ silabo.fecha|date:"d F, Y" }} | Unidad {{ silabo.unidad }}: {{ silabo.nombre_de_la_unidad }}
+                        </p>
+                    </header>
+
+                    <section class="post-content">
+                        <!-- DATOS GENERALES -->
+                        <div class="content-block mb-4">
+                            <h3 class="section-heading h5">Datos Generales</h3>
+                            <div class="list-style-data">
+                                <p><strong>N° de Encuentro:</strong> {{ silabo.encuentros }}</p>
+                                <p><strong>Fecha:</strong> {{ silabo.fecha|date:"d/m/Y" }}</p>
+                                {# <p><strong>Sede:</strong> Jalapa</p> <!-- Dato estático, ¿debería ser dinámico? --> #}
+                                <p><strong>Unidad:</strong> {{ silabo.unidad }}. {{ silabo.nombre_de_la_unidad }}</p>
+                                <p><strong>Trimestre:</strong> {{ silabo.asignacion_plan.plan_de_estudio.trimestre }}</p>
+                            </div>
+                        </div>
+
+                        <!-- OBJETIVOS DE LA UNIDAD -->
+                        <div class="content-block mb-4">
+                            <h3 class="section-heading h5">Objetivos de la Unidad</h3>
+                            <ul class="styled-list">
+                                <li><strong>Conceptual:</strong> {{ silabo.objetivo_conceptual|default:"Sin datos" }}</li>
+                                <li><strong>Procedimental:</strong> {{ silabo.objetivo_procedimental|default:"Sin datos" }}</li>
+                                <li><strong>Actitudinal:</strong> {{ silabo.objetivo_actitudinal|default:"Sin datos" }}</li>
+                            </ul>
+                        </div>
+
+                        <!-- MEDIACIÓN PEDAGÓGICA -->
+                        <div class="content-block mb-4">
+                            <h3 class="section-heading h5">Mediación Pedagógica</h3>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-bordered table-sm blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Contenido Temático</th>
+                                            <th>Fases</th>
+                                            <th>Forma Organizativa</th>
+                                            <th>Descripción</th>
+                                            <th>Recursos Didácticos</th>
+                                            <th>Tiempo (min)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan="3">{{ silabo.contenido_tematico|linebreaksbr|default:"Sin datos" }}</td>
+                                            <td><strong>Primer Momento</strong> (Entrada)</td>
+                                            <td>{{ silabo.tipo_primer_momento|default:"Sin datos" }}</td>
+                                            <td>{{ silabo.detalle_primer_momento|linebreaksbr|default:"Sin datos" }}</td>
+                                            <td>{{ silabo.recursos_primer_momento|default:"Sin datos" }}</td>
+                                            <td>{{ silabo.tiempo_primer_momento|default:"Sin datos" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Segundo Momento</strong> (Elaboración)</td>
+                                            <td>
+                                                Teórica: {{ silabo.tipo_segundo_momento_claseteoria|default:"-" }}<br>
+                                                Práctica: {{ silabo.tipo_segundo_momento_practica|default:"-" }}
+                                            </td>
+                                            <td>
+                                                Teórica: {{ silabo.clase_teorica|linebreaksbr|default:"-" }}<br>
+                                                Práctica: {{ silabo.clase_practica|linebreaksbr|default:"-" }}
+                                            </td>
+                                            <td>
+                                                Teórica: {{ silabo.recursos_segundo_momento|default:"-" }}<br>
+                                                Práctica: {{ silabo.recursos_segundo_momento_practica|default:"-" }}
+                                            </td>
+                                            <td>
+                                                Teórica: {{ silabo.tiempo_segundo_momento_teorica|default:"-" }}<br>
+                                                Práctica: {{ silabo.tiempo_segundo_momento_practica|default:"-" }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Tercer Momento</strong> (Salida)</td>
+                                            <td>{{ silabo.tipo_tercer_momento|default:"Sin datos" }}</td>
+                                            <td>{{ silabo.detalle_tercer_momento|linebreaksbr|default:"Sin datos" }}</td>
+                                            <td>{{ silabo.recursos_tercer_momento|default:"Sin datos" }}</td>
+                                            <td>{{ silabo.tiempo_tercer_momento|default:"Sin datos" }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- ORIENTACIONES DE LAS ACTIVIDADES DE APRENDIZAJE -->
+                        <div class="content-block mb-4">
+                            <h3 class="section-heading h5">Orientaciones de las Actividades de Aprendizaje</h3>
+                            <div class="evaluation-details">
+                                <p><strong>Actividad de Aprendizaje:</strong> {{ silabo.actividad_aprendizaje|linebreaksbr|default:"Sin datos" }}</p>
+                                <p><strong>Tipo de Evaluación:</strong> {{ silabo.tipo_evaluacion|default:"Sin datos" }}</p>
+                                <p><strong>Instrumento:</strong> {{ silabo.instrumento_evaluacion|default:"Sin datos" }}</p>
+                                <p><strong>Técnica:</strong> {{ silabo.tecnica_evaluacion|default:"Sin datos" }}</p>
+                                <p><strong>Periodo:</strong> {{ silabo.periodo_tiempo_programado|default:"Sin datos" }}</p>
+                                <p><strong>Tiempo:</strong> {{ silabo.tiempo_minutos|default:"Sin datos" }} minutos</p>
+                                <p><strong>Puntaje:</strong> {{ silabo.puntaje|default:"Sin datos" }}</p>
+                                <p><strong>Criterios de Evaluación:</strong> {{ silabo.criterios_evaluacion|linebreaksbr|default:"Sin datos" }}</p>
+                                <p><strong>Agente Evaluador:</strong> {{ silabo.agente_evaluador|default:"Sin datos" }}</p>
+                            </div>
+                        </div>
+
+                        <!-- EJE TRANSVERSAL -->
+                        <div class="content-block mb-4">
+                            <h3 class="section-heading h5">Eje Transversal</h3>
+                            <div class="list-style-data">
+                                <p><strong>Eje:</strong> {{ silabo.eje_transversal|default:"Sin datos" }}</p>
+                                <p><strong>Detalle:</strong> {{ silabo.detalle_eje_transversal|linebreaksbr|default:"Sin datos" }}</p>
+                            </div>
+                        </div>
+
+                        {% comment %}
+                           IMPORTANTE: Reemplaza 'guia_set' con el related_name correcto de tu modelo Guia a Silabo.
+                           Si no hay related_name, y tu modelo Guia se llama 'GuiaEstudioIndependiente',
+                           sería 'guiaestudioindependiente_set'.
+                        {% endcomment %}
+                        {% with guia=silabo.guias.first %} {# AJUSTA 'guia_set' SI ES NECESARIO #}
+                        {% if guia %}
+                        <!-- GUÍA AUTODIDÁCTICA DE APRENDIZAJE (Integrada) -->
+                        <div class="content-block mb-4">
+                            <h3 class="section-heading h5">Guía Autodidáctica de Aprendizaje (Resumen)</h3>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-bordered table-sm blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Act.</th>
+                                            <th>Objetivo</th>
+                                            <th>Contenido</th>
+                                            <th>Actividad</th>
+                                            <th>Evaluación</th>
+                                            <th>Recursos</th>
+                                            <th>Tiempo</th>
+                                            <th>Puntaje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {# Actividad 1 #}
+                                        {% if guia.actividad_aprendizaje_1 %}
+                                        <tr>
+                                            <td>1</td>
+                                            <td><strong>{{ guia.tipo_objetivo_1|default:"" }}:</strong> {{ guia.objetivo_aprendizaje_1|truncatewords:15|default:"-" }}</td>
+                                            <td>{{ guia.contenido_tematico_1|truncatewords:15|default:"-" }}</td>
+                                            <td>{{ guia.actividad_aprendizaje_1|truncatewords:20|default:"-" }}</td>
+                                            <td><strong>Tipo:</strong> {{ guia.tipo_evaluacion_1|default:"-" }}<br><strong>Instrumento:</strong> {{ guia.instrumento_evaluacion_1|default:"-" }}</td>
+                                            <td>{{ guia.recursos_didacticos_1|truncatewords:10|default:"-" }}</td>
+                                            <td>{{ guia.tiempo_minutos_1|default:"0" }} min</td>
+                                            <td>{{ guia.puntaje_1|default:"0" }}</td>
+                                        </tr>
+                                        {% endif %}
+
+                                        {# Actividad 2 #}
+                                        {% if guia.actividad_aprendizaje_2 %}
+                                        <tr>
+                                            <td>2</td>
+                                            <td><strong>{{ guia.tipo_objetivo_2|default:"" }}:</strong> {{ guia.objetivo_aprendizaje_2|truncatewords:15|default:"-" }}</td>
+                                            <td>{{ guia.contenido_tematico_2|truncatewords:15|default:"-" }}</td>
+                                            <td>{{ guia.actividad_aprendizaje_2|truncatewords:20|default:"-" }}</td>
+                                            <td><strong>Tipo:</strong> {{ guia.tipo_evaluacion_2|default:"-" }}<br><strong>Instrumento:</strong> {{ guia.instrumento_evaluacion_2|default:"-" }}</td>
+                                            <td>{{ guia.recursos_didacticos_2|truncatewords:10|default:"-" }}</td>
+                                            <td>{{ guia.tiempo_minutos_2|default:"0" }} min</td>
+                                            <td>{{ guia.puntaje_2|default:"0" }}</td>
+                                        </tr>
+                                        {% endif %}
+
+                                        {# Actividad 3 #}
+                                        {% if guia.actividad_aprendizaje_3 %}
+                                        <tr>
+                                            <td>3</td>
+                                            <td><strong>{{ guia.tipo_objetivo_3|default:"" }}:</strong> {{ guia.objetivo_aprendizaje_3|truncatewords:15|default:"-" }}</td>
+                                            <td>{{ guia.contenido_tematico_3|truncatewords:15|default:"-" }}</td>
+                                            <td>{{ guia.actividad_aprendizaje_3|truncatewords:20|default:"-" }}</td>
+                                            <td><strong>Tipo:</strong> {{ guia.tipo_evaluacion_3|default:"-" }}<br><strong>Instrumento:</strong> {{ guia.instrumento_evaluacion_3|default:"-" }}</td>
+                                            <td>{{ guia.recursos_didacticos_3|truncatewords:10|default:"-" }}</td>
+                                            <td>{{ guia.tiempo_minutos_3|default:"0" }} min</td>
+                                            <td>{{ guia.puntaje_3|default:"0" }}</td>
+                                        </tr>
+                                        {% endif %}
+
+                                        {# Actividad 4 #}
+                                        {% if guia.actividad_aprendizaje_4 %}
+                                        <tr>
+                                            <td>4</td>
+                                            <td><strong>{{ guia.tipo_objetivo_4|default:"" }}:</strong> {{ guia.objetivo_aprendizaje_4|truncatewords:15|default:"-" }}</td>
+                                            <td>{{ guia.contenido_tematico_4|truncatewords:15|default:"-" }}</td>
+                                            <td>{{ guia.actividad_aprendizaje_4|truncatewords:20|default:"-" }}</td>
+                                            <td><strong>Tipo:</strong> {{ guia.tipo_evaluacion_4|default:"-" }}<br><strong>Instrumento:</strong> {{ guia.instrumento_evaluacion_4|default:"-" }}</td>
+                                            <td>{{ guia.recursos_didacticos_4|truncatewords:10|default:"-" }}</td>
+                                            <td>{{ guia.tiempo_minutos_4|default:"0" }} min</td>
+                                            <td>{{ guia.puntaje_4|default:"0" }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                                 {% if not guia.actividad_aprendizaje_1 and not guia.actividad_aprendizaje_2 and not guia.actividad_aprendizaje_3 and not guia.actividad_aprendizaje_4 %}
+                                    <p class="text-center font-italic my-3" style="color: var(--blog-meta-color);">No hay actividades detalladas en la guía para este encuentro.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- RESUMEN DE HORAS Y PUNTAJES -->
+                        <div class="content-block mb-4">
+                            <h3 class="section-heading h5">Resumen de Horas y Puntajes</h3>
+                            <div class="list-style-data">
+                                <p><strong>Horas Presenciales:</strong> {{ silabo.horas_presenciales_calculadas|default:"N/A" }}</p>
+                                <p><strong>Horas Estudio Independiente:</strong> {{ guia.horas_independientes_calculadas|default:"N/A" }}</p>
+                                <p><strong>Total de Horas:</strong> {{ silabo.total_horas_calculadas|default:"N/A" }}</p>
+                                <p><strong>Puntaje Presencial:</strong> {{ silabo.puntaje|default:"0" }}</p>
+                                <p><strong>Puntaje Estudio Independiente:</strong> {{ guia.puntaje_total_calculado|default:"N/A" }}</p>
+                                <p><strong>Puntaje Total del Encuentro:</strong> {{ silabo.puntaje_total_encuentro_calculado|default:"N/A" }}</p>
+                            </div>
+                        </div>
+                        {% else %}
+                         <div class="content-block mb-4">
+                            <h3 class="section-heading h5">Guía Autodidáctica de Aprendizaje</h3>
+                            <p class="text-muted font-italic">No hay guía autodidáctica asociada a este encuentro.</p>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                    </section>
+                </article>
+                {% endfor %}
+
+                <!-- Paginación de Encuentros (Abajo) -->
+                <nav aria-label="Encuentro navigation {{ codigo_grupo }} bottom" class="mt-5">
+                    <ul class="pagination justify-content-center" id="encuentro-pagination-secuencia-{{ codigo_grupo }}-bottom">
+                        <!-- Ítems de paginación generados por JS -->
+                    </ul>
+                </nav>
+            {% else %}
+                <div class="alert alert-info text-center">No hay encuentros con secuencia didáctica para {{ codigo_grupo }}.</div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="info-message text-center py-5">
+             <h2 class="h4">No hay secuencias didácticas disponibles</h2>
+            <p class="text-muted">
+                No se encontraron secuencias para las asignaciones actuales.
+            </p>
+        </div>
+        {% endfor %}
+        
+      
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded for SECUENCIA DIDACTICA (blog style - direct access - pagination included).");
+
+    function showSecuenciaPage(codigoGrupo, pageIndex) {
+        const componentWrapper = document.querySelector(`.content-component-wrapper[data-codigo-grupo="${codigoGrupo}"]`);
+        if (!componentWrapper) {
+            console.error(`Contenedor para ${codigoGrupo} no encontrado.`);
+            return;
+        }
+
+        const secuenciaPanels = componentWrapper.querySelectorAll('.secuencia-panel');
+        
+        const paginationUls = [
+            document.getElementById(`encuentro-pagination-secuencia-${codigoGrupo}`),
+            document.getElementById(`encuentro-pagination-secuencia-${codigoGrupo}-bottom`)
+        ].filter(ul => ul);
+
+        paginationUls.forEach(paginationUl => {
+            const paginationItems = paginationUl.querySelectorAll('.page-item');
+            paginationItems.forEach(item => item.classList.remove('active'));
+            // pageIndex es 0-based. paginationItems[0] es 'Prev', paginationItems[1] es pág 1 (índice 0)
+            if (paginationItems[pageIndex + 1]) { 
+                paginationItems[pageIndex + 1].classList.add('active');
+            }
+            const prevButtonLi = paginationUl.querySelector('.page-item:first-child');
+            const nextButtonLi = paginationUl.querySelector('.page-item:last-child');
+            if (prevButtonLi) prevButtonLi.classList.toggle('disabled', pageIndex === 0);
+            if (nextButtonLi) nextButtonLi.classList.toggle('disabled', pageIndex === secuenciaPanels.length - 1);
+        });
+        
+        secuenciaPanels.forEach((panel, index) => {
+            panel.classList.toggle('active', index === pageIndex);
+            panel.classList.toggle('d-none', index !== pageIndex);
+        });
+    }
+
+    function setupEncuentroPaginationSecuencia(codigoGrupo) {
+        const componentWrapper = document.querySelector(`.content-component-wrapper[data-codigo-grupo="${codigoGrupo}"]`);
+        if (!componentWrapper) return;
+
+        const encuentroPanels = componentWrapper.querySelectorAll('.secuencia-panel');
+        const numEncuentros = encuentroPanels.length;
+        
+        const paginationTargets = [
+            document.getElementById(`encuentro-pagination-secuencia-${codigoGrupo}`),
+            document.getElementById(`encuentro-pagination-secuencia-${codigoGrupo}-bottom`)
+        ].filter(ul => ul);
+
+        if (numEncuentros <= 1) {
+            paginationTargets.forEach(ul => ul.closest('nav')?.classList.add('d-none')); // Oculta nav si no hay paginación
+            return;
+        }
+        
+        paginationTargets.forEach(paginationUl => {
+            paginationUl.innerHTML = ''; // Limpiar paginación existente
+            paginationUl.closest('nav')?.classList.remove('d-none'); // Mostrar nav
+
+            const createPageItem = (text, pageIdxOrAction, isPrevNext = false, isDisabled = false, isHtml = false) => {
+                const li = document.createElement('li');
+                li.classList.add('page-item');
+                if (isDisabled) li.classList.add('disabled');
+                
+                const a = document.createElement('a');
+                a.classList.add('page-link');
+                a.href = '#';
+                if (isHtml) a.innerHTML = text; else a.textContent = text;
+
+                if (!isDisabled) {
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (li.classList.contains('disabled')) return;
+
+                        let newIndex;
+                        if (isPrevNext) {
+                            const currentActivePanel = componentWrapper.querySelector('.secuencia-panel.active');
+                            let currentIndex = 0;
+                            if (currentActivePanel) {
+                                currentIndex = parseInt(currentActivePanel.getAttribute('data-encuentro-index'));
+                            }
+                            newIndex = (pageIdxOrAction === 'prev') ? currentIndex - 1 : currentIndex + 1;
+                        } else {
+                            newIndex = pageIdxOrAction; // Este es el índice directo (0-based)
+                        }
+                        
+                        if (newIndex >= 0 && newIndex < numEncuentros) {
+                            showSecuenciaPage(codigoGrupo, newIndex);
+                        }
+                    });
+                }
+                li.appendChild(a);
+                return li;
+            };
+            
+            const currentActivePanel = componentWrapper.querySelector('.secuencia-panel.active');
+            const currentPageIndex = currentActivePanel ? parseInt(currentActivePanel.getAttribute('data-encuentro-index')) : 0;
+
+            // Botón Anterior
+            paginationUl.appendChild(createPageItem('<span aria-hidden="true">«</span>', 'prev', true, currentPageIndex === 0, true));
+            
+            // Botones de Número de Página
+            for (let i = 0; i < numEncuentros; i++) {
+                const pageLi = createPageItem(i + 1, i); // i es el pageIndex (0-based)
+                 if (i === currentPageIndex) {
+                    pageLi.classList.add('active');
+                }
+                paginationUl.appendChild(pageLi);
+            }
+
+            // Botón Siguiente
+            paginationUl.appendChild(createPageItem('<span aria-hidden="true">»</span>', 'next', true, currentPageIndex === numEncuentros - 1, true));
+        });
+    }
+    
+    document.querySelectorAll('.content-component-wrapper').forEach(wrapper => {
+        const codigoGrupo = wrapper.getAttribute('data-codigo-grupo');
+        if (codigoGrupo) {
+            setupEncuentroPaginationSecuencia(codigoGrupo);
+             // Asegurar que el primer panel esté visible si hay alguno y no está activo por defecto
+             const firstActivePanel = wrapper.querySelector('.secuencia-panel.active');
+             const allPanels = wrapper.querySelectorAll('.secuencia-panel');
+             if (!firstActivePanel && allPanels.length > 0) {
+                 // Si no hay ninguno activo, activamos el primero
+                 allPanels[0].classList.add('active');
+                 allPanels[0].classList.remove('d-none');
+                 // Y actualizamos la paginación para que refleje esto
+                 if (document.getElementById(`encuentro-pagination-secuencia-${codigoGrupo}`)) {
+                     showSecuenciaPage(codigoGrupo, 0); 
+                 }
+             } else if (firstActivePanel) {
+                // Si hay uno activo, solo nos aseguramos que la paginación lo refleje
+                const activeIndex = parseInt(firstActivePanel.getAttribute('data-encuentro-index'), 10);
+                if (document.getElementById(`encuentro-pagination-secuencia-${codigoGrupo}`)) {
+                     showSecuenciaPage(codigoGrupo, activeIndex); 
+                 }
+             }
+        }
+    });
+    console.log('Secuencia Didáctica (blog style - direct access - pagination included) cargada y lista.');
+});
+</script>
+{% endblock %}

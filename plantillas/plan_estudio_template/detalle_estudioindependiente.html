@@ -1,460 +1,190 @@
-<!-- Contenido del estudio independiente -->
-<div class="main-content active" id="estudio-view-{{ codigo }}">
-    {% if mensaje_error %}
-    <div class="alert alert-info">
-        <p class="text-center mb-0">{{ mensaje_error }}</p>
+{% comment %}
+Este archivo (ej. partials/guia_contenido_blog.html) es renderizado por tu vista
+y su contenido HTML es el que se envía en la respuesta JSON.
+Asume que el contexto tiene:
+- `guia`: El objeto de la guía con todos sus campos (ej. guia.objetivo_aprendizaje_1, etc.).
+- `mensaje_error`: Un mensaje si algo salió mal o no hay guía.
+{% endcomment %}
+
+{% if mensaje_error %}
+    <div class="alert alert-info text-center my-4">
+        <p class="mb-0">{{ mensaje_error }}</p>
     </div>
-    {% else %}
-        {% if guia %}
-        <!-- Contenido de la guía -->
-        <div class="encuentro-content active">
-            <!-- Información básica -->
-            <div class="data-section">
-                <h3 class="section-title info-title">Información General</h3>
-                <div class="data-grid">
-                    <div class="data-card">
-                        <div class="data-label">N° Encuentro</div>
-                        <div class="data-value">{{ guia.numero_encuentro }}</div>
-                    </div>
-                    <div class="data-card">
-                        <div class="data-label">Fecha</div>
-                        <div class="data-value">{{ guia.fecha }}</div>
-                    </div>
-                    <div class="data-card">
-                        <div class="data-label">Unidad</div>
-                        <div class="data-value">{{ guia.unidad }}</div>
-                    </div>
-                    <div class="data-card">
-                        <div class="data-label">Nombre de la Unidad</div>
-                        <div class="data-value">{{ guia.nombre_de_la_unidad }}</div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tarea 1 -->
-            <div class="data-section task-section">
-                <h3 class="section-title tarea-title">Primera actividad ({{ guia.puntaje_1 }} puntos)</h3>
-                
-                <!-- Objetivo y Contenido -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Objetivo y Contenido</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Tipo de Objetivo</div>
-                            <div class="data-value">{{ guia.tipo_objetivo_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Objetivo de Aprendizaje</div>
-                            <div class="data-value">{{ guia.objetivo_aprendizaje_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Contenido Temático</div>
-                            <div class="data-value">{{ guia.contenido_tematico_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Actividad de Aprendizaje</div>
-                            <div class="data-value">{{ guia.actividad_aprendizaje_1 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Evaluación -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Evaluación</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Técnica de Evaluación</div>
-                            <div class="data-value">{{ guia.tecnica_evaluacion_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Tipo de Evaluación</div>
-                            <div class="data-value">{{ guia.tipo_evaluacion_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Instrumento de Evaluación</div>
-                            <div class="data-value">{{ guia.instrumento_evaluacion_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Criterios de Evaluación</div>
-                            <div class="data-value">{{ guia.criterios_evaluacion_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Agente Evaluador</div>
-                            <div class="data-value">{{ guia.agente_evaluador_1 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Recursos y Tiempos -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Recursos y Tiempos</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Tiempo (minutos)</div>
-                            <div class="data-value">{{ guia.tiempo_minutos_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Recursos Didácticos</div>
-                            <div class="data-value">{{ guia.recursos_didacticos_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Periodo de Tiempo Programado</div>
-                            <div class="data-value">{{ guia.periodo_tiempo_programado_1 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Fecha de Entrega</div>
-                            <div class="data-value">{{ guia.fecha_entrega_1 }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tarea 2 -->
-            <div class="data-section task-section">
-                <h3 class="section-title tarea-title">Segunda actividad ({{ guia.puntaje_2 }} puntos)</h3>
-                
-                <!-- Objetivo y Contenido -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Objetivo y Contenido</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Tipo de Objetivo</div>
-                            <div class="data-value">{{ guia.tipo_objetivo_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Objetivo de Aprendizaje</div>
-                            <div class="data-value">{{ guia.objetivo_aprendizaje_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Contenido Temático</div>
-                            <div class="data-value">{{ guia.contenido_tematico_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Actividad de Aprendizaje</div>
-                            <div class="data-value">{{ guia.actividad_aprendizaje_2 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Evaluación -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Evaluación</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Técnica de Evaluación</div>
-                            <div class="data-value">{{ guia.tecnica_evaluacion_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Tipo de Evaluación</div>
-                            <div class="data-value">{{ guia.tipo_evaluacion_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Instrumento de Evaluación</div>
-                            <div class="data-value">{{ guia.instrumento_evaluacion_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Criterios de Evaluación</div>
-                            <div class="data-value">{{ guia.criterios_evaluacion_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Agente Evaluador</div>
-                            <div class="data-value">{{ guia.agente_evaluador_2 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Recursos y Tiempos -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Recursos y Tiempos</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Tiempo (minutos)</div>
-                            <div class="data-value">{{ guia.tiempo_minutos_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Recursos Didácticos</div>
-                            <div class="data-value">{{ guia.recursos_didacticos_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Periodo de Tiempo Programado</div>
-                            <div class="data-value">{{ guia.periodo_tiempo_programado_2 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Fecha de Entrega</div>
-                            <div class="data-value">{{ guia.fecha_entrega_2 }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tarea 3 -->
-            <div class="data-section task-section">
-                <h3 class="section-title tarea-title">Tarea 3 ({{ guia.puntaje_3 }} puntos)</h3>
-                
-                <!-- Objetivo y Contenido -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Objetivo y Contenido</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Tipo de Objetivo</div>
-                            <div class="data-value">{{ guia.tipo_objetivo_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Objetivo de Aprendizaje</div>
-                            <div class="data-value">{{ guia.objetivo_aprendizaje_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Contenido Temático</div>
-                            <div class="data-value">{{ guia.contenido_tematico_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Actividad de Aprendizaje</div>
-                            <div class="data-value">{{ guia.actividad_aprendizaje_3 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Evaluación -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Evaluación</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Técnica de Evaluación</div>
-                            <div class="data-value">{{ guia.tecnica_evaluacion_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Tipo de Evaluación</div>
-                            <div class="data-value">{{ guia.tipo_evaluacion_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Instrumento de Evaluación</div>
-                            <div class="data-value">{{ guia.instrumento_evaluacion_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Criterios de Evaluación</div>
-                            <div class="data-value">{{ guia.criterios_evaluacion_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Agente Evaluador</div>
-                            <div class="data-value">{{ guia.agente_evaluador_3 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Recursos y Tiempos -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Recursos y Tiempos</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Tiempo (minutos)</div>
-                            <div class="data-value">{{ guia.tiempo_minutos_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Recursos Didácticos</div>
-                            <div class="data-value">{{ guia.recursos_didacticos_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Periodo de Tiempo Programado</div>
-                            <div class="data-value">{{ guia.periodo_tiempo_programado_3 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Fecha de Entrega</div>
-                            <div class="data-value">{{ guia.fecha_entrega_3 }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Tarea 4 -->
-            <div class="data-section task-section">
-                <h3 class="section-title tarea-title">Tarea 4 ({{ guia.puntaje_4 }} puntos)</h3>
-                
-                <!-- Objetivo y Contenido -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Objetivo y Contenido</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Tipo de Objetivo</div>
-                            <div class="data-value">{{ guia.tipo_objetivo_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Objetivo de Aprendizaje</div>
-                            <div class="data-value">{{ guia.objetivo_aprendizaje_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Contenido Temático</div>
-                            <div class="data-value">{{ guia.contenido_tematico_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Actividad de Aprendizaje</div>
-                            <div class="data-value">{{ guia.actividad_aprendizaje_4 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Evaluación -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Evaluación</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Técnica de Evaluación</div>
-                            <div class="data-value">{{ guia.tecnica_evaluacion_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Tipo de Evaluación</div>
-                            <div class="data-value">{{ guia.tipo_evaluacion_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Instrumento de Evaluación</div>
-                            <div class="data-value">{{ guia.instrumento_evaluacion_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Criterios de Evaluación</div>
-                            <div class="data-value">{{ guia.criterios_evaluacion_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Agente Evaluador</div>
-                            <div class="data-value">{{ guia.agente_evaluador_4 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Recursos y Tiempos -->
-                <div class="subsection">
-                    <h4 class="subsection-title">Recursos y Tiempos</h4>
-                    <div class="data-grid">
-                        <div class="data-card">
-                            <div class="data-label">Tiempo (minutos)</div>
-                            <div class="data-value">{{ guia.tiempo_minutos_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Recursos Didácticos</div>
-                            <div class="data-value">{{ guia.recursos_didacticos_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Periodo de Tiempo Programado</div>
-                            <div class="data-value">{{ guia.periodo_tiempo_programado_4 }}</div>
-                        </div>
-                        <div class="data-card">
-                            <div class="data-label">Fecha de Entrega</div>
-                            <div class="data-value">{{ guia.fecha_entrega_4 }}</div>
-                        </div>
-                    </div>
-                </div>
+{% else %}
+    {% if guia %}
+        {# --- Información General (OPCIONAL AQUÍ, ya está en el header del panel de guía) --- #}
+        
+        <div class="content-block mb-4">
+            <h3 class="section-heading h5">Información General de la Guía</h3>
+             <div class="evaluation-details"> {# Reutilizando una clase existente para p > strong #}
+                <p><strong>N° Encuentro:</strong> {{ guia.numero_encuentro|default:"No especificado" }}</p>
+                <p><strong>Fecha:</strong> {% if guia.fecha %}{{ guia.fecha|date:"d F, Y" }}{% else %}No especificada{% endif %}</p>
+                <p><strong>Unidad:</strong> {{ guia.unidad|default:"No especificada" }}</p>
+                <p><strong>Nombre de la Unidad:</strong> {{ guia.nombre_de_la_unidad|default:"No especificado" }}</p>
             </div>
         </div>
-        {% else %}
-        <div class="alert alert-info">
-            <p class="text-center mb-0">No hay guía de estudio independiente asociada a este sílabo</p>
+
+        {# --- Tarea 1 --- #}
+        {% if guia.objetivo_aprendizaje_1 %} {# Condición clave: si existe el objetivo, mostramos la tarea #}
+        <div class="content-block task-details-block mb-5">
+            <h3 class="section-heading h5">
+                Primera Actividad
+                {% if guia.puntaje_1 is not None %}
+                    ({{ guia.puntaje_1 }} puntos)
+                {% endif %}
+            </h3>
+
+            <div class="mb-3">
+                <h4 class="task-subheading h6">Objetivo y Contenido</h4>
+                <p><strong>Tipo de Objetivo:</strong> {{ guia.tipo_objetivo_1|default:"No especificado" }}</p>
+                <p><strong>Objetivo de Aprendizaje:</strong> {{ guia.objetivo_aprendizaje_1|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Contenido Temático:</strong> {{ guia.contenido_tematico_1|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Actividad de Aprendizaje:</strong> {{ guia.actividad_aprendizaje_1|linebreaksbr|default:"No especificado" }}</p>
+            </div>
+
+            <div class="mb-3">
+                <h4 class="task-subheading h6">Evaluación</h4>
+                <p><strong>Técnica:</strong> {{ guia.tecnica_evaluacion_1|default:"No especificado" }}</p>
+                <p><strong>Tipo:</strong> {{ guia.tipo_evaluacion_1|default:"No especificado" }}</p>
+                <p><strong>Instrumento:</strong> {{ guia.instrumento_evaluacion_1|default:"No especificado" }}</p>
+                <p><strong>Criterios:</strong> {{ guia.criterios_evaluacion_1|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Agente:</strong> {{ guia.agente_evaluador_1|default:"No especificado" }}</p>
+            </div>
+
+            <div>
+                <h4 class="task-subheading h6">Recursos y Tiempos</h4>
+                <p><strong>Tiempo Estimado:</strong> 
+                    {% if guia.tiempo_minutos_1 is not None %}
+                        {{ guia.tiempo_minutos_1 }} minutos
+                    {% else %}
+                        No especificado
+                    {% endif %}
+                </p>
+                <p><strong>Recursos Didácticos:</strong> {{ guia.recursos_didacticos_1|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Periodo Programado:</strong> {{ guia.periodo_tiempo_programado_1|default:"No especificado" }}</p>
+                <p><strong>Fecha de Entrega:</strong> 
+                    {% if guia.fecha_entrega_1 %}
+                        {{ guia.fecha_entrega_1|date:"d F, Y" }}
+                    {% else %}
+                        No especificado
+                    {% endif %}
+                </p>
+            </div>
         </div>
         {% endif %}
+
+        {# --- Tarea 2 --- #}
+        {% if guia.objetivo_aprendizaje_2 %}
+        <div class="content-block task-details-block mb-5">
+            <h3 class="section-heading h5">
+                Segunda Actividad
+                {% if guia.puntaje_2 is not None %}
+                    ({{ guia.puntaje_2 }} puntos)
+                {% endif %}
+            </h3>
+            <div class="mb-3">
+                <h4 class="task-subheading h6">Objetivo y Contenido</h4>
+                <p><strong>Tipo de Objetivo:</strong> {{ guia.tipo_objetivo_2|default:"No especificado" }}</p>
+                <p><strong>Objetivo de Aprendizaje:</strong> {{ guia.objetivo_aprendizaje_2|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Contenido Temático:</strong> {{ guia.contenido_tematico_2|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Actividad de Aprendizaje:</strong> {{ guia.actividad_aprendizaje_2|linebreaksbr|default:"No especificado" }}</p>
+            </div>
+            <div class="mb-3">
+                <h4 class="task-subheading h6">Evaluación</h4>
+                <p><strong>Técnica:</strong> {{ guia.tecnica_evaluacion_2|default:"No especificado" }}</p>
+                <p><strong>Tipo:</strong> {{ guia.tipo_evaluacion_2|default:"No especificado" }}</p>
+                <p><strong>Instrumento:</strong> {{ guia.instrumento_evaluacion_2|default:"No especificado" }}</p>
+                <p><strong>Criterios:</strong> {{ guia.criterios_evaluacion_2|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Agente:</strong> {{ guia.agente_evaluador_2|default:"No especificado" }}</p>
+            </div>
+            <div>
+                <h4 class="task-subheading h6">Recursos y Tiempos</h4>
+                <p><strong>Tiempo Estimado:</strong> {% if guia.tiempo_minutos_2 is not None %}{{ guia.tiempo_minutos_2 }} minutos{% else %}No especificado{% endif %}</p>
+                <p><strong>Recursos Didácticos:</strong> {{ guia.recursos_didacticos_2|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Periodo Programado:</strong> {{ guia.periodo_tiempo_programado_2|default:"No especificado" }}</p>
+                <p><strong>Fecha de Entrega:</strong> {% if guia.fecha_entrega_2 %}{{ guia.fecha_entrega_2|date:"d F, Y" }}{% else %}No especificado{% endif %}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {# --- Tarea 3 --- #}
+        {% if guia.objetivo_aprendizaje_3 %}
+        <div class="content-block task-details-block mb-5">
+            <h3 class="section-heading h5">
+                Tercera Actividad {# Cambiado de "Tarea 3" para consistencia si algunas son "actividades" #}
+                {% if guia.puntaje_3 is not None %}
+                    ({{ guia.puntaje_3 }} puntos)
+                {% endif %}
+            </h3>
+            <div class="mb-3">
+                <h4 class="task-subheading h6">Objetivo y Contenido</h4>
+                <p><strong>Tipo de Objetivo:</strong> {{ guia.tipo_objetivo_3|default:"No especificado" }}</p>
+                <p><strong>Objetivo de Aprendizaje:</strong> {{ guia.objetivo_aprendizaje_3|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Contenido Temático:</strong> {{ guia.contenido_tematico_3|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Actividad de Aprendizaje:</strong> {{ guia.actividad_aprendizaje_3|linebreaksbr|default:"No especificado" }}</p>
+            </div>
+            <div class="mb-3">
+                <h4 class="task-subheading h6">Evaluación</h4>
+                <p><strong>Técnica:</strong> {{ guia.tecnica_evaluacion_3|default:"No especificado" }}</p>
+                <p><strong>Tipo:</strong> {{ guia.tipo_evaluacion_3|default:"No especificado" }}</p>
+                <p><strong>Instrumento:</strong> {{ guia.instrumento_evaluacion_3|default:"No especificado" }}</p>
+                <p><strong>Criterios:</strong> {{ guia.criterios_evaluacion_3|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Agente:</strong> {{ guia.agente_evaluador_3|default:"No especificado" }}</p>
+            </div>
+            <div>
+                <h4 class="task-subheading h6">Recursos y Tiempos</h4>
+                <p><strong>Tiempo Estimado:</strong> {% if guia.tiempo_minutos_3 is not None %}{{ guia.tiempo_minutos_3 }} minutos{% else %}No especificado{% endif %}</p>
+                <p><strong>Recursos Didácticos:</strong> {{ guia.recursos_didacticos_3|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Periodo Programado:</strong> {{ guia.periodo_tiempo_programado_3|default:"No especificado" }}</p>
+                <p><strong>Fecha de Entrega:</strong> {% if guia.fecha_entrega_3 %}{{ guia.fecha_entrega_3|date:"d F, Y" }}{% else %}No especificado{% endif %}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {# --- Tarea 4 --- #}
+        {% if guia.objetivo_aprendizaje_4 %}
+        <div class="content-block task-details-block mb-5">
+            <h3 class="section-heading h5">
+                Cuarta Actividad
+                {% if guia.puntaje_4 is not None %}
+                    ({{ guia.puntaje_4 }} puntos)
+                {% endif %}
+            </h3>
+            <div class="mb-3">
+                <h4 class="task-subheading h6">Objetivo y Contenido</h4>
+                <p><strong>Tipo de Objetivo:</strong> {{ guia.tipo_objetivo_4|default:"No especificado" }}</p>
+                <p><strong>Objetivo de Aprendizaje:</strong> {{ guia.objetivo_aprendizaje_4|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Contenido Temático:</strong> {{ guia.contenido_tematico_4|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Actividad de Aprendizaje:</strong> {{ guia.actividad_aprendizaje_4|linebreaksbr|default:"No especificado" }}</p>
+            </div>
+            <div class="mb-3">
+                <h4 class="task-subheading h6">Evaluación</h4>
+                <p><strong>Técnica:</strong> {{ guia.tecnica_evaluacion_4|default:"No especificado" }}</p>
+                <p><strong>Tipo:</strong> {{ guia.tipo_evaluacion_4|default:"No especificado" }}</p>
+                <p><strong>Instrumento:</strong> {{ guia.instrumento_evaluacion_4|default:"No especificado" }}</p>
+                <p><strong>Criterios:</strong> {{ guia.criterios_evaluacion_4|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Agente:</strong> {{ guia.agente_evaluador_4|default:"No especificado" }}</p>
+            </div>
+            <div>
+                <h4 class="task-subheading h6">Recursos y Tiempos</h4>
+                <p><strong>Tiempo Estimado:</strong> {% if guia.tiempo_minutos_4 is not None %}{{ guia.tiempo_minutos_4 }} minutos{% else %}No especificado{% endif %}</p>
+                <p><strong>Recursos Didácticos:</strong> {{ guia.recursos_didacticos_4|linebreaksbr|default:"No especificado" }}</p>
+                <p><strong>Periodo Programado:</strong> {{ guia.periodo_tiempo_programado_4|default:"No especificado" }}</p>
+                <p><strong>Fecha de Entrega:</strong> {% if guia.fecha_entrega_4 %}{{ guia.fecha_entrega_4|date:"d F, Y" }}{% else %}No especificado{% endif %}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Mensaje si ninguna tarea tiene objetivo_aprendizaje_X definido #}
+        {% if not guia.objetivo_aprendizaje_1 and not guia.objetivo_aprendizaje_2 and not guia.objetivo_aprendizaje_3 and not guia.objetivo_aprendizaje_4 %}
+            <div class="alert alert-secondary text-center my-4">
+                <p class="mb-0">No hay actividades detalladas en la guía de estudio para este encuentro.</p>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <div class="alert alert-info text-center my-4">
+            <p class="mb-0">No hay guía de estudio independiente disponible para este encuentro.</p>
+        </div>
     {% endif %}
-</div>
-
-<style>
-    /* Estilos para el estudio independiente */
-    .main-content {
-        display: none;
-        padding: 1.5rem;
-    }
-    
-    .main-content.active {
-        display: block;
-    }
-    
-    .data-section {
-        margin-bottom: 30px;
-        background-color: #fff;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        padding: 20px;
-    }
-    
-    .section-title {
-        color: var(--color-azul-oscuro);
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid var(--color-azul-3);
-        font-weight: 600;
-    }
-    
-    .info-title::before {
-        content: "📋";
-        margin-right: 8px;
-    }
-    
-    .tarea-title::before {
-        content: "✏️";
-        margin-right: 8px;
-    }
-    
-    .subsection {
-        margin-bottom: 20px;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-    }
-    
-    .subsection-title {
-        color: var(--color-azul-oscuro);
-        margin-bottom: 15px;
-        font-size: 1.1rem;
-        font-weight: 500;
-    }
-    
-    .data-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 15px;
-    }
-    
-    .data-card {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 15px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        border-left: 4px solid var(--color-azul-3);
-    }
-    
-    .data-label {
-        font-weight: 600;
-        color: var(--color-azul-oscuro);
-        margin-bottom: 5px;
-    }
-    
-    .data-value {
-        color: #333;
-        line-height: 1.5;
-    }
-    
-    /* Color coding for tasks */
-    .task-section:nth-child(2) .section-title {
-        border-bottom-color: #2874a6;
-    }
-    
-    .task-section:nth-child(3) .section-title {
-        border-bottom-color: #2e86c1;
-    }
-    
-    .task-section:nth-child(4) .section-title {
-        border-bottom-color: #3498db;
-    }
-    
-    .task-section:nth-child(5) .section-title {
-        border-bottom-color: #1f618d;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .data-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-
-<script>
-    // JavaScript para la navegación
-    document.addEventListener('DOMContentLoaded', function() {
-        // No hay navegación entre guías
-    });
-</script>
+{% endif %}

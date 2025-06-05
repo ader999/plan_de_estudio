@@ -1,0 +1,234 @@
+/* static/css/blog_style.css */
+
+:root {
+    --blog-primary-color: #007bff; /* Bootstrap primary blue, o el que uses */
+    --blog-text-color: #333;
+    --blog-text-light: #555;
+    --blog-meta-color: #777;
+    --blog-border-color: #e9ecef;
+    --blog-card-bg: #f8f9fa;
+    --blog-header-font: 'Georgia', serif; /* Opcional, para un toque más clásico */
+    --blog-body-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+body {
+    font-family: var(--blog-body-font);
+    color: var(--blog-text-color);
+    line-height: 1.6;
+    background-color: #fff; /* Fondo general más limpio */
+}
+
+.blog-post-style {
+    max-width: 900px; /* Ancho típico para blogs, para mejor legibilidad */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.page-main-header h1 {
+    font-family: var(--blog-header-font);
+    font-size: 2.8rem;
+    margin-bottom: 0.5rem;
+    color: var(--blog-card-bg);
+}
+
+.page-main-header .lead {
+    font-size: 1.25rem;
+    color: var(--blog-card-bg);
+    margin-bottom: 0.5rem;
+}
+
+.page-main-header .meta-info {
+    font-size: 0.9rem;
+    color: var(--blog-card-bg);
+}
+
+/* Estilo de Pestañas (Tabs) */
+.blog-tabs.nav-tabs {
+    border-bottom: 2px solid var(--blog-border-color);
+    margin-bottom: 2rem !important;
+}
+
+.blog-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--blog-text-light);
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: -2px; /* Alinea con el borde inferior del contenedor */
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.blog-tabs .nav-link:hover {
+    color: var(--blog-primary-color);
+    border-bottom-color: var(--blog-primary-color);
+}
+
+.blog-tabs .nav-link.active {
+    color: var(--blog-primary-color);
+    border-bottom-color: var(--blog-primary-color);
+    font-weight: 600;
+    background-color: transparent;
+}
+
+
+/* Estilo de Artículo (Encuentro) */
+.post-article {
+    padding: 1.5rem;
+    border: 1px solid var(--blog-border-color);
+    border-radius: 8px;
+    background-color: #fff;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+/* Ocultar todos los que no son activos */
+.encuentro-content-panel:not(.active) {
+    display: none;
+}
+/* Mostrar el activo */
+.encuentro-content-panel.active {
+    display: block;
+}
+
+
+.post-header h2.h3 { /* Título del encuentro */
+    font-family: var(--blog-header-font);
+    font-size: 1.8rem; /* Un poco más pequeño que el H1 principal */
+    color: var(--blog-text-color);
+    margin-bottom: 0.25rem;
+}
+
+.post-meta {
+    font-size: 0.85rem;
+    color: var(--blog-meta-color);
+    margin-bottom: 1.5rem;
+}
+.post-meta small {
+    display: block;
+    font-size: 0.9em;
+}
+
+.post-content {
+    font-size: 1rem;
+    color: var(--blog-text-light);
+}
+
+.section-heading.h5 { /* Títulos de sección dentro del encuentro */
+    font-family: var(--blog-header-font);
+    font-size: 1.3rem;
+    color: var(--blog-text-color);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--blog-border-color);
+}
+
+.content-block {
+    margin-bottom: 2rem;
+}
+
+.content-block p, .evaluation-details p {
+    margin-bottom: 0.6rem;
+    line-height: 1.7;
+}
+.content-block p strong, .evaluation-details p strong {
+    color: var(--blog-text-color);
+    margin-right: 0.3em;
+}
+
+
+.text-content {
+    line-height: 1.7;
+}
+
+.styled-list {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.styled-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px dotted var(--blog-border-color);
+}
+.styled-list li:last-child {
+    border-bottom: none;
+}
+
+.styled-list li strong {
+    color: var(--blog-text-color);
+    margin-right: 0.5em;
+}
+
+/* Momentos Didácticos */
+.momentos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.momento-card {
+    background-color: var(--blog-card-bg);
+    padding: 1.25rem;
+    border-radius: 6px;
+    border: 1px solid var(--blog-border-color);
+}
+
+.momento-title.h6 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--blog-primary-color);
+    margin-bottom: 0.75rem;
+}
+.momento-card hr {
+    border-top: 1px solid #ccc;
+}
+
+/* Guía de Estudio */
+.guide-article .post-header {
+    padding-top: 1rem;
+}
+.guide-content-js .alert,
+.guide-content-js .loading-message {
+    margin-top: 1rem;
+    padding: 1rem;
+}
+/* Si el HTML de la guía ya viene con su propio formato de blog, 
+   quizás no necesites muchos estilos específicos aquí para `guide-content-js` */
+
+
+/* Paginación */
+.pagination .page-link {
+    color: var(--blog-primary-color);
+    border-radius: 0.25rem;
+    margin: 0 0.2rem;
+    border-color: var(--blog-border-color);
+}
+.pagination .page-link:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+.pagination .page-item.active .page-link {
+    background-color: var(--blog-primary-color);
+    border-color: var(--blog-primary-color);
+    color: white;
+}
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: var(--blog-border-color);
+}
+
+
+/* Botón de Volver */
+.back-button .btn {
+    font-size: 0.9rem;
+}
+
+/* Mensaje de "No hay sílabos" */
+.info-message h4 {
+    font-family: var(--blog-header-font);
+}
+
+/* Mejorar visibilidad de d-none para JS */
+.d-none {
+    display: none !important;
+}

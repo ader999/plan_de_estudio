@@ -8,6 +8,7 @@ import traceback  # Añadido para mejor manejo de errores
 
 from django.db.models.functions import Lower
 from django.http import HttpResponse, request, HttpResponseNotFound, JsonResponse
+from django.template.loader import render_to_string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 import logging
@@ -35,34 +36,59 @@ genai.configure(api_key=os.environ.get("GOOGLE_GENERATIVE_API_KEY"))
 
 
 @login_required
-def detalle_silabo(request):
-    # Recupera todos los objetos Silabo con sus guías relacionadas
-    silabos = Silabo.objects.all().prefetch_related("guias")
+def detalle_silabo(request, codigo=None):
+    # Obtiene el usuario autenticado
+    usuario_autenticado = request.user
+    nombre_de_usuario = request.user.get_full_name()
 
-    # Agrupar sílabos por código de asignatura
+    # Obtener código desde URL o parámetros GET
+    if not codigo:
+        codigo = request.GET.get('codigo')
+
+    # Primero obtenemos las asignaciones del usuario autenticado
+    asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
+
+    # Luego obtenemos los silabos relacionados con esas asignaciones
+    silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones)
+
+    # Si se especifica un código, filtrar solo por ese código
+    if codigo:
+        silabos = silabos.filter(asignacion_plan__plan_de_estudio__codigo=codigo)
+
+    # Crear un diccionario para agrupar los silabos por código de plan de estudio
     silabos_agrupados = {}
 
     for silabo in silabos:
-        codigo = silabo.asignacion.codigo
-        if codigo not in silabos_agrupados:
-            silabos_agrupados[codigo] = []
+        # Si el sílabo no tiene asignación de plan o plan de estudio, continuamos al siguiente
+        if not silabo.asignacion_plan or not silabo.asignacion_plan.plan_de_estudio:
+            continue
 
-        silabos_agrupados[codigo].append(silabo)
+        # Usamos el código del plan de estudio como clave
+        codigo_silabo = silabo.asignacion_plan.plan_de_estudio.codigo
 
-    # Añadir información adicional a cada grupo
-    for codigo, grupo in silabos_agrupados.items():
+        # Si el código no existe en el diccionario, lo creamos
+        if codigo_silabo not in silabos_agrupados:
+            silabos_agrupados[codigo_silabo] = []
+
+        # Añadimos información útil al silabo para su uso en las plantillas
+        silabo.asignatura = silabo.asignacion_plan.plan_de_estudio.asignatura
+        silabo.carrera = silabo.asignacion_plan.plan_de_estudio.carrera
+        silabo.plan_de_estudio = silabo.asignacion_plan.plan_de_estudio
+
+        # Agregamos el sílabo a la lista correspondiente
+        silabos_agrupados[codigo_silabo].append(silabo)
+
+    # Para cada grupo de sílabos, añadimos información adicional
+    for codigo_grupo, grupo in silabos_agrupados.items():
         # Ordenar por número de encuentro
         grupo.sort(key=lambda s: s.encuentros)
 
-        # Añadir nombre de asignatura como atributo del grupo
-        if grupo:
-            grupo.asignatura = grupo[0].asignacion.nombre
+    # Obtener el año actual
+    año_actual = datetime.datetime.now().year
 
-    return render(
-        request,
-        "plan_estudio_template/detalle_silabo.html",
-        {"silabos_agrupados": silabos_agrupados},
-    )
+    context = {"silabos_agrupados": silabos_agrupados, "usuario": nombre_de_usuario, "año_actual": año_actual}
+
+    return render(request, "detalle_silabo_completo.html", context)
 
 
 @login_required
@@ -157,9 +183,138 @@ def plan_estudio(request):
     # Obtener el año actual
     año_actual = datetime.datetime.now().year
 
-    context = {"silabos_agrupados": silabos_agrupados, "usuario": nombre_de_usuario, "año_actual": año_actual}
+    context = {
+        "silabos_agrupados": silabos_agrupados, 
+        "usuario": nombre_de_usuario, 
+        "año_actual": año_actual,
+        "asignaciones": asignaciones
+    }
 
     return render(request, "plan_estudio.html", context)
+
+
+@login_required
+def guia_autodidactica(request, codigo=None):
+    # Obtiene el usuario autenticado
+    usuario_autenticado = request.user
+    nombre_de_usuario = request.user.get_full_name()
+
+    # Obtener código desde URL o parámetros GET
+    if not codigo:
+        codigo = request.GET.get('codigo')
+
+    # Primero obtenemos las asignaciones del usuario autenticado
+    asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
+
+    # Luego obtenemos los silabos relacionados con esas asignaciones
+    silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones)
+
+    # Si se especifica un código, filtrar solo por ese código
+    if codigo:
+        silabos = silabos.filter(asignacion_plan__plan_de_estudio__codigo=codigo)
+
+    # Crear un diccionario para agrupar los silabos por código de plan de estudio
+    silabos_agrupados = {}
+
+    for silabo in silabos:
+        # Si el sílabo no tiene asignación de plan o plan de estudio, continuamos al siguiente
+        if not silabo.asignacion_plan or not silabo.asignacion_plan.plan_de_estudio:
+            continue
+
+        # Usamos el código del plan de estudio como clave
+        codigo_silabo = silabo.asignacion_plan.plan_de_estudio.codigo
+
+        # Si el código no existe en el diccionario, lo creamos
+        if codigo_silabo not in silabos_agrupados:
+            silabos_agrupados[codigo_silabo] = []
+
+        # Añadimos información útil al silabo para su uso en las plantillas
+        silabo.asignatura = silabo.asignacion_plan.plan_de_estudio.asignatura
+        silabo.carrera = silabo.asignacion_plan.plan_de_estudio.carrera
+        silabo.plan_de_estudio = silabo.asignacion_plan.plan_de_estudio
+
+        # Agregamos el sílabo a la lista correspondiente
+        silabos_agrupados[codigo_silabo].append(silabo)
+
+    # Para cada grupo de sílabos, añadimos información adicional
+    for codigo_grupo, grupo in silabos_agrupados.items():
+        # Ordenar por número de encuentro
+        grupo.sort(key=lambda s: s.encuentros)
+
+    # Obtener el año actual
+    año_actual = datetime.datetime.now().year
+
+    context = {"silabos_agrupados": silabos_agrupados, "usuario": nombre_de_usuario, "año_actual": año_actual}
+
+    return render(request, "guia_autodidactica_completa.html", context)
+
+
+import datetime # Ensure datetime is imported
+
+@login_required
+def secuencia_didactica(request, codigo=None):
+    # Obtiene el usuario autenticado
+    usuario_autenticado = request.user
+    nombre_de_usuario = request.user.get_full_name()
+    print(f"[DEBUG] Secuencia Didáctica View - User: {usuario_autenticado.username}")
+
+    # Obtener código desde URL o parámetros GET
+    if not codigo:
+        codigo = request.GET.get('codigo')
+    print(f"[DEBUG] Secuencia Didáctica View - Plan Code (codigo): {codigo}")
+
+    # Primero obtenemos las asignaciones del usuario autenticado
+    asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
+    print(f"[DEBUG] Secuencia Didáctica View - Found {asignaciones.count()} asignaciones for user {usuario_autenticado.username}")
+
+    # Luego obtenemos los silabos relacionados con esas asignaciones
+    silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones).prefetch_related('guias')
+    print(f"[DEBUG] Secuencia Didáctica View - Found {silabos.count()} silabos initially for user's asignaciones")
+
+    # Si se especifica un código, filtrar solo por ese código
+    if codigo:
+        silabos = silabos.filter(asignacion_plan__plan_de_estudio__codigo=codigo)
+        print(f"[DEBUG] Secuencia Didáctica View - Found {silabos.count()} silabos after filtering by codigo '{codigo}'")
+    else:
+        print("[DEBUG] Secuencia Didáctica View - No codigo provided, not filtering silabos by plan code.")
+
+    # Crear un diccionario para agrupar los silabos por código de plan de estudio
+    silabos_agrupados = {}
+
+    for silabo in silabos:
+        # Si el sílabo no tiene asignación de plan o plan de estudio, continuamos al siguiente
+        if not silabo.asignacion_plan or not silabo.asignacion_plan.plan_de_estudio:
+            continue
+
+        # Usamos el código del plan de estudio como clave
+        codigo_silabo = silabo.asignacion_plan.plan_de_estudio.codigo
+
+        # Si el código no existe en el diccionario, lo creamos
+        if codigo_silabo not in silabos_agrupados:
+            silabos_agrupados[codigo_silabo] = []
+
+        # Añadimos información útil al silabo para su uso en las plantillas
+        silabo.asignatura = silabo.asignacion_plan.plan_de_estudio.asignatura
+        silabo.carrera = silabo.asignacion_plan.plan_de_estudio.carrera
+        silabo.plan_de_estudio = silabo.asignacion_plan.plan_de_estudio
+
+        # Agregamos el sílabo a la lista correspondiente
+        silabos_agrupados[codigo_silabo].append(silabo)
+
+    # Para cada grupo de sílabos, añadimos información adicional
+    for codigo_grupo, grupo in silabos_agrupados.items():
+        # Ordenar por número de encuentro
+        grupo.sort(key=lambda s: s.encuentros)
+
+    # Obtener el año actual
+    año_actual = datetime.datetime.now().year
+
+    context = {"silabos_agrupados": silabos_agrupados, "usuario": nombre_de_usuario, "año_actual": año_actual}
+
+    print(f"[DEBUG] Secuencia Didáctica View - Final silabos_agrupados: {silabos_agrupados}")
+    print(f"[DEBUG] Secuencia Didáctica View - Context being passed to template: {context}")
+
+    return render(request, "secuencia_didactica_completa.html", context)
 
 
 @login_required
@@ -214,11 +369,6 @@ def Plan_de_clase(request):
     return render(request, "plan_estudio_template/detalle_plandeclase.html", context)
 
 
-@login_required
-def generar_excel(request):
-    from .document_generators import generar_excel as generate_excel_file
-
-    return generate_excel_file(request)
 
 
 @login_required
@@ -695,105 +845,7 @@ def get_matching_guia(silabo_id, encuentro_numero):
     print(
         f"DEBUG: Sin coincidencia. Usando primera guía (ID: {guia_fallback.id}) como fallback"
     )
-    return guia_fallback
 
-
-@login_required
-def cargar_guia(request, silabo_id):
-    """
-    Vista para cargar una guía específica de un sílabo mediante AJAX.
-    """
-    try:
-        # Obtener el sílabo específico
-        silabo = Silabo.objects.get(id=silabo_id)
-
-        # Determinar si la solicitud viene de detalle_plandeclase.html
-        # Si hay un parámetro 'only_table' en la URL, se usará tabla_actividades.html
-        # En caso contrario, se usará el template detalle_estudioindependiente.html
-        template_name = (
-            "plan_estudio_template/tabla_actividades.html"
-            if request.GET.get("only_table", False)
-            else "plan_estudio_template/detalle_estudioindependiente.html"
-        )
-
-        # Información de debugging inicial
-        debug_info = {
-            "silabo_id": silabo_id,
-            "silabo_encuentros": silabo.encuentros,
-            "silabo_codigo": (
-                silabo.codigo if hasattr(silabo, "codigo") else "No tiene código"
-            ),
-            "asignatura": (
-                silabo.asignacion_plan.asignatura.nombre
-                if hasattr(silabo, "asignacion_plan")
-                and hasattr(silabo.asignacion_plan, "asignatura")
-                else "No asignada"
-            ),
-            "request_type": (
-                "Solo tabla" if request.GET.get("only_table", False) else "Completo"
-            ),
-            "template_usado": template_name,
-        }
-
-        print(f"DEBUG SILABO: {debug_info}")
-
-        # Contar guías
-        guias_count = Guia.objects.filter(silabo_id=silabo_id).count()
-        print(f"Total de guías para el sílabo {silabo_id}: {guias_count}")
-
-        # Si no hay guías asociadas
-        if guias_count == 0:
-            print(f"No se encontraron guías para el sílabo {silabo_id}")
-            return render(
-                request,
-                template_name,
-                {
-                    "silabo": silabo,
-                    "mensaje_error": "Este sílabo no tiene guía asociada.",
-                    "debug_info": debug_info,
-                    "codigo": silabo.codigo if hasattr(silabo, "codigo") else "",
-                },
-            )
-
-        # Usar la función helper para encontrar la guía correcta
-        guia = get_matching_guia(silabo_id, silabo.encuentros)
-
-        if guia:
-            print(
-                f"Guía encontrada - ID: {guia.id}, Encuentro: {guia.numero_encuentro}"
-            )
-        else:
-            print(f"No se encontró ninguna guía para el sílabo {silabo_id}")
-
-        # Información de debugging completa
-        debug_info.update(
-            {
-                "guia_id": guia.id if guia else None,
-                "guia_numero_encuentro": guia.numero_encuentro if guia else None,
-                "total_guias": guias_count,
-            }
-        )
-
-        print(f"DEBUG FINAL: {debug_info}")
-
-        return render(
-            request,
-            template_name,
-            {
-                "silabo": silabo,
-                "guia": guia,
-                "debug_info": debug_info,
-                "codigo": silabo.codigo if hasattr(silabo, "codigo") else "",
-            },
-        )
-
-    except Silabo.DoesNotExist:
-        print(f"Sílabo no encontrado: ID={silabo_id}")
-        return HttpResponse(f"Sílabo no encontrado (ID: {silabo_id})", status=404)
-    except Exception as e:
-        error_msg = f"Error al cargar la guía: {str(e)} (Sílabo ID: {silabo_id})"
-        print(f"ERROR: {error_msg}")
-        return HttpResponse(error_msg, status=500)
 
 
 @login_required
@@ -1259,96 +1311,66 @@ def cargar_guia(request, silabo_id):
     Vista para cargar una guía específica de un sílabo mediante AJAX.
     """
     try:
-        # Obtener el sílabo específico
         silabo = Silabo.objects.get(id=silabo_id)
-
-        # Determinar si la solicitud viene de detalle_plandeclase.html
-        # Si hay un parámetro 'only_table' en la URL, se usará tabla_actividades.html
-        # En caso contrario, se usará el template detalle_estudioindependiente.html
         template_name = (
             "plan_estudio_template/tabla_actividades.html"
             if request.GET.get("only_table", False)
             else "plan_estudio_template/detalle_estudioindependiente.html"
         )
 
-        # Información de debugging inicial
         debug_info = {
             "silabo_id": silabo_id,
             "silabo_encuentros": silabo.encuentros,
-            "silabo_codigo": (
-                silabo.codigo if hasattr(silabo, "codigo") else "No tiene código"
-            ),
-            "asignatura": (
-                silabo.asignacion_plan.asignatura.nombre
-                if hasattr(silabo, "asignacion_plan")
-                and hasattr(silabo.asignacion_plan, "asignatura")
-                else "No asignada"
-            ),
-            "request_type": (
-                "Solo tabla" if request.GET.get("only_table", False) else "Completo"
-            ),
+            "silabo_codigo": silabo.codigo if hasattr(silabo, "codigo") else "No tiene código",
+            "asignatura": silabo.asignacion_plan.asignatura.nombre if hasattr(silabo, "asignacion_plan") and hasattr(silabo.asignacion_plan, "asignatura") else "No asignada",
+            "request_type": "Solo tabla" if request.GET.get("only_table", False) else "Completo",
             "template_usado": template_name,
         }
-
         print(f"DEBUG SILABO: {debug_info}")
 
-        # Contar guías
         guias_count = Guia.objects.filter(silabo_id=silabo_id).count()
         print(f"Total de guías para el sílabo {silabo_id}: {guias_count}")
 
-        # Si no hay guías asociadas
+        context = {
+            "silabo": silabo,
+            "debug_info": debug_info,
+            "codigo": silabo.codigo if hasattr(silabo, "codigo") else "",
+        }
+
         if guias_count == 0:
             print(f"No se encontraron guías para el sílabo {silabo_id}")
-            return render(
-                request,
-                template_name,
-                {
-                    "silabo": silabo,
-                    "mensaje_error": "Este sílabo no tiene guía asociada.",
-                    "debug_info": debug_info,
-                    "codigo": silabo.codigo if hasattr(silabo, "codigo") else "",
-                },
-            )
+            context["mensaje_error"] = "Este sílabo no tiene guía asociada."
+            html_content = render_to_string(template_name, context, request=request)
+            return JsonResponse({"success": True, "html": html_content})
 
-        # Usar la función helper para encontrar la guía correcta
         guia = get_matching_guia(silabo_id, silabo.encuentros)
 
         if guia:
-            print(
-                f"Guía encontrada - ID: {guia.id}, Encuentro: {guia.numero_encuentro}"
-            )
+            print(f"Guía encontrada - ID: {guia.id}, Encuentro: {guia.numero_encuentro}")
         else:
-            print(f"No se encontró ninguna guía para el sílabo {silabo_id}")
+            print(f"No se encontró ninguna guía específica para el sílabo {silabo_id}, pero existen guías.")
+            # Si se quiere un mensaje específico en este caso:
+            # context["mensaje_info"] = "No se encontró una guía para este encuentro específico."
 
-        # Información de debugging completa
-        debug_info.update(
-            {
-                "guia_id": guia.id if guia else None,
-                "guia_numero_encuentro": guia.numero_encuentro if guia else None,
-                "total_guias": guias_count,
-            }
-        )
+        debug_info.update({
+            "guia_id": guia.id if guia else None,
+            "guia_numero_encuentro": guia.numero_encuentro if guia else None,
+            "total_guias": guias_count,
+        })
+        context["guia"] = guia
+        context["debug_info"] = debug_info # Actualizar debug_info en el contexto
 
         print(f"DEBUG FINAL: {debug_info}")
-
-        return render(
-            request,
-            template_name,
-            {
-                "silabo": silabo,
-                "guia": guia,
-                "debug_info": debug_info,
-                "codigo": silabo.codigo if hasattr(silabo, "codigo") else "",
-            },
-        )
+        html_content = render_to_string(template_name, context, request=request)
+        return JsonResponse({"success": True, "html": html_content})
 
     except Silabo.DoesNotExist:
         print(f"Sílabo no encontrado: ID={silabo_id}")
-        return HttpResponse(f"Sílabo no encontrado (ID: {silabo_id})", status=404)
+        return JsonResponse({"success": False, "message": f"Sílabo no encontrado (ID: {silabo_id})"}, status=404)
     except Exception as e:
         error_msg = f"Error al cargar la guía: {str(e)} (Sílabo ID: {silabo_id})"
         print(f"ERROR: {error_msg}")
-        return HttpResponse(error_msg, status=500)
+        return JsonResponse({"success": False, "message": error_msg}, status=500)
 
 
 @login_required
@@ -1365,9 +1387,10 @@ def descargar_secuencia_didactica(request):
     
     # Obtener las asignaciones del usuario autenticado
     asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
-    
-    # Obtener los silabos relacionados con esas asignaciones
+    print(f"[DEBUG] Secuencia Didáctica View - Found {asignaciones.count()} asignaciones for user {usuario_autenticado.username}")
+
     silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones)
+    print(f"[DEBUG] Secuencia Didáctica View - Found {silabos.count()} silabos initially for user's asignaciones")
     
     # Crear un diccionario para agrupar los silabos por código de plan de estudio
     silabos_agrupados = {}

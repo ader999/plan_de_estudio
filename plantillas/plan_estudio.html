@@ -1,51 +1,248 @@
 {% extends 'base.html' %}
-
 {% load static %}
-<style>
-    @media (max-width: 768px) {
-    .nav-pills {
-        flex-direction: row !important;
-        justify-content: center;
-    }
-    .nav-pills .nav-link {
-        margin-bottom: 5px;
-
-    }
-    button{
-        border: solid 1px white;
-    }
-
-}
-
-
-</style>
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <!-- Nav pills -->
-        <div class="col-md-3 col-12">
-            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical" >
-                <button class="nav-link active" id="v-pills-silabo-tab" data-bs-toggle="pill" data-bs-target="#section1" type="button" role="tab" aria-controls="section1" aria-selected="true">SILABO Y GUÍA</button>
-                <button class="nav-link" id="v-pills-plandeclase-tab" data-bs-toggle="pill" data-bs-target="#section3" type="button" role="tab" aria-controls="section3" aria-selected="false">GUÍA AUTODIDÁCTICA DE APRENDIZAJE</button>
-                <button class="nav-link" id="v-pills-guia-tab" data-bs-toggle="pill" data-bs-target="#section4" type="button" role="tab" aria-controls="section4" aria-selected="false">SECUENCIA DIDÁCTICA</button>
-            </div>
-        </div>
+<style>
+    :root {
+        --classic-bg: #f0fdfa;
+        --classic-card: #abb2b9;
+        --classic-text: #047857;
+        --classic-text-light: #059669;
+        --classic-border: #a7f3d0;
+        --classic-shadow: rgba(16, 185, 129, 0.12);
+        --classic-hover: rgba(16, 185, 129, 0.06);
+    }
 
-        <!-- Tab content -->
-        <div class="col-md-9 col-12">
-            <div class="tab-content" id="v-pills-tabContent">
-                <div class="tab-pane fade show active" id="section1" role="tabpanel" aria-labelledby="v-pills-silabo-tab">
-                    {% include 'plan_estudio_template/detalle_silabo.html' %}
-                </div>
-                <div class="tab-pane fade" id="section3" role="tabpanel" aria-labelledby="v-pills-plandeclase-tab">
-                    {% include 'plan_estudio_template/guia_autodidactica_aprendisaje.html' %}
-                </div>
-                <div class="tab-pane fade" id="section4" role="tabpanel" aria-labelledby="v-pills-guia-tab">
-                    {% include 'plan_estudio_template/secuensia_didactica.html' %}
+    body {
+        background-color: var(--classic-bg);
+        color: var(--classic-text);
+        font-family: 'Georgia', 'Times New Roman', serif;
+    }
+
+    .classic-card {
+        background: var(--classic-card);
+        border: 1px solid var(--classic-border);
+        box-shadow: 0 2px 8px var(--classic-shadow);
+        transition: all 0.3s ease;
+    }
+
+    .classic-card:hover {
+        box-shadow: 0 4px 12px var(--classic-shadow);
+        transform: translateY(-2px);
+    }
+
+    .classic-header {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
+        border-bottom: 3px solid #047857;
+    }
+
+    .classic-btn {
+        font-size: 0.85rem;
+        font-weight: 500;
+        border: none;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .btn-classic-primary { background-color: #059669; color: white; }
+    .btn-classic-primary:hover { background-color: #047857; color: white; }
+
+    .btn-classic-secondary { background-color: #6ee7b7; color: white; }
+    .btn-classic-secondary:hover { background-color: #34d399; color: white; }
+
+    .btn-classic-muted { background-color: #34d399; color: white; }
+    .btn-classic-muted:hover { background-color: #10b981; color: white; }
+
+    .btn-classic-dark { background-color: #047857; color: white; }
+    .btn-classic-dark:hover { background-color: #065f46; color: white; }
+
+    .btn-classic-light { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .btn-classic-light:hover { background-color: #d1fae5; color: #047857; }
+
+    .classic-badge {
+        background-color: #059669;
+        color: white;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .classic-title {
+        color: #047857;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .classic-subtitle {
+        color: var(--classic-text-light);
+        font-size: 0.95rem;
+        font-style: italic;
+    }
+
+    .classic-icon {
+        opacity: 0.8;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="classic-card rounded-3 overflow-hidden">
+                <div class="classic-header text-center py-5">
+                    <i class="fas fa-graduation-cap fa-3x classic-icon"></i>
+                    <h1 class="display-6 fw-bold mb-3">Plan de Estudio</h1>
+                    <p class="lead mb-0 opacity-90">Selecciona una asignación para explorar su contenido académico</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Cards Section -->
+    <div class="row justify-content-center">
+        {% if silabos_agrupados %}
+            {% for codigo, silabos in silabos_agrupados.items %}
+                {% with first_silabo=silabos|first %}
+                <div class="col-xl-4 col-lg-6 col-md-8 mb-4">
+                    <div class="classic-card rounded-3 h-100">
+                        <!-- Card Header -->
+                        <div class="card-header bg-light border-0 text-center py-4">
+                            <i class="fas fa-book-open fa-2x text-muted mb-3"></i>
+                            <h4 class="classic-title mb-0">{{ codigo }}</h4>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body px-4 py-4">
+                            <div class="text-center mb-4">
+                                <h6 class="classic-title mb-2">{{ first_silabo.asignatura.nombre }}</h6>
+                                <p class="classic-subtitle mb-3">{{ first_silabo.carrera.nombre }}</p>
+
+                                <span class="badge classic-badge rounded-pill">
+                                    <i class="fas fa-calendar-check me-1"></i>
+                                    {{ silabos|length }}/12 Encuentros
+                                </span>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2">
+                                <!-- Primary Row -->
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <a href="{% url 'detalle_silabo' %}?codigo={{ codigo }}"
+                                           class="btn btn-classic-primary classic-btn w-100 py-2">
+                                            <i class="fas fa-file-alt d-block mb-1"></i>
+                                            <small>S</small>ílabo</small>
+                                        </a>
+                                    </div>
+                                    <div class="col-4">
+                                        <a href="{% url 'guia_autodidactica' %}?codigo={{ codigo }}"
+                                           class="btn btn-classic-secondary classic-btn w-100 py-2">
+                                            <i class="fas fa-compass d-block mb-1"></i>
+                                            <small>Guía</small>
+                                        </a>
+                                    </div>
+                                    <div class="col-4">
+                                        <a href="{% url 'secuencia_didactica' %}?codigo={{ codigo }}"
+                                           class="btn btn-classic-muted classic-btn w-100 py-2">
+                                            <i class="fas fa-list-ol d-block mb-1"></i>
+                                            <small>Secuencia</small>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Secondary Row -->
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <a href="{% url 'descargar_secuencia_didactica' %}?codigo={{ codigo }}"
+                                           class="btn btn-classic-dark classic-btn w-100 py-2">
+                                            <i class="fas fa-file-word d-block mb-1"></i>
+                                            <small>Descargar Word</small>
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="{% url 'generar_excel_original' %}?codigo={{ codigo }}"
+                                           class="btn btn-classic-light classic-btn w-100 py-2">
+                                            <i class="fas fa-file-excel d-block mb-1"></i>
+                                            <small>Exportar Excel</small>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endwith %}
+            {% endfor %}
+        {% else %}
+            <!-- No Assignments Message -->
+            <div class="col-lg-6">
+                <div class="classic-card rounded-3 text-center py-5">
+                    <div class="card-body">
+                        <i class="fas fa-folder-open fa-4x text-muted mb-4 opacity-50"></i>
+                        <h4 class="classic-title mb-3">No hay asignaciones disponibles</h4>
+                        <p class="classic-subtitle mb-0">
+                            No se encontraron asignaciones para tu usuario.<br>
+                            Contacta al administrador si consideras que esto es un error.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 </div>
+
+<!-- Additional Custom Styles for Better UX -->
+<style>
+    .classic-card {
+        border-radius: 0.75rem !important;
+    }
+
+    .card-header {
+        border-radius: 0.75rem 0.75rem 0 0 !important;
+    }
+
+    .classic-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px var(--classic-shadow);
+    }
+
+    .classic-btn i {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .classic-header h1 {
+            font-size: 2rem;
+        }
+
+        .classic-btn {
+            font-size: 0.8rem;
+            padding: 0.5rem !important;
+        }
+
+        .classic-btn small {
+            font-size: 0.7rem;
+        }
+    }
+
+    /* Smooth transitions for all interactive elements */
+    .classic-card,
+    .classic-btn,
+    .badge {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Focus states for accessibility */
+    .classic-btn:focus {
+        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+        outline: none;
+    }
+</style>
 {% endblock %}

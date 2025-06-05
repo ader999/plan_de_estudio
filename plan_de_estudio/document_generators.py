@@ -7,104 +7,7 @@ from .template_utils import get_excel_template
 
 from django.contrib.admin.views.decorators import staff_member_required # Importar
 
-@login_required
-def generar_excel(request):
-    print("Me estoy ejecutando")
-    if request.method == 'POST':
-        # Obtén el ID del sílabo del formulario
-        silabo_id = request.POST.get('codigoSilabo')
-        print(f"ID de sílabo recibido: {silabo_id}")
-        print(f"Usuario actual: {request.user.username}")
 
-        if silabo_id:
-            try:
-                # Si se proporcionó un ID de sílabo, busca el sílabo directamente
-                print(f"Buscando sílabo con ID={silabo_id} y usuario={request.user.username}")
-                silabo = Silabo.objects.get(id=silabo_id, asignacion_plan__usuario=request.user)
-                print(f"Sílabo encontrado: ID={silabo.id}, Código={silabo.codigo}")
-
-                # Generamos el Excel para este sílabo
-                print(f"Generando Excel para el sílabo ID={silabo.id}")
-
-                # Carga la plantilla de Excel desde storage
-                wb = get_excel_template('plantilla.xlsx')
-
-                # Selecciona una hoja de cálculo (worksheet) si es necesario
-                ws = wb.active  # O selecciona una hoja específica
-
-                # Inserta los datos en las celdas correspondientes
-                row_num = 11  # Fila en la que se insertarán los datos
-
-                # Datos del sílabo - Usando la función safe_write_cell
-                safe_write_cell(ws, 5, 2, silabo.asignacion_plan.usuario.username)
-                safe_write_cell(ws, 6, 2, silabo.asignacion_plan.plan_de_estudio.asignatura.nombre)
-                safe_write_cell(ws, 7, 2, silabo.asignacion_plan.plan_de_estudio.carrera.nombre)
-                safe_write_cell(ws, 5, 4, silabo.asignacion_plan.plan_de_estudio.codigo)
-                safe_write_cell(ws, 6, 4, silabo.asignacion_plan.plan_de_estudio.año)
-                safe_write_cell(ws, 7, 4, silabo.asignacion_plan.plan_de_estudio.trimestre)
-                safe_write_cell(ws, 5, 6, silabo.fecha.year)
-                safe_write_cell(ws, 6, 6, silabo.asignacion_plan.plan_de_estudio.hp + silabo.asignacion_plan.plan_de_estudio.hti)
-                safe_write_cell(ws, 7, 6, silabo.asignacion_plan.plan_de_estudio.pr.nombre if silabo.asignacion_plan.plan_de_estudio.pr else "N/A")
-                safe_write_cell(ws, 5, 8, silabo.asignacion_plan.plan_de_estudio.pc.nombre if silabo.asignacion_plan.plan_de_estudio.pc else "N/A")
-                safe_write_cell(ws, 6, 8, silabo.asignacion_plan.plan_de_estudio.cr.nombre if silabo.asignacion_plan.plan_de_estudio.cr else "N/A")
-                safe_write_cell(ws, row_num, 1, silabo.encuentros)
-                safe_write_cell(ws, row_num, 2, silabo.fecha)
-                safe_write_cell(ws, row_num, 3, silabo.objetivo_conceptual)
-                safe_write_cell(ws, row_num, 4, silabo.objetivo_procedimental)
-                safe_write_cell(ws, row_num, 5, silabo.objetivo_actitudinal)
-                safe_write_cell(ws, row_num, 6, silabo.detalle_primer_momento)
-                safe_write_cell(ws, row_num, 7, silabo.clase_teorica)
-                safe_write_cell(ws, row_num, 8, silabo.detalle_tercer_momento)
-                safe_write_cell(ws, row_num, 9, silabo.unidad)
-                safe_write_cell(ws, row_num, 10, silabo.contenido_tematico)
-                safe_write_cell(ws, row_num, 11, silabo.tipo_primer_momento)
-                safe_write_cell(ws, row_num, 12, silabo.tiempo_primer_momento)
-                safe_write_cell(ws, row_num, 13, silabo.tecnica_evaluacion)
-                safe_write_cell(ws, row_num, 14, silabo.instrumento_evaluacion)
-                safe_write_cell(ws, row_num, 15, silabo.eje_transversal)
-                safe_write_cell(ws, row_num, 16, silabo.tiempo_primer_momento)
-
-                # Verificar si el sílabo tiene una guía asociada
-                if hasattr(silabo, 'guia') and silabo.guia is not None:
-                    try:
-                        safe_write_cell(ws, row_num+16, 1, silabo.guia.numero_guia if hasattr(silabo.guia, 'numero_guia') else silabo.encuentros)
-                        safe_write_cell(ws, row_num+16, 2, silabo.guia.fecha if hasattr(silabo.guia, 'fecha') else silabo.fecha)
-                        safe_write_cell(ws, row_num+16, 3, silabo.guia.unidad if hasattr(silabo.guia, 'unidad') else silabo.unidad)
-                        safe_write_cell(ws, row_num+16, 5, silabo.guia.objetivo_procedimental)
-                        safe_write_cell(ws, row_num+16, 6, silabo.guia.objetivo_conceptual)
-                        safe_write_cell(ws, row_num+16, 7, silabo.guia.objetivo_actitudinal)
-                        safe_write_cell(ws, row_num+16, 8, silabo.guia.contenido_tematico)
-                        safe_write_cell(ws, row_num+16, 9, silabo.guia.actividades if hasattr(silabo.guia, 'actividades') else "")
-                        safe_write_cell(ws, row_num+16, 10, silabo.guia.instrumento_cuaderno if hasattr(silabo.guia, 'instrumento_cuaderno') else "")
-                        safe_write_cell(ws, row_num+16, 11, silabo.guia.instrumento_organizador if hasattr(silabo.guia, 'instrumento_organizador') else "")
-                        safe_write_cell(ws, row_num+16, 12, silabo.guia.instrumento_diario if hasattr(silabo.guia, 'instrumento_diario') else "")
-                        safe_write_cell(ws, row_num+16, 13, silabo.guia.instrumento_prueba if hasattr(silabo.guia, 'instrumento_prueba') else "")
-                        safe_write_cell(ws, row_num+16, 14, silabo.guia.criterios_evaluacion)
-                        safe_write_cell(ws, row_num+16, 15, silabo.guia.tiempo_minutos)
-                        safe_write_cell(ws, row_num+16, 16, silabo.guia.recursos_primer_momento if hasattr(silabo.guia, 'recursos_primer_momento') else "")
-                        safe_write_cell(ws, row_num+16, 17, silabo.guia.puntaje)
-                        safe_write_cell(ws, row_num+16, 18, silabo.guia.evaluacion_sumativa if hasattr(silabo.guia, 'evaluacion_sumativa') else "")
-                        safe_write_cell(ws, row_num+16, 19, silabo.guia.fecha_entrega if hasattr(silabo.guia, 'fecha_entrega') else "")
-
-                    except Exception as e:
-                        # Si hay un error al acceder a los datos de la guía, simplemente continuamos
-                        print(f"Error al procesar la guía del sílabo {silabo.id}: {str(e)}")
-
-                # Guarda el archivo Excel en memoria
-                response = HttpResponse(content_type='application/ms-excel')
-                response['Content-Disposition'] = f'attachment; filename=silabo_{silabo.codigo}.xlsx'
-                wb.save(response)
-
-                return response
-
-            except Silabo.DoesNotExist:
-                print(f"Error: No se encontró el sílabo con ID {silabo_id}")
-            except Exception as e:
-                print(f"Error al generar el Excel: {str(e)}")
-
-    # Si no se proporcionó un ID de sílabo o no se encontró, redirige a la página principal
-    from django.shortcuts import redirect
-    return redirect('plan_de_estudio')
 
 
 # Helper function to safely write to cells, avoiding merged cell errors
@@ -146,54 +49,72 @@ def safe_write_cell(ws, row, col, value):
 def generar_excel_original(request):
     """
     Función para generar un archivo Excel basado en los datos de un sílabo.
+    Ahora acepta tanto POST (id de sílabo) como GET (código de plan de estudio).
     """
+    from django.http import JsonResponse
+    silabo = None
+    silabo_id = None
+    codigo = None
     if request.method == 'POST':
-        # Obtén el ID del sílabo del formulario
         silabo_id = request.POST.get('codigoSilabo')
         print(f"ID de sílabo recibido: {silabo_id}")
         print(f"Usuario actual: {request.user.username}")
-
         if not silabo_id:
             return JsonResponse({'error': 'El ID de sílabo no se proporcionó.'}, status=400)
-
         try:
-            # Si se proporcionó un ID de sílabo, busca el sílabo directamente
             print(f"Buscando sílabo con ID={silabo_id} y usuario={request.user.username}")
             silabo = Silabo.objects.get(id=silabo_id, asignacion_plan__usuario=request.user)
-            print(f"Sílabo encontrado: ID={silabo.id}, Código={silabo.codigo}")
+            print(f"Sílabo encontrado: ID={silabo.id}, Código={silabo.asignacion_plan.plan_de_estudio.codigo}")
+        except Silabo.DoesNotExist:
+            print(f"Error: No se encontró el sílabo con ID {silabo_id}")
+            return JsonResponse({'error': f'No se encontró el sílabo con ID {silabo_id}'}, status=404)
+    else:
+        codigo = request.GET.get('codigo')
+        print(f"Código recibido por GET: {codigo}")
+        print(f"Usuario actual: {request.user.username}")
+        if not codigo:
+            return JsonResponse({'error': 'No se proporcionó el código de plan de estudio.'}, status=400)
+        silabo = Silabo.objects.filter(
+            asignacion_plan__plan_de_estudio__codigo=codigo,
+            asignacion_plan__usuario=request.user
+        ).order_by('encuentros').first()
+        if not silabo:
+            print(f"No se encontró sílabo para el usuario y código {codigo}")
+            return JsonResponse({'error': f'No se encontró sílabo para el código {codigo}'}, status=404)
+        print(f"Sílabo encontrado: ID={silabo.id}, Código={silabo.asignacion_plan.plan_de_estudio.codigo}")
 
-            # Generamos el Excel para este sílabo
-            print(f"Generando Excel para el sílabo ID={silabo.id}")
+        # Generamos el Excel para este sílabo
+        print(f"Generando Excel para el sílabo ID={silabo.id}")
 
-            # Carga la plantilla de Excel desde storage
-            wb = get_excel_template('plantilla_original.xlsx')
+        # Carga la plantilla de Excel desde storage
+        wb = get_excel_template('plantilla_original.xlsx')
 
-            # Selecciona la segunda hoja de cálculo
-            ws = wb.worksheets[1]  # Índice 1 para la segunda hoja
+        # Selecciona la segunda hoja de cálculo
+        ws = wb.worksheets[1]  # Índice 1 para la segunda hoja
 
-            # Datos generales del sílabo que solo se escriben una vez
-            safe_write_cell(ws, 7, 4, silabo.asignacion_plan.usuario.first_name + " " + silabo.asignacion_plan.usuario.last_name)
-            safe_write_cell(ws, 5, 10, silabo.asignacion_plan.plan_de_estudio.codigo)
-            safe_write_cell(ws, 5, 11, silabo.asignacion_plan.plan_de_estudio.año)
-            safe_write_cell(ws, 5, 12, silabo.asignacion_plan.plan_de_estudio.trimestre)
-            safe_write_cell(ws, 5, 9, silabo.asignacion_plan.plan_de_estudio.asignatura.nombre)
+        # Datos generales del sílabo que solo se escriben una vez
+        safe_write_cell(ws, 7, 4, silabo.asignacion_plan.usuario.first_name + " " + silabo.asignacion_plan.usuario.last_name)
+        safe_write_cell(ws, 5, 10, silabo.asignacion_plan.plan_de_estudio.codigo)
+        safe_write_cell(ws, 5, 11, silabo.asignacion_plan.plan_de_estudio.año)
+        safe_write_cell(ws, 5, 12, silabo.asignacion_plan.plan_de_estudio.trimestre)
+        safe_write_cell(ws, 5, 9, silabo.asignacion_plan.plan_de_estudio.asignatura.nombre)
 
-            safe_write_cell(ws, 5, 6, silabo.asignacion_plan.plan_de_estudio.carrera.nombre)
-            safe_write_cell(ws, 5, 3, silabo.asignacion_plan.plan_de_estudio.carrera.codigo)
-            safe_write_cell(ws, 5, 4, silabo.asignacion_plan.plan_de_estudio.carrera.cine_2011)
-            safe_write_cell(ws, 5, 5, silabo.asignacion_plan.plan_de_estudio.carrera.cine_2013)
-            safe_write_cell(ws, 5, 7, silabo.asignacion_plan.plan_de_estudio.carrera.area_formacion)
-            safe_write_cell(ws, 5, 8, silabo.asignacion_plan.plan_de_estudio.carrera.area_disiplinaria)
+        safe_write_cell(ws, 5, 6, silabo.asignacion_plan.plan_de_estudio.carrera.nombre)
+        safe_write_cell(ws, 5, 3, silabo.asignacion_plan.plan_de_estudio.carrera.codigo)
+        safe_write_cell(ws, 5, 4, silabo.asignacion_plan.plan_de_estudio.carrera.cine_2011)
+        safe_write_cell(ws, 5, 5, silabo.asignacion_plan.plan_de_estudio.carrera.cine_2013)
+        safe_write_cell(ws, 5, 7, silabo.asignacion_plan.plan_de_estudio.carrera.area_formacion)
+        safe_write_cell(ws, 5, 8, silabo.asignacion_plan.plan_de_estudio.carrera.area_disiplinaria)
 
-            safe_write_cell(ws, 7, 7, silabo.asignacion_plan.plan_de_estudio.horas_presenciales)
-            safe_write_cell(ws, 7, 8, silabo.asignacion_plan.plan_de_estudio.horas_estudio_independiente)
+        safe_write_cell(ws, 7, 7, silabo.asignacion_plan.plan_de_estudio.horas_presenciales)
+        safe_write_cell(ws, 7, 8, silabo.asignacion_plan.plan_de_estudio.horas_estudio_independiente)
 
-            safe_write_cell(ws, 7, 10, silabo.asignacion_plan.plan_de_estudio.pr.nombre if silabo.asignacion_plan.plan_de_estudio.pr else "N/A")
-            safe_write_cell(ws, 7, 11, silabo.asignacion_plan.plan_de_estudio.pc.nombre if silabo.asignacion_plan.plan_de_estudio.pc else "N/A")
-            safe_write_cell(ws, 7, 12, silabo.asignacion_plan.plan_de_estudio.cr.nombre if silabo.asignacion_plan.plan_de_estudio.cr else "N/A")
+        safe_write_cell(ws, 7, 10, silabo.asignacion_plan.plan_de_estudio.pr.nombre if silabo.asignacion_plan.plan_de_estudio.pr else "N/A")
+        safe_write_cell(ws, 7, 11, silabo.asignacion_plan.plan_de_estudio.pc.nombre if silabo.asignacion_plan.plan_de_estudio.pc else "N/A")
+        safe_write_cell(ws, 7, 12, silabo.asignacion_plan.plan_de_estudio.cr.nombre if silabo.asignacion_plan.plan_de_estudio.cr else "N/A")
 
-            # Buscar todos los sílabos relacionados con la misma asignación de plan de estudio, ordenados por número de encuentro
-            try:
+        # Buscar todos los sílabos relacionados con la misma asignación de plan de estudio, ordenados por número de encuentro
+        try:
                 silabos_relacionados = Silabo.objects.filter(
                     asignacion_plan=silabo.asignacion_plan
                 ).order_by('encuentros')
@@ -342,11 +263,11 @@ def generar_excel_original(request):
                 print("Archivo Excel generado correctamente")
                 return response
 
-            except Exception as e:
-                print(f"Error específico durante la generación del Excel: {str(e)}")
-                import traceback
-                print(traceback.format_exc())
-                return JsonResponse({'error': f'Error al generar el Excel: {str(e)}'}, status=500)
+        except Exception as e:
+            print(f"Error específico durante la generación del Excel: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
+            return JsonResponse({'error': f'Error al generar el Excel: {str(e)}'}, status=500)
 
         except Silabo.DoesNotExist:
             print(f"Error: No se encontró el sílabo con ID {silabo_id}")
