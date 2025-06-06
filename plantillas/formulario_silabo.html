@@ -242,7 +242,7 @@
             </div>
             <div class="mb-3">
                 <label for="tiempo_primer_momento" class="form-label">Tiempo (minutos)</label>
-                {{ form.tiempo_primer_momento|add_class:"form-control" }}
+                {{ form.tiempo_primer_momento|add_class:"form-control tiempo_minutos" }}
             </div>
             <div class="mb-3">
                 <label for="recursos_primer_momento" class="form-label">Recursos Didácticos</label>
@@ -269,11 +269,11 @@
             </div>
             <div class="mb-3">
                 <label for="tiempo_segundo_momento_teorica" class="form-label">Tiempo clase teorica (minutos)</label>
-                {{ form.tiempo_segundo_momento_teorica|add_class:"form-control" }}
+                {{ form.tiempo_segundo_momento_teorica|add_class:"form-control tiempo_minutos" }}
             </div>
             <div class="mb-3">
                 <label for="tiempo_segundo_momento_practica" class="form-label">Tiempo clase practica (minutos)</label>
-                {{ form.tiempo_segundo_momento_practica|add_class:"form-control" }}
+                {{ form.tiempo_segundo_momento_practica|add_class:"form-control tiempo_minutos" }}
             </div>
             <div class="mb-3">
                 <label for="recursos_segundo_momento" class="form-label">Recursos Didácticos</label>
@@ -294,7 +294,7 @@
             </div>
             <div class="mb-3">
                 <label for="tiempo_tercer_momento" class="form-label">Tiempo (minutos)</label>
-                {{ form.tiempo_tercer_momento|add_class:"form-control" }}
+                {{ form.tiempo_tercer_momento|add_class:"form-control tiempo_minutos" }}
             </div>
             <div class="mb-3">
                 <label for="recursos_tercer_momento" class="form-label">Recursos Didácticos</label>
@@ -338,7 +338,7 @@
             </div>
             <div class="mb-3">
                 <label for="tiempo_minutos" class="form-label">Tiempo en Minutos</label>
-                {{ form.tiempo_minutos|add_class:"form-control" }}
+                {{ form.tiempo_minutos|add_class:"form-control tiempo_minutos" }}
             </div>
             <div class="mb-3">
                 <label for="agente_evaluador" class="form-label">Agente Evaluador</label>
@@ -356,6 +356,51 @@
                 <label for="puntaje" class="form-label">Puntaje</label>
                 {{ form.puntaje|add_class:"form-control" }}
             </div>
+
+
+            <div class="mb-3">
+                <label for="tiempo_total" class="form-label">Tiempo Total (minutos)</label>
+                <div class="input-group">
+                    <span class="input-group-text">Tiempo Total</span>
+                    <input type="text" class="form-control" id="tiempo_total" readonly>
+                </div>
+            </div>
+            <script>
+                // Función para calcular la suma de todos los tiempos
+                function calcularTiempoTotal() {
+                    console.log('calcularTiempoTotal_01: Función llamada.');
+                    let tiempo_total = 0;
+                    let count = 0;
+                    $(".tiempo_minutos").each(function(index) {
+                        count++;
+                        let rawValue = $(this).val();
+                        let elementId = $(this).attr('id') || 'no-id';
+                        console.log(`calcularTiempoTotal_02: Campo ${index} (ID: ${elementId}), valor crudo: '${rawValue}'`);
+                        let valor = parseInt(rawValue);
+                        console.log(`calcularTiempoTotal_03: Campo ${index} (ID: ${elementId}), valor parseado: ${valor}`);
+                        if (!isNaN(valor)) {
+                            tiempo_total += valor;
+                            console.log(`calcularTiempoTotal_04: Campo ${index} (ID: ${elementId}), tiempo_total acumulado: ${tiempo_total}`);
+                        } else {
+                            console.log(`calcularTiempoTotal_05: Campo ${index} (ID: ${elementId}), valor no es un número (NaN).`);
+                        }
+                    });
+                    console.log(`calcularTiempoTotal_06: Total de campos .tiempo_minutos encontrados: ${count}`);
+                    console.log(`calcularTiempoTotal_07: Tiempo total final calculado: ${tiempo_total}`);
+                    $("#tiempo_total").val(tiempo_total);
+                }
+                // Llamar a la función cada vez que se cambia un valor de tiempo (evento input para reacción inmediata)
+                $(document).ready(function() {
+                    // Asegurarse de que los listeners se adjuntan después de que el DOM esté listo
+                    // y que los elementos existan.
+                    console.log('calcularTiempoTotal_08: Adjuntando listener de input a .tiempo_minutos');
+                    $(document).on('input', '.tiempo_minutos', calcularTiempoTotal);
+                    // Llamar a la función al cargar la página para inicializar
+                    console.log('calcularTiempoTotal_09: Llamando a calcularTiempoTotal al cargar la página.');
+                    calcularTiempoTotal();
+                });
+            </script>
+
         </div>
     </div>
 </form>
