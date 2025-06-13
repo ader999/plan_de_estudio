@@ -129,7 +129,7 @@ class FiltrarGuia(admin.ModelAdmin):
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     # Añade 'exportar_excel_boton' a list_display
-    list_display = ('usuario', 'plan_de_estudio','fecha_asignacion', 'completado_icono', 'exportar_excel_boton')
+    list_display = ('usuario', 'plan_de_estudio','fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
     readonly_fields = ('silabos_creados', 'guias_creadas')
     list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'usuario') # Añadir filtros útiles
 
@@ -140,6 +140,10 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
         return obj.silabos_creados >= total_esperado # Usar >= por si acaso
     completado_icono.boolean = True
     completado_icono.short_description = 'Completado'
+
+    def progreso_silabos_guias(self, obj):
+        return f"S:{obj.silabos_creados}, G:{obj.guias_creadas}"
+    progreso_silabos_guias.short_description = 'Progreso (S/G)'
 
     # Método para generar el botón de exportar
     def exportar_excel_boton(self, obj):
@@ -192,9 +196,9 @@ class CompletadoFilter(admin.SimpleListFilter):
 
 
 class PlanTematicoAdmin(admin.ModelAdmin):
-    list_display = ('nombre_de_la_unidad', 'unidades', 'planes_de_estudio_related', 'completado_icono')
+    list_display = ('plan_estudio', 'unidades', 'planes_de_estudio_related', 'completado_icono')
     list_filter = (CompletadoFilter,)
-    search_fields = ('nombre_de_la_unidad',)
+    search_fields = ('plan_estudio',)
 
     def completado_icono(self, obj):
         # Verificamos si este PlanTematico está relacionado con algún Plan_de_estudio

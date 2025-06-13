@@ -579,7 +579,7 @@ def generar_excel_admin(request, asignacion_id):
         # Crear un nombre de archivo descriptivo
         filename = f"asignacion_{asignacion_obj.usuario.username}_{asignacion_obj.plan_de_estudio.asignatura.nombre}.xlsx"
         # Sanitizar nombre de archivo si es necesario (remover caracteres especiales)
-        filename = "".join(c for c in filename if c.isalnum() or c in ('_', '-')).rstrip()
+        filename = "".join(c for c in filename if c.isalnum() or c in ('_', '-', '.')).rstrip()
         response['Content-Disposition'] = f'attachment; filename={filename}'
         wb.save(response)
         print(f"Archivo Excel '{filename}' generado correctamente")

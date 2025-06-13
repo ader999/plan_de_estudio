@@ -251,14 +251,107 @@
                         <!-- RESUMEN DE HORAS Y PUNTAJES -->
                         <div class="content-block mb-4">
                             <h3 class="section-heading h5">Resumen de Horas y Puntajes</h3>
-                            <div class="list-style-data">
-                                <p><strong>Horas Presenciales:</strong> {{ silabo.horas_presenciales_calculadas|default:"N/A" }}</p>
-                                <p><strong>Horas Estudio Independiente:</strong> {{ guia.horas_independientes_calculadas|default:"N/A" }}</p>
-                                <p><strong>Total de Horas:</strong> {{ silabo.total_horas_calculadas|default:"N/A" }}</p>
-                                <p><strong>Puntaje Presencial:</strong> {{ silabo.puntaje|default:"0" }}</p>
-                                <p><strong>Puntaje Estudio Independiente:</strong> {{ guia.puntaje_total_calculado|default:"N/A" }}</p>
-                                <p><strong>Puntaje Total del Encuentro:</strong> {{ silabo.puntaje_total_encuentro_calculado|default:"N/A" }}</p>
-                            </div>
+                            <table>
+                                <tbody>
+                                    {# Horas Presenciales (Silabo) - Suma de minutos #}
+                                    {% with hp_t1=silabo.tiempo_primer_momento|default:0 hp_t2=silabo.tiempo_segundo_momento_teorica|default:0 hp_t3=silabo.tiempo_segundo_momento_practica|default:0 hp_t4=silabo.tiempo_tercer_momento|default:0 %}
+                                        {% with silabo_horas_presenciales_minutos=0|add:hp_t1|add:hp_t2|add:hp_t3|add:hp_t4 %}
+                                            <tr>
+                                                <td><strong>Horas Presenciales (minutos):</strong></td>
+                                                <td class="px-3">{{ silabo_horas_presenciales_minutos }}</td>
+                                            </tr>
+                                        {% endwith %}
+                                    {% endwith %}
+
+                                    {# Horas Estudio Independiente (Guia) - Suma de minutos #}
+                                    {% with guia_obj=silabo.guias.first %}
+                                        {% if guia_obj %}
+                                            {% with hei_t1=guia_obj.tiempo_minutos_1|default:0 hei_t2=guia_obj.tiempo_minutos_2|default:0 hei_t3=guia_obj.tiempo_minutos_3|default:0 hei_t4=guia_obj.tiempo_minutos_4|default:0 %}
+                                                {% with guia_horas_independientes_minutos=0|add:hei_t1|add:hei_t2|add:hei_t3|add:hei_t4 %}
+                                                    <tr>
+                                                        <td><strong>Horas Estudio Independiente (minutos):</strong></td>
+                                                        <td class="px-3">{{ guia_horas_independientes_minutos }}</td>
+                                                    </tr>
+                                                {% endwith %}
+                                            {% endwith %}
+                                        {% else %}
+                                            <tr>
+                                                <td><strong>Horas Estudio Independiente (minutos):</strong></td>
+                                                <td class="px-3">0</td> {# Default to 0 if no guia #}
+                                            </tr>
+                                        {% endif %}
+                                    {% endwith %}
+
+                                    {# Total de Horas (Silabo + Guia) - Suma de minutos #}
+                                    {% with hp_t1_th=silabo.tiempo_primer_momento|default:0 hp_t2_th=silabo.tiempo_segundo_momento_teorica|default:0 hp_t3_th=silabo.tiempo_segundo_momento_practica|default:0 hp_t4_th=silabo.tiempo_tercer_momento|default:0 %}
+                                        {% with silabo_total_pres_min_th=0|add:hp_t1_th|add:hp_t2_th|add:hp_t3_th|add:hp_t4_th %}
+                                            {% with guia_obj_total_h=silabo.guias.first %}
+                                                {% if guia_obj_total_h %}
+                                                    {% with hei_t1_th_val=guia_obj_total_h.tiempo_minutos_1|default:0 hei_t2_th_val=guia_obj_total_h.tiempo_minutos_2|default:0 hei_t3_th_val=guia_obj_total_h.tiempo_minutos_3|default:0 hei_t4_th_val=guia_obj_total_h.tiempo_minutos_4|default:0 %}
+                                                        {% with guia_total_ind_min_th=0|add:hei_t1_th_val|add:hei_t2_th_val|add:hei_t3_th_val|add:hei_t4_th_val %}
+                                                            <tr>
+                                                                <td><strong>Total de Horas (minutos):</strong></td>
+                                                                <td class="px-3">{{ silabo_total_pres_min_th|add:guia_total_ind_min_th }}</td>
+                                                            </tr>
+                                                        {% endwith %}
+                                                    {% endwith %}
+                                                {% else %}
+                                                    <tr>
+                                                        <td><strong>Total de Horas (minutos):</strong></td>
+                                                        <td class="px-3">{{ silabo_total_pres_min_th }}</td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endwith %}
+                                    {% endwith %}
+
+                                    {# Puntaje Presencial (Silabo) #}
+                                    <tr>
+                                        <td><strong>Puntaje Presencial:</strong></td>
+                                        <td class="px-3">{{ silabo.puntaje|default:0 }}</td>
+                                    </tr>
+
+                                    {# Puntaje Estudio Independiente (Guia) #}
+                                    {% with guia_obj_puntaje=silabo.guias.first %}
+                                        {% if guia_obj_puntaje %}
+                                            {% with p_guia_t1=guia_obj_puntaje.puntaje_1|default:0 p_guia_t2=guia_obj_puntaje.puntaje_2|default:0 p_guia_t3=guia_obj_puntaje.puntaje_3|default:0 p_guia_t4=guia_obj_puntaje.puntaje_4|default:0 %}
+                                                {% with guia_puntaje_total=0|add:p_guia_t1|add:p_guia_t2|add:p_guia_t3|add:p_guia_t4 %}
+                                                    <tr>
+                                                        <td><strong>Puntaje Estudio Independiente:</strong></td>
+                                                        <td class="px-3">{{ guia_puntaje_total }}</td>
+                                                    </tr>
+                                                {% endwith %}
+                                            {% endwith %}
+                                        {% else %}
+                                            <tr>
+                                                <td><strong>Puntaje Estudio Independiente:</strong></td>
+                                                <td class="px-3">0</td> {# Default to 0 if no guia #}
+                                            </tr>
+                                        {% endif %}
+                                    {% endwith %}
+
+                                    {# Puntaje Total del Encuentro (Silabo + Guia) #}
+                                    {% with silabo_punt_directo=silabo.puntaje|default:0 %}
+                                        {% with guia_obj_punt_total_enc=silabo.guias.first %}
+                                            {% if guia_obj_punt_total_enc %}
+                                                {% with pg_t1_pte=guia_obj_punt_total_enc.puntaje_1|default:0 pg_t2_pte=guia_obj_punt_total_enc.puntaje_2|default:0 pg_t3_pte=guia_obj_punt_total_enc.puntaje_3|default:0 pg_t4_pte=guia_obj_punt_total_enc.puntaje_4|default:0 %}
+                                                    {% with guia_punt_total_calc_pte=0|add:pg_t1_pte|add:pg_t2_pte|add:pg_t3_pte|add:pg_t4_pte %}
+                                                        <tr>
+                                                            <td><strong>Puntaje Total del Encuentro:</strong></td>
+                                                            <td class="px-3">{{ silabo_punt_directo|add:guia_punt_total_calc_pte }}</td>
+                                                        </tr>
+                                                    {% endwith %}
+                                                {% endwith %}
+                                            {% else %}
+                                                <tr>
+                                                    <td><strong>Puntaje Total del Encuentro:</strong></td>
+                                                    <td class="px-3">{{ silabo_punt_directo }}</td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endwith %}
+                                </tbody>
+                            </table>
                         </div>
                         {% else %}
                          <div class="content-block mb-4">
