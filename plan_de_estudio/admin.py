@@ -196,9 +196,13 @@ class CompletadoFilter(admin.SimpleListFilter):
 
 
 class PlanTematicoAdmin(admin.ModelAdmin):
-    list_display = ('plan_estudio', 'unidades', 'planes_de_estudio_related', 'completado_icono')
+    list_display = ('plan_estudio', 'unidades_completadas_count', 'planes_de_estudio_related', 'completado_icono')
     list_filter = (CompletadoFilter,)
     search_fields = ('plan_estudio',)
+
+    def unidades_completadas_count(self, obj):
+        return obj.get_numero_unidades_completadas()
+    unidades_completadas_count.short_description = 'Unidades Llenadas'
 
     def completado_icono(self, obj):
         # Verificamos si este PlanTematico está relacionado con algún Plan_de_estudio

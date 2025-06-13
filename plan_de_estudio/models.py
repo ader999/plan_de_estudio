@@ -365,6 +365,24 @@ class PlanTematico(models.Model):
     def __str__(self):
         return f'{self.unidades} - {self.nombre_de_la_unidad}'
 
+    def get_numero_unidades_completadas(self):
+        count = 0
+        # Check if the main unit name field is filled
+        if self.nombre_de_la_unidad and self.nombre_de_la_unidad.strip():
+            count += 1
+        # Check optional unit name fields
+        if self.nombre_de_la_unidad_2 and self.nombre_de_la_unidad_2.strip():
+            count += 1
+        if self.nombre_de_la_unidad_3 and self.nombre_de_la_unidad_3.strip():
+            count += 1
+        if self.nombre_de_la_unidad_4 and self.nombre_de_la_unidad_4.strip():
+            count += 1
+        if self.nombre_de_la_unidad_5 and self.nombre_de_la_unidad_5.strip():
+            count += 1
+        if self.nombre_de_la_unidad_6 and self.nombre_de_la_unidad_6.strip():
+            count += 1
+        return count
+
     def clean(self):
         pass
 
