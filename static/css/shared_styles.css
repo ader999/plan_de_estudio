@@ -277,30 +277,69 @@ hr.section-divider {
     color: var(--color-accent);
 }
 
-/* Print (simplificado, ya que el diseño es más lineal) */
-@media print {
-    body {
-        background-color: #fff !important;
-        color: #000 !important;
-        font-size: 10pt;
-        font-family: Georgia, 'Times New Roman', Times, serif;
+
+
+    /* Print (simplificado, ya que el diseño es más lineal) */
+    @media print {
+        body {
+            background-color: #fff !important;
+            color: #000 !important;
+            font-size: 10pt;
+            font-family: Georgia, 'Times New Roman', Times, serif;
+        }
+
+        :root { /* Resetear variables para impresión a un esquema claro */
+            --color-background: #ffffff !important;
+            --color-surface: #ffffff !important;
+            --color-text-primary: #000000 !important;
+            --color-text-secondary: #333333 !important;
+            --color-text-muted: #555555 !important;
+            --color-accent: #007bff !important;
+            --color-border: #dddddd !important;
+        }
+
+        .main-page-container {
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .back-button, .main-content-tabs-blog {
+            display: none !important;
+        }
+
+        .page-header-blog {
+            text-align: left;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .article-content-wrapper {
+            background-color: #fff !important;
+            box-shadow: none;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        .encuentro-section {
+            border-bottom: 1px solid #eee;
+            page-break-inside: avoid;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: #000 !important;
+        }
+
+        a {
+            color: var(--color-accent) !important;
+            text-decoration: none;
+        }
+
+        .table-responsive-wrapper-blog {
+            border: 1px solid #ccc;
+        }
+
+        .data-table-blog th {
+            background-color: #f0f0f0;
+        }
     }
-    :root { /* Resetear variables para impresión a un esquema claro */
-        --color-background: #ffffff !important;
-        --color-surface: #ffffff !important;
-        --color-text-primary: #000000 !important;
-        --color-text-secondary: #333333 !important;
-        --color-text-muted: #555555 !important;
-        --color-accent: #007bff !important;
-        --color-border: #dddddd !important;
-    }
-    .main-page-container { max-width: 100%; padding: 0; margin: 0; }
-    .back-button, .main-content-tabs-blog { display: none !important; }
-    .page-header-blog { text-align: left; border-bottom: 1px solid #ccc; }
-    .article-content-wrapper { background-color: #fff !important; box-shadow: none; padding: 0; border-radius: 0;}
-    .encuentro-section { border-bottom: 1px solid #eee; page-break-inside: avoid; }
-    h1,h2,h3,h4,h5,h6 { color: #000 !important; }
-    a { color: var(--color-accent) !important; text-decoration: none; }
-    .table-responsive-wrapper-blog { border: 1px solid #ccc; }
-    .data-table-blog th { background-color: #f0f0f0; }
-}
+

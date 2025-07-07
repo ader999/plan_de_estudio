@@ -338,21 +338,24 @@ main {
 }
 
 /* Ajustes para dispositivos móviles */
-@media (max-width: 576px) {
-    #offcanvasNavbar {
-        max-width: 280px;
+
+@media (max-width: 767.98px) {
+
+    /*
+       Seleccionamos el contenedor principal por su ID #page-content.
+       Este ID ya lo tienes en tu base.html, lo que lo hace perfecto para esto.
+    */
+    #page-content {
+        /* Anulamos los márgenes laterales que pone la clase .container de Bootstrap */
+        padding-left: 3px !important;  /* Margen izquierdo mínimo */
+        padding-right: 3px !important; /* Margen derecho mínimo */
+
+        /* Forzamos que el ancho máximo sea el 100% de la pantalla */
+        max-width: 100% !important;
+
+        /* Opcional: Reducimos un poco el margen superior en pantallas pequeñas */
+        margin-top: 85px !important;
+
     }
-    
-    #offcanvasNavbarLabel img {
-        height: 70px !important;
-    }
-    
-    #offcanvasNavbarLabel h5 {
-        font-size: 1.5rem;
-    }
-    
-    #offcanvasNavbar .nav-link,
-    #offcanvasNavbar .dropdown-toggle {
-        padding: 12px 14px;
-    }
+
 }

@@ -1,4 +1,4 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
 {% load static %}
 {% load widget_tweaks %}
 
@@ -17,7 +17,7 @@
         border: none;
         border-radius: 2px;
     }
-    
+
     /* Estilos para el formulario con fondo oscuro - Paleta elegante */
     .card-dark {
         background-color: #3a4b4b;
@@ -25,24 +25,24 @@
         padding: 1.25rem;
         border-radius: 0.25rem;
     }
-    
+
     .card-dark label {
         color: #a6cdcd;
         font-weight: 500;
         margin-bottom: 0.5rem;
     }
-    
+
     .card-dark h2 {
         color: #ffffff;
         margin-bottom: 1.5rem;
         text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
         letter-spacing: 1px;
     }
-    
+
     .card-dark h5, .card-dark h6 {
         color: #c4eaea;
     }
-    
+
     /* Mejorar contraste en campos de formulario dentro del tema oscuro */
     .card-dark .form-control, .card-dark .form-select {
         background-color: #f8f9fa;
@@ -51,12 +51,12 @@
         border-radius: 4px;
         transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     }
-    
+
     .card-dark .form-control:focus, .card-dark .form-select:focus {
         border-color: #81afc2;
         box-shadow: 0 0 0 0.2rem rgba(129, 175, 194, 0.25);
     }
-    
+
     /* Estilo para las cabeceras de las tarjetas */
     .card-header-custom {
         background-color: #2a3838;
@@ -65,25 +65,25 @@
         padding: 1rem;
         border-radius: 0.25rem 0.25rem 0 0;
     }
-    
+
     /* Estilos para resaltar secciones y mejorar legibilidad */
     .section-divider {
         border-top: 1px solid rgba(166, 205, 205, 0.3);
         margin: 1.5rem 0;
     }
-    
+
     /* Estilo para tarjetas */
     .card {
         border: none;
         margin-bottom: 1.5rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
-    
+
     /* Espaciado consistente para los campos */
     .mb-3 {
         margin-bottom: 1.25rem !important;
     }
-    
+
     h6 {
         margin-top: 1rem;
         margin-bottom: 1rem;
@@ -91,7 +91,7 @@
     }
 </style>
 
-<div class="container-fluid mt-3">
+<div class="text-center">
     <div class="text-center">
         <h1 class="mb-4 text-center">Llenar formularios</h1>
         <h3>{{ asignacion.plan_de_estudio }}</h3>
@@ -99,11 +99,11 @@
     </div>
 
     <!-- Contenedor principal que contiene ambas secciones -->
-    <div class="container">
+    <div class="row justify-content-center">
         <!-- Sección 2: Formulario de Estudio Independiente -->
         <div id="seccionEstudioIndependiente" style="display: block">
             <div class="row justify-content-center">
-                <div class="col-lg-8 col-md-10 col-sm-12">
+                <div class="col-lg-8 col-md-10">
                     <div class="card shadow-lg">
                         <div class="card-body card-dark">
                             <!-- Contenido del Estudio Independiente -->
@@ -315,7 +315,7 @@
                                                 class="form-control"
                                                 id="objetivo_aprendizaje_1"
                                                 name="objetivo_aprendizaje_1"
-                                                rows="2"
+                                                rows="4"
                                                 required
                                             >
                                                 {% if guia %}{{ guia.objetivo_aprendizaje_1 }}{% endif %}
@@ -332,7 +332,7 @@
                                                 class="form-control"
                                                 id="contenido_tematico_1"
                                                 name="contenido_tematico_1"
-                                                rows="3"
+                                                rows="4"
                                                 required
                                             >
                                                 {% if guia %}{{ guia.contenido_tematico_1 }}{% endif %}
@@ -345,7 +345,7 @@
                                                 class="form-control"
                                                 id="actividad_aprendizaje_1"
                                                 name="actividad_aprendizaje_1"
-                                                rows="3"
+                                                rows="4"
                                                 required
                                             >
                                                 {% if guia %}{{ guia.actividad_aprendizaje_1 }}{% endif %}
@@ -421,7 +421,7 @@
                                                 class="form-control"
                                                 id="criterios_evaluacion_1"
                                                 name="criterios_evaluacion_1"
-                                                rows="3"
+                                                rows="4"
                                                 required
                                             >
                                                 {% if guia %}{{ guia.criterios_evaluacion_1 }}{% endif %}
@@ -468,7 +468,7 @@
                                                 class="form-control"
                                                 id="recursos_didacticos_1"
                                                 name="recursos_didacticos_1"
-                                                rows="3"
+                                                rows="4"
                                                 required
                                             >
                                                 {% if guia %}{{ guia.recursos_didacticos_1 }}{% endif %}
@@ -563,7 +563,7 @@
                                                 class="form-control"
                                                 id="objetivo_aprendizaje_2"
                                                 name="objetivo_aprendizaje_2"
-                                                rows="2"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.objetivo_aprendizaje_2 }}{% endif %}
                                             </textarea>
@@ -575,7 +575,7 @@
                                                 class="form-control"
                                                 id="contenido_tematico_2"
                                                 name="contenido_tematico_2"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.contenido_tematico_2 }}{% endif %}
                                             </textarea>
@@ -587,7 +587,7 @@
                                                 class="form-control"
                                                 id="actividad_aprendizaje_2"
                                                 name="actividad_aprendizaje_2"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.actividad_aprendizaje_2 }}{% endif %}
                                             </textarea>
@@ -662,7 +662,7 @@
                                                 class="form-control"
                                                 id="criterios_evaluacion_2"
                                                 name="criterios_evaluacion_2"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.criterios_evaluacion_2 }}{% endif %}
                                             </textarea>
@@ -707,7 +707,7 @@
                                                 class="form-control"
                                                 id="recursos_didacticos_2"
                                                 name="recursos_didacticos_2"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.recursos_didacticos_2 }}{% endif %}
                                             </textarea>
@@ -807,7 +807,7 @@
                                                 class="form-control"
                                                 id="objetivo_aprendizaje_3"
                                                 name="objetivo_aprendizaje_3"
-                                                rows="2"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.objetivo_aprendizaje_3 }}{% endif %}
                                             </textarea>
@@ -823,7 +823,7 @@
                                                 class="form-control"
                                                 id="contenido_tematico_3"
                                                 name="contenido_tematico_3"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.contenido_tematico_3 }}{% endif %}
                                             </textarea>
@@ -835,7 +835,7 @@
                                                 class="form-control"
                                                 id="actividad_aprendizaje_3"
                                                 name="actividad_aprendizaje_3"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.actividad_aprendizaje_3 }}{% endif %}
                                             </textarea>
@@ -910,7 +910,7 @@
                                                 class="form-control"
                                                 id="criterios_evaluacion_3"
                                                 name="criterios_evaluacion_3"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.criterios_evaluacion_3 }}{% endif %}
                                             </textarea>
@@ -955,7 +955,7 @@
                                                 class="form-control"
                                                 id="recursos_didacticos_3"
                                                 name="recursos_didacticos_3"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.recursos_didacticos_3 }}{% endif %}
                                             </textarea>
@@ -1043,7 +1043,7 @@
                                                 class="form-control"
                                                 id="objetivo_aprendizaje_4"
                                                 name="objetivo_aprendizaje_4"
-                                                rows="2"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.objetivo_aprendizaje_4 }}{% endif %}
                                             </textarea>
@@ -1055,7 +1055,7 @@
                                                 class="form-control"
                                                 id="contenido_tematico_4"
                                                 name="contenido_tematico_4"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.contenido_tematico_4 }}{% endif %}
                                             </textarea>
@@ -1067,7 +1067,7 @@
                                                 class="form-control"
                                                 id="actividad_aprendizaje_4"
                                                 name="actividad_aprendizaje_4"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.actividad_aprendizaje_4 }}{% endif %}
                                             </textarea>
@@ -1142,7 +1142,7 @@
                                                 class="form-control"
                                                 id="criterios_evaluacion_4"
                                                 name="criterios_evaluacion_4"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.criterios_evaluacion_4 }}{% endif %}
                                             </textarea>
@@ -1184,7 +1184,7 @@
                                                 class="form-control"
                                                 id="recursos_didacticos_4"
                                                 name="recursos_didacticos_4"
-                                                rows="3"
+                                                rows="4"
                                             >
                                                 {% if guia %}{{ guia.recursos_didacticos_4 }}{% endif %}
                                             </textarea>
@@ -1315,6 +1315,18 @@
 <script src="{% static 'js/guia_ia.js' %}"></script>
 
 <style>
+@media (max-width: 767.98px) {
+
+    /*
+       Seleccionamos el contenedor principal por su ID #page-content.
+       Este ID ya lo tienes en tu base.html, lo que lo hace perfecto para esto.
+    */
+    .card-dark {
+        /* Anulamos los márgenes laterales que pone la clase .container de Bootstrap */
+        padding-left: 7px !important;  /* Margen izquierdo mínimo */
+        padding-right: 7px !important; /* Margen derecho mínimo */
+
+    }
     .transition-btn {
         transition: all 0.3s ease;
         border-radius: 25px;
