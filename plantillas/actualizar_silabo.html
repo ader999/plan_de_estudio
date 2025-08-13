@@ -1,0 +1,324 @@
+<!-- actualizar_silabo.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Estilos para mejorar la apariencia del formulario */
+    .card-dark { background-color: #3a4b4b; color: #e0e7e7; padding: 1.25rem; border-radius: 0.25rem; }
+    .card-dark label { color: #a6cdcd; font-weight: 500; margin-bottom: 0.5rem; }
+    .card-dark .form-control, .card-dark .form-select { background-color: #f8f9fa; border: 1px solid #ced4da; color: #212529; }
+    .card-header-custom { background-color: #2a3838; color: #ffffff; border-bottom: 2px solid #62a2a2; padding: 1rem; }
+    .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
+    .form-check { margin-bottom: 0.5rem; }
+    .form-check-label { color: #e0e7e7; }
+</style>
+
+<div class="container-fluid mt-3">
+    <div class="text-center">
+        <h1 class="mb-4 text-center">Actualizar Sílabo</h1>
+        <h3>{{ asignacion.plan_de_estudio }}</h3>
+        <h3>Encuentro ({{ encuentro }})</h3>
+    </div>
+
+    <!-- Mostrar mensajes del sistema -->
+    <div class="container" style="max-width: 800px;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    </div>
+
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10 col-sm-12">
+                <div class="card shadow-lg">
+                    <div class="card-body card-dark">
+                        <h2 class="text-center mb-4">Formulario de Actualización</h2>
+
+                        <!-- El action del formulario apunta a la URL de actualización con el ID -->
+                        <form method="post" action="{% url 'actualizar_silabo' silabo.id %}">
+                            {% csrf_token %}
+
+                            <!-- Sección 1: Información General -->
+                            <div class="card mb-4 mt-3">
+                                <div class="card-header card-header-custom">
+                                    <h5 class="mb-0">Información General</h5>
+                                </div>
+                                <div class="card-body card-dark">
+                                    <div class="mb-3">
+                                        <label for="fecha" class="form-label">Fecha</label>
+                                        <input type="date" name="fecha" value="{{ silabo.fecha|date:'Y-m-d' }}" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="unidad" class="form-label">Unidad</label>
+                                        <select name="unidad" class="form-select">
+                                            {% for value, display in UNIDAD_LIST %}
+                                            <option value="{{ value }}" {% if silabo.unidad == value %}selected{% endif %}>{{ display }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="nombre_de_la_unidad" class="form-label">Nombre de la Unidad</label>
+                                        <input type="text" name="nombre_de_la_unidad" value="{{ silabo.nombre_de_la_unidad }}" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="contenido_tematico" class="form-label">Contenido Temático</label>
+                                        <textarea name="contenido_tematico" class="form-control" rows="3" required>{{ silabo.contenido_tematico }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sección 2: Objetivos -->
+                            <div class="card mb-4">
+                                <div class="card-header card-header-custom">
+                                    <h5 class="mb-0">Objetivos</h5>
+                                </div>
+                                <div class="card-body card-dark">
+                                    <div class="mb-3">
+                                        <label for="objetivo_conceptual" class="form-label">Objetivo Conceptual</label>
+                                        <textarea name="objetivo_conceptual" class="form-control" rows="3">{{ silabo.objetivo_conceptual }}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="objetivo_procedimental" class="form-label">Objetivo Procedimental</label>
+                                        <textarea name="objetivo_procedimental" class="form-control" rows="3">{{ silabo.objetivo_procedimental }}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="objetivo_actitudinal" class="form-label">Objetivo Actitudinal</label>
+                                        <textarea name="objetivo_actitudinal" class="form-control" rows="3">{{ silabo.objetivo_actitudinal }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sección 3: Fases del Acto Mental -->
+                            <div class="card mb-4">
+                                <div class="card-header card-header-custom">
+                                    <h5 class="mb-0">Descripción de las fases del acto mental</h5>
+                                </div>
+                                <div class="card-body card-dark">
+                                    <!-- Primer Momento -->
+                                    <h6 class="mt-2">Primer Momento Didáctico (Fase Entrada)</h6>
+                                    <div class="mb-3">
+                                        <label for="tipo_primer_momento" class="form-label">Tipo de Enseñanza</label>
+                                        <select name="tipo_primer_momento" class="form-select">
+                                            {% for value, display in TIPO_PRIMER_MOMENTO_LIST %}
+                                            <option value="{{ value }}" {% if silabo.tipo_primer_momento == value %}selected{% endif %}>{{ display }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="detalle_primer_momento" class="form-label">Detalle</label>
+                                        <textarea name="detalle_primer_momento" class="form-control" rows="2">{{ silabo.detalle_primer_momento }}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="tiempo_primer_momento" class="form-label">Tiempo (minutos)</label>
+                                        <input type="number" name="tiempo_primer_momento" value="{{ silabo.tiempo_primer_momento }}" class="form-control">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="recursos_primer_momento" class="form-label">Recursos</label>
+                                        <textarea name="recursos_primer_momento" class="form-control" rows="2">{{ silabo.recursos_primer_momento }}</textarea>
+                                    </div>
+
+                                    <!-- Segundo Momento -->
+                                    <h6 class="mt-4">Segundo Momento Didáctico (Fase Elaboración)</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="tipo_segundo_momento_claseteoria" class="form-label">Tipo Clase Teórica</label>
+                                                <select name="tipo_segundo_momento_claseteoria" class="form-select">
+                                                     {% for value, display in TIPO_SEGUNDO_MOMENTO_TEORIA_LIST %}
+                                                    <option value="{{ value }}" {% if silabo.tipo_segundo_momento_claseteoria == value %}selected{% endif %}>{{ display }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="clase_teorica" class="form-label">Detalle Clase Teórica</label>
+                                                <textarea name="clase_teorica" class="form-control" rows="2">{{ silabo.clase_teorica }}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="tiempo_segundo_momento_teorica" class="form-label">Tiempo Teórica (minutos)</label>
+                                                <input type="number" name="tiempo_segundo_momento_teorica" value="{{ silabo.tiempo_segundo_momento_teorica }}" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="tipo_segundo_momento_practica" class="form-label">Tipo Clase Práctica</label>
+                                                <select name="tipo_segundo_momento_practica" class="form-select">
+                                                    {% for value, display in TIPO_SEGUNDO_MOMENTO_PRACTICA_LIST %}
+                                                    <option value="{{ value }}" {% if silabo.tipo_segundo_momento_practica == value %}selected{% endif %}>{{ display }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="clase_practica" class="form-label">Detalle Clase Práctica</label>
+                                                <textarea name="clase_practica" class="form-control" rows="2">{{ silabo.clase_practica }}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="tiempo_segundo_momento_practica" class="form-label">Tiempo Práctica (minutos)</label>
+                                                <input type="number" name="tiempo_segundo_momento_practica" value="{{ silabo.tiempo_segundo_momento_practica }}" class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                     <div class="mb-3">
+                                        <label for="recursos_segundo_momento" class="form-label">Recursos</label>
+                                        <textarea name="recursos_segundo_momento" class="form-control" rows="2">{{ silabo.recursos_segundo_momento }}</textarea>
+                                    </div>
+
+                                    <!-- Tercer Momento -->
+                                    <h6 class="mt-4">Tercer Momento Didáctico (Fase Salida)</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tipo de Enseñanza</label>
+                                        {% for value, display in TIPO_TERCER_MOMENTO_LIST %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="tipo_tercer_momento" value="{{ value }}"
+                                                   id="id_tipo_tercer_momento_{{ forloop.counter }}"
+                                                   {% if value in silabo.tipo_tercer_momento %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_tipo_tercer_momento_{{ forloop.counter }}">
+                                                {{ display }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="detalle_tercer_momento" class="form-label">Detalle</label>
+                                        <textarea name="detalle_tercer_momento" class="form-control" rows="2">{{ silabo.detalle_tercer_momento }}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="tiempo_tercer_momento" class="form-label">Tiempo (minutos)</label>
+                                        <input type="number" name="tiempo_tercer_momento" value="{{ silabo.tiempo_tercer_momento }}" class="form-control">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="recursos_tercer_momento" class="form-label">Recursos</label>
+                                        <textarea name="recursos_tercer_momento" class="form-control" rows="2">{{ silabo.recursos_tercer_momento }}</textarea>
+                                    </div>
+
+                                    <!-- Ejes Transversales -->
+                                    <h6 class="mt-4">Ejes Transversales</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Eje</label>
+                                        {% for value, display in EJE_TRANSVERSAL_LIST %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="eje_transversal" value="{{ value }}"
+                                                   id="id_eje_transversal_{{ forloop.counter }}"
+                                                   {% if value in silabo.eje_transversal %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_eje_transversal_{{ forloop.counter }}">
+                                                {{ display }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                     <div class="mb-3">
+                                        <label for="detalle_eje_transversal" class="form-label">Detalle del Eje Transversal</label>
+                                        <textarea name="detalle_eje_transversal" class="form-control" rows="2">{{ silabo.detalle_eje_transversal }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sección 4: Evaluación Dinámica -->
+                            <div class="card mb-4">
+                                <div class="card-header card-header-custom">
+                                    <h5 class="mb-0">Evaluación Dinámica</h5>
+                                </div>
+                                <div class="card-body card-dark">
+                                    <div class="mb-3">
+                                        <label for="actividad_aprendizaje" class="form-label">Actividad de Aprendizaje</label>
+                                        <textarea name="actividad_aprendizaje" class="form-control" rows="2">{{ silabo.actividad_aprendizaje }}</textarea>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Técnica de Evaluación</label>
+                                                {% for value, display in TECNICA_EVALUACION_LIST %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="tecnica_evaluacion" value="{{ value }}"
+                                                           id="id_tecnica_evaluacion_{{ forloop.counter }}"
+                                                           {% if value in silabo.tecnica_evaluacion %}checked{% endif %}>
+                                                    <label class="form-check-label" for="id_tecnica_evaluacion_{{ forloop.counter }}">
+                                                        {{ display }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Tipo de Evaluación</label>
+                                                {% for value, display in TIPO_EVALUACION_LIST %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="tipo_evaluacion" value="{{ value }}"
+                                                           id="id_tipo_evaluacion_{{ forloop.counter }}"
+                                                           {% if value in silabo.tipo_evaluacion %}checked{% endif %}>
+                                                    <label class="form-check-label" for="id_tipo_evaluacion_{{ forloop.counter }}">
+                                                        {{ display }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Agente Evaluador</label>
+                                                {% for value, display in AGENTE_EVALUADOR_LIST %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="agente_evaluador" value="{{ value }}"
+                                                           id="id_agente_evaluador_{{ forloop.counter }}"
+                                                           {% if value in silabo.agente_evaluador %}checked{% endif %}>
+                                                    <label class="form-check-label" for="id_agente_evaluador_{{ forloop.counter }}">
+                                                        {{ display }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="periodo_tiempo_programado" class="form-label">Periodo de Tiempo</label>
+                                        <select name="periodo_tiempo_programado" class="form-select">
+                                            {% for value, display in PERIODO_TIEMPO_LIST %}
+                                            <option value="{{ value }}" {% if silabo.periodo_tiempo_programado == value %}selected{% endif %}>{{ display }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="tiempo_minutos" class="form-label">Tiempo en Minutos</label>
+                                        <input type="number" name="tiempo_minutos" value="{{ silabo.tiempo_minutos }}" class="form-control">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="instrumento_evaluacion" class="form-label">Instrumento de Evaluación</label>
+                                        <select name="instrumento_evaluacion" class="form-select">
+                                            {% for value, display in INSTRUMENTO_EVALUACION_LIST %}
+                                            <option value="{{ value }}" {% if silabo.instrumento_evaluacion == value %}selected{% endif %}>{{ display }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="criterios_evaluacion" class="form-label">Criterios de Evaluación</label>
+                                        <textarea name="criterios_evaluacion" class="form-control" rows="2">{{ silabo.criterios_evaluacion }}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="puntaje" class="form-label">Puntaje</label>
+                                        <input type="number" name="puntaje" value="{{ silabo.puntaje }}" class="form-control" step="0.01">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botón para actualizar -->
+                            <div class="row justify-content-center mt-4 mb-3">
+                                <div class="col-lg-6 col-md-8 col-sm-12 text-center">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-sync-alt me-2"></i> Actualizar Sílabo
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

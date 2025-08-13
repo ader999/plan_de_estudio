@@ -12,6 +12,7 @@ from django.template.loader import render_to_string
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 import logging
+from django.core.exceptions import ValidationError
 
 # librerias para el login
 from django.contrib.auth import login, authenticate, logout
@@ -1417,3 +1418,98 @@ def descargar_secuencia_didactica(request):
     response['Content-Disposition'] = 'attachment; filename=secuencia_didactica.docx'
     
     return response
+
+
+@login_required
+def actualizar_silabo(request, silabo_id):
+    """
+    Vista para actualizar un sílabo existente de forma manual,
+    sin usar un ModelForm de forms.py.
+    """
+    # Obtener la instancia del sílabo que se va a editar
+    silabo = get_object_or_404(Silabo, id=silabo_id)
+
+    # Lógica para manejar el envío del formulario (petición POST)
+    if request.method == 'POST':
+        try:
+            # --- Actualizar cada campo del objeto 'silabo' con los datos de request.POST ---
+
+            # Sección 1: Información General
+            silabo.fecha = request.POST.get('fecha')
+            silabo.unidad = request.POST.get('unidad')
+            silabo.nombre_de_la_unidad = request.POST.get('nombre_de_la_unidad')
+            silabo.contenido_tematico = request.POST.get('contenido_tematico')
+
+            # Sección 2: Objetivos
+            silabo.objetivo_conceptual = request.POST.get('objetivo_conceptual')
+            silabo.objetivo_procedimental = request.POST.get('objetivo_procedimental')
+            silabo.objetivo_actitudinal = request.POST.get('objetivo_actitudinal')
+
+            # Sección 3: Fases del Acto Mental
+            # Primer Momento
+            silabo.tipo_primer_momento = request.POST.get('tipo_primer_momento')
+            silabo.detalle_primer_momento = request.POST.get('detalle_primer_momento')
+            silabo.tiempo_primer_momento = request.POST.get('tiempo_primer_momento')
+            silabo.recursos_primer_momento = request.POST.get('recursos_primer_momento')
+            # Segundo Momento
+            silabo.tipo_segundo_momento_claseteoria = request.POST.get('tipo_segundo_momento_claseteoria')
+            silabo.clase_teorica = request.POST.get('clase_teorica')
+            silabo.tipo_segundo_momento_practica = request.POST.get('tipo_segundo_momento_practica')
+            silabo.clase_practica = request.POST.get('clase_practica')
+            silabo.tiempo_segundo_momento_teorica = request.POST.get('tiempo_segundo_momento_teorica')
+            silabo.tiempo_segundo_momento_practica = request.POST.get('tiempo_segundo_momento_practica')
+            silabo.recursos_segundo_momento = request.POST.get('recursos_segundo_momento')
+            # Tercer Momento (Campo MultiSelect)
+            silabo.tipo_tercer_momento = request.POST.getlist('tipo_tercer_momento')
+            silabo.detalle_tercer_momento = request.POST.get('detalle_tercer_momento')
+            silabo.tiempo_tercer_momento = request.POST.get('tiempo_tercer_momento')
+            silabo.recursos_tercer_momento = request.POST.get('recursos_tercer_momento')
+            # Ejes Transversales (Campo MultiSelect)
+            silabo.eje_transversal = request.POST.getlist('eje_transversal')
+            silabo.detalle_eje_transversal = request.POST.get('detalle_eje_transversal')
+
+            # Sección 4: Evaluación Dinámica
+            silabo.actividad_aprendizaje = request.POST.get('actividad_aprendizaje')
+            silabo.tecnica_evaluacion = request.POST.getlist('tecnica_evaluacion')
+            silabo.tipo_evaluacion = request.POST.getlist('tipo_evaluacion')
+            silabo.periodo_tiempo_programado = request.POST.get('periodo_tiempo_programado')
+            silabo.tiempo_minutos = request.POST.get('tiempo_minutos')
+            silabo.agente_evaluador = request.POST.getlist('agente_evaluador')
+            silabo.instrumento_evaluacion = request.POST.get('instrumento_evaluacion')
+            silabo.criterios_evaluacion = request.POST.get('criterios_evaluacion')
+            silabo.puntaje = request.POST.get('puntaje')
+
+            # Es una buena práctica ejecutar la validación del modelo manualmente
+            silabo.full_clean()
+            silabo.save()
+
+            messages.success(request, '¡El sílabo ha sido actualizado correctamente!')
+            # Cambia 'lista_silabos' por el nombre de la URL a la que quieres redirigir
+            return redirect('plan_de_estudio')
+
+        except ValidationError as e:
+            # Si la validación del modelo falla, mostramos los errores
+            messages.error(request, 'Error de validación. Por favor, revise los campos.')
+            # El contexto se pasará al final para volver a renderizar el formulario
+            pass  # Permite que el código continúe hasta el render final
+
+    # Contexto para peticiones GET o si falla la validación en POST
+    context = {
+        'silabo': silabo,  # La instancia del sílabo para poblar los campos
+        'asignacion': silabo.asignacion_plan,
+        'encuentro': silabo.encuentros,
+        # Pasamos las listas de opciones para construir los <select> y checkboxes en la plantilla
+        'UNIDAD_LIST': Silabo.UNIDAD_LIST,
+        'TIPO_PRIMER_MOMENTO_LIST': Silabo.TIPO_PRIMER_MOMENTO_LIST,
+        'TIPO_SEGUNDO_MOMENTO_TEORIA_LIST': Silabo.TIPO_SEGUNDO_MOMENTO_TEORIA_LIST,
+        'TIPO_SEGUNDO_MOMENTO_PRACTICA_LIST': Silabo.TIPO_SEGUNDO_MOMENTO_PRACTICA_LIST,
+        'TIPO_TERCER_MOMENTO_LIST': Silabo.TIPO_TERCER_MOMENTO_LIST,
+        'EJE_TRANSVERSAL_LIST': Silabo.EJE_TRANSVERSAL_LIST,
+        'TECNICA_EVALUACION_LIST': Silabo.TECNICA_EVALUACION_LIST,
+        'TIPO_EVALUACION_LIST': Silabo.TIPO_EVALUACION_LIST,
+        'PERIODO_TIEMPO_LIST': Silabo.PERIODO_TIEMPO_LIST,
+        'AGENTE_EVALUADOR_LIST': Silabo.AGENTE_EVALUADOR_LIST,
+        'INSTRUMENTO_EVALUACION_LIST': Silabo.INSTRUMENTO_EVALUACION_LIST,
+    }
+
+    return render(request, 'actualizar_silabo.html', context)
