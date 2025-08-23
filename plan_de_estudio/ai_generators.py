@@ -12,6 +12,11 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 import time
 import datetime
+# CORRECCIÓN: Se importa la librería openai al inicio para mantener un estilo consistente.
+from openai import OpenAI
+
+CANTIDAD_MAXIMA_TOKEN = 12000
+
 
 # Añadir un encoder personalizado para manejar objetos de fecha
 class DateTimeEncoder(json.JSONEncoder):
@@ -44,7 +49,7 @@ def usar_modelo_google(prompt_completo, generation_config):
 
         # Crear el modelo y sesión de chat
         model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
+            model_name="gemini-2.5-flash",
             generation_config=generation_config
         )
         chat_session = model.start_chat()
@@ -59,7 +64,9 @@ def usar_modelo_google(prompt_completo, generation_config):
         raise RuntimeError(f"Error inesperado: {e}")
 
 
-def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7, timeout=60):
+# CORRECCIÓN: Se cambió el nombre del parámetro 'CANTIDAD_MAXIMA_TOKEN' a 'max_tokens'
+# para que coincida con cómo se llama desde la función principal y evitar errores.
+def usar_modelo_deepseek(prompt_completo, max_tokens, temperature=0.7, timeout=180):
     """
     Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
 
@@ -95,7 +102,8 @@ def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7, time
             {"role": "user", "content": prompt_completo}
         ],
         "temperature": temperature,
-        "max_tokens": max_tokens
+        # CORRECCIÓN: Ahora usa el parámetro 'max_tokens' correctamente.
+        "max_tokens": 8000
     }
 
     MAX_RETRIES = 3
@@ -174,55 +182,51 @@ def usar_modelo_deepseek(prompt_completo, max_tokens=4000, temperature=0.7, time
             raise RuntimeError(error_msg)
 
 
-def usar_modelo_openai(prompt_completo, model="gpt-4o-mini"):
+# Pega esta función completa en ai_generators.py
+
+def usar_modelo_openai(prompt_completo, max_tokens, model="o4-mini"):
     """
     Función para interactuar con OpenAI usando el cliente de chat.
 
     Args:
         prompt_completo (str): Prompt que contiene las instrucciones y datos.
-        model (str): Modelo de OpenAI a utilizar (default: gpt-4o-mini)
+        max_tokens (int): Número máximo de tokens para la respuesta.
+        model (str): Modelo de OpenAI a utilizar (default: o4-mini)
 
     Returns:
         str: Respuesta generada por el modelo.
     """
     try:
-        # Limpiar variables de entorno de proxy que podrían estar causando el error
-        for key in ["HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"]:
-           if key in os.environ:
-                del os.environ[key]
+        # Imprime para confirmar que se ejecuta la versión final
+        print(">>> Ejecutando la versión DEFINITIVA de usar_modelo_openai <<<")
 
-        # Configurar API key para OpenAI 0.28
+        # Cargar variables de entorno
         load_dotenv()
         api_key = os.environ.get("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
 
-        # Configurar la API key directamente (estilo OpenAI 0.28)
-        import openai
-        openai.api_key = api_key
+        # Crear cliente (sin proxies, ya no se usa en v1.x)
+        # Esta es la línea clave, no acepta ningún otro argumento extra.
+        client = OpenAI(api_key=api_key)
 
-        # Crear el mensaje con el modelo usando la API antigua (0.28)
-        completion = openai.ChatCompletion.create(
+        # Llamar al modelo usando los argumentos recibidos
+        completion = client.chat.completions.create(
             model=model,
             messages=[
-                {
-                    "role": "system",
-                    "content": "Asistente para crear sílabo y plan de clases."
-                },
-                {
-                    "role": "user",
-                    "content": prompt_completo
-                }
-            ]
+                {"role": "system", "content": "Asistente para crear sílabo y plan de clases."},
+                {"role": "user", "content": prompt_completo}
+            ],
+            max_completion_tokens=max_tokens
         )
 
-        # Extraer el contenido del mensaje generado
-        messages = completion.choices[0].message.content
-        return messages
+        return completion.choices[0].message.content
 
     except Exception as e:
+        # Esto nos dará el error exacto si algo más falla
         logging.error(f"Error detallado al usar OpenAI: {str(e)}")
         raise RuntimeError(f"Error al generar respuesta con OpenAI: {str(e)}")
+
 
 
 def procesar_respuesta_ai(respuesta_ai):
@@ -340,17 +344,19 @@ def get_default_config(modelo='google'):
             "temperature": 0.7,
             "top_p": 0.95,
             "top_k": 40,
-            "max_output_tokens": 1524
+            "max_output_tokens": CANTIDAD_MAXIMA_TOKEN
         }
     elif modelo == 'deepseek':
         return {
-            "max_tokens": 1524,
+            "max_tokens": CANTIDAD_MAXIMA_TOKEN,
             "temperature": 0.7,
             "timeout": 60
         }
     elif modelo == 'openai':
+        # CORRECCIÓN: Se añade 'max_tokens' a la configuración por defecto de OpenAI.
         return {
-            "model": "gpt-4o-mini"
+            "model": "o4-mini",
+            "max_tokens": CANTIDAD_MAXIMA_TOKEN
         }
     else:
         # Si el modelo no es reconocido, usar configuración de google por defecto
@@ -359,7 +365,7 @@ def get_default_config(modelo='google'):
             "temperature": 0.7,
             "top_p": 0.95,
             "top_k": 40,
-            "max_output_tokens": 1524
+            "max_output_tokens": CANTIDAD_MAXIMA_TOKEN
         }
 
 
@@ -388,17 +394,24 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
         respuesta_ai = None
 
         if modelo_seleccionado == 'openai':
-            model = kwargs.get('model', 'gpt-4o-mini')
-            respuesta_ai = usar_modelo_openai(prompt_completo, model=model)
+            model = kwargs.get('model', 'o4-mini')
+            # CORRECCIÓN: Se obtiene 'max_tokens' y se pasa a la función.
+            max_tokens = kwargs.get('max_tokens', CANTIDAD_MAXIMA_TOKEN)
+            respuesta_ai = usar_modelo_openai(
+                prompt_completo,
+                model=model,
+                max_tokens=max_tokens
+            )
 
         elif modelo_seleccionado == 'deepseek':
-            max_tokens = kwargs.get('max_tokens', 1524)
+            max_tokens = kwargs.get('max_tokens', CANTIDAD_MAXIMA_TOKEN)
             temperature = kwargs.get('temperature', 0.7)
             timeout = kwargs.get('timeout', 60)
 
             try:
                 respuesta_ai = usar_modelo_deepseek(
                     prompt_completo,
+                    # CORRECCIÓN: Se pasa como argumento nombrado para mayor claridad y seguridad.
                     max_tokens=max_tokens,
                     temperature=temperature,
                     timeout=timeout
@@ -456,7 +469,6 @@ def generar_fallback_json(info_asignatura, info_carrera, info_unidad, info_conte
     return f"""
     {{
       "descripcion": "Esta guía de estudio independiente #{numero_guia} para {info_asignatura} de {info_carrera} está enfocada en {info_unidad}. El estudiante deberá profundizar en {info_contenido} mediante investigación autodirigida, análisis crítico y aplicación práctica de los conocimientos. Esta guía promueve el desarrollo de habilidades de autorregulación y pensamiento crítico, fundamentales para el éxito académico y profesional.",
-
       "actividades": [
         "Realizar una lectura comprensiva de los materiales asignados sobre {info_contenido}",
         "Elaborar un mapa conceptual que sintetice los conceptos principales del tema",
@@ -464,40 +476,28 @@ def generar_fallback_json(info_asignatura, info_carrera, info_unidad, info_conte
         "Investigar ejemplos prácticos de aplicación del contenido en contextos reales",
         "Participar en el foro de discusión compartiendo reflexiones sobre el tema estudiado"
       ],
-
       "recursos": [
         "Material bibliográfico proporcionado por el docente",
         "Presentaciones y apuntes de clase disponibles en el aula virtual",
         "Recursos digitales complementarios (artículos, videos, simulaciones)",
-        "Bases de datos académicas para consulta e investigación",
+        "Bases de datos académicas para consulta e investigación", 
         "Software especializado según requerimientos de la asignatura"
       ],
-
       "tiempo_estimado": "120",
-
       "criterios_evaluacion": [
         "Comprensión de los conceptos fundamentales del tema (40%)",
         "Capacidad de análisis y síntesis de la información (20%)",
         "Aplicación práctica de los conocimientos adquiridos (25%)",
         "Claridad y coherencia en la presentación de resultados (15%)"
       ],
-
       "puntaje": "15",
-
       "evaluacion_sumativa": "La evaluación sumativa de esta guía se realizará mediante la entrega de un informe escrito que incluya: 1) Síntesis conceptual del tema estudiado, 2) Resolución de problemas o casos prácticos, 3) Reflexión crítica sobre la aplicabilidad de los conocimientos adquiridos. Se valorará la profundidad del análisis, la correcta aplicación de conceptos y la capacidad de establecer conexiones entre teoría y práctica.",
-
       "objetivo_conceptual": "Comprender en profundidad los fundamentos teóricos de {info_contenido}, identificando sus principios, componentes y relaciones con otros temas de la asignatura, para construir una base conceptual sólida que permita avanzar hacia aplicaciones más complejas.",
-
       "objetivo_procedimental": "Desarrollar habilidades para aplicar los conocimientos adquiridos sobre {info_contenido} en la resolución de problemas prácticos, utilizando métodos, técnicas y procedimientos apropiados que demuestren dominio de los aspectos operativos del tema.",
-
       "objetivo_actitudinal": "Valorar la importancia de {info_contenido} en el contexto profesional de {info_carrera}, desarrollando una actitud crítica, responsable y ética frente al conocimiento y sus aplicaciones en situaciones reales.",
-
       "instrumento_cuaderno": "El estudiante utilizará su cuaderno para registrar conceptos clave, definiciones, fórmulas y procedimientos importantes relacionados con {info_contenido}. Se evaluará la organización, claridad y precisión de las anotaciones, así como la capacidad de estructurar la información de manera lógica y coherente.",
-
       "instrumento_organizador": "El estudiante elaborará un organizador gráfico (mapa conceptual, diagrama de flujo o cuadro sinóptico) que represente de manera visual las relaciones entre los conceptos principales de {info_contenido}. Se evaluará la jerarquización de ideas, el establecimiento de conexiones significativas y la síntesis de información compleja.",
-
       "instrumento_diario": "El estudiante llevará un diario de aprendizaje donde registrará diariamente: 1) Conceptos aprendidos sobre {info_contenido}, 2) Dificultades encontradas, 3) Estrategias utilizadas para superar obstáculos, 4) Reflexiones sobre aplicaciones prácticas del tema. Se evaluará la consistencia, profundidad de reflexión y evolución del aprendizaje.",
-
       "instrumento_prueba": "Se realizará una prueba escrita que incluirá: preguntas de comprensión conceptual, problemas de aplicación y casos para análisis relacionados con {info_contenido}. La prueba evaluará tanto el dominio teórico como la capacidad de transferir conocimientos a situaciones nuevas."
     }}
     """
