@@ -283,4 +283,29 @@
         </div>
     </div>
 </div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Seleccionamos el formulario de inicio de sesión.
+        const loginForm = document.querySelector('form[action="{% url 'login' %}"]');
+
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(event) {
+                // Seleccionamos el botón de 'Ingresar' dentro del formulario.
+                const submitButton = loginForm.querySelector('button[type="submit"]');
+
+                if (submitButton) {
+                    // Deshabilitamos el botón para prevenir múltiples envíos.
+                    submitButton.disabled = true;
+
+                    // Cambiamos el texto y añadimos un ícono de carga para dar feedback visual.
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Procesando...';
+                }
+            });
+        }
+    });
+</script>
+
 {% endblock %}

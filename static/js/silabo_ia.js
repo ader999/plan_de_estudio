@@ -5,6 +5,9 @@
  * y el autocompletado del formulario de guardado.
  */
 
+
+
+
 $(document).ready(function () {
   // --- Manejador de eventos para el formulario de GENERACIÓN ---
 
@@ -266,4 +269,15 @@ function autocompletarFormularioGuardar(silaboData) {
   }
   $("#id_criterios_evaluacion").val(criterios);
   $("#id_puntaje").val(silaboData.puntaje || "");
+
+  // =======================================================
+  // === ¡AQUÍ ESTÁ LA LÍNEA AÑADIDA! ===
+  // Llamar a la función para recalcular el tiempo total después de rellenar los campos.
+  // =======================================================
+  if (typeof calcularTiempoTotal === "function") {
+    calcularTiempoTotal();
+    console.log("calcularTiempoTotal ejecutada después del autocompletado de la IA.");
+  } else {
+    console.warn("La función calcularTiempoTotal no fue encontrada.");
+  }
 }

@@ -429,7 +429,6 @@
             </div>
         </div>
 
-        <!-- Botón único para guardar ambos formularios -->
         <div class="row justify-content-center mt-4 mb-5">
             <div class="col-lg-4 col-md-8 col-sm-12 text-center">
                 <button type="button" class="btn btn-success w-100 save-btn transition-btn" id="guardarFormularioBtn">
@@ -449,9 +448,10 @@
 
 
 
-
+<script src="{% static 'js/silabo_validar.js' %}"></script>
 <script src="{% static 'js/silabo_guardar.js' %}"></script>
 <script src="{% static 'js/silabo_ia.js' %}"></script>
+
 
 <style>
     .transition-btn {
@@ -644,5 +644,51 @@
         padding-right: 40px;
     }
 </style>
+
+
+
+<!-- ======================================================= -->
+<!-- NUEVO SCRIPT PARA LIMITAR SELECCIÓN DE CHECKBOXES -->
+<!-- ======================================================= -->
+<script>
+$(document).ready(function() {
+    /**
+     * Función para limitar el número de checkboxes que se pueden seleccionar en un grupo.
+     * @param {string} checkboxName - El atributo 'name' del grupo de checkboxes.
+     * @param {number} limit - El número máximo de selecciones permitidas.
+     */
+    function limitCheckboxSelection(checkboxName, limit) {
+        // Adjuntar un evento 'change' a todos los checkboxes con el nombre especificado.
+        $('input[name="' + checkboxName + '"]').on('change', function() {
+            // Contar cuántos checkboxes de este grupo están actualmente seleccionados.
+            const checkedCount = $('input[name="' + checkboxName + '"]:checked').length;
+
+            // Obtener todos los checkboxes del grupo.
+            const allCheckboxes = $('input[name="' + checkboxName + '"]');
+
+            if (checkedCount >= limit) {
+                // Si el número de seleccionados alcanza o supera el límite,
+                // deshabilitar todos los que NO están seleccionados.
+                allCheckboxes.not(':checked').prop('disabled', true);
+            } else {
+                // Si se deselecciona uno y el conteo es menor que el límite,
+                // habilitar todos los checkboxes del grupo nuevamente.
+                allCheckboxes.prop('disabled', false);
+            }
+        });
+
+        // Opcional: Ejecutar la lógica al cargar la página por si el formulario
+        // viene con valores pre-seleccionados desde el servidor.
+        $('input[name="' + checkboxName + '"]').first().trigger('change');
+    }
+
+    // Aplicar la función a los grupos de checkboxes deseados con un límite de 2.
+    limitCheckboxSelection('eje_transversal', 2);
+    limitCheckboxSelection('tecnica_evaluacion', 2);
+    limitCheckboxSelection('agente_evaluador', 2);
+    limitCheckboxSelection('tipo_evaluacion', 2);
+});
+</script>
+
 
 {% endblock %}
