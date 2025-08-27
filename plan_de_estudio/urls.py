@@ -32,7 +32,8 @@ urlpatterns = [
     path('formulario_guia/<int:asignacion_id>/', views.ver_formulario_guia, name='ver_formulario_guia'),
     path('guardar_silabo/<int:asignacion_id>/', views.guardar_silabo, name='guardar_silabo'),
     path('guardar-guia/<int:silabo_id>/', views.guardar_guia, name='guardar_guia'),
-    
+    path('tutoriales/', views.vista_tutoriales, name='tutoriales'),
+
     # Ruta para cargar guía específica de un sílabo
     path('cargar_guia/<int:silabo_id>/', views.cargar_guia, name='cargar_guia'),
     path('silabo/actualizar/<int:silabo_id>/', views.actualizar_silabo, name='actualizar_silabo'),

@@ -32,7 +32,7 @@
                         <ul class="navbar-nav justify-content-end flex-grow-1 pe-3" id="offcanvas-nav">
                             <li class="nav-item dropdown" id="1p">
                                 <a class="nav-link dropdown-toggle" id="2p" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-user-circle fa-fw fa-lg"></i> <span>{{ usuario }}</span>
+                                    <i class="fas fa-user-circle fa-fw fa-lg"></i> <span>{{ usuario }} </span>
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt fa-fw fa-lg"></i> <span>Cerrar Sesión</span></a></li>
@@ -40,22 +40,27 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link active" aria-current="page" href="{% url 'inicio' %}">
-                                    <i class="fas fa-home fa-fw fa-lg"></i> <span>Inicio</span>
+                                    <i class="fas fa-home fa-fw fa-lg"></i> <span>Inicio </span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link active" aria-current="page" href="{% url 'plan_de_estudio' %}">
-                                    <i class="fas fa-book-open fa-fw fa-lg"></i> <span>Ver datos</span>
+                                    <i class="fas fa-book-open fa-fw fa-lg"></i> <span>Ver datos </span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link active" href="{% url 'admin:index' %}">
-                                    <i class="fas fa-sliders-h fa-fw fa-lg"></i> <span>Panel de control</span>
+                                    <i class="fas fa-sliders-h fa-fw fa-lg"></i> <span>Panel de control </span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link active" href="{% url 'tutoriales' %}">
+                                    <i class="fas fa-video fa-fw fa-lg"></i> <span>Tutoriales </span>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link active" href="{% url 'acerca' %}">
-                                    <i class="fas fa-info-circle fa-fw fa-lg"></i> <span>Acerca de</span>
+                                    <i class="fas fa-info-circle fa-fw fa-lg"></i> <span>Acerca de </span>
                                 </a>
                             </li>
                         </ul>

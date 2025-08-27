@@ -24,7 +24,7 @@ from .forms import SilaboForm
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count
 from django.urls import reverse
-
+from django.core.files.storage import default_storage
 # Importaciones para IA
 import openai  # Importar openai directamente, sin la clase OpenAI
 import google.generativeai as genai
@@ -1513,3 +1513,39 @@ def actualizar_silabo(request, silabo_id):
     }
 
     return render(request, 'actualizar_silabo.html', context)
+
+
+def vista_tutoriales(request):
+    """
+    Renderiza la página de tutoriales, obteniendo la URL para el video
+    'tutoriales/tutorial.mp4' desde MinIO y la asigna a ambos reproductores.
+    """
+    # Ruta del único video de tutorial en tu bucket de MinIO
+    tutorial_video_path = 'tutoriales/tutorial.mp4'
+
+    video_url = None
+
+    try:
+        # Primero, verificamos si el archivo de video realmente existe en MinIO
+        if default_storage.exists(tutorial_video_path):
+            # Si existe, generamos su URL. Como tienes 'PRESIGNED' activado,
+            # será una URL temporal y segura.
+            video_url = default_storage.url(tutorial_video_path)
+        else:
+            # Si el archivo no se encuentra, imprimimos una advertencia en la consola del servidor.
+            # Esto es útil para depuración.
+            print(f"ADVERTENCIA: El video tutorial en la ruta '{tutorial_video_path}' no fue encontrado en MinIO.")
+
+    except Exception as e:
+        # Capturamos cualquier otro error de conexión con MinIO
+        print(f"ERROR: No se pudo obtener la URL del video desde MinIO. Detalle: {e}")
+
+    # Creamos el contexto para la plantilla.
+    # Asignamos la misma URL a las dos variables que la plantilla espera.
+    # De esta forma, no necesitas modificar la plantilla HTML.
+    contexto = {
+        'silabo_video_url': video_url,
+        'guia_video_url': video_url,
+    }
+
+    return render(request, 'tutoriales.html', contexto)
