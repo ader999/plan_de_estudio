@@ -1517,35 +1517,38 @@ def actualizar_silabo(request, silabo_id):
 
 def vista_tutoriales(request):
     """
-    Renderiza la página de tutoriales, obteniendo la URL para el video
-    'tutoriales/tutorial.mp4' desde MinIO y la asigna a ambos reproductores.
+    Renderiza la página de tutoriales, obteniendo las URLs para los videos
+    desde MinIO.
     """
-    # Ruta del único video de tutorial en tu bucket de MinIO
-    tutorial_video_path = 'tutoriales/tutorial.mp4'
+    # Definimos las rutas de los videos en el bucket de MinIO
+    login_video_path = 'tutoriales/Iniciarsecion.mp4'
+    general_tutorial_path = 'tutoriales/tutorial.mp4'
 
-    video_url = None
+    login_video_url = None
+    general_tutorial_url = None
 
     try:
-        # Primero, verificamos si el archivo de video realmente existe en MinIO
-        if default_storage.exists(tutorial_video_path):
-            # Si existe, generamos su URL. Como tienes 'PRESIGNED' activado,
-            # será una URL temporal y segura.
-            video_url = default_storage.url(tutorial_video_path)
+        # Buscamos y obtenemos la URL del video de inicio de sesión
+        if default_storage.exists(login_video_path):
+            login_video_url = default_storage.url(login_video_path)
         else:
-            # Si el archivo no se encuentra, imprimimos una advertencia en la consola del servidor.
-            # Esto es útil para depuración.
-            print(f"ADVERTENCIA: El video tutorial en la ruta '{tutorial_video_path}' no fue encontrado en MinIO.")
+            print(f"ADVERTENCIA: El video '{login_video_path}' no fue encontrado en MinIO.")
+
+        # Buscamos y obtenemos la URL del video general
+        if default_storage.exists(general_tutorial_path):
+            general_tutorial_url = default_storage.url(general_tutorial_path)
+        else:
+            print(f"ADVERTENCIA: El video '{general_tutorial_path}' no fue encontrado en MinIO.")
 
     except Exception as e:
-        # Capturamos cualquier otro error de conexión con MinIO
-        print(f"ERROR: No se pudo obtener la URL del video desde MinIO. Detalle: {e}")
+        print(f"ERROR: No se pudo obtener la URL de los videos desde MinIO. Detalle: {e}")
 
-    # Creamos el contexto para la plantilla.
-    # Asignamos la misma URL a las dos variables que la plantilla espera.
-    # De esta forma, no necesitas modificar la plantilla HTML.
+    # Creamos el contexto para la plantilla con las URLs de ambos videos.
+    # El video general se usará para las secciones de sílabo y guía.
     contexto = {
-        'silabo_video_url': video_url,
-        'guia_video_url': video_url,
+        'login_video_url': login_video_url,
+        'silabo_video_url': general_tutorial_url,
+        'guia_video_url': general_tutorial_url,
     }
 
     return render(request, 'tutoriales.html', contexto)
