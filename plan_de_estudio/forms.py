@@ -3,11 +3,6 @@ from multiselectfield import MultiSelectFormField
 from .models import Silabo
 
 class SilaboForm(forms.ModelForm):
-    tipo_tercer_momento = MultiSelectFormField(
-        choices=Silabo.TIPO_TERCER_MOMENTO_LIST,
-        required=False,
-    )
-
     class Meta:
         model = Silabo
         fields = '__all__'
