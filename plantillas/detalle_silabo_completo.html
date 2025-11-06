@@ -164,9 +164,11 @@
                             </div>
                         </section>
                         <footer class="update-button-container">
+                            {% if silabo_item.guias.first %}
                             <a href="{% url 'actualizar_guia' guia_id=silabo_item.guias.first.id %}" class="btn btn-update-silabo">
                                 <i class="fas fa-pencil-alt me-2"></i> Actualizar esta Guía
                             </a>
+                            {% endif %}
                         </footer>
                     </article>
                     {% endfor %}

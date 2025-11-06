@@ -40,8 +40,8 @@ function validarCamposObligatorios() {
   const checkboxGroupsObligatorios = [
     "tipo_tercer_momento",
     "eje_transversal",
-    "tecnica_evaluacion",
     "tipo_evaluacion",
+    "tecnica_evaluacion",
     "agente_evaluador",
   ];
 
