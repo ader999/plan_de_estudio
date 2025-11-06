@@ -1061,13 +1061,11 @@ def generar_estudio_independiente(request):
             request.POST.get("encuentro", 1)
         )  # Por defecto, primer encuentro
         modelo_seleccionado = request.POST.get("modelo")
+        numero_actividades = int(request.POST.get("numero_actividades", 4))
 
         print(
-            f"Recibida solicitud para generar guía de estudio. Sílabo ID: {silabo_id}, Asignación ID: {asignacion_id}, Encuentro: {encuentro}, Modelo: {modelo_seleccionado}"
+            f"Recibida solicitud para generar guía de estudio. Sílabo ID: {silabo_id}, Asignación ID: {asignacion_id}, Encuentro: {encuentro}, Modelo: {modelo_seleccionado}, Actividades: {numero_actividades}"
         )
-
-        # Log all POST parameters for debugging
-        print(f"POST parameters: {request.POST}")
 
         try:
             # Obtener el sílabo actual
@@ -1267,14 +1265,14 @@ def generar_estudio_independiente(request):
 
             INSTRUCCIONES ESPECÍFICAS:
             1. Crea una guía de estudio independiente para el encuentro {silabo.encuentros} basada en el sílabo proporcionado.
-            2. La guía debe tener 4 tareas diferentes que el estudiante debe realizar como trabajo independiente.
+            2. La guía debe tener {numero_actividades} tareas diferentes que el estudiante debe realizar como trabajo independiente.
             3. Cada tarea debe estar relacionada con el contenido temático y los objetivos del sílabo.
             4. Las tareas deben ser progresivas y complementarias entre sí.
             5. Asigna fechas de entrega realistas (considera que la fecha actual es {datetime.datetime.now().strftime('%Y-%m-%d')}).
-            6. Distribuye el puntaje total entre las 4 tareas (el total debe sumar 100 puntos).
+            6. Distribuye el puntaje total entre las {numero_actividades} tareas (el total debe sumar 100 puntos).
             7. Utiliza diferentes tipos de objetivos, técnicas e instrumentos de evaluación para las tareas.
             8. NO repitas actividades que ya se hayan asignado en guías anteriores.
-            9. Sigue exactamente la misma estructura JSON que el ejemplo proporcionado.
+            9. Sigue exactamente la misma estructura JSON que el ejemplo proporcionado, pero solo incluye los bloques de tarea hasta `tarea_{numero_actividades}`.
 
             Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior,
             adaptado al sílabo actual (encuentro {silabo.encuentros}).
