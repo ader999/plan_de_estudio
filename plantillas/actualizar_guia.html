@@ -1,0 +1,220 @@
+<!-- plantillas/actualizar_guia.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<style>
+    /* Estilos para mejorar la apariencia del formulario */
+    .card-dark { background-color: #3a4b4b; color: #e0e7e7; padding: 1.25rem; border-radius: 0.25rem; }
+    .card-dark label { color: #a6cdcd; font-weight: 500; margin-bottom: 0.5rem; }
+    .card-dark .form-control, .card-dark .form-select { background-color: #f8f9fa; border: 1px solid #ced4da; color: #212529; }
+    .card-header-custom { background-color: #2a3838; color: #ffffff; border-bottom: 2px solid #62a2a2; padding: 1rem; }
+    .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
+    .form-check { margin-bottom: 0.5rem; }
+    .form-check-label { color: #e0e7e7; }
+    .form-control[disabled] { background-color: #e9ecef; opacity: 1; }
+</style>
+
+<div class="container-fluid mt-3">
+    <div class="text-center">
+        <h1 class="mb-4 text-center">Actualizar Guía de Estudio</h1>
+        <h3>{{ asignacion.plan_de_estudio }}</h3>
+        <h3>Encuentro ({{ encuentro }})</h3>
+    </div>
+
+    <!-- Mostrar mensajes del sistema -->
+    <div class="container" style="max-width: 800px;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-md-12">
+                <div class="card shadow-lg">
+                    <div class="card-body card-dark">
+                        <h2 class="text-center mb-4">Formulario de Actualización de Guía</h2>
+
+                        <form id="actualizarGuiaForm" method="post" action="{% url 'actualizar_guia' guia.id %}">
+                            {% csrf_token %}
+
+                            <!-- Sección 1: Información General -->
+                            <div class="card mb-4 mt-3">
+                                <div class="card-header card-header-custom">
+                                    <h5 class="mb-0">Información General</h5>
+                                </div>
+                                <div class="card-body card-dark">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="silabo" class="form-label">Sílabo Asociado</label>
+                                            <input type="text" value="{{ silabo.asignacion_plan.plan_de_estudio.asignatura.nombre }} - Encuentro {{ silabo.encuentros }}" class="form-control" disabled>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="numero_encuentro" class="form-label">N° Encuentro</label>
+                                            <input type="number" name="numero_encuentro" value="{{ guia.numero_encuentro }}" class="form-control" disabled>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="fecha" class="form-label">Fecha</label>
+                                            <input type="date" id="fecha" name="fecha" value="{{ guia.fecha|date:'Y-m-d' }}" class="form-control" required>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="unidad" class="form-label">Unidad</label>
+                                            <select name="unidad" id="unidad" class="form-select">
+                                                {% for value, display in UNIDAD_LIST %}
+                                                <option value="{{ value }}" {% if guia.unidad == value %}selected{% endif %}>{{ display }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="nombre_de_la_unidad" class="form-label">Nombre de la Unidad</label>
+                                            <input type="text" id="nombre_de_la_unidad" name="nombre_de_la_unidad" value="{{ guia.nombre_de_la_unidad }}" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tareas -->
+                            {% for i in "1234" %}
+                            <div class="card mb-4">
+                                <div class="card-header card-header-custom">
+                                    <h5 class="mb-0">Tarea {{ i }}</h5>
+                                </div>
+                                <div class="card-body card-dark">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="tipo_objetivo_{{ i }}" class="form-label">Tipo de Objetivo</label>
+                                            <select name="tipo_objetivo_{{ i }}" id="tipo_objetivo_{{ i }}" class="form-select">
+                                                <option value="">---------</option>
+                                                {% for value, display in TIPO_OBJETIVO_LIST %}
+                                                <option value="{{ value }}" {% if i == '1' and guia.tipo_objetivo_1 == value %}selected{% elif i == '2' and guia.tipo_objetivo_2 == value %}selected{% elif i == '3' and guia.tipo_objetivo_3 == value %}selected{% elif i == '4' and guia.tipo_objetivo_4 == value %}selected{% endif %}>{{ display }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="objetivo_aprendizaje_{{ i }}" class="form-label">Objetivo de Aprendizaje</label>
+                                            <textarea name="objetivo_aprendizaje_{{ i }}" id="objetivo_aprendizaje_{{ i }}" class="form-control" rows="2">{% if i == '1' %}{{ guia.objetivo_aprendizaje_1|default:'' }}{% elif i == '2' %}{{ guia.objetivo_aprendizaje_2|default:'' }}{% elif i == '3' %}{{ guia.objetivo_aprendizaje_3|default:'' }}{% elif i == '4' %}{{ guia.objetivo_aprendizaje_4|default:'' }}{% endif %}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="contenido_tematico_{{ i }}" class="form-label">Contenido Temático</label>
+                                        <textarea name="contenido_tematico_{{ i }}" id="contenido_tematico_{{ i }}" class="form-control" rows="2">{% if i == '1' %}{{ guia.contenido_tematico_1|default:'' }}{% elif i == '2' %}{{ guia.contenido_tematico_2|default:'' }}{% elif i == '3' %}{{ guia.contenido_tematico_3|default:'' }}{% elif i == '4' %}{{ guia.contenido_tematico_4|default:'' }}{% endif %}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="actividad_aprendizaje_{{ i }}" class="form-label">Actividad de Aprendizaje</label>
+                                        <textarea name="actividad_aprendizaje_{{ i }}" id="actividad_aprendizaje_{{ i }}" class="form-control" rows="3">{% if i == '1' %}{{ guia.actividad_aprendizaje_1|default:'' }}{% elif i == '2' %}{{ guia.actividad_aprendizaje_2|default:'' }}{% elif i == '3' %}{{ guia.actividad_aprendizaje_3|default:'' }}{% elif i == '4' %}{{ guia.actividad_aprendizaje_4|default:'' }}{% endif %}</textarea>
+                                    </div>
+                                    <hr>
+                                    <h6 class="mt-3">Evaluación</h6>
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="tecnica_evaluacion_{{ i }}" class="form-label">Técnica de Evaluación</label>
+                                            <select name="tecnica_evaluacion_{{ i }}" id="tecnica_evaluacion_{{ i }}" class="form-select">
+                                                <option value="">---------</option>
+                                                {% for value, display in TECNICA_EVALUACION_LIST %}
+                                                <option value="{{ value }}" {% if i == '1' and guia.tecnica_evaluacion_1 == value %}selected{% elif i == '2' and guia.tecnica_evaluacion_2 == value %}selected{% elif i == '3' and guia.tecnica_evaluacion_3 == value %}selected{% elif i == '4' and guia.tecnica_evaluacion_4 == value %}selected{% endif %}>{{ display }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="tipo_evaluacion_{{ i }}" class="form-label">Tipo de Evaluación</label>
+                                            <select name="tipo_evaluacion_{{ i }}" id="tipo_evaluacion_{{ i }}" class="form-select">
+                                                <option value="">---------</option>
+                                                {% for value, display in TIPO_EVALUACION_LIST %}
+                                                <option value="{{ value }}" {% if i == '1' and guia.tipo_evaluacion_1 == value %}selected{% elif i == '2' and guia.tipo_evaluacion_2 == value %}selected{% elif i == '3' and guia.tipo_evaluacion_3 == value %}selected{% elif i == '4' and guia.tipo_evaluacion_4 == value %}selected{% endif %}>{{ display }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="instrumento_evaluacion_{{ i }}" class="form-label">Instrumento de Evaluación</label>
+                                            <select name="instrumento_evaluacion_{{ i }}" id="instrumento_evaluacion_{{ i }}" class="form-select">
+                                                <option value="">---------</option>
+                                                {% for value, display in INSTRUMENTO_EVALUACION_LIST %}
+                                                <option value="{{ value }}" {% if i == '1' and guia.instrumento_evaluacion_1 == value %}selected{% elif i == '2' and guia.instrumento_evaluacion_2 == value %}selected{% elif i == '3' and guia.instrumento_evaluacion_3 == value %}selected{% elif i == '4' and guia.instrumento_evaluacion_4 == value %}selected{% endif %}>{{ display }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="criterios_evaluacion_{{ i }}" class="form-label">Criterios de Evaluación</label>
+                                        <textarea name="criterios_evaluacion_{{ i }}" id="criterios_evaluacion_{{ i }}" class="form-control" rows="2">{% if i == '1' %}{{ guia.criterios_evaluacion_1|default:'' }}{% elif i == '2' %}{{ guia.criterios_evaluacion_2|default:'' }}{% elif i == '3' %}{{ guia.criterios_evaluacion_3|default:'' }}{% elif i == '4' %}{{ guia.criterios_evaluacion_4|default:'' }}{% endif %}</textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Agente Evaluador</label>
+                                        <div id="agente_evaluador_{{ i }}_container">
+                                           {% for value, display in AGENTE_EVALUADOR_LIST %}
+                                           <div class="form-check form-check-inline">
+                                               <input class="form-check-input" type="checkbox" name="agente_evaluador_{{ i }}" value="{{ value }}" id="id_agente_{{ i }}_{{ forloop.counter }}"
+                                                      {% if i == '1' and value in guia.agente_evaluador_1 %}checked{% elif i == '2' and value in guia.agente_evaluador_2 %}checked{% elif i == '3' and value in guia.agente_evaluador_3 %}checked{% elif i == '4' and value in guia.agente_evaluador_4 %}checked{% endif %}>
+                                               <label class="form-check-label" for="id_agente_{{ i }}_{{ forloop.counter }}">{{ display }}</label>
+                                           </div>
+                                           {% endfor %}
+                                       </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label for="tiempo_minutos_{{ i }}" class="form-label">Tiempo (minutos)</label>
+                                            <input type="number" name="tiempo_minutos_{{ i }}" id="tiempo_minutos_{{ i }}" value="{% if i == '1' %}{{ guia.tiempo_minutos_1 }}{% elif i == '2' %}{{ guia.tiempo_minutos_2 }}{% elif i == '3' %}{{ guia.tiempo_minutos_3 }}{% elif i == '4' %}{{ guia.tiempo_minutos_4 }}{% endif %}" class="form-control">
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="puntaje_{{ i }}" class="form-label">Puntaje</label>
+                                            <input type="number" name="puntaje_{{ i }}" id="puntaje_{{ i }}" value="{% if i == '1' %}{{ guia.puntaje_1 }}{% elif i == '2' %}{{ guia.puntaje_2 }}{% elif i == '3' %}{{ guia.puntaje_3 }}{% elif i == '4' %}{{ guia.puntaje_4 }}{% endif %}" class="form-control">
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="fecha_entrega_{{ i }}" class="form-label">Fecha de Entrega</label>
+                                            <input type="date" name="fecha_entrega_{{ i }}" id="fecha_entrega_{{ i }}" value="{% if i == '1' and guia.fecha_entrega_1 %}{{ guia.fecha_entrega_1|date:'Y-m-d' }}{% elif i == '2' and guia.fecha_entrega_2 %}{{ guia.fecha_entrega_2|date:'Y-m-d' }}{% elif i == '3' and guia.fecha_entrega_3 %}{{ guia.fecha_entrega_3|date:'Y-m-d' }}{% elif i == '4' and guia.fecha_entrega_4 %}{{ guia.fecha_entrega_4|date:'Y-m-d' }}{% endif %}" class="form-control">
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <label for="periodo_tiempo_programado_{{ i }}" class="form-label">Periodo</label>
+                                            <select name="periodo_tiempo_programado_{{ i }}" id="periodo_tiempo_programado_{{ i }}" class="form-select">
+                                                <option value="">---------</option>
+                                                {% for value, display in PERIODO_TIEMPO_LIST %}
+                                                <option value="{{ value }}" {% if i == '1' and guia.periodo_tiempo_programado_1 == value %}selected{% elif i == '2' and guia.periodo_tiempo_programado_2 == value %}selected{% elif i == '3' and guia.periodo_tiempo_programado_3 == value %}selected{% elif i == '4' and guia.periodo_tiempo_programado_4 == value %}selected{% endif %}>{{ display }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="recursos_didacticos_{{ i }}" class="form-label">Recursos Didácticos</label>
+                                        <textarea name="recursos_didacticos_{{ i }}" id="recursos_didacticos_{{ i }}" class="form-control" rows="2">{% if i == '1' %}{{ guia.recursos_didacticos_1|default:'' }}{% elif i == '2' %}{{ guia.recursos_didacticos_2|default:'' }}{% elif i == '3' %}{{ guia.recursos_didacticos_3|default:'' }}{% elif i == '4' %}{{ guia.recursos_didacticos_4|default:'' }}{% endif %}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+
+                            <!-- Botón para actualizar -->
+                            <div class="row justify-content-center mt-4 mb-3">
+                               <div class="col-lg-6 col-md-8 col-sm-12 text-center">
+                                   <div class="d-flex justify-content-center align-items-center mb-3">
+                                       <h5 class="mb-0 me-3">Suma de Puntajes:</h5>
+                                       <span id="sumaPuntajes" class="fs-4 fw-bold text-success">0</span>
+                                       <span class="fs-4 fw-bold ms-1">/ 100</span>
+                                   </div>
+                                   <button id="submitButton" type="submit" class="btn btn-primary w-100">
+                                       <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                       <span class="button-text"><i class="fas fa-sync-alt me-2"></i> Actualizar Guía</span>
+                                   </button>
+                               </div>
+                           </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/guia_actualizar.js' %}"></script>
+{% endblock %}

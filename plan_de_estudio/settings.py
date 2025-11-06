@@ -184,3 +184,4 @@ MINIO_STORAGE_USE_HTTPS = True
 MINIO_STORAGE_AUTO_CREATE_BUCKET = True
 MINIO_STORAGE_AUTO_CREATE_POLICY = True
 MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
+# Forzando el reinicio del servidor para registrar los templatetags

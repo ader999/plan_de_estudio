@@ -1550,3 +1550,114 @@ def vista_tutoriales(request):
     }
 
     return render(request, 'tutoriales.html', contexto)
+
+@login_required
+def actualizar_guia(request, guia_id):
+    """
+    Vista para actualizar una guía existente de forma manual.
+    """
+    guia = get_object_or_404(Guia, id=guia_id)
+    silabo = guia.silabo
+
+    if request.method == 'POST':
+        try:
+            # --- Actualizar cada campo del objeto 'guia' con los datos de request.POST ---
+            
+            # Información General (campos no editables: silabo, numero_encuentro)
+            guia.fecha = request.POST.get('fecha')
+            guia.unidad = request.POST.get('unidad')
+            guia.nombre_de_la_unidad = request.POST.get('nombre_de_la_unidad')
+
+            # Tarea 1
+            guia.tipo_objetivo_1 = request.POST.get('tipo_objetivo_1')
+            guia.objetivo_aprendizaje_1 = request.POST.get('objetivo_aprendizaje_1')
+            guia.contenido_tematico_1 = request.POST.get('contenido_tematico_1')
+            guia.actividad_aprendizaje_1 = request.POST.get('actividad_aprendizaje_1')
+            guia.tecnica_evaluacion_1 = request.POST.get('tecnica_evaluacion_1')
+            guia.tipo_evaluacion_1 = request.POST.get('tipo_evaluacion_1')
+            guia.instrumento_evaluacion_1 = request.POST.get('instrumento_evaluacion_1')
+            guia.criterios_evaluacion_1 = request.POST.get('criterios_evaluacion_1')
+            guia.agente_evaluador_1 = request.POST.getlist('agente_evaluador_1')
+            guia.tiempo_minutos_1 = request.POST.get('tiempo_minutos_1') or None
+            guia.recursos_didacticos_1 = request.POST.get('recursos_didacticos_1')
+            guia.periodo_tiempo_programado_1 = request.POST.get('periodo_tiempo_programado_1')
+            guia.puntaje_1 = request.POST.get('puntaje_1') or None
+            guia.fecha_entrega_1 = request.POST.get('fecha_entrega_1') or None
+
+            # Tarea 2
+            guia.tipo_objetivo_2 = request.POST.get('tipo_objetivo_2')
+            guia.objetivo_aprendizaje_2 = request.POST.get('objetivo_aprendizaje_2')
+            guia.contenido_tematico_2 = request.POST.get('contenido_tematico_2')
+            guia.actividad_aprendizaje_2 = request.POST.get('actividad_aprendizaje_2')
+            guia.tecnica_evaluacion_2 = request.POST.get('tecnica_evaluacion_2')
+            guia.tipo_evaluacion_2 = request.POST.get('tipo_evaluacion_2')
+            guia.instrumento_evaluacion_2 = request.POST.get('instrumento_evaluacion_2')
+            guia.criterios_evaluacion_2 = request.POST.get('criterios_evaluacion_2')
+            guia.agente_evaluador_2 = request.POST.getlist('agente_evaluador_2')
+            guia.tiempo_minutos_2 = request.POST.get('tiempo_minutos_2') or None
+            guia.recursos_didacticos_2 = request.POST.get('recursos_didacticos_2')
+            guia.periodo_tiempo_programado_2 = request.POST.get('periodo_tiempo_programado_2')
+            guia.puntaje_2 = request.POST.get('puntaje_2') or None
+            guia.fecha_entrega_2 = request.POST.get('fecha_entrega_2') or None
+
+            # Tarea 3
+            guia.tipo_objetivo_3 = request.POST.get('tipo_objetivo_3')
+            guia.objetivo_aprendizaje_3 = request.POST.get('objetivo_aprendizaje_3')
+            guia.contenido_tematico_3 = request.POST.get('contenido_tematico_3')
+            guia.actividad_aprendizaje_3 = request.POST.get('actividad_aprendizaje_3')
+            guia.tecnica_evaluacion_3 = request.POST.get('tecnica_evaluacion_3')
+            guia.tipo_evaluacion_3 = request.POST.get('tipo_evaluacion_3')
+            guia.instrumento_evaluacion_3 = request.POST.get('instrumento_evaluacion_3')
+            guia.criterios_evaluacion_3 = request.POST.get('criterios_evaluacion_3')
+            guia.agente_evaluador_3 = request.POST.getlist('agente_evaluador_3')
+            guia.tiempo_minutos_3 = request.POST.get('tiempo_minutos_3') or None
+            guia.recursos_didacticos_3 = request.POST.get('recursos_didacticos_3')
+            guia.periodo_tiempo_programado_3 = request.POST.get('periodo_tiempo_programado_3')
+            guia.puntaje_3 = request.POST.get('puntaje_3') or None
+            guia.fecha_entrega_3 = request.POST.get('fecha_entrega_3') or None
+
+            # Tarea 4
+            guia.tipo_objetivo_4 = request.POST.get('tipo_objetivo_4')
+            guia.objetivo_aprendizaje_4 = request.POST.get('objetivo_aprendizaje_4')
+            guia.contenido_tematico_4 = request.POST.get('contenido_tematico_4')
+            guia.actividad_aprendizaje_4 = request.POST.get('actividad_aprendizaje_4')
+            guia.tecnica_evaluacion_4 = request.POST.get('tecnica_evaluacion_4')
+            guia.tipo_evaluacion_4 = request.POST.get('tipo_evaluacion_4')
+            guia.instrumento_evaluacion_4 = request.POST.get('instrumento_evaluacion_4')
+            guia.criterios_evaluacion_4 = request.POST.get('criterios_evaluacion_4')
+            guia.agente_evaluador_4 = request.POST.getlist('agente_evaluador_4')
+            guia.tiempo_minutos_4 = request.POST.get('tiempo_minutos_4') or None
+            guia.recursos_didacticos_4 = request.POST.get('recursos_didacticos_4')
+            guia.periodo_tiempo_programado_4 = request.POST.get('periodo_tiempo_programado_4')
+            guia.puntaje_4 = request.POST.get('puntaje_4') or None
+            guia.fecha_entrega_4 = request.POST.get('fecha_entrega_4') or None
+
+            guia.full_clean()
+            guia.save()
+
+            messages.success(request, '¡La guía ha sido actualizada correctamente!')
+            # Redirigir a la vista de detalle con el código del plan y un ancla al encuentro
+            codigo_plan = guia.silabo.asignacion_plan.plan_de_estudio.codigo
+            url_redirect = reverse('detalle_silabo_codigo', kwargs={'codigo': codigo_plan})
+            # El ancla #guia-{{codigo}}-{{encuentro}} es manejado por el JS en el frontend para mostrar la página correcta
+            return redirect(f'{url_redirect}?encuentro={guia.numero_encuentro}#guia-{codigo_plan}-{guia.numero_encuentro}')
+
+        except ValidationError as e:
+            messages.error(request, 'Error de validación. Por favor, revise los campos.')
+            pass
+
+    context = {
+        'guia': guia,
+        'silabo': silabo,
+        'asignacion': silabo.asignacion_plan,
+        'encuentro': silabo.encuentros,
+        'UNIDAD_LIST': Silabo.UNIDAD_LIST,
+        'TIPO_OBJETIVO_LIST': Guia.TIPO_OBJETIVO_LIST,
+        'TECNICA_EVALUACION_LIST': Silabo.TECNICA_EVALUACION_LIST,
+        'TIPO_EVALUACION_LIST': Silabo.TIPO_EVALUACION_LIST,
+        'INSTRUMENTO_EVALUACION_LIST': Silabo.INSTRUMENTO_EVALUACION_LIST,
+        'AGENTE_EVALUADOR_LIST': Silabo.AGENTE_EVALUADOR_LIST,
+        'PERIODO_TIEMPO_LIST': Silabo.PERIODO_TIEMPO_LIST,
+    }
+
+    return render(request, 'actualizar_guia.html', context)

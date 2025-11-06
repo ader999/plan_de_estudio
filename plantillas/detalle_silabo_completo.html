@@ -163,7 +163,11 @@
                                 <p class="mt-3 text-muted">Cargando guía de estudio para el encuentro {{ silabo_item.encuentros }}...</p>
                             </div>
                         </section>
-
+                        <footer class="update-button-container">
+                            <a href="{% url 'actualizar_guia' guia_id=silabo_item.guias.first.id %}" class="btn btn-update-silabo">
+                                <i class="fas fa-pencil-alt me-2"></i> Actualizar esta Guía
+                            </a>
+                        </footer>
                     </article>
                     {% endfor %}
                 </div>
@@ -370,17 +374,29 @@ document.addEventListener('DOMContentLoaded', function() {
         if (codigoGrupo) {
             setupEncuentroPagination(codigoGrupo);
 
-            // Cargar la guía para el primer encuentro activo al cargar la página
-            const firstActiveGuiaPanel = wrapper.querySelector(`#guias-view-${codigoGrupo} .guia-panel.active`);
-            if (firstActiveGuiaPanel) {
-                const silaboId = firstActiveGuiaPanel.getAttribute('data-silabo-id');
-                const isLoaded = firstActiveGuiaPanel.getAttribute('data-loaded') === 'true';
-                if (silaboId && !isLoaded) {
-                    const dynamicContentDiv = firstActiveGuiaPanel.querySelector('.guia-dynamic-content');
-                    if (dynamicContentDiv) {
-                       cargarGuia(silaboId, dynamicContentDiv, firstActiveGuiaPanel);
-                    }
+            const urlParams = new URLSearchParams(window.location.search);
+            const encuentroParam = urlParams.get('encuentro');
+            const hash = window.location.hash;
+
+            let startPageIndex = 0; // Por defecto es el primer encuentro (índice 0)
+
+            if (encuentroParam) {
+                // Buscar el panel que corresponde a ese número de encuentro
+                const targetPanel = wrapper.querySelector(`#silabo-view-${codigoGrupo} .silabo-panel[id$="-${encuentroParam}"]`);
+                if (targetPanel) {
+                    startPageIndex = parseInt(targetPanel.getAttribute('data-encuentro-index'));
                 }
+            }
+
+            // Mostrar la página correcta al cargar
+            showEncuentroPage(codigoGrupo, startPageIndex);
+
+            // Si el hash indica que se debe mostrar la guía, nos aseguramos de que esté visible
+            if (hash.startsWith('#guia-')) {
+                // No se necesita una acción explícita aquí si showEncuentroPage ya muestra
+                // tanto el sílabo como la guía para el índice dado. La carga de la guía
+                // ya está manejada dentro de showEncuentroPage.
+                console.log(`Ancla a guía detectada: ${hash}. La guía para el encuentro ${startPageIndex + 1} debería estar visible.`);
             }
         }
     });

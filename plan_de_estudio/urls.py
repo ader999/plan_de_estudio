@@ -37,6 +37,7 @@ urlpatterns = [
     # Ruta para cargar guía específica de un sílabo
     path('cargar_guia/<int:silabo_id>/', views.cargar_guia, name='cargar_guia'),
     path('silabo/actualizar/<int:silabo_id>/', views.actualizar_silabo, name='actualizar_silabo'),
+    path('guia/actualizar/<int:guia_id>/', views.actualizar_guia, name='actualizar_guia'),
 
 ]
 if settings.DEBUG:
