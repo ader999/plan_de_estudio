@@ -1,0 +1,21 @@
+# Usar una imagen base de Python ligera
+FROM python:3.13-slim
+
+# Establecer el directorio de trabajo
+WORKDIR /app
+
+# Instalar dependencias del sistema necesarias para psycopg2 (PostgreSQL)
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements.txt e instalar dependencias de Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar el código del proyecto
+COPY . .
+
+# Comando por defecto (se sobrescribirá en Railway, pero es bueno tenerlo)
+CMD ["python", "manage.py", "enviar_recordatorios"]
