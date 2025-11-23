@@ -12,6 +12,9 @@ from django.db.models import Count
 from django.contrib.auth.models import User
 from .document_generators import generar_excel_admin
 from django.urls import path, reverse
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from .email_utils import enviar_correos_plan_incompleto
 
 admin.site.site_header = 'PLANEAUML'
 admin.site.index_title = 'Bienbenidos al Panel de control del sitio'
@@ -128,6 +131,7 @@ class FiltrarGuia(admin.ModelAdmin):
 
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/plan_de_estudio/asignacionplanestudio/change_list.html'
     # Añade 'exportar_excel_boton' a list_display
     list_display = ('usuario', 'plan_de_estudio','fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
     readonly_fields = ('silabos_creados', 'guias_creadas')
@@ -163,10 +167,23 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
                 '<int:asignacion_id>/exportar_excel/', # La URL que captura el ID
                 self.admin_site.admin_view(generar_excel_admin), # Llama a la vista importada, protegida por admin
                 name='plan_de_estudio_asignacionplanestudio_exportar_excel' # Nombre para usar en 'reverse'
-            )
+            ),
+            path(
+                'enviar-recordatorios/',
+                self.admin_site.admin_view(self.enviar_recordatorios_view),
+                name='plan_de_estudio_asignacionplanestudio_enviar_recordatorios'
+            ),
         ]
         # Añade las URLs personalizadas ANTES que las URLs por defecto
         return custom_urls + urls
+
+    def enviar_recordatorios_view(self, request):
+        try:
+            cantidad = enviar_correos_plan_incompleto()
+            self.message_user(request, f'Se enviaron {cantidad} recordatorios exitosamente.', level=messages.SUCCESS)
+        except Exception as e:
+            self.message_user(request, f'Error al enviar recordatorios: {str(e)}', level=messages.ERROR)
+        return HttpResponseRedirect("../")
 
 
 class CompletadoFilter(admin.SimpleListFilter):

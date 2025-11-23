@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Recordatorio: Plan de Estudio Incompleto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background-color: #007bff;
+            color: #ffffff;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .content {
+            padding: 20px;
+            color: #333333;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
+            color: #777777;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #28a745;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://planeauml.codeader.com/static/img/logotipo.ico" alt="Logo"
+                style="max-width: 50px; margin-bottom: 10px;">
+            <h1>Recordatorio de Plan de Estudio</h1>
+        </div>
+        <div class="content">
+            <p>Hola <strong>{{ nombre_usuario }}</strong>,</p>
+            <p>Esperamos que te encuentres bien.</p>
+            <p>Hemos notado que tu avance en el plan de estudio para la asignatura <strong>{{ asignatura }}</strong> aún
+                no está completo.</p>
+            <p>Actualmente tienes:</p>
+            <ul>
+                <li>Sílabos creados: <strong>{{ silabos_creados }}</strong> (Requerido: 11)</li>
+                <li>Guías creadas: <strong>{{ guias_creadas }}</strong> (Requerido: 11)</li>
+            </ul>
+            <p>Por favor, asegúrate de completar los sílabos y guías faltantes lo antes posible para cumplir con los
+                requisitos académicos.</p>
+            <p>Si ya has completado esta tarea, por favor omite este mensaje.</p>
+            <a href="https://planeauml.codeader.com/" class="button">Ir a mi Plan de Estudio</a>
+        </div>
+        <div class="footer">
+            <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
+        </div>
+    </div>
+</body>
+
+</html>

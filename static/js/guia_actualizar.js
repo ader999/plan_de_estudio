@@ -57,6 +57,8 @@ function validarFormulario() {
 
     // Limpiar validaciones previas
     document.querySelectorAll('#actualizarGuiaForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+   document.querySelectorAll('#actualizarGuiaForm .is-invalid-parent').forEach(el => el.classList.remove('is-invalid-parent'));
+   document.querySelectorAll('#actualizarGuiaForm .checkbox-group.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
     // 1. Validar puntajes
     const puntaje1 = parseInt(document.getElementById('puntaje_1')?.value) || 0;
@@ -93,19 +95,27 @@ function validarFormulario() {
         const campo = document.getElementById(id);
         if (campo && campo.value.trim() === '') {
             campo.classList.add('is-invalid');
+
+            // Si el campo es un <select>, a menudo es mejor aplicar el estilo de error
+            // a su contenedor padre para que sea visible.
+            if (campo.tagName.toLowerCase() === 'select') {
+                const parentDiv = campo.closest('.mb-3'); // Busca el div contenedor más cercano
+                if (parentDiv) {
+                    parentDiv.classList.add('is-invalid-parent'); // Usaremos una clase custom para no interferir con otros estilos
+                }
+            }
+
             const label = document.querySelector(`label[for='${id}']`);
             camposFaltantes.push(label ? label.textContent.trim() : id);
             formularioValido = false;
         }
     });
     
-    // Validar agente evaluador 1
-    if (document.querySelectorAll('input[name="agente_evaluador_1"]:checked').length === 0) {
-        const container = document.getElementById('agente_evaluador_1_container');
-        if(container) container.classList.add('is-invalid');
-        camposFaltantes.push("Agente Evaluador 1");
-        formularioValido = false;
-    }
+   // La validación para el campo de checkboxes 'agente_evaluador_1' ha sido omitida intencionadamente.
+   // Se ha decidido delegar esta validación específica al backend (Django) para centralizar la lógica
+   // y evitar complejidades en el script del lado del cliente. El backend se asegurará de que
+   // al menos una opción sea seleccionada para los campos obligatorios.
+
 
 
     if (camposFaltantes.length > 0) {
@@ -153,12 +163,8 @@ function validarActividadOpcional(numActividad, mensajesError) {
         }
     });
 
-    const agentesSeleccionados = document.querySelectorAll(`input[name="agente_evaluador_${numActividad}"]:checked`).length;
-    if (agentesSeleccionados > 0) {
-        algunCampoConInfo = true;
-    } else {
-        todosCamposLlenos = false;
-    }
+    // Se elimina la validación de 'agente_evaluador' del lado del cliente.
+    // Esta validación ahora es responsabilidad exclusiva del backend.
 
     if (!algunCampoConInfo) {
         return true; // Actividad vacía es válida
@@ -170,10 +176,9 @@ function validarActividadOpcional(numActividad, mensajesError) {
             const campo = document.getElementById(id);
             if (campo) campo.classList.add('is-invalid');
         });
-        if (agentesSeleccionados === 0) {
-            const container = document.getElementById(`agente_evaluador_${numActividad}_container`);
-            if(container) container.classList.add('is-invalid');
-        }
+       // Se omite la validación visual de 'agente_evaluador' para las tareas opcionales en el cliente.
+       // La lógica de que si la tarea está parcialmente completa, todos los campos deben ser llenados,
+       // será manejada por el backend.
         return false;
     }
 

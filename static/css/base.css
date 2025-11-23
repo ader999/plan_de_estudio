@@ -1,30 +1,29 @@
 /* Archivo: estilos.css */
 :root {
-  --color-fondo: var(--color-gris-1);
-  --color-navar: var(--color-azul-2);
-  --color-fuente: white;
-  --color-fuente-navar: white;
-  --tamano-texto: 16px;
-  
-  /* Paleta de colores */
-  --color-azul-1: #2874a6;
-  --color-azul-2: #1f618d;
-  --color-azul-3: #2e86c1;
-  --color-gris-1: #717d7e;
-  --color-gris-2: #707b7c;
-  --color-azul-oscuro: #2e4053;
+    --color-fondo: var(--color-gris-1);
+    --color-navar: var(--color-azul-2);
+    --color-fuente: white;
+    --color-fuente-navar: white;
+    --tamano-texto: 16px;
+
+    /* Paleta de colores */
+    --color-azul-1: #2874a6;
+    --color-azul-2: #1f618d;
+    --color-azul-3: #2e86c1;
+    --color-gris-1: #717d7e;
+    --color-gris-2: #707b7c;
+    --color-azul-oscuro: #2e4053;
 }
 
 /* Estilos base para el cuerpo */
 body {
-    background: linear-gradient(135deg, 
-        var(--color-azul-1), 
-        var(--color-azul-2), 
-        var(--color-azul-3), 
-        var(--color-gris-1), 
-        var(--color-gris-2), 
-        var(--color-azul-oscuro)
-    );
+    background: linear-gradient(135deg,
+            var(--color-azul-1),
+            var(--color-azul-2),
+            var(--color-azul-3),
+            var(--color-gris-1),
+            var(--color-gris-2),
+            var(--color-azul-oscuro));
     background-size: 400% 1800%;
     animation: gradientBG 30s ease infinite;
     color: var(--color-fuente);
@@ -37,15 +36,24 @@ body {
 }
 
 @keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 /* Estilos para el contenido principal */
 main {
     flex-grow: 1;
-    padding-top: 85px; /* Espacio para la navbar fija */
+    padding-top: 85px;
+    /* Espacio para la navbar fija */
     padding-bottom: 30px;
     position: relative;
     z-index: 1;
@@ -61,8 +69,8 @@ main {
     left: 0;
     right: 0;
     z-index: 1030;
-    height: 70px;
-    padding: 10px 15px;
+    min-height: 80px;
+    padding: 5px 15px;
 }
 
 #navbar-container {
@@ -83,6 +91,11 @@ main {
     gap: 10px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
+    /* Posicionamiento absoluto para que el logo "cuelgue" */
+    position: absolute;
+    top: 5px;
+    left: 15px;
+    z-index: 1040;
 }
 
 #navbar-brand:hover {
@@ -91,7 +104,23 @@ main {
 
 #navbar-brand img {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    /* Mobile Default: Visible size that fits navbar */
     height: 50px;
+    width: auto;
+}
+
+/* Desktop Override: Slightly larger logo */
+@media (min-width: 768px) {
+    #navbar-brand {
+        position: static;
+        top: auto;
+        left: auto;
+        z-index: auto;
+    }
+
+    #navbar-brand img {
+        height: 60px;
+    }
 }
 
 /* Botón toggler */
@@ -295,7 +324,8 @@ main {
 }
 
 /* FOOTER */
-#page-footer, .footer {
+#page-footer,
+.footer {
     background-color: var(--color-azul-oscuro);
     color: white;
     padding: 2rem 0;
@@ -347,8 +377,10 @@ main {
     */
     #page-content {
         /* Anulamos los márgenes laterales que pone la clase .container de Bootstrap */
-        padding-left: 3px !important;  /* Margen izquierdo mínimo */
-        padding-right: 3px !important; /* Margen derecho mínimo */
+        padding-left: 3px !important;
+        /* Margen izquierdo mínimo */
+        padding-right: 3px !important;
+        /* Margen derecho mínimo */
 
         /* Forzamos que el ancho máximo sea el 100% de la pantalla */
         max-width: 100% !important;

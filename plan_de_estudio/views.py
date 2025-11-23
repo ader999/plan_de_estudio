@@ -1643,8 +1643,20 @@ def actualizar_guia(request, guia_id):
             return redirect(f'{url_redirect}?encuentro={guia.numero_encuentro}#guia-{codigo_plan}-{guia.numero_encuentro}')
 
         except ValidationError as e:
-            messages.error(request, 'Error de validación. Por favor, revise los campos.')
-            pass
+           # Capturamos los errores de validación del modelo
+           error_dict = e.message_dict
+           error_messages = []
+           # Iteramos sobre los errores para crear mensajes más claros
+           for field, errors in error_dict.items():
+               # Obtenemos el nombre legible del campo desde el modelo
+               field_verbose_name = Guia._meta.get_field(field).verbose_name
+               # Creamos un mensaje de error específico
+               error_messages.append(f"Error en el campo '{field_verbose_name}': {'; '.join(errors)}")
+           
+           # Unimos todos los mensajes de error en un solo mensaje para el usuario
+           final_error_message = "Error de validación. " + " ".join(error_messages)
+           messages.error(request, final_error_message)
+           pass
 
     context = {
         'guia': guia,
