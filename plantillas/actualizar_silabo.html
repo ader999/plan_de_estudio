@@ -13,6 +13,14 @@
     .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
     .form-check { margin-bottom: 0.5rem; }
     .form-check-label { color: #e0e7e7; }
+    
+    /* Estilos para validación */
+    .border-danger { border-color: #dc3545 !important; }
+    .border-success { border-color: #198754 !important; }
+    .text-danger { color: #dc3545 !important; }
+    .border-danger-group { border: 1px solid #dc3545; padding: 10px; border-radius: 5px; }
+    .border-success-group { border: 1px solid #198754; padding: 10px; border-radius: 5px; }
+    .form-check-group-container { padding: 5px; }
 </style>
 
 <div class="container-fluid mt-3">
@@ -54,11 +62,11 @@
                                 <div class="card-body card-dark">
                                     <div class="mb-3">
                                         <label for="fecha" class="form-label">Fecha</label>
-                                        <input type="date" name="fecha" value="{{ silabo.fecha|date:'Y-m-d' }}" class="form-control" required>
+                                        <input type="date" id="id_fecha" name="fecha" value="{{ silabo.fecha|date:'Y-m-d' }}" class="form-control" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="unidad" class="form-label">Unidad</label>
-                                        <select name="unidad" class="form-select">
+                                        <select id="id_unidad" name="unidad" class="form-select">
                                             {% for value, display in UNIDAD_LIST %}
                                             <option value="{{ value }}" {% if silabo.unidad == value %}selected{% endif %}>{{ display }}</option>
                                             {% endfor %}
@@ -66,11 +74,11 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="nombre_de_la_unidad" class="form-label">Nombre de la Unidad</label>
-                                        <input type="text" name="nombre_de_la_unidad" value="{{ silabo.nombre_de_la_unidad }}" class="form-control" required>
+                                        <input type="text" id="id_nombre_de_la_unidad" name="nombre_de_la_unidad" value="{{ silabo.nombre_de_la_unidad }}" class="form-control" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="contenido_tematico" class="form-label">Contenido Temático</label>
-                                        <textarea name="contenido_tematico" class="form-control" rows="3" required>{{ silabo.contenido_tematico }}</textarea>
+                                        <textarea id="id_contenido_tematico" name="contenido_tematico" class="form-control" rows="3" required>{{ silabo.contenido_tematico }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -83,15 +91,15 @@
                                 <div class="card-body card-dark">
                                     <div class="mb-3">
                                         <label for="objetivo_conceptual" class="form-label">Objetivo Conceptual</label>
-                                        <textarea name="objetivo_conceptual" class="form-control" rows="3">{{ silabo.objetivo_conceptual }}</textarea>
+                                        <textarea id="id_objetivo_conceptual" name="objetivo_conceptual" class="form-control" rows="3">{{ silabo.objetivo_conceptual }}</textarea>
                                     </div>
                                     <div class="mb-3">
                                         <label for="objetivo_procedimental" class="form-label">Objetivo Procedimental</label>
-                                        <textarea name="objetivo_procedimental" class="form-control" rows="3">{{ silabo.objetivo_procedimental }}</textarea>
+                                        <textarea id="id_objetivo_procedimental" name="objetivo_procedimental" class="form-control" rows="3">{{ silabo.objetivo_procedimental }}</textarea>
                                     </div>
                                     <div class="mb-3">
                                         <label for="objetivo_actitudinal" class="form-label">Objetivo Actitudinal</label>
-                                        <textarea name="objetivo_actitudinal" class="form-control" rows="3">{{ silabo.objetivo_actitudinal }}</textarea>
+                                        <textarea id="id_objetivo_actitudinal" name="objetivo_actitudinal" class="form-control" rows="3">{{ silabo.objetivo_actitudinal }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -106,7 +114,7 @@
                                     <h6 class="mt-2">Primer Momento Didáctico (Fase Entrada)</h6>
                                     <div class="mb-3">
                                         <label for="tipo_primer_momento" class="form-label">Tipo de Enseñanza</label>
-                                        <select name="tipo_primer_momento" class="form-select">
+                                        <select id="id_tipo_primer_momento" name="tipo_primer_momento" class="form-select">
                                             {% for value, display in TIPO_PRIMER_MOMENTO_LIST %}
                                             <option value="{{ value }}" {% if silabo.tipo_primer_momento == value %}selected{% endif %}>{{ display }}</option>
                                             {% endfor %}
@@ -114,15 +122,15 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="detalle_primer_momento" class="form-label">Detalle</label>
-                                        <textarea name="detalle_primer_momento" class="form-control" rows="2">{{ silabo.detalle_primer_momento }}</textarea>
+                                        <textarea id="id_detalle_primer_momento" name="detalle_primer_momento" class="form-control" rows="2">{{ silabo.detalle_primer_momento }}</textarea>
                                     </div>
                                     <div class="mb-3">
                                         <label for="tiempo_primer_momento" class="form-label">Tiempo (minutos)</label>
-                                        <input type="number" name="tiempo_primer_momento" value="{{ silabo.tiempo_primer_momento }}" class="form-control">
+                                        <input type="number" id="id_tiempo_primer_momento" name="tiempo_primer_momento" value="{{ silabo.tiempo_primer_momento }}" class="form-control">
                                     </div>
                                     <div class="mb-3">
                                         <label for="recursos_primer_momento" class="form-label">Recursos</label>
-                                        <textarea name="recursos_primer_momento" class="form-control" rows="2">{{ silabo.recursos_primer_momento }}</textarea>
+                                        <textarea id="id_recursos_primer_momento" name="recursos_primer_momento" class="form-control" rows="2">{{ silabo.recursos_primer_momento }}</textarea>
                                     </div>
 
                                     <!-- Segundo Momento -->
@@ -131,7 +139,7 @@
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="tipo_segundo_momento_claseteoria" class="form-label">Tipo Clase Teórica</label>
-                                                <select name="tipo_segundo_momento_claseteoria" class="form-select">
+                                                <select id="id_tipo_segundo_momento_claseteoria" name="tipo_segundo_momento_claseteoria" class="form-select">
                                                      {% for value, display in TIPO_SEGUNDO_MOMENTO_TEORIA_LIST %}
                                                     <option value="{{ value }}" {% if silabo.tipo_segundo_momento_claseteoria == value %}selected{% endif %}>{{ display }}</option>
                                                     {% endfor %}
@@ -139,17 +147,17 @@
                                             </div>
                                             <div class="mb-3">
                                                 <label for="clase_teorica" class="form-label">Detalle Clase Teórica</label>
-                                                <textarea name="clase_teorica" class="form-control" rows="2">{{ silabo.clase_teorica }}</textarea>
+                                                <textarea id="id_clase_teorica" name="clase_teorica" class="form-control" rows="2">{{ silabo.clase_teorica }}</textarea>
                                             </div>
                                             <div class="mb-3">
                                                 <label for="tiempo_segundo_momento_teorica" class="form-label">Tiempo Teórica (minutos)</label>
-                                                <input type="number" name="tiempo_segundo_momento_teorica" value="{{ silabo.tiempo_segundo_momento_teorica }}" class="form-control">
+                                                <input type="number" id="id_tiempo_segundo_momento_teorica" name="tiempo_segundo_momento_teorica" value="{{ silabo.tiempo_segundo_momento_teorica }}" class="form-control">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="tipo_segundo_momento_practica" class="form-label">Tipo Clase Práctica</label>
-                                                <select name="tipo_segundo_momento_practica" class="form-select">
+                                                <select id="id_tipo_segundo_momento_practica" name="tipo_segundo_momento_practica" class="form-select">
                                                     {% for value, display in TIPO_SEGUNDO_MOMENTO_PRACTICA_LIST %}
                                                     <option value="{{ value }}" {% if silabo.tipo_segundo_momento_practica == value %}selected{% endif %}>{{ display }}</option>
                                                     {% endfor %}
@@ -157,22 +165,22 @@
                                             </div>
                                             <div class="mb-3">
                                                 <label for="clase_practica" class="form-label">Detalle Clase Práctica</label>
-                                                <textarea name="clase_practica" class="form-control" rows="2">{{ silabo.clase_practica }}</textarea>
+                                                <textarea id="id_clase_practica" name="clase_practica" class="form-control" rows="2">{{ silabo.clase_practica }}</textarea>
                                             </div>
                                             <div class="mb-3">
                                                 <label for="tiempo_segundo_momento_practica" class="form-label">Tiempo Práctica (minutos)</label>
-                                                <input type="number" name="tiempo_segundo_momento_practica" value="{{ silabo.tiempo_segundo_momento_practica }}" class="form-control">
+                                                <input type="number" id="id_tiempo_segundo_momento_practica" name="tiempo_segundo_momento_practica" value="{{ silabo.tiempo_segundo_momento_practica }}" class="form-control">
                                             </div>
                                         </div>
                                     </div>
                                      <div class="mb-3">
                                         <label for="recursos_segundo_momento" class="form-label">Recursos</label>
-                                        <textarea name="recursos_segundo_momento" class="form-control" rows="2">{{ silabo.recursos_segundo_momento }}</textarea>
+                                        <textarea id="id_recursos_segundo_momento" name="recursos_segundo_momento" class="form-control" rows="2">{{ silabo.recursos_segundo_momento }}</textarea>
                                     </div>
 
                                     <!-- Tercer Momento -->
                                     <h6 class="mt-4">Tercer Momento Didáctico (Fase Salida)</h6>
-                                    <div class="mb-3">
+                                    <div class="mb-3 form-check-group-container">
                                         <label class="form-label">Tipo de Enseñanza</label>
                                         {% for value, display in TIPO_TERCER_MOMENTO_LIST %}
                                         <div class="form-check">
@@ -187,20 +195,20 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="detalle_tercer_momento" class="form-label">Detalle</label>
-                                        <textarea name="detalle_tercer_momento" class="form-control" rows="2">{{ silabo.detalle_tercer_momento }}</textarea>
+                                        <textarea id="id_detalle_tercer_momento" name="detalle_tercer_momento" class="form-control" rows="2">{{ silabo.detalle_tercer_momento }}</textarea>
                                     </div>
                                     <div class="mb-3">
                                         <label for="tiempo_tercer_momento" class="form-label">Tiempo (minutos)</label>
-                                        <input type="number" name="tiempo_tercer_momento" value="{{ silabo.tiempo_tercer_momento }}" class="form-control">
+                                        <input type="number" id="id_tiempo_tercer_momento" name="tiempo_tercer_momento" value="{{ silabo.tiempo_tercer_momento }}" class="form-control">
                                     </div>
                                     <div class="mb-3">
                                         <label for="recursos_tercer_momento" class="form-label">Recursos</label>
-                                        <textarea name="recursos_tercer_momento" class="form-control" rows="2">{{ silabo.recursos_tercer_momento }}</textarea>
+                                        <textarea id="id_recursos_tercer_momento" name="recursos_tercer_momento" class="form-control" rows="2">{{ silabo.recursos_tercer_momento }}</textarea>
                                     </div>
 
                                     <!-- Ejes Transversales -->
                                     <h6 class="mt-4">Ejes Transversales</h6>
-                                    <div class="mb-3">
+                                    <div class="mb-3 form-check-group-container">
                                         <label class="form-label">Eje</label>
                                         {% for value, display in EJE_TRANSVERSAL_LIST %}
                                         <div class="form-check">
@@ -215,7 +223,7 @@
                                     </div>
                                      <div class="mb-3">
                                         <label for="detalle_eje_transversal" class="form-label">Detalle del Eje Transversal</label>
-                                        <textarea name="detalle_eje_transversal" class="form-control" rows="2">{{ silabo.detalle_eje_transversal }}</textarea>
+                                        <textarea id="id_detalle_eje_transversal" name="detalle_eje_transversal" class="form-control" rows="2">{{ silabo.detalle_eje_transversal }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -228,11 +236,11 @@
                                 <div class="card-body card-dark">
                                     <div class="mb-3">
                                         <label for="actividad_aprendizaje" class="form-label">Actividad de Aprendizaje</label>
-                                        <textarea name="actividad_aprendizaje" class="form-control" rows="2">{{ silabo.actividad_aprendizaje }}</textarea>
+                                        <textarea id="id_actividad_aprendizaje" name="actividad_aprendizaje" class="form-control" rows="2">{{ silabo.actividad_aprendizaje }}</textarea>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <div class="mb-3">
+                                            <div class="mb-3 form-check-group-container">
                                                 <label class="form-label">Técnica de Evaluación</label>
                                                 {% for value, display in TECNICA_EVALUACION_LIST %}
                                                 <div class="form-check">
@@ -245,7 +253,7 @@
                                                 </div>
                                                 {% endfor %}
                                             </div>
-                                            <div class="mb-3">
+                                            <div class="mb-3 form-check-group-container">
                                                 <label class="form-label">Tipo de Evaluación</label>
                                                 {% for value, display in TIPO_EVALUACION_LIST %}
                                                 <div class="form-check">
@@ -260,7 +268,7 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="mb-3">
+                                            <div class="mb-3 form-check-group-container">
                                                 <label class="form-label">Agente Evaluador</label>
                                                 {% for value, display in AGENTE_EVALUADOR_LIST %}
                                                 <div class="form-check">
@@ -277,7 +285,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="periodo_tiempo_programado" class="form-label">Periodo de Tiempo</label>
-                                        <select name="periodo_tiempo_programado" class="form-select">
+                                        <select id="id_periodo_tiempo_programado" name="periodo_tiempo_programado" class="form-select">
                                             {% for value, display in PERIODO_TIEMPO_LIST %}
                                             <option value="{{ value }}" {% if silabo.periodo_tiempo_programado == value %}selected{% endif %}>{{ display }}</option>
                                             {% endfor %}
@@ -285,11 +293,11 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="tiempo_minutos" class="form-label">Tiempo en Minutos</label>
-                                        <input type="number" name="tiempo_minutos" value="{{ silabo.tiempo_minutos }}" class="form-control">
+                                        <input type="number" id="id_tiempo_minutos" name="tiempo_minutos" value="{{ silabo.tiempo_minutos }}" class="form-control">
                                     </div>
                                     <div class="mb-3">
                                         <label for="instrumento_evaluacion" class="form-label">Instrumento de Evaluación</label>
-                                        <select name="instrumento_evaluacion" class="form-select">
+                                        <select id="id_instrumento_evaluacion" name="instrumento_evaluacion" class="form-select">
                                             {% for value, display in INSTRUMENTO_EVALUACION_LIST %}
                                             <option value="{{ value }}" {% if silabo.instrumento_evaluacion == value %}selected{% endif %}>{{ display }}</option>
                                             {% endfor %}
@@ -297,11 +305,11 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="criterios_evaluacion" class="form-label">Criterios de Evaluación</label>
-                                        <textarea name="criterios_evaluacion" class="form-control" rows="2">{{ silabo.criterios_evaluacion }}</textarea>
+                                        <textarea id="id_criterios_evaluacion" name="criterios_evaluacion" class="form-control" rows="2">{{ silabo.criterios_evaluacion }}</textarea>
                                     </div>
                                     <div class="mb-3">
                                         <label for="puntaje" class="form-label">Puntaje</label>
-                                        <input type="number" name="puntaje" value="{{ silabo.puntaje }}" class="form-control" step="0.01">
+                                        <input type="number" id="id_puntaje" name="puntaje" value="{{ silabo.puntaje }}" class="form-control" step="0.01">
                                     </div>
                                 </div>
                             </div>
@@ -309,7 +317,7 @@
                             <!-- Botón para actualizar -->
                             <div class="row justify-content-center mt-4 mb-3">
                                 <div class="col-lg-6 col-md-8 col-sm-12 text-center">
-                                    <button type="submit" class="btn btn-primary w-100">
+                                    <button type="submit" id="btn-actualizar" class="btn btn-primary w-100">
                                         <i class="fas fa-sync-alt me-2"></i> Actualizar Sílabo
                                     </button>
                                 </div>
@@ -320,5 +328,7 @@
             </div>
         </div>
     </div>
+    </div>
 </div>
+<script src="{% static 'js/silabo_actualizar_validar.js' %}"></script>
 {% endblock %}
