@@ -18,7 +18,7 @@
         border: none;
         border-radius: 2px;
     }
-    
+
     /* Estilos para el formulario con fondo oscuro - Paleta elegante */
     .card-dark {
         background-color: #3a4b4b;
@@ -26,38 +26,41 @@
         padding: 1.25rem;
         border-radius: 0.25rem;
     }
-    
+
     .card-dark label {
         color: #a6cdcd;
         font-weight: 500;
         margin-bottom: 0.5rem;
     }
-    
+
     .card-dark h2 {
         color: #ffffff;
         margin-bottom: 1.5rem;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
         letter-spacing: 1px;
     }
-    
-    .card-dark h5, .card-dark h6 {
+
+    .card-dark h5,
+    .card-dark h6 {
         color: #c4eaea;
     }
-    
+
     /* Mejorar contraste en campos de formulario dentro del tema oscuro */
-    .card-dark .form-control, .card-dark .form-select {
+    .card-dark .form-control,
+    .card-dark .form-select {
         background-color: #f8f9fa;
         border: 1px solid #ced4da;
         color: #212529;
         border-radius: 4px;
         transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     }
-    
-    .card-dark .form-control:focus, .card-dark .form-select:focus {
+
+    .card-dark .form-control:focus,
+    .card-dark .form-select:focus {
         border-color: #81afc2;
         box-shadow: 0 0 0 0.2rem rgba(129, 175, 194, 0.25);
     }
-    
+
     /* Estilo para las cabeceras de las tarjetas */
     .card-header-custom {
         background-color: #2a3838;
@@ -66,25 +69,25 @@
         padding: 1rem;
         border-radius: 0.25rem 0.25rem 0 0;
     }
-    
+
     /* Estilos para resaltar secciones y mejorar legibilidad */
     .section-divider {
         border-top: 1px solid rgba(166, 205, 205, 0.3);
         margin: 1.5rem 0;
     }
-    
+
     /* Estilo para tarjetas */
     .card {
         border: none;
         margin-bottom: 1.5rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
-    
+
     /* Espaciado consistente para los campos */
     .mb-3 {
         margin-bottom: 1.25rem !important;
     }
-    
+
     h6 {
         margin-top: 1rem;
         margin-bottom: 1rem;
@@ -112,298 +115,324 @@
 
 
                             <h2 class="text-center mb-4">Silabo</h2>
-<form id="silabo-form" method="POST" action="{% url 'generar_silabo' %}" data-url-generar-silabo="{% url 'generar_silabo' %}" data-url-guardar-silabo="{% url 'guardar_silabo' asignacion.id %}" data-url-guardar-estudio-independiente="{% url 'generar_estudio_independiente' %}">
-    {% csrf_token %}
+                            <form id="silabo-form" method="POST" action="{% url 'generar_silabo' %}"
+                                data-url-generar-silabo="{% url 'generar_silabo' %}"
+                                data-url-guardar-silabo="{% url 'guardar_silabo' asignacion.id %}"
+                                data-url-guardar-estudio-independiente="{% url 'generar_estudio_independiente' %}">
+                                {% csrf_token %}
 
-    <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">
-    <input type="hidden" id="plan" name="plan" value="{{ asignacion.id }}">
+                                <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">
+                                <input type="hidden" id="plan" name="plan" value="{{ asignacion.id }}">
 
-    <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
-        <div class="d-flex align-items-center">
-            <!-- Etiqueta para el select -->
-            <label for="modelo_select" class="form-label mb-0 me-2">Modelo:</label>
+                                <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
+                                    <div class="d-flex align-items-center">
+                                        <!-- Etiqueta para el select -->
+                                        <label for="modelo_select" class="form-label mb-0 me-2">Modelo:</label>
 
-            <!-- Combobox con ancho personalizado -->
-            <select id="modelo_select" name="modelo_select" class="form-select" style="width: 200px;">
-                <option value="google">Google - Gemini-2.5-flash</option>
-                <option value="openai">OpenAI - o4Mini</option>
-                <option value="deepseek">DeepSeek - Chat</option>
-            </select>
-        </div>
+                                        <!-- Combobox con ancho personalizado -->
+                                        <select id="modelo_select" name="modelo_select" class="form-select"
+                                            style="width: 200px;">
+                                            <option value="google">Google - Gemini-2.5-flash</option>
+                                            <option value="openai">OpenAI - o4Mini</option>
+                                            <option value="deepseek">DeepSeek - Chat</option>
+                                        </select>
+                                    </div>
 
-        {% include 'generar_plan_estudio/boton_generar.html' %}
-    </div>
-</form>
+                                    {% include 'generar_plan_estudio/boton_generar.html' %}
+                                </div>
+                            </form>
 
-<form method="post" id="form-guardar-silabo">
-    {% csrf_token %}
+                            <form method="post" id="form-guardar-silabo">
+                                {% csrf_token %}
 
-    <!-- Mostrando errores de formulario -->
-    {% if form.errors %}
-        <div class="alert alert-danger">
-            <ul>
-                {% for field in form %}
-                    {% if field.errors %}
-                        <li>{{ field.label }}: {{ field.errors }}</li>
-                    {% endif %}
-                {% endfor %}
-                {% for error in form.non_field_errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-    {% endif %}
+                                <!-- Mostrando errores de formulario -->
+                                {% if form.errors %}
+                                <div class="alert alert-danger">
+                                    <ul>
+                                        {% for field in form %}
+                                        {% if field.errors %}
+                                        <li>{{ field.label }}: {{ field.errors }}</li>
+                                        {% endif %}
+                                        {% endfor %}
+                                        {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
 
-    <!-- Campo Código -->
-    <div class="mb-3 oculto">
-        <label for="codigo" class="form-label">Código</label>
-        {{ form.codigo|add_class:"form-control" }}
-    </div>
+                                <!-- Campo Código -->
+                                <div class="mb-3 oculto">
+                                    <label for="codigo" class="form-label">Código</label>
+                                    {{ form.codigo|add_class:"form-control" }}
+                                </div>
 
-    <!-- Sección 1: Información general del plan de estudio -->
-    <div class="card mb-4 mt-3">
-        <div class="card-header card-header-custom">
-            <h5 class="mb-0">Información General</h5>
-        </div>
-        <div class="card-body card-dark">
-            <!-- Campo Encuentros -->
-            <div class="mb-3 oculto">
-                <label for="encuentros" class="form-label">Encuentros</label>
-                {{ form.encuentros|add_class:"form-control" }}
-            </div>
+                                <!-- Sección 1: Información general del plan de estudio -->
+                                <div class="card mb-4 mt-3">
+                                    <div class="card-header card-header-custom">
+                                        <h5 class="mb-0">Información General</h5>
+                                    </div>
+                                    <div class="card-body card-dark">
+                                        <!-- Campo Encuentros -->
+                                        <div class="mb-3 oculto">
+                                            <label for="encuentros" class="form-label">Encuentros</label>
+                                            {{ form.encuentros|add_class:"form-control" }}
+                                        </div>
 
-            <!-- Campo Fecha -->
-            <div class="mb-3">
-                <label for="fecha" class="form-label">Fecha</label>
-                {{ form.fecha|add_class:"form-control" }}
-            </div>
+                                        <!-- Campo Fecha -->
+                                        <div class="mb-3">
+                                            <label for="fecha" class="form-label">Fecha</label>
+                                            {{ form.fecha|add_class:"form-control" }}
+                                        </div>
 
-            <!-- Campo Unidad -->
-            <div class="mb-3">
-                <label for="unidad" class="form-label">Unidad</label>
-                {{ form.unidad|add_class:"form-select" }}
-            </div>
+                                        <!-- Campo Unidad -->
+                                        <div class="mb-3">
+                                            <label for="unidad" class="form-label">Unidad</label>
+                                            {{ form.unidad|add_class:"form-select" }}
+                                        </div>
 
-            <!-- Campo Nombre de la Unidad -->
-            <div class="mb-3">
-                <label for="nombre_de_la_unidad" class="form-label">Nombre de la Unidad</label>
-                {{ form.nombre_de_la_unidad|add_class:"form-control" }}
-            </div>
+                                        <!-- Campo Nombre de la Unidad -->
+                                        <div class="mb-3">
+                                            <label for="nombre_de_la_unidad" class="form-label">Nombre de la
+                                                Unidad</label>
+                                            {{ form.nombre_de_la_unidad|add_class:"form-control" }}
+                                        </div>
 
-            <!-- Campo Contenido Temático -->
-            <div class="mb-3">
-                <label for="contenido_tematico" class="form-label">Contenido Temático</label>
-                {{ form.contenido_tematico|add_class:"form-control" }}
-            </div>
-        </div>
-    </div>
+                                        <!-- Campo Contenido Temático -->
+                                        <div class="mb-3">
+                                            <label for="contenido_tematico" class="form-label">Contenido
+                                                Temático</label>
+                                            {{ form.contenido_tematico|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                </div>
 
-    <!-- Sección 2: Objetivos de la unidad -->
-    <div class="card mb-4">
-        <div class="card-header card-header-custom">
-            <h5 class="mb-0">Objetivos</h5>
-        </div>
-        <div class="card-body card-dark">
-            <!-- Campo Objetivo Conceptual -->
-            <div class="mb-3">
-                <label for="objetivo_conceptual" class="form-label">Objetivo Conceptual</label>
-                {{ form.objetivo_conceptual|add_class:"form-control" }}
-            </div>
+                                <!-- Sección 2: Objetivos de la unidad -->
+                                <div class="card mb-4">
+                                    <div class="card-header card-header-custom">
+                                        <h5 class="mb-0">Objetivos</h5>
+                                    </div>
+                                    <div class="card-body card-dark">
+                                        <!-- Campo Objetivo Conceptual -->
+                                        <div class="mb-3">
+                                            <label for="objetivo_conceptual" class="form-label">Objetivo
+                                                Conceptual</label>
+                                            {{ form.objetivo_conceptual|add_class:"form-control" }}
+                                        </div>
 
-            <!-- Campo Objetivo Procedimental -->
-            <div class="mb-3">
-                <label for="objetivo_procedimental" class="form-label">Objetivo Procedimental</label>
-                {{ form.objetivo_procedimental|add_class:"form-control" }}
-            </div>
+                                        <!-- Campo Objetivo Procedimental -->
+                                        <div class="mb-3">
+                                            <label for="objetivo_procedimental" class="form-label">Objetivo
+                                                Procedimental</label>
+                                            {{ form.objetivo_procedimental|add_class:"form-control" }}
+                                        </div>
 
-            <!-- Campo Objetivo Actitudinal -->
-            <div class="mb-3">
-                <label for="objetivo_actitudinal" class="form-label">Objetivo Actitudinal</label>
-                {{ form.objetivo_actitudinal|add_class:"form-control" }}
-            </div>
-        </div>
-    </div>
+                                        <!-- Campo Objetivo Actitudinal -->
+                                        <div class="mb-3">
+                                            <label for="objetivo_actitudinal" class="form-label">Objetivo
+                                                Actitudinal</label>
+                                            {{ form.objetivo_actitudinal|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                </div>
 
-    <!-- Sección 3: Descripción de las fases del acto mental -->
-    <div class="card mb-4">
-        <div class="card-header card-header-custom">
-            <h5 class="mb-0">Descripción de las fases del acto mental</h5>
-        </div>
-        <div class="card-body card-dark">
-            <!-- Primer momento didáctico (fase entrada) -->
-            <h6>Primer Momento Didáctico (Fase Entrada)</h6>
-            <div class="mb-3">
-                <label for="tipo_primer_momento" class="form-label">Tipo de Enseñanza</label>
-                {{ form.tipo_primer_momento|add_class:"form-select" }}
-            </div>
-            <div class="mb-3">
-                <label for="detalle_primer_momento" class="form-label">Detalle</label>
-                {{ form.detalle_primer_momento|add_class:"form-control" }}
-            </div>
-            <div class="mb-3">
-                <label for="tiempo_primer_momento" class="form-label">Tiempo (minutos)</label>
-                {{ form.tiempo_primer_momento|add_class:"form-control tiempo_minutos" }}
-            </div>
-            <div class="mb-3">
-                <label for="recursos_primer_momento" class="form-label">Recursos Didácticos</label>
-                {{ form.recursos_primer_momento|add_class:"form-control" }}
-            </div>
+                                <!-- Sección 3: Descripción de las fases del acto mental -->
+                                <div class="card mb-4">
+                                    <div class="card-header card-header-custom">
+                                        <h5 class="mb-0">Descripción de las fases del acto mental</h5>
+                                    </div>
+                                    <div class="card-body card-dark">
+                                        <!-- Primer momento didáctico (fase entrada) -->
+                                        <h6>Primer Momento Didáctico (Fase Entrada)</h6>
+                                        <div class="mb-3">
+                                            <label for="tipo_primer_momento" class="form-label">Tipo de
+                                                Enseñanza</label>
+                                            {{ form.tipo_primer_momento|add_class:"form-select" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="detalle_primer_momento" class="form-label">Detalle</label>
+                                            {{ form.detalle_primer_momento|add_class:"form-control" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tiempo_primer_momento" class="form-label">Tiempo
+                                                (minutos)</label>
+                                            {{ form.tiempo_primer_momento|add_class:"form-control tiempo_minutos" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="recursos_primer_momento" class="form-label">Recursos
+                                                Didácticos</label>
+                                            {{ form.recursos_primer_momento|add_class:"form-control" }}
+                                        </div>
 
-            <!-- Segundo momento didáctico (fase elaboración) -->
-            <h6 class="mt-4">Segundo Momento Didáctico (Fase Elaboración)</h6>
-            <div class="mb-3">
-                <label for="tipo_segundo_momento_claseteoria" class="form-label">Tipo de Enseñanza - Clase Teórica</label>
-                {{ form.tipo_segundo_momento_claseteoria|add_class:"form-select" }}
-            </div>
-            <div class="mb-3">
-                <label for="clase_teorica" class="form-label">Clase Teórica</label>
-                {{ form.clase_teorica|add_class:"form-control" }}
-            </div>
-            <div class="mb-3">
-                <label for="tipo_segundo_momento_practica" class="form-label">Tipo de Enseñanza - Clase Práctica</label>
-                {{ form.tipo_segundo_momento_practica|add_class:"form-select" }}
-            </div>
-            <div class="mb-3">
-                <label for="clase_practica" class="form-label">Clase Práctica</label>
-                {{ form.clase_practica|add_class:"form-control" }}
-            </div>
-            <div class="mb-3">
-                <label for="tiempo_segundo_momento_teorica" class="form-label">Tiempo clase teorica (minutos)</label>
-                {{ form.tiempo_segundo_momento_teorica|add_class:"form-control tiempo_minutos" }}
-            </div>
-            <div class="mb-3">
-                <label for="tiempo_segundo_momento_practica" class="form-label">Tiempo clase practica (minutos)</label>
-                {{ form.tiempo_segundo_momento_practica|add_class:"form-control tiempo_minutos" }}
-            </div>
-            <div class="mb-3">
-                <label for="recursos_segundo_momento" class="form-label">Recursos Didácticos</label>
-                {{ form.recursos_segundo_momento|add_class:"form-control" }}
-            </div>
+                                        <!-- Segundo momento didáctico (fase elaboración) -->
+                                        <h6 class="mt-4">Segundo Momento Didáctico (Fase Elaboración)</h6>
+                                        <div class="mb-3">
+                                            <label for="tipo_segundo_momento_claseteoria" class="form-label">Tipo de
+                                                Enseñanza - Clase Teórica</label>
+                                            {{ form.tipo_segundo_momento_claseteoria|add_class:"form-select" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="clase_teorica" class="form-label">Clase Teórica</label>
+                                            {{ form.clase_teorica|add_class:"form-control" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tipo_segundo_momento_practica" class="form-label">Tipo de
+                                                Enseñanza - Clase Práctica</label>
+                                            {{ form.tipo_segundo_momento_practica|add_class:"form-select" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="clase_practica" class="form-label">Clase Práctica</label>
+                                            {{ form.clase_practica|add_class:"form-control" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tiempo_segundo_momento_teorica" class="form-label">Tiempo clase
+                                                teorica (minutos)</label>
+                                            {{ form.tiempo_segundo_momento_teorica|add_class:"form-control tiempo_minutos" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tiempo_segundo_momento_practica" class="form-label">Tiempo clase
+                                                practica (minutos)</label>
+                                            {{ form.tiempo_segundo_momento_practica|add_class:"form-control tiempo_minutos" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="recursos_segundo_momento" class="form-label">Recursos
+                                                Didácticos</label>
+                                            {{ form.recursos_segundo_momento|add_class:"form-control" }}
+                                        </div>
 
-            <!-- Tercer momento didáctico (fase salida) -->
-            <h6 class="mt-4">Tercer Momento Didáctico (Fase Salida)</h6>
-            <div class="mb-3">
-                <label for="tipo_tercer_momento" class="form-label">Tipo de Enseñanza</label>
-                    {{ form.tipo_tercer_momento }}
-
-
-            </div>
-            <div class="mb-3">
-                <label for="detalle_tercer_momento" class="form-label">Detalle</label>
-                {{ form.detalle_tercer_momento|add_class:"form-control" }}
-            </div>
-            <div class="mb-3">
-                <label for="tiempo_tercer_momento" class="form-label">Tiempo (minutos)</label>
-                {{ form.tiempo_tercer_momento|add_class:"form-control tiempo_minutos" }}
-            </div>
-            <div class="mb-3">
-                <label for="recursos_tercer_momento" class="form-label">Recursos Didácticos</label>
-                {{ form.recursos_tercer_momento|add_class:"form-control" }}
-            </div>
-
-            <!-- Ejes transversales -->
-            <h6>Ejes Transversal</h6>
-            <div class="mb-3">
-                <label for="eje_transversal" class="form-label"></label>
-                {{ form.eje_transversal }}
-            </div>
-            <div class="mb-3">
-                <label for="detalle_eje_transversal" class="form-label">Detalle Eje Transversal</label>
-                {{ form.detalle_eje_transversal|add_class:"form-control" }}
-            </div>
-        </div>
-    </div>
-
-    <!-- Sección 4: Evaluación dinámica -->
-    <div class="card mb-4">
-        <div class="card-header card-header-custom">
-            <h5 class="mb-0">Evaluación Dinámica</h5>
-        </div>
-        <div class="card-body card-dark">
-            <div class="mb-3">
-                <label for="actividad_aprendizaje" class="form-label">Actividad de Aprendizaje</label>
-                {{ form.actividad_aprendizaje|add_class:"form-control" }}
-            </div>
-            <div class="mb-3">
-                <label for="tecnica_evaluacion" class="form-label">Técnica de Evaluación</label>
-                {{ form.tecnica_evaluacion }}
-            </div>
-            <div class="mb-3">
-                <label for="tipo_evaluacion" class="form-label">Tipo de Evaluación</label>
-                {{ form.tipo_evaluacion }}
-            </div>
-            <div class="mb-3">
-                <label for="periodo_tiempo_programado" class="form-label">Periodo de Tiempo Programado</label>
-                {{ form.periodo_tiempo_programado|add_class:"form-select" }}
-            </div>
-            <div class="mb-3">
-                <label for="tiempo_minutos" class="form-label">Tiempo en Minutos</label>
-                {{ form.tiempo_minutos|add_class:"form-control tiempo_minutos" }}
-            </div>
-            <div class="mb-3">
-                <label for="agente_evaluador" class="form-label">Agente Evaluador</label>
-                {{ form.agente_evaluador }}
-            </div>
-            <div class="mb-3">
-                <label for="instrumento_evaluacion" class="form-label">Instrumento de Evaluación</label>
-                {{ form.instrumento_evaluacion|add_class:"form-select" }}
-            </div>
-            <div class="mb-3">
-                <label for="criterios_evaluacion" class="form-label">Criterios de Evaluación</label>
-                {{ form.criterios_evaluacion|add_class:"form-control" }}
-            </div>
-            <div class="mb-3">
-                <label for="puntaje" class="form-label">Puntaje</label>
-                {{ form.puntaje|add_class:"form-control" }}
-            </div>
+                                        <!-- Tercer momento didáctico (fase salida) -->
+                                        <h6 class="mt-4">Tercer Momento Didáctico (Fase Salida)</h6>
+                                        <div class="mb-3 form-check-group-container">
+                                            <label for="tipo_tercer_momento" class="form-label">Tipo de
+                                                Enseñanza</label>
+                                            {{ form.tipo_tercer_momento }}
 
 
-            <div class="mb-3">
-                <label for="tiempo_total" class="form-label">Tiempo Total (minutos)</label>
-                <div class="input-group">
-                    <span class="input-group-text">Tiempo Total</span>
-                    <input type="text" class="form-control" id="tiempo_total" readonly>
-                </div>
-            </div>
-            <script>
-                // Función para calcular la suma de todos los tiempos
-                function calcularTiempoTotal() {
-                    console.log('calcularTiempoTotal_01: Función llamada.');
-                    let tiempo_total = 0;
-                    let count = 0;
-                    $(".tiempo_minutos").each(function(index) {
-                        count++;
-                        let rawValue = $(this).val();
-                        let elementId = $(this).attr('id') || 'no-id';
-                        console.log(`calcularTiempoTotal_02: Campo ${index} (ID: ${elementId}), valor crudo: '${rawValue}'`);
-                        let valor = parseInt(rawValue);
-                        console.log(`calcularTiempoTotal_03: Campo ${index} (ID: ${elementId}), valor parseado: ${valor}`);
-                        if (!isNaN(valor)) {
-                            tiempo_total += valor;
-                            console.log(`calcularTiempoTotal_04: Campo ${index} (ID: ${elementId}), tiempo_total acumulado: ${tiempo_total}`);
-                        } else {
-                            console.log(`calcularTiempoTotal_05: Campo ${index} (ID: ${elementId}), valor no es un número (NaN).`);
-                        }
-                    });
-                    console.log(`calcularTiempoTotal_06: Total de campos .tiempo_minutos encontrados: ${count}`);
-                    console.log(`calcularTiempoTotal_07: Tiempo total final calculado: ${tiempo_total}`);
-                    $("#tiempo_total").val(tiempo_total);
-                }
-                // Llamar a la función cada vez que se cambia un valor de tiempo (evento input para reacción inmediata)
-                $(document).ready(function() {
-                    // Asegurarse de que los listeners se adjuntan después de que el DOM esté listo
-                    // y que los elementos existan.
-                    console.log('calcularTiempoTotal_08: Adjuntando listener de input a .tiempo_minutos');
-                    $(document).on('input', '.tiempo_minutos', calcularTiempoTotal);
-                    // Llamar a la función al cargar la página para inicializar
-                    console.log('calcularTiempoTotal_09: Llamando a calcularTiempoTotal al cargar la página.');
-                    calcularTiempoTotal();
-                });
-            </script>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="detalle_tercer_momento" class="form-label">Detalle</label>
+                                            {{ form.detalle_tercer_momento|add_class:"form-control" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tiempo_tercer_momento" class="form-label">Tiempo
+                                                (minutos)</label>
+                                            {{ form.tiempo_tercer_momento|add_class:"form-control tiempo_minutos" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="recursos_tercer_momento" class="form-label">Recursos
+                                                Didácticos</label>
+                                            {{ form.recursos_tercer_momento|add_class:"form-control" }}
+                                        </div>
 
-        </div>
-    </div>
-</form>
+                                        <!-- Ejes transversales -->
+                                        <h6>Ejes Transversal</h6>
+                                        <div class="mb-3 form-check-group-container">
+                                            <label for="eje_transversal" class="form-label"></label>
+                                            {{ form.eje_transversal }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="detalle_eje_transversal" class="form-label">Detalle Eje
+                                                Transversal</label>
+                                            {{ form.detalle_eje_transversal|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sección 4: Evaluación dinámica -->
+                                <div class="card mb-4">
+                                    <div class="card-header card-header-custom">
+                                        <h5 class="mb-0">Evaluación Dinámica</h5>
+                                    </div>
+                                    <div class="card-body card-dark">
+                                        <div class="mb-3">
+                                            <label for="actividad_aprendizaje" class="form-label">Actividad de
+                                                Aprendizaje</label>
+                                            {{ form.actividad_aprendizaje|add_class:"form-control" }}
+                                        </div>
+                                        <div class="mb-3 form-check-group-container">
+                                            <label for="tecnica_evaluacion" class="form-label">Técnica de
+                                                Evaluación</label>
+                                            {{ form.tecnica_evaluacion }}
+                                        </div>
+                                        <div class="mb-3 form-check-group-container">
+                                            <label for="tipo_evaluacion" class="form-label">Tipo de Evaluación</label>
+                                            {{ form.tipo_evaluacion }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="periodo_tiempo_programado" class="form-label">Periodo de Tiempo
+                                                Programado</label>
+                                            {{ form.periodo_tiempo_programado|add_class:"form-select" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tiempo_minutos" class="form-label">Tiempo en Minutos</label>
+                                            {{ form.tiempo_minutos|add_class:"form-control tiempo_minutos" }}
+                                        </div>
+                                        <div class="mb-3 form-check-group-container">
+                                            <label for="agente_evaluador" class="form-label">Agente Evaluador</label>
+                                            {{ form.agente_evaluador }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="instrumento_evaluacion" class="form-label">Instrumento de
+                                                Evaluación</label>
+                                            {{ form.instrumento_evaluacion|add_class:"form-select" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="criterios_evaluacion" class="form-label">Criterios de
+                                                Evaluación</label>
+                                            {{ form.criterios_evaluacion|add_class:"form-control" }}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="puntaje" class="form-label">Puntaje</label>
+                                            {{ form.puntaje|add_class:"form-control" }}
+                                        </div>
+
+
+                                        <div class="mb-3">
+                                            <label for="tiempo_total" class="form-label">Tiempo Total (minutos)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">Tiempo Total</span>
+                                                <input type="text" class="form-control" id="tiempo_total" readonly>
+                                            </div>
+                                        </div>
+                                        <script>
+                                            // Función para calcular la suma de todos los tiempos
+                                            function calcularTiempoTotal() {
+                                                console.log('calcularTiempoTotal_01: Función llamada.');
+                                                let tiempo_total = 0;
+                                                let count = 0;
+                                                $(".tiempo_minutos").each(function (index) {
+                                                    count++;
+                                                    let rawValue = $(this).val();
+                                                    let elementId = $(this).attr('id') || 'no-id';
+                                                    console.log(`calcularTiempoTotal_02: Campo ${index} (ID: ${elementId}), valor crudo: '${rawValue}'`);
+                                                    let valor = parseInt(rawValue);
+                                                    console.log(`calcularTiempoTotal_03: Campo ${index} (ID: ${elementId}), valor parseado: ${valor}`);
+                                                    if (!isNaN(valor)) {
+                                                        tiempo_total += valor;
+                                                        console.log(`calcularTiempoTotal_04: Campo ${index} (ID: ${elementId}), tiempo_total acumulado: ${tiempo_total}`);
+                                                    } else {
+                                                        console.log(`calcularTiempoTotal_05: Campo ${index} (ID: ${elementId}), valor no es un número (NaN).`);
+                                                    }
+                                                });
+                                                console.log(`calcularTiempoTotal_06: Total de campos .tiempo_minutos encontrados: ${count}`);
+                                                console.log(`calcularTiempoTotal_07: Tiempo total final calculado: ${tiempo_total}`);
+                                                $("#tiempo_total").val(tiempo_total);
+                                            }
+                                            // Llamar a la función cada vez que se cambia un valor de tiempo (evento input para reacción inmediata)
+                                            $(document).ready(function () {
+                                                // Asegurarse de que los listeners se adjuntan después de que el DOM esté listo
+                                                // y que los elementos existan.
+                                                console.log('calcularTiempoTotal_08: Adjuntando listener de input a .tiempo_minutos');
+                                                $(document).on('input', '.tiempo_minutos', calcularTiempoTotal);
+                                                // Llamar a la función al cargar la página para inicializar
+                                                console.log('calcularTiempoTotal_09: Llamando a calcularTiempoTotal al cargar la página.');
+                                                calcularTiempoTotal();
+                                            });
+                                        </script>
+
+                                    </div>
+                                </div>
+                            </form>
 
 
 
@@ -423,7 +452,8 @@
                     </div>
                     <div class="custom-alert-content">
                         <h4 class="mb-2">¡Atención!</h4>
-                        <p class="mb-0">Esta IA puede cometer errores. Por favor, revise la información cuidadosamente antes de guardarla.</p>
+                        <p class="mb-0">Esta IA puede cometer errores. Por favor, revise la información cuidadosamente
+                            antes de guardarla.</p>
                     </div>
                 </div>
             </div>
@@ -537,9 +567,11 @@
         0% {
             box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
         }
+
         70% {
             box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
         }
+
         100% {
             box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
         }
@@ -566,6 +598,7 @@
             opacity: 0;
             transform: translate(-50%, -60%);
         }
+
         to {
             opacity: 1;
             transform: translate(-50%, -50%);
@@ -627,9 +660,11 @@
         0% {
             box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
         }
+
         50% {
             box-shadow: 0 0 10px rgba(255, 152, 0, 0.8);
         }
+
         100% {
             box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
         }
@@ -643,6 +678,19 @@
         background-size: 20px;
         padding-right: 40px;
     }
+
+    /* Estilos para validación de grupos de checkboxes */
+    .border-danger-group {
+        border: 1px solid #dc3545;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .border-success-group {
+        border: 1px solid #198754;
+        padding: 10px;
+        border-radius: 5px;
+    }
 </style>
 
 
@@ -651,43 +699,43 @@
 <!-- NUEVO SCRIPT PARA LIMITAR SELECCIÓN DE CHECKBOXES -->
 <!-- ======================================================= -->
 <script>
-$(document).ready(function() {
-    /**
-     * Función para limitar el número de checkboxes que se pueden seleccionar en un grupo.
-     * @param {string} checkboxName - El atributo 'name' del grupo de checkboxes.
-     * @param {number} limit - El número máximo de selecciones permitidas.
-     */
-    function limitCheckboxSelection(checkboxName, limit) {
-        // Adjuntar un evento 'change' a todos los checkboxes con el nombre especificado.
-        $('input[name="' + checkboxName + '"]').on('change', function() {
-            // Contar cuántos checkboxes de este grupo están actualmente seleccionados.
-            const checkedCount = $('input[name="' + checkboxName + '"]:checked').length;
+    $(document).ready(function () {
+        /**
+         * Función para limitar el número de checkboxes que se pueden seleccionar en un grupo.
+         * @param {string} checkboxName - El atributo 'name' del grupo de checkboxes.
+         * @param {number} limit - El número máximo de selecciones permitidas.
+         */
+        function limitCheckboxSelection(checkboxName, limit) {
+            // Adjuntar un evento 'change' a todos los checkboxes con el nombre especificado.
+            $('input[name="' + checkboxName + '"]').on('change', function () {
+                // Contar cuántos checkboxes de este grupo están actualmente seleccionados.
+                const checkedCount = $('input[name="' + checkboxName + '"]:checked').length;
 
-            // Obtener todos los checkboxes del grupo.
-            const allCheckboxes = $('input[name="' + checkboxName + '"]');
+                // Obtener todos los checkboxes del grupo.
+                const allCheckboxes = $('input[name="' + checkboxName + '"]');
 
-            if (checkedCount >= limit) {
-                // Si el número de seleccionados alcanza o supera el límite,
-                // deshabilitar todos los que NO están seleccionados.
-                allCheckboxes.not(':checked').prop('disabled', true);
-            } else {
-                // Si se deselecciona uno y el conteo es menor que el límite,
-                // habilitar todos los checkboxes del grupo nuevamente.
-                allCheckboxes.prop('disabled', false);
-            }
-        });
+                if (checkedCount >= limit) {
+                    // Si el número de seleccionados alcanza o supera el límite,
+                    // deshabilitar todos los que NO están seleccionados.
+                    allCheckboxes.not(':checked').prop('disabled', true);
+                } else {
+                    // Si se deselecciona uno y el conteo es menor que el límite,
+                    // habilitar todos los checkboxes del grupo nuevamente.
+                    allCheckboxes.prop('disabled', false);
+                }
+            });
 
-        // Opcional: Ejecutar la lógica al cargar la página por si el formulario
-        // viene con valores pre-seleccionados desde el servidor.
-        $('input[name="' + checkboxName + '"]').first().trigger('change');
-    }
+            // Opcional: Ejecutar la lógica al cargar la página por si el formulario
+            // viene con valores pre-seleccionados desde el servidor.
+            $('input[name="' + checkboxName + '"]').first().trigger('change');
+        }
 
-    // Aplicar la función a los grupos de checkboxes deseados con un límite de 2.
-    limitCheckboxSelection('eje_transversal', 2);
-    limitCheckboxSelection('tecnica_evaluacion', 2);
-    limitCheckboxSelection('agente_evaluador', 2);
-    limitCheckboxSelection('tipo_evaluacion', 2);
-});
+        // Aplicar la función a los grupos de checkboxes deseados con un límite de 2.
+        limitCheckboxSelection('eje_transversal', 2);
+        limitCheckboxSelection('tecnica_evaluacion', 2);
+        limitCheckboxSelection('agente_evaluador', 2);
+        limitCheckboxSelection('tipo_evaluacion', 2);
+    });
 </script>
 
 
