@@ -445,6 +445,11 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
 
         asignaturas = Asignatura.objects.all()
 
+        # Obtener el plan temático efectivo y calcular unidades completadas
+        plan_tematico = asignacion.plan_de_estudio.get_plan_tematico_efectivo()
+        num_unidades = plan_tematico.get_numero_unidades_completadas() if plan_tematico else 0
+        mostrar_ia = num_unidades >= 2
+
         return render(
             request,
             "formulario_silabo.html",
@@ -455,6 +460,7 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
                 "silabos_creados": silabos_creados,
                 "encuentro": silabos_creados + 1,
                 "asignaturas": asignaturas,
+                "mostrar_ia": mostrar_ia,
             },
         )
 
@@ -541,6 +547,11 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
         periodo_tiempo_choices = Silabo.PERIODO_TIEMPO_LIST
         tipo_objetivo_choices = Guia.TIPO_OBJETIVO_LIST
 
+        # Obtener el plan temático efectivo y calcular unidades completadas
+        plan_tematico = asignacion.plan_de_estudio.get_plan_tematico_efectivo()
+        num_unidades = plan_tematico.get_numero_unidades_completadas() if plan_tematico else 0
+        mostrar_ia = num_unidades >= 2
+
         return render(
             request,
             "formulario_estudio_independiente.html",
@@ -558,6 +569,7 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
                 "agente_evaluador_choices": agente_evaluador_choices,
                 "periodo_tiempo_choices": periodo_tiempo_choices,
                 "tipo_objetivo_choices": tipo_objetivo_choices,
+                "mostrar_ia": mostrar_ia,
             },
         )
 

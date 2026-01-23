@@ -110,6 +110,22 @@ class Plan_de_estudio(models.Model):
             if existing_assignment:
                 raise ValidationError("Este plan temático ya está asignado a otro plan de estudio.")
 
+    def get_plan_tematico_efectivo(self):
+        """
+        Devuelve el PlanTematico asociado, ya sea por la relación directa (plan_tematico_ref)
+        o por la relación inversa (plantematicos_asociados).
+        Priotiza la relación directa.
+        """
+        if self.plan_tematico_ref:
+            return self.plan_tematico_ref
+        
+        # Verificar relación inversa
+        asociado = self.plantematicos_asociados.first()
+        if asociado:
+            return asociado
+            
+        return None
+
 
 class AsignacionPlanEstudio(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)

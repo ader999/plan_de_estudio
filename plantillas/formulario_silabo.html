@@ -124,6 +124,7 @@
                                 <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">
                                 <input type="hidden" id="plan" name="plan" value="{{ asignacion.id }}">
 
+                                {% if mostrar_ia %}
                                 <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
                                     <div class="d-flex align-items-center">
                                         <!-- Etiqueta para el select -->
@@ -140,6 +141,7 @@
 
                                     {% include 'generar_plan_estudio/boton_generar.html' %}
                                 </div>
+                                {% endif %}
                             </form>
 
                             <form method="post" id="form-guardar-silabo">

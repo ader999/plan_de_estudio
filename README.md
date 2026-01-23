@@ -24,7 +24,7 @@ El proyecto permite a los docentes y administradores gestionar la información a
 
 1.  **Clonar el repositorio:**
     ```bash
-    git clone <url-del-repositorio>
+    git clone <https://github.com/ader999/plan_de_estudio.git>
     cd plan_de_estudio
     ```
 
