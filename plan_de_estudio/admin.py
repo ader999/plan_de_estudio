@@ -106,6 +106,7 @@ class UsuarioConSilabosFilter(admin.SimpleListFilter):
 
 class FiltarSilabo(admin.ModelAdmin):
     list_display = ('encuentros',  'asignacion_plan', 'fecha')
+    list_per_page = 20
     list_filter = (
         ('fecha', DateFieldListFilter),  # Utiliza el widget de fecha aquí
         ('asignacion_plan__plan_de_estudio__asignatura__nombre', admin.AllValuesFieldListFilter),  # Filtro por nombre de asignatura
@@ -132,6 +133,7 @@ class FiltarSilabo(admin.ModelAdmin):
 
 class FiltrarGuia(admin.ModelAdmin):
     list_filter = ('silabo__codigo',)
+    list_per_page = 20
     readonly_fields = ('silabo', 'numero_encuentro', 'fecha')  # Campos que solo serán de lectura
 
 
@@ -221,6 +223,10 @@ class PlanTematicoAdmin(admin.ModelAdmin):
     list_display = ('plan_estudio', 'unidades_completadas_count', 'planes_de_estudio_related', 'completado_icono')
     list_filter = (CompletadoFilter,)
     search_fields = ('plan_estudio__codigo', 'plan_estudio__asignatura__nombre')
+    list_per_page = 20
+
+    def has_add_permission(self, request):
+        return False
 
     def unidades_completadas_count(self, obj):
         return obj.get_numero_unidades_completadas()

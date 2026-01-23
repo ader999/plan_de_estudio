@@ -49,7 +49,7 @@ def usar_modelo_google(prompt_completo, generation_config):
 
         # Crear el modelo y sesión de chat
         model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
+            model_name="gemini-3-flash-preview",
             generation_config=generation_config
         )
         chat_session = model.start_chat()

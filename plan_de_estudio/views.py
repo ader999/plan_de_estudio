@@ -869,7 +869,7 @@ def generar_silabo(request):
     from plan_de_estudio.ai_generators import generar_respuesta_ai, get_default_config
     import json
     from django.db.models import Q
-    from plan_de_estudio.models import AsignacionPlanEstudio, Silabo, PlanTematico
+    from plan_de_estudio.models import AsignacionPlanEstudio, Silabo, PlanTematico, ProgramaAsignatura2026, Guia
 
     if request.method == "POST":
         # Obtener los datos del formulario
@@ -885,7 +885,7 @@ def generar_silabo(request):
         try:
             # Convertir a entero para asegurar que es un número válido
             encuentro = int(encuentro)
-            if encuentro < 1 or encuentro > 12:
+            if encuentro < 1 or encuentro > 11:
                 return JsonResponse(
                     {"error": "El número de encuentro debe estar entre 1 y 12"},
                     status=400,
@@ -900,15 +900,52 @@ def generar_silabo(request):
             # Obtener la asignación del plan de estudio
             asignacion = AsignacionPlanEstudio.objects.get(id=plan_id)
 
-            # Obtener el plan temático relacionado
-            plan_tematico = PlanTematico.objects.filter(
+            # Obtener información de la asignatura (Prioridad: Programa 2026, Fallback: Plan Temático)
+            programa_2026 = ProgramaAsignatura2026.objects.filter(
                 plan_estudio=asignacion.plan_de_estudio
             ).first()
-            if not plan_tematico:
-                return JsonResponse(
-                    {"error": "No se encontró un plan temático para esta asignación"},
-                    status=400,
-                )
+
+            contexto_asignatura = ""
+
+            if programa_2026:
+                contexto_asignatura += f"FUNDAMENTACIÓN: {programa_2026.fundamentacion}\n"
+                contexto_asignatura += f"OBJETIVOS GENERALES:\nConceptual: {programa_2026.objetivo_conceptual}\nProcedimental: {programa_2026.objetivo_procedimental}\nActitudinal: {programa_2026.objetivo_actitudinal}\n"
+                contexto_asignatura += f"EJES TRANSVERSALES PROGRAMA: {programa_2026.ejes_transversales}\n\n"
+                contexto_asignatura += "UNIDADES TEMÁTICAS:\n"
+
+                # Iterar sobre las 6 unidades posibles
+                for i in range(1, 7):
+                    nombre = getattr(programa_2026, f'unidad_{i}_nombre', '')
+                    if nombre:
+                        contexto_asignatura += f"\n--- UNIDAD {i}: {nombre} ---\n"
+                        contexto_asignatura += f"Objetivos Específicos: {getattr(programa_2026, f'unidad_{i}_objetivos_especificos', 'No especificado')}\n"
+                        contexto_asignatura += f"Contenido Temático: {getattr(programa_2026, f'unidad_{i}_contenido', 'No especificado')}\n"
+                        contexto_asignatura += f"Mediación Pedagógica: {getattr(programa_2026, f'unidad_{i}_mediacion', 'No especificado')}\n"
+                        contexto_asignatura += f"Evaluación: {getattr(programa_2026, f'unidad_{i}_evaluacion', 'No especificado')}\n"
+
+            else:
+                # Fallback a Plan Temático antiguo
+                plan_tematico = PlanTematico.objects.filter(
+                    plan_estudio=asignacion.plan_de_estudio
+                ).first()
+
+                if not plan_tematico:
+                    return JsonResponse(
+                        {"error": "No se encontró información del programa (ni Programa 2026 ni Plan Temático)"},
+                        status=400,
+                    )
+
+                contexto_asignatura = f"""
+                INFORMACIÓN DEL PLAN TEMÁTICO (LEGADO):
+                Unidad: {plan_tematico.unidades}
+                Nombre de la unidad: {plan_tematico.nombre_de_la_unidad}
+                Objetivos específicos: {plan_tematico.objetivo_especificos}
+                Plan analítico: {plan_tematico.plan_analitico}
+                Recomendaciones metodológicas: {plan_tematico.recomendaciones_metodologicas}
+
+                CONTENIDO TEMÁTICO COMPLETO:
+                {plan_tematico.plan_analitico}
+                """
 
             # Obtener los sílabos ya generados para esta asignación
             silabos_existentes = Silabo.objects.filter(
@@ -917,6 +954,7 @@ def generar_silabo(request):
 
             # Convertir los sílabos existentes a un formato que podamos usar en el prompt
             silabos_previos = []
+            guias_previas = []
             for silabo in silabos_existentes:
                 if (
                     silabo.encuentros < encuentro
@@ -931,6 +969,18 @@ def generar_silabo(request):
                         "objetivo_actitudinal": silabo.objetivo_actitudinal,
                     }
                     silabos_previos.append(silabo_dict)
+
+                    if silabo.guia:
+                        guia_dict = {
+                            "encuentro": silabo.encuentros,
+                            "actividades_guia": [
+                                silabo.guia.actividad_aprendizaje_1,
+                                silabo.guia.actividad_aprendizaje_2,
+                                silabo.guia.actividad_aprendizaje_3,
+                                silabo.guia.actividad_aprendizaje_4,
+                            ]
+                        }
+                        guias_previas.append(guia_dict)
 
             # Verificar si ya existe un sílabo para este encuentro
             silabo_actual = Silabo.objects.filter(
@@ -982,22 +1032,18 @@ def generar_silabo(request):
         prompt_completo = f"""
             Instrucciones: Crea un sílabo basado en la siguiente información y devuélvelo en formato JSON estructurado.
 
-            Estás creando el sílabo para el encuentro {encuentro} de 12 encuentros.
+            Estás creando el sílabo para el encuentro {encuentro} de 11 encuentros.
             Plan de estudio: {str(asignacion.plan_de_estudio)}
             Asignatura: {asignacion.plan_de_estudio.asignatura.nombre}
 
-            INFORMACIÓN DEL PLAN TEMÁTICO:
-            Unidad: {plan_tematico.unidades}
-            Nombre de la unidad: {plan_tematico.nombre_de_la_unidad}
-            Objetivos específicos: {plan_tematico.objetivo_especificos}
-            Plan analítico: {plan_tematico.plan_analitico}
-            Recomendaciones metodológicas: {plan_tematico.recomendaciones_metodologicas}
-
-            CONTENIDO TEMÁTICO COMPLETO:
-            {plan_tematico.plan_analitico}
+            INFORMACIÓN DETALLADA DE LA ASIGNATURA:
+            {contexto_asignatura}
 
             {"SÍLABOS PREVIOS YA GENERADOS:" if silabos_previos else "Este es el primer encuentro, no hay sílabos previos."}
             {json.dumps(silabos_previos, indent=2, ensure_ascii=False) if silabos_previos else ""}
+
+            {"ACTIVIDADES DE GUÍAS PREVIAS (NO REPETIR EN CLASE):" if guias_previas else ""}
+            {json.dumps(guias_previas, indent=2, ensure_ascii=False) if guias_previas else ""}
 
             Utiliza la siguiente estructura de datos y opciones disponibles:
 
@@ -1025,14 +1071,15 @@ def generar_silabo(request):
             ```
 
             INSTRUCCIONES ESPECÍFICAS:
-            1. Divide el contenido temático completo en 12 encuentros de manera coherente y progresiva.
+            1. Divide el contenido temático completo en 11 encuentros de manera coherente y progresiva.
             2. Para el encuentro {encuentro}, selecciona la parte correspondiente del contenido temático.
             3. NO repitas contenido que ya se ha cubierto en encuentros anteriores.
-            4. Si es el primer encuentro, comienza con una introducción general.
-            5. Si hay encuentros previos, continúa desde donde se quedaron.
-            6. Asegúrate de que haya una progresión lógica entre los encuentros.
-            7. Adapta los objetivos y actividades al contenido específico de este encuentro.
-            8. Usa la misma estructura JSON que el ejemplo proporcionado.
+            4. IMPORTANTE: En la sección 'actividad_aprendizaje' (Actividad Dinámica / Trabajo en clase), NO repitas ejercicios o actividades que ya se hayan dejado en las Guías de Estudio Independiente (ver ACTIVIDADES DE GUÍAS PREVIAS). La actividad en clase debe ser diferente y complementaria.
+            5. Si es el primer encuentro, comienza con una introducción general.
+            6. Si hay encuentros previos, continúa desde donde se quedaron.
+            7. Asegúrate de que haya una progresión lógica entre los encuentros.
+            8. Adapta los objetivos y actividades al contenido específico de este encuentro.
+            9. Usa la misma estructura JSON que el ejemplo proporcionado.
 
             Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior,
             pero adaptado al encuentro {encuentro} y al plan de estudio proporcionado.
@@ -1159,6 +1206,52 @@ def generar_estudio_independiente(request):
 
             print(f"Usando asignación: {asignacion}, Sílabo: {silabo}")
 
+            # Obtener información de la asignatura para dar contexto
+            from plan_de_estudio.models import ProgramaAsignatura2026, PlanTematico
+
+            programa_2026 = ProgramaAsignatura2026.objects.filter(
+                plan_estudio=asignacion.plan_de_estudio
+            ).first()
+
+            contexto_asignatura = ""
+
+            if programa_2026:
+                contexto_asignatura += f"FUNDAMENTACIÓN: {programa_2026.fundamentacion}\n"
+                contexto_asignatura += f"OBJETIVOS GENERALES:\nConceptual: {programa_2026.objetivo_conceptual}\nProcedimental: {programa_2026.objetivo_procedimental}\nActitudinal: {programa_2026.objetivo_actitudinal}\n"
+                contexto_asignatura += (
+                    f"EJES TRANSVERSALES PROGRAMA: {programa_2026.ejes_transversales}\n\n"
+                )
+                contexto_asignatura += "UNIDADES TEMÁTICAS:\n"
+
+                # Iterar sobre las 6 unidades posibles
+                for i in range(1, 7):
+                    nombre = getattr(programa_2026, f"unidad_{i}_nombre", "")
+                    if nombre:
+                        contexto_asignatura += f"\n--- UNIDAD {i}: {nombre} ---\n"
+                        contexto_asignatura += f"Objetivos Específicos: {getattr(programa_2026, f'unidad_{i}_objetivos_especificos', 'No especificado')}\n"
+                        contexto_asignatura += f"Contenido Temático: {getattr(programa_2026, f'unidad_{i}_contenido', 'No especificado')}\n"
+                        contexto_asignatura += f"Mediación Pedagógica: {getattr(programa_2026, f'unidad_{i}_mediacion', 'No especificado')}\n"
+                        contexto_asignatura += f"Evaluación: {getattr(programa_2026, f'unidad_{i}_evaluacion', 'No especificado')}\n"
+
+            else:
+                # Fallback a Plan Temático antiguo
+                plan_tematico = PlanTematico.objects.filter(
+                    plan_estudio=asignacion.plan_de_estudio
+                ).first()
+
+                if plan_tematico:
+                    contexto_asignatura = f"""
+                    INFORMACIÓN DEL PLAN TEMÁTICO (LEGADO):
+                    Unidad: {plan_tematico.unidades}
+                    Nombre de la unidad: {plan_tematico.nombre_de_la_unidad}
+                    Objetivos específicos: {plan_tematico.objetivo_especificos}
+                    Plan analítico: {plan_tematico.plan_analitico}
+                    Recomendaciones metodológicas: {plan_tematico.recomendaciones_metodologicas}
+
+                    CONTENIDO TEMÁTICO COMPLETO:
+                    {plan_tematico.plan_analitico}
+                    """
+
             # Verificar si ya existe una guía para este sílabo
             guia_existente = Guia.objects.filter(silabo=silabo).first()
             if guia_existente:
@@ -1225,6 +1318,9 @@ def generar_estudio_independiente(request):
             prompt_completo = f"""
             Instrucciones: Crea una guía de estudio independiente basada en la siguiente información y devuélvela en formato JSON estructurado.
 
+            INFORMACIÓN DETALLADA DE LA ASIGNATURA:
+            {contexto_asignatura}
+
             INFORMACIÓN DEL SÍLABO ACTUAL (Encuentro {silabo.encuentros}):
             - Código: {silabo.codigo}
             - Unidad: {silabo.unidad}
@@ -1276,15 +1372,16 @@ def generar_estudio_independiente(request):
             ```
 
             INSTRUCCIONES ESPECÍFICAS:
-            1. Crea una guía de estudio independiente para el encuentro {silabo.encuentros} basada en el sílabo proporcionado.
-            2. La guía debe tener {numero_actividades} tareas diferentes que el estudiante debe realizar como trabajo independiente.
-            3. Cada tarea debe estar relacionada con el contenido temático y los objetivos del sílabo.
-            4. Las tareas deben ser progresivas y complementarias entre sí.
-            5. Asigna fechas de entrega realistas (considera que la fecha actual es {datetime.datetime.now().strftime('%Y-%m-%d')}).
-            6. Distribuye el puntaje total entre las {numero_actividades} tareas (el total debe sumar 100 puntos).
-            7. Utiliza diferentes tipos de objetivos, técnicas e instrumentos de evaluación para las tareas.
-            8. NO repitas actividades que ya se hayan asignado en guías anteriores.
-            9. Sigue exactamente la misma estructura JSON que el ejemplo proporcionado, pero solo incluye los bloques de tarea hasta `tarea_{numero_actividades}`.
+            1. Crea una guía de estudio independiente para el encuentro {silabo.encuentros} (de un total de 11 encuentros para esta asignatura).
+            2. REVISA CUIDADOSAMENTE la "INFORMACIÓN DETALLADA DE LA ASIGNATURA" y la "INFORMACIÓN DEL SÍLABO ACTUAL" antes de generar el contenido.
+            3. La guía debe tener EXACTAMENTE {numero_actividades} tareas diferentes que el estudiante debe realizar como trabajo independiente.
+            4. Las tareas deben estar estrictamente relacionadas con el contenido temático ({silabo.contenido_tematico}) y los objetivos del sílabo de ESTE encuentro.
+            5. PROHIBIDO REPETIR INFORMACIÓN: No incluyas explicaciones, tareas o temas que pertenezcan a las "GUÍAS DE ESTUDIO PREVIAS" listadas arriba. El contenido debe ser nuevo y progresivo.
+            6. Si es el último encuentro (Encuentro 11), asegúrate de que las actividades sirvan como cierre o integración final de la unidad/asignatura.
+            7. Asigna fechas de entrega realistas (considera que la fecha actual es {datetime.datetime.now().strftime('%Y-%m-%d')}).
+            8. Distribuye el puntaje total entre las {numero_actividades} tareas (el total debe sumar 100 puntos).
+            9. Utiliza diferentes tipos de objetivos, técnicas e instrumentos de evaluación para las tareas.
+            10. Sigue exactamente la misma estructura JSON que el ejemplo proporcionado, pero solo incluye los bloques de tarea hasta `tarea_{numero_actividades}`.
 
             Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior,
             adaptado al sílabo actual (encuentro {silabo.encuentros}).
