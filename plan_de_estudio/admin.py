@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Plan_de_estudio, Asignatura, Carrera, Silabo, Guia, AsignacionPlanEstudio, PlanTematico
+from .models import Plan_de_estudio, Asignatura, Carrera, Silabo, Guia, AsignacionPlanEstudio, PlanTematico, ProgramaAsignatura2026
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django import forms
@@ -15,6 +15,11 @@ from django.urls import path, reverse
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from .email_utils import enviar_correos_plan_incompleto
+from django.shortcuts import render, redirect
+from .utils.gemini_parser import parse_curriculum_with_ai
+import logging
+
+logger = logging.getLogger(__name__)
 
 admin.site.site_header = 'PLANEAUML'
 admin.site.index_title = 'Bienbenidos al Panel de control del sitio'
@@ -241,7 +246,141 @@ class PlanTematicoAdmin(admin.ModelAdmin):
         # Ya no necesitamos anotar con conteos basados en la relación anterior
         return super().get_queryset(request)
 
+class ProgramaAsignatura2026Admin(admin.ModelAdmin):
+    list_display = ('plan_estudio',)
+    search_fields = ('plan_estudio__codigo', 'plan_estudio__asignatura__nombre')
+    
+    fieldsets = (
+        ('Información General', {
+            'fields': (
+                'plan_estudio',
+                'fundamentacion',
+                'relacion_unidades',
+                'aportes_perfil',
+                'valores',
+                'ejes_transversales',
+            )
+        }),
+        ('Objetivos Generales', {
+            'fields': (
+                'objetivo_conceptual',
+                'objetivo_procedimental',
+                'objetivo_actitudinal',
+            )
+        }),
+        ('Unidad I', {
+            'fields': (
+                'unidad_1_nombre',
+                ('unidad_1_horas_teoricas', 'unidad_1_horas_practicas', 'unidad_1_horas_independientes'),
+                'unidad_1_objetivos_especificos',
+                'unidad_1_contenido',
+                'unidad_1_mediacion',
+                'unidad_1_evaluacion',
+            ),
+             'classes': ('collapse',),
+        }),
+        ('Unidad II', {
+            'fields': (
+                'unidad_2_nombre',
+                ('unidad_2_horas_teoricas', 'unidad_2_horas_practicas', 'unidad_2_horas_independientes'),
+                'unidad_2_objetivos_especificos',
+                'unidad_2_contenido',
+                'unidad_2_mediacion',
+                'unidad_2_evaluacion',
+            ),
+             'classes': ('collapse',),
+        }),
+        ('Unidad III', {
+            'fields': (
+                'unidad_3_nombre',
+                ('unidad_3_horas_teoricas', 'unidad_3_horas_practicas', 'unidad_3_horas_independientes'),
+                'unidad_3_objetivos_especificos',
+                'unidad_3_contenido',
+                'unidad_3_mediacion',
+                'unidad_3_evaluacion',
+            ),
+             'classes': ('collapse',),
+        }),
+        ('Unidad IV', {
+            'fields': (
+                'unidad_4_nombre',
+                ('unidad_4_horas_teoricas', 'unidad_4_horas_practicas', 'unidad_4_horas_independientes'),
+                'unidad_4_objetivos_especificos',
+                'unidad_4_contenido',
+                'unidad_4_mediacion',
+                'unidad_4_evaluacion',
+            ),
+             'classes': ('collapse',),
+        }),
+        ('Unidad V', {
+            'fields': (
+                'unidad_5_nombre',
+                ('unidad_5_horas_teoricas', 'unidad_5_horas_practicas', 'unidad_5_horas_independientes'),
+                'unidad_5_objetivos_especificos',
+                'unidad_5_contenido',
+                'unidad_5_mediacion',
+                'unidad_5_evaluacion',
+            ),
+             'classes': ('collapse',),
+        }),
+        ('Unidad VI', {
+            'fields': (
+                'unidad_6_nombre',
+                ('unidad_6_horas_teoricas', 'unidad_6_horas_practicas', 'unidad_6_horas_independientes'),
+                'unidad_6_objetivos_especificos',
+                'unidad_6_contenido',
+                'unidad_6_mediacion',
+                'unidad_6_evaluacion',
+            ),
+             'classes': ('collapse',),
+        }),
+        ('Bibliografía', {
+            'fields': (
+                'bibliografia_basica',
+                'bibliografia_complementaria',
+                'webgrafia',
+            )
+        }),
+    )
 
+    
+    change_form_template = 'admin/plan_de_estudio/programaasignatura2026/change_form.html'
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('import-docx/', self.admin_site.admin_view(self.import_docx_view), name='plan_de_estudio_programaasignatura2026_import_docx'),
+        ]
+        return custom_urls + urls
+
+    def import_docx_view(self, request):
+        if request.method == 'POST':
+            docx_file = request.FILES.get('docx_file')
+            if docx_file:
+                try:
+                    data = parse_curriculum_with_ai(docx_file)
+                    request.session['imported_programa_data'] = data
+                    messages.success(request, 'Documento procesado exitosamente por la IA. Verifique los datos.')
+                except Exception as e:
+                    logger.error(f"Error processing docx: {e}")
+                    messages.error(request, f'Error al procesar el documento: {str(e)}')
+            else:
+                messages.error(request, 'Por favor, seleccione un archivo.')
+            return redirect('admin:plan_de_estudio_programaasignatura2026_add')
+
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Importar Programa desde Word',
+            'opts': self.model._meta,
+        }
+        return render(request, 'admin/plan_de_estudio/programaasignatura2026/import_form.html', context)
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        imported_data = request.session.pop('imported_programa_data', None)
+        if imported_data:
+            initial.update(imported_data)
+        return initial
 admin.site.register(Plan_de_estudio, PlanDeEstudioAdmin)
 admin.site.register(Asignatura, FiltrarClases)
 admin.site.register(Carrera)
@@ -249,3 +388,4 @@ admin.site.register(Silabo, FiltarSilabo)
 admin.site.register(Guia, FiltrarGuia)
 admin.site.register(AsignacionPlanEstudio, AsignacionPlanEstudioAdmin)
 admin.site.register(PlanTematico, PlanTematicoAdmin)
+admin.site.register(ProgramaAsignatura2026, ProgramaAsignatura2026Admin)

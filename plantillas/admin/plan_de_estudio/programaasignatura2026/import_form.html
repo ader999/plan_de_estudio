@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+    {{ media }}
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url 'admin:plan_de_estudio_programaasignatura2026_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; Importar
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div>
+            <fieldset class="module aligned">
+                <div class="form-row">
+                    <label for="docx_file" class="required">Seleccione un archivo Word (.docx):</label>
+                    <input type="file" name="docx_file" id="docx_file" accept=".docx" required>
+                </div>
+            </fieldset>
+            <div class="submit-row">
+                <input type="submit" value="Procesar con IA" class="default" name="_save">
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

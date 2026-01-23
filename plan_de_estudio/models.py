@@ -57,7 +57,12 @@ class Asignatura(models.Model):
 
 
     def __str__(self):
-        return self.nombre
+        return self.nombre.upper()
+
+    def clean(self):
+        if self.nombre:
+            if Asignatura.objects.filter(nombre__iexact=self.nombre).exclude(pk=self.pk).exists():
+                raise ValidationError({'nombre': 'La asignatura con este nombre ya existe.'})
 
 class Plan_de_estudio(models.Model):
     carrera = models.ForeignKey(Carrera, on_delete=models.CASCADE)
@@ -376,7 +381,8 @@ class PlanTematico(models.Model):
     relacion_eje_contenido_launidad_6 = models.TextField(max_length=2500, verbose_name='Relación eje contenido la unidad 6', null=True, blank=True)
 
     class Meta:
-        pass
+        verbose_name = "Programa de asignatura 2015-2025"
+        verbose_name_plural = "Programas de asignatura 2015-2025"
 
     def __str__(self):
         return f'{self.unidades} - {self.nombre_de_la_unidad}'
@@ -401,6 +407,95 @@ class PlanTematico(models.Model):
 
     def clean(self):
         pass
+
+
+class ProgramaAsignatura2026(models.Model):
+    # Fundamentación y Descripción
+    fundamentacion = models.TextField(verbose_name="Fundamentación")
+    relacion_unidades = models.TextField(verbose_name="Relación entre las unidades temáticas")
+    aportes_perfil = models.TextField(verbose_name="Aportes al perfil profesional")
+    valores = models.TextField(verbose_name="Valores que se desarrollan")
+    ejes_transversales = models.TextField(verbose_name="Ejes Transversales")
+
+    # Objetivos Generales
+    objetivo_conceptual = models.TextField(verbose_name="Objetivo General - Conceptual")
+    objetivo_procedimental = models.TextField(verbose_name="Objetivo General - Procedimental")
+    objetivo_actitudinal = models.TextField(verbose_name="Objetivo General - Actitudinal")
+    
+    plan_estudio = models.ForeignKey("Plan_de_estudio", on_delete=models.CASCADE, related_name="programas_2026_asociados", verbose_name="Plan de Estudio Asociado", null=True, blank=True)
+
+    # UNIDADES (Repetimos estructura de I a VI como en el modelo anterior para consistencia en Admin)
+    # UNIDAD I
+    unidad_1_nombre = models.CharField(max_length=255, verbose_name="Nombre Unidad I", blank=True, null=True)
+    unidad_1_horas_teoricas = models.IntegerField(verbose_name="Horas Teóricas I", default=0)
+    unidad_1_horas_practicas = models.IntegerField(verbose_name="Horas Prácticas I", default=0)
+    unidad_1_horas_independientes = models.IntegerField(verbose_name="Horas Estudio Indep. I", default=0)
+    unidad_1_objetivos_especificos = models.TextField(verbose_name="Objetivos Específicos I", blank=True, null=True)
+    unidad_1_contenido = models.TextField(verbose_name="Contenido Temático I", blank=True, null=True)
+    unidad_1_mediacion = models.TextField(verbose_name="Mediación Pedagógica I", blank=True, null=True)
+    unidad_1_evaluacion = models.TextField(verbose_name="Evaluación I", blank=True, null=True)
+
+    # UNIDAD II
+    unidad_2_nombre = models.CharField(max_length=255, verbose_name="Nombre Unidad II", blank=True, null=True)
+    unidad_2_horas_teoricas = models.IntegerField(verbose_name="Horas Teóricas II", default=0)
+    unidad_2_horas_practicas = models.IntegerField(verbose_name="Horas Prácticas II", default=0)
+    unidad_2_horas_independientes = models.IntegerField(verbose_name="Horas Estudio Indep. II", default=0)
+    unidad_2_objetivos_especificos = models.TextField(verbose_name="Objetivos Específicos II", blank=True, null=True)
+    unidad_2_contenido = models.TextField(verbose_name="Contenido Temático II", blank=True, null=True)
+    unidad_2_mediacion = models.TextField(verbose_name="Mediación Pedagógica II", blank=True, null=True)
+    unidad_2_evaluacion = models.TextField(verbose_name="Evaluación II", blank=True, null=True)
+
+    # UNIDAD III
+    unidad_3_nombre = models.CharField(max_length=255, verbose_name="Nombre Unidad III", blank=True, null=True)
+    unidad_3_horas_teoricas = models.IntegerField(verbose_name="Horas Teóricas III", default=0)
+    unidad_3_horas_practicas = models.IntegerField(verbose_name="Horas Prácticas III", default=0)
+    unidad_3_horas_independientes = models.IntegerField(verbose_name="Horas Estudio Indep. III", default=0)
+    unidad_3_objetivos_especificos = models.TextField(verbose_name="Objetivos Específicos III", blank=True, null=True)
+    unidad_3_contenido = models.TextField(verbose_name="Contenido Temático III", blank=True, null=True)
+    unidad_3_mediacion = models.TextField(verbose_name="Mediación Pedagógica III", blank=True, null=True)
+    unidad_3_evaluacion = models.TextField(verbose_name="Evaluación III", blank=True, null=True)
+
+    # UNIDAD IV
+    unidad_4_nombre = models.CharField(max_length=255, verbose_name="Nombre Unidad IV", blank=True, null=True)
+    unidad_4_horas_teoricas = models.IntegerField(verbose_name="Horas Teóricas IV", default=0)
+    unidad_4_horas_practicas = models.IntegerField(verbose_name="Horas Prácticas IV", default=0)
+    unidad_4_horas_independientes = models.IntegerField(verbose_name="Horas Estudio Indep. IV", default=0)
+    unidad_4_objetivos_especificos = models.TextField(verbose_name="Objetivos Específicos IV", blank=True, null=True)
+    unidad_4_contenido = models.TextField(verbose_name="Contenido Temático IV", blank=True, null=True)
+    unidad_4_mediacion = models.TextField(verbose_name="Mediación Pedagógica IV", blank=True, null=True)
+    unidad_4_evaluacion = models.TextField(verbose_name="Evaluación IV", blank=True, null=True)
+
+    # UNIDAD V
+    unidad_5_nombre = models.CharField(max_length=255, verbose_name="Nombre Unidad V", blank=True, null=True)
+    unidad_5_horas_teoricas = models.IntegerField(verbose_name="Horas Teóricas V", default=0)
+    unidad_5_horas_practicas = models.IntegerField(verbose_name="Horas Prácticas V", default=0)
+    unidad_5_horas_independientes = models.IntegerField(verbose_name="Horas Estudio Indep. V", default=0)
+    unidad_5_objetivos_especificos = models.TextField(verbose_name="Objetivos Específicos V", blank=True, null=True)
+    unidad_5_contenido = models.TextField(verbose_name="Contenido Temático V", blank=True, null=True)
+    unidad_5_mediacion = models.TextField(verbose_name="Mediación Pedagógica V", blank=True, null=True)
+    unidad_5_evaluacion = models.TextField(verbose_name="Evaluación V", blank=True, null=True)
+
+    # UNIDAD VI (Extra just in case, or to match 6 units in old model)
+    unidad_6_nombre = models.CharField(max_length=255, verbose_name="Nombre Unidad VI", blank=True, null=True)
+    unidad_6_horas_teoricas = models.IntegerField(verbose_name="Horas Teóricas VI", default=0)
+    unidad_6_horas_practicas = models.IntegerField(verbose_name="Horas Prácticas VI", default=0)
+    unidad_6_horas_independientes = models.IntegerField(verbose_name="Horas Estudio Indep. VI", default=0)
+    unidad_6_objetivos_especificos = models.TextField(verbose_name="Objetivos Específicos VI", blank=True, null=True)
+    unidad_6_contenido = models.TextField(verbose_name="Contenido Temático VI", blank=True, null=True)
+    unidad_6_mediacion = models.TextField(verbose_name="Mediación Pedagógica VI", blank=True, null=True)
+    unidad_6_evaluacion = models.TextField(verbose_name="Evaluación VI", blank=True, null=True)
+
+    # Bibliografía
+    bibliografia_basica = models.TextField(verbose_name="Bibliografía Básica", blank=True, null=True)
+    bibliografia_complementaria = models.TextField(verbose_name="Bibliografía Complementaria", blank=True, null=True)
+    webgrafia = models.TextField(verbose_name="Web-grafía", blank=True, null=True)
+    
+    class Meta:
+        verbose_name = "Programa de asignatura 2026"
+        verbose_name_plural = "Programas de asignatura 2026"
+
+    def __str__(self):
+        return f"{self.plan_estudio} - Programa 2026"
 
 
 class Guia(models.Model):

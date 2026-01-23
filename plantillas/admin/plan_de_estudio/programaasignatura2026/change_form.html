@@ -1,0 +1,15 @@
+{% extends "admin/change_form.html" %}
+{% load admin_modify %}
+
+{% block object-tools %}
+<ul class="object-tools">
+    <li>
+        <a href="{% url 'admin:plan_de_estudio_programaasignatura2026_import_docx' %}" class="historylink" style="background: #79aec8; color: white;">Cargar desde Documento (.docx)</a>
+    </li>
+    {% if change %}{% if not is_popup %}
+      {% block object-tools-items %}
+        {% change_form_object_tools %}
+      {% endblock %}
+    {% endif %}{% endif %}
+</ul>
+{% endblock %}
