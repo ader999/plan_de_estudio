@@ -30,6 +30,12 @@ class FiltrarClases(admin.ModelAdmin):
     list_per_page = 20
     search_fields = ('nombre',)
 
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        if not search_term:
+            queryset = queryset.order_by('-id')[:10]
+        return queryset, use_distinct
+
 class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin aquí
     class CarreraFilter(admin.SimpleListFilter):
         title = 'Carrera'
@@ -52,6 +58,7 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
     list_per_page = 20  # Limitar a 20 elementos por página
     list_display = ('carrera', 'año', 'trimestre', 'asignatura', 'pr')  # Mostrar los campos
     list_filter = (CarreraFilter, 'año', 'trimestre')  # Filtros en el panel de administración, incluyendo 'carrera'
+    autocomplete_fields = ['asignatura']
     resource_class = PlanDeEstudioResource
     readonly_fields = ('total_horas',)  # 'th' es solo lectura en el formulario
 
@@ -116,6 +123,12 @@ class FiltarSilabo(admin.ModelAdmin):
     readonly_fields = ('codigo', 'encuentros', 'fecha', 'guia', 'asignacion_plan')  # Campos que solo serán de lectura
     exclude = ()  # No excluir campos innecesarios
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'encuentros':
             kwargs['widget'] = forms.NumberInput(attrs={'min': '1', 'max': '10', 'step': '1'})
@@ -135,6 +148,12 @@ class FiltrarGuia(admin.ModelAdmin):
     list_filter = ('silabo__codigo',)
     list_per_page = 20
     readonly_fields = ('silabo', 'numero_encuentro', 'fecha')  # Campos que solo serán de lectura
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
