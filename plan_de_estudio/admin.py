@@ -59,7 +59,15 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
     list_display = ('carrera', 'año', 'trimestre', 'asignatura', 'pr')  # Mostrar los campos
     list_filter = (CarreraFilter, 'año', 'trimestre')  # Filtros en el panel de administración, incluyendo 'carrera'
     autocomplete_fields = ['asignatura', 'pr', 'pc', 'cr']
+    search_fields = ('asignatura__nombre', 'codigo') # Para permitir búsqueda en autocomplete
     resource_class = PlanDeEstudioResource
+    
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        if not search_term:
+            # Mostrar los últimos 10 agregados por defecto si no hay término de búsqueda
+            queryset = queryset.order_by('-id')[:10]
+        return queryset, use_distinct
     readonly_fields = ('total_horas',)  # 'th' es solo lectura en el formulario
 
     fieldsets = (
@@ -161,6 +169,7 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     # Añade 'exportar_excel_boton' a list_display
     list_display = ('usuario', 'plan_de_estudio','fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
     readonly_fields = ('silabos_creados', 'guias_creadas')
+    autocomplete_fields = ['plan_de_estudio'] # Habilita buscador dinámico
     list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'usuario') # Añadir filtros útiles
 
     def completado_icono(self, obj):
@@ -274,6 +283,7 @@ class PlanTematicoAdmin(admin.ModelAdmin):
 class ProgramaAsignatura2026Admin(admin.ModelAdmin):
     list_display = ('plan_estudio',)
     search_fields = ('plan_estudio__codigo', 'plan_estudio__asignatura__nombre')
+    autocomplete_fields = ['plan_estudio']
     
     fieldsets = (
         ('Información General', {
@@ -406,6 +416,8 @@ class ProgramaAsignatura2026Admin(admin.ModelAdmin):
         if imported_data:
             initial.update(imported_data)
         return initial
+
+
 admin.site.register(Plan_de_estudio, PlanDeEstudioAdmin)
 admin.site.register(Asignatura, FiltrarClases)
 admin.site.register(Carrera)

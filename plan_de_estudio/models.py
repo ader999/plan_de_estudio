@@ -6,6 +6,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models.functions.text import CharField
 from django.utils.regex_helper import Choice
 from multiselectfield import MultiSelectField
+from django.utils import timezone
+import datetime
 
 
 
@@ -81,6 +83,11 @@ class Plan_de_estudio(models.Model):
     horas_presenciales = models.IntegerField(null=False, unique=False, verbose_name="Horas presenciales", validators=[MinValueValidator(1)])
     horas_estudio_independiente = models.IntegerField(null=False, unique=False, verbose_name="Horas de estudio independiente", validators=[MinValueValidator(1)])
 
+    class Meta:
+        unique_together = ('carrera', 'asignatura')
+        verbose_name = "Plan de estudio"
+        verbose_name_plural = "Planes de estudio"
+
     def __str__(self):
         return f"{self.asignatura} - {self.carrera} - {self.año}"
 
@@ -140,7 +147,8 @@ class AsignacionPlanEstudio(models.Model):
     guias_creadas = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ('usuario', 'plan_de_estudio')
+        # unique_together = ('usuario', 'plan_de_estudio')
+        pass
 
     def __str__(self):
         return f"{self.usuario} - {self.plan_de_estudio}"
@@ -148,6 +156,46 @@ class AsignacionPlanEstudio(models.Model):
     def clean(self):
         if not self.plan_de_estudio:
             raise ValidationError("Debes asignar un plan de estudio.")
+            
+        now = timezone.now()
+        mes = now.month
+        year = now.year
+
+        # Definir rangos de trimestres (Marzo inicio)
+        # T1: Marzo, Abril, Mayo
+        # T2: Junio, Julio, Agosto
+        # T3: Septiembre, Octubre, Noviembre
+        # T4: Diciembre, Enero, Febrero
+        
+        if 3 <= mes <= 5:
+            start_date = datetime.date(year, 3, 1)
+            end_date = datetime.date(year, 5, 31)
+        elif 6 <= mes <= 8:
+            start_date = datetime.date(year, 6, 1)
+            end_date = datetime.date(year, 8, 31)
+        elif 9 <= mes <= 11:
+            start_date = datetime.date(year, 9, 1)
+            end_date = datetime.date(year, 11, 30)
+        else: # 12, 1, 2
+            if mes == 12:
+                start_date = datetime.date(year, 12, 1)
+                # Fin de febrero del siguiente año
+                # Usamos 1ro marzo - 1 dia para manejar bisiestos
+                end_date = datetime.date(year + 1, 3, 1) - datetime.timedelta(days=1)
+            else: # Enero, Febrero
+                start_date = datetime.date(year - 1, 12, 1)
+                end_date = datetime.date(year, 3, 1) - datetime.timedelta(days=1)
+
+        # Buscar duplicados en el rango de fechas calculado
+        duplicados = AsignacionPlanEstudio.objects.filter(
+            usuario=self.usuario,
+            plan_de_estudio=self.plan_de_estudio,
+            fecha_asignacion__date__gte=start_date,
+            fecha_asignacion__date__lte=end_date
+        ).exclude(pk=self.pk)
+
+        if duplicados.exists():
+            raise ValidationError("Asignacion plan estudio con este Usuario y Plan de estudio ya existe en el trimestre actual.")
 
 
 class Silabo(models.Model):
