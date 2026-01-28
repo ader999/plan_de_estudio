@@ -58,7 +58,7 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
     list_per_page = 20  # Limitar a 20 elementos por página
     list_display = ('carrera', 'año', 'trimestre', 'asignatura', 'pr')  # Mostrar los campos
     list_filter = (CarreraFilter, 'año', 'trimestre')  # Filtros en el panel de administración, incluyendo 'carrera'
-    autocomplete_fields = ['asignatura']
+    autocomplete_fields = ['asignatura', 'pr', 'pc', 'cr']
     resource_class = PlanDeEstudioResource
     readonly_fields = ('total_horas',)  # 'th' es solo lectura en el formulario
 
