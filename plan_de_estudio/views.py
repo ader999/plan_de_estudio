@@ -1010,17 +1010,39 @@ def generar_silabo(request):
 
             # Obtener la estructura del primer encuentro como ejemplo
             primer_encuentro = datos_estructura.get("primer_encuentro", {})
-            # Obtener las listas de opciones
-            unidades = datos_estructura.get("unidades", [])
-            ejes_transversales = datos_estructura.get("ejes_transversales", [])
-            tipos_primer_momento = datos_estructura.get("tipos_primer_momento", [])
-            tipos_segundo_momento_teoria = datos_estructura.get(
-                "tipos_segundo_momento_teoria", []
-            )
-            tipos_segundo_momento_practica = datos_estructura.get(
-                "tipos_segundo_momento_practica", []
-            )
-            tipos_tercer_momento = datos_estructura.get("tipos_tercer_momento", [])
+            
+            # Obtener las listas de opciones directamente de los Modelos para asegurar consistencia
+            unidades = [u[0] for u in Silabo.UNIDAD_LIST]
+            ejes_transversales = [e[0] for e in Silabo.EJE_TRANSVERSAL_LIST]
+            tipos_primer_momento = [t[0] for t in Silabo.TIPO_PRIMER_MOMENTO_LIST]
+            tipos_segundo_momento_teoria = [t[0] for t in Silabo.TIPO_SEGUNDO_MOMENTO_TEORIA_LIST]
+            tipos_segundo_momento_practica = [t[0] for t in Silabo.TIPO_SEGUNDO_MOMENTO_PRACTICA_LIST]
+            tipos_tercer_momento = [t[0] for t in Silabo.TIPO_TERCER_MOMENTO_LIST]
+
+            # --- Lógica de distribución de contenido ---
+            total_unidades = 0
+            if programa_2026:
+                for i in range(1, 7):
+                    if getattr(programa_2026, f'unidad_{i}_nombre', ''):
+                        total_unidades += 1
+            elif plan_tematico:
+                 # Estimación para plan temático legado (menos preciso)
+                 total_unidades = 4 
+
+            # Calcular unidad esperada (distribución lineal simple)
+            unidad_esperada = min(int((encuentro - 1) / (11 / max(total_unidades, 1))) + 1, total_unidades)
+            
+            # Identificar temas y unidades YA cubiertos
+            temas_cubiertos = [s['contenido_tematico'] for s in silabos_previos]
+            unidades_cubiertas = list(set([s['unidad'] for s in silabos_previos]))
+            
+            info_progreso = f"""
+            ESTADO DE PROGRESO DEL CURSO:
+            - Encuentro actual: {encuentro} de 11.
+            - Total Unidades de la asignatura: {total_unidades}.
+            - Unidades ya cubiertas anteriormente: {', '.join(unidades_cubiertas) if unidades_cubiertas else 'Ninguna'}.
+            - Según la distribución del tiempo, deberías estar abordando temas de la: UNIDAD {unidad_esperada} (aproximadamente).
+            """
 
         except Exception as e:
             return JsonResponse(
@@ -1032,14 +1054,19 @@ def generar_silabo(request):
         prompt_completo = f"""
             Instrucciones: Crea un sílabo basado en la siguiente información y devuélvelo en formato JSON estructurado.
 
-            Estás creando el sílabo para el encuentro {encuentro} de 11 encuentros.
+            Estás creando el sílabo para el encuentro {encuentro} de 11 encuentros totales.
             Plan de estudio: {str(asignacion.plan_de_estudio)}
             Asignatura: {asignacion.plan_de_estudio.asignatura.nombre}
+
+            {info_progreso}
 
             INFORMACIÓN DETALLADA DE LA ASIGNATURA:
             {contexto_asignatura}
 
-            {"SÍLABOS PREVIOS YA GENERADOS:" if silabos_previos else "Este es el primer encuentro, no hay sílabos previos."}
+            TEMAS YA IMPARTIDOS EN ENCUENTROS ANTERIORES (¡NO REPETIR!):
+            {json.dumps(temas_cubiertos, indent=2, ensure_ascii=False) if temas_cubiertos else "Ninguno."}
+
+            {"SÍLABOS PREVIOS (Contexto completo):" if silabos_previos else ""}
             {json.dumps(silabos_previos, indent=2, ensure_ascii=False) if silabos_previos else ""}
 
             {"ACTIVIDADES DE GUÍAS PREVIAS (NO REPETIR EN CLASE):" if guias_previas else ""}
@@ -1283,14 +1310,14 @@ def generar_estudio_independiente(request):
 
             # Obtener la estructura de ejemplo y las listas de opciones
             ejemplo_guia = datos_estructura.get("ejemplo_guia", {})
-            tipos_objetivo = datos_estructura.get("tipos_objetivo", [])
-            tecnicas_evaluacion = datos_estructura.get("tecnicas_evaluacion", [])
-            tipos_evaluacion = datos_estructura.get("tipos_evaluacion", [])
-            instrumentos_evaluacion = datos_estructura.get(
-                "instrumentos_evaluacion", []
-            )
-            agentes_evaluadores = datos_estructura.get("agentes_evaluadores", [])
-            periodos_tiempo = datos_estructura.get("periodos_tiempo", [])
+            
+            # Obtener las listas de opciones directamente de los Modelos
+            tipos_objetivo = [t[0] for t in Guia.TIPO_OBJETIVO_LIST]
+            tecnicas_evaluacion = [t[0] for t in Silabo.TECNICA_EVALUACION_LIST]
+            tipos_evaluacion = [t[0] for t in Silabo.TIPO_EVALUACION_LIST]
+            instrumentos_evaluacion = [t[0] for t in Silabo.INSTRUMENTO_EVALUACION_LIST]
+            agentes_evaluadores = [t[0] for t in Silabo.AGENTE_EVALUADOR_LIST]
+            periodos_tiempo = [t[0] for t in Silabo.PERIODO_TIEMPO_LIST]
 
             # Convertir las guías anteriores a un formato que podamos usar en el prompt
             guias_previas = []
