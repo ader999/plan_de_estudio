@@ -1365,29 +1365,57 @@ def generar_estudio_independiente(request):
             # Filtrar vacíos
             temas_cubiertos_guias = [t for t in temas_cubiertos_guias if t]
             
-            # Advertencia si el sílabo base no coincide con el encuentro actual (caso fallback)
-            advertencia_desfase = ""
-            if silabo.encuentros != encuentro:
-                advertencia_desfase = f"""
-                ¡ATENCIÓN! El contexto del sílabo proporcionado corresponde al ENCUENTRO {silabo.encuentros}, 
-                pero estamos generando la guía para el ENCUENTRO {encuentro}.
-                DEBES AVANZAR en el contenido temático. NO USES los temas del sílabo del encuentro {silabo.encuentros} si ya quedaron atrás.
-                Basado en el progreso, deberías estar trabajando temas de la UNIDAD {unidad_esperada}.
+            # Preparar contexto virtual si hay desfase
+            contexto_virtual = ""
+            if silabo.encuentros != encuentro and programa_2026:
+                u_nombre = getattr(programa_2026, f"unidad_{unidad_esperada}_nombre", "No especificado")
+                u_contenido = getattr(programa_2026, f"unidad_{unidad_esperada}_contenido", "No especificado")
+                u_obj = getattr(programa_2026, f"unidad_{unidad_esperada}_objetivos_especificos", "No especificado")
+                
+                contexto_virtual = f"""
+                CONTEXTO PRIORITARIO (TEMAS A CUBRIR EN ESTE ENCUENTRO {encuentro}):
+                ------------------------------------------------------------
+                ESTA ES LA INFORMACIÓN MÁS IMPORTANTE. ÚSALA COMO BASE PRINCIPAL.
+                UNIDAD CORRESPONDIENTE: UNIDAD {unidad_esperada}: {u_nombre}
+                CONTENIDO TEMÁTICO DE LA UNIDAD: {u_contenido}
+                OBJETIVOS DE LA UNIDAD: {u_obj}
+                ------------------------------------------------------------
+                IMPORTANTE: Ignora cualquier información contradictoria de la sección "INFORMACIÓN DEL SÍLABO ACTUAL" si corresponde a un encuentro pasado.
                 """
 
-            info_progreso = f"""
-            ESTADO DE PROGRESO DEL CURSO:
-            - Estamos generando la Guía para el Encuentro: {encuentro} de 11.
-            - Total Unidades de la asignatura: {total_unidades}.
-            - Unidad esperada para este momento: UNIDAD {unidad_esperada}.
-            {advertencia_desfase}
-            """
+            # Determinar qué información del sílabo mostrar
+            if silabo.encuentros == encuentro:
+                info_silabo_actual = f"""
+                INFORMACIÓN DEL SÍLABO ACTUAL (Encuentro {silabo.encuentros}):
+                - Código: {silabo.codigo}
+                - Unidad: {silabo.unidad}
+                - Nombre de la unidad: {silabo.nombre_de_la_unidad}
+                - Contenido temático: {silabo.contenido_tematico}
+                - Objetivo conceptual: {silabo.objetivo_conceptual}
+                - Objetivo procedimental: {silabo.objetivo_procedimental}
+                - Objetivo actitudinal: {silabo.objetivo_actitudinal}
+                - Eje transversal: {silabo.eje_transversal} - {silabo.detalle_eje_transversal}
+
+                MOMENTOS DIDÁCTICOS DEL SÍLABO:
+                - Primer momento: {silabo.tipo_primer_momento} - {silabo.detalle_primer_momento}
+                - Segundo momento (teoría): {silabo.tipo_segundo_momento_claseteoria} - {silabo.clase_teorica}
+                - Segundo momento (práctica): {silabo.tipo_segundo_momento_practica} - {silabo.clase_practica}
+                - Tercer momento: {silabo.tipo_tercer_momento} - {silabo.detalle_tercer_momento}
+                """
+            else:
+                 info_silabo_actual = f"""
+                 NOTA: No se incluye información detallada del sílabo base porque corresponde al Encuentro {silabo.encuentros}, 
+                 mientras que este documento es para el Encuentro {encuentro}.
+                 Utiliza EXCLUSIVAMENTE la información del "CONTEXTO PRIORITARIO" y la "INFORMACIÓN DETALLADA DE LA ASIGNATURA" arriba.
+                 """
 
             # Crear el prompt completo
             prompt_completo = f"""
             Instrucciones: Crea una guía de estudio independiente basada en la siguiente información y devuélvela en formato JSON estructurado.
 
             {info_progreso}
+            
+            {contexto_virtual}
 
             TEMAS YA CUBIERTOS EN GUÍAS ANTERIORES (NO REPETIR):
             {json.dumps(temas_cubiertos_guias, indent=2, ensure_ascii=False) if temas_cubiertos_guias else "Ninguno."}
@@ -1395,22 +1423,54 @@ def generar_estudio_independiente(request):
             INFORMACIÓN DETALLADA DE LA ASIGNATURA:
             {contexto_asignatura}
 
-            INFORMACIÓN DEL SÍLABO ACTUAL (Encuentro {silabo.encuentros}):
-            - Código: {silabo.codigo}
-            - Unidad: {silabo.unidad}
-            - Nombre de la unidad: {silabo.nombre_de_la_unidad}
-            - Contenido temático: {silabo.contenido_tematico}
-            - Objetivo conceptual: {silabo.objetivo_conceptual}
-            - Objetivo procedimental: {silabo.objetivo_procedimental}
-            - Objetivo actitudinal: {silabo.objetivo_actitudinal}
-            - Eje transversal: {silabo.eje_transversal} - {silabo.detalle_eje_transversal}
+            {info_silabo_actual}
 
-            MOMENTOS DIDÁCTICOS DEL SÍLABO:
-            - Primer momento: {silabo.tipo_primer_momento} - {silabo.detalle_primer_momento}
-            - Segundo momento (teoría): {silabo.tipo_segundo_momento_claseteoria} - {silabo.clase_teorica}
-            - Segundo momento (práctica): {silabo.tipo_segundo_momento_practica} - {silabo.clase_practica}
-            - Tercer momento: {silabo.tipo_tercer_momento} - {silabo.detalle_tercer_momento}
+            EVALUACIÓN DEL SÍLABO (Referencia):
+            - Actividad de aprendizaje: {silabo.actividad_aprendizaje}
+            - Técnica de evaluación: {silabo.tecnica_evaluacion}
+            - Tipo de evaluación: {silabo.tipo_evaluacion}
+            - Instrumento de evaluación: {silabo.instrumento_evaluacion}
+            - Criterios de evaluación: {silabo.criterios_evaluacion}
+            - Puntaje: {silabo.puntaje}
 
+            {"GUÍAS DE ESTUDIO PREVIAS:" if guias_previas else "Esta es la primera guía para esta asignación."}
+            {json.dumps(guias_previas, indent=2, ensure_ascii=False, cls=DateTimeEncoder) if guias_previas else ""}
+
+            TIPOS DE OBJETIVO DISPONIBLES:
+            {', '.join(tipos_objetivo)}
+
+            TÉCNICAS DE EVALUACIÓN DISPONIBLES:
+            {', '.join(tecnicas_evaluacion)}
+
+            TIPOS DE EVALUACIÓN DISPONIBLES:
+            {', '.join(tipos_evaluacion)}
+
+            INSTRUMENTOS DE EVALUACIÓN DISPONIBLES:
+            {', '.join(instrumentos_evaluacion)}
+
+            AGENTES EVALUADORES DISPONIBLES:
+            {', '.join(agentes_evaluadores)}
+
+            PERIODOS DE TIEMPO DISPONIBLES:
+            {', '.join(periodos_tiempo)}
+
+            EJEMPLO DE ESTRUCTURA DE GUÍA:
+            ```
+            {json.dumps(ejemplo_guia, indent=2, ensure_ascii=False, cls=DateTimeEncoder)}
+            ```
+            
+            INSTRUCCIONES ESPECÍFICAS:
+            1. Crea una guía de estudio independiente para el encuentro {encuentro} (de un total de 11 encuentros).
+            2. BASATE PRINCIPALMENTE EN EL "CONTEXTO PRIORITARIO" (si existe) y en la Unidad {unidad_esperada}.
+            3. La guía debe tener EXACTAMENTE {numero_actividades} tareas diferentes.
+            4. Las tareas deben estar estrictamente relacionadas con la Unidad {unidad_esperada} y sus objetivos.
+            5. PROHIBIDO REPETIR INFORMACIÓN de guías previas.
+            6. Asigna fechas de entrega realistas (considera que la fecha actual es {datetime.datetime.now().strftime('%Y-%m-%d')}).
+            7. Distribuye el puntaje total entre las {numero_actividades} tareas (suma 100 puntos).
+            8. Sigue exactamente la misma estructura JSON que el ejemplo.
+
+            Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior.
+            """
             EVALUACIÓN DEL SÍLABO:
             - Actividad de aprendizaje: {silabo.actividad_aprendizaje}
             - Técnica de evaluación: {silabo.tecnica_evaluacion}
