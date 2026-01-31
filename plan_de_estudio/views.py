@@ -1341,9 +1341,56 @@ def generar_estudio_independiente(request):
                 }
                 guias_previas.append(guia_dict)
 
+            # --- Lógica de distribución de contenido (Igual que en generar_silabo) ---
+            total_unidades = 0
+            if programa_2026:
+                for i in range(1, 7):
+                    if getattr(programa_2026, f'unidad_{i}_nombre', ''):
+                        total_unidades += 1
+            elif plan_tematico:
+                 total_unidades = 4 
+
+            # Calcular unidad esperada
+            unidad_esperada = min(int((encuentro - 1) / (11 / max(total_unidades, 1))) + 1, total_unidades)
+            
+            # Identificar temas YA cubiertos en guías anteriores
+            temas_cubiertos_guias = []
+            for g in guias_previas:
+                temas_cubiertos_guias.extend([
+                    g.get('contenido_tematico_1', ''),
+                    g.get('contenido_tematico_2', ''),
+                    g.get('contenido_tematico_3', ''),
+                    g.get('contenido_tematico_4', '')
+                ])
+            # Filtrar vacíos
+            temas_cubiertos_guias = [t for t in temas_cubiertos_guias if t]
+            
+            # Advertencia si el sílabo base no coincide con el encuentro actual (caso fallback)
+            advertencia_desfase = ""
+            if silabo.encuentros != encuentro:
+                advertencia_desfase = f"""
+                ¡ATENCIÓN! El contexto del sílabo proporcionado corresponde al ENCUENTRO {silabo.encuentros}, 
+                pero estamos generando la guía para el ENCUENTRO {encuentro}.
+                DEBES AVANZAR en el contenido temático. NO USES los temas del sílabo del encuentro {silabo.encuentros} si ya quedaron atrás.
+                Basado en el progreso, deberías estar trabajando temas de la UNIDAD {unidad_esperada}.
+                """
+
+            info_progreso = f"""
+            ESTADO DE PROGRESO DEL CURSO:
+            - Estamos generando la Guía para el Encuentro: {encuentro} de 11.
+            - Total Unidades de la asignatura: {total_unidades}.
+            - Unidad esperada para este momento: UNIDAD {unidad_esperada}.
+            {advertencia_desfase}
+            """
+
             # Crear el prompt completo
             prompt_completo = f"""
             Instrucciones: Crea una guía de estudio independiente basada en la siguiente información y devuélvela en formato JSON estructurado.
+
+            {info_progreso}
+
+            TEMAS YA CUBIERTOS EN GUÍAS ANTERIORES (NO REPETIR):
+            {json.dumps(temas_cubiertos_guias, indent=2, ensure_ascii=False) if temas_cubiertos_guias else "Ninguno."}
 
             INFORMACIÓN DETALLADA DE LA ASIGNATURA:
             {contexto_asignatura}
