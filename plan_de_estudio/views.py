@@ -1425,52 +1425,6 @@ def generar_estudio_independiente(request):
 
             {info_silabo_actual}
 
-            EVALUACIÓN DEL SÍLABO (Referencia):
-            - Actividad de aprendizaje: {silabo.actividad_aprendizaje}
-            - Técnica de evaluación: {silabo.tecnica_evaluacion}
-            - Tipo de evaluación: {silabo.tipo_evaluacion}
-            - Instrumento de evaluación: {silabo.instrumento_evaluacion}
-            - Criterios de evaluación: {silabo.criterios_evaluacion}
-            - Puntaje: {silabo.puntaje}
-
-            {"GUÍAS DE ESTUDIO PREVIAS:" if guias_previas else "Esta es la primera guía para esta asignación."}
-            {json.dumps(guias_previas, indent=2, ensure_ascii=False, cls=DateTimeEncoder) if guias_previas else ""}
-
-            TIPOS DE OBJETIVO DISPONIBLES:
-            {', '.join(tipos_objetivo)}
-
-            TÉCNICAS DE EVALUACIÓN DISPONIBLES:
-            {', '.join(tecnicas_evaluacion)}
-
-            TIPOS DE EVALUACIÓN DISPONIBLES:
-            {', '.join(tipos_evaluacion)}
-
-            INSTRUMENTOS DE EVALUACIÓN DISPONIBLES:
-            {', '.join(instrumentos_evaluacion)}
-
-            AGENTES EVALUADORES DISPONIBLES:
-            {', '.join(agentes_evaluadores)}
-
-            PERIODOS DE TIEMPO DISPONIBLES:
-            {', '.join(periodos_tiempo)}
-
-            EJEMPLO DE ESTRUCTURA DE GUÍA:
-            ```
-            {json.dumps(ejemplo_guia, indent=2, ensure_ascii=False, cls=DateTimeEncoder)}
-            ```
-            
-            INSTRUCCIONES ESPECÍFICAS:
-            1. Crea una guía de estudio independiente para el encuentro {encuentro} (de un total de 11 encuentros).
-            2. BASATE PRINCIPALMENTE EN EL "CONTEXTO PRIORITARIO" (si existe) y en la Unidad {unidad_esperada}.
-            3. La guía debe tener EXACTAMENTE {numero_actividades} tareas diferentes.
-            4. Las tareas deben estar estrictamente relacionadas con la Unidad {unidad_esperada} y sus objetivos.
-            5. PROHIBIDO REPETIR INFORMACIÓN de guías previas.
-            6. Asigna fechas de entrega realistas (considera que la fecha actual es {datetime.datetime.now().strftime('%Y-%m-%d')}).
-            7. Distribuye el puntaje total entre las {numero_actividades} tareas (suma 100 puntos).
-            8. Sigue exactamente la misma estructura JSON que el ejemplo.
-
-            Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior.
-            """
             EVALUACIÓN DEL SÍLABO:
             - Actividad de aprendizaje: {silabo.actividad_aprendizaje}
             - Técnica de evaluación: {silabo.tecnica_evaluacion}
@@ -1506,7 +1460,7 @@ def generar_estudio_independiente(request):
             ```
 
             INSTRUCCIONES ESPECÍFICAS:
-            1. Crea una guía de estudio independiente para el encuentro {silabo.encuentros} (de un total de 11 encuentros para esta asignatura).
+            1. Crea una guía de estudio independiente para el encuentro {encuentro} (de un total de 11 encuentros para esta asignatura).
             2. REVISA CUIDADOSAMENTE la "INFORMACIÓN DETALLADA DE LA ASIGNATURA" y la "INFORMACIÓN DEL SÍLABO ACTUAL" antes de generar el contenido.
             3. La guía debe tener EXACTAMENTE {numero_actividades} tareas diferentes que el estudiante debe realizar como trabajo independiente.
             4. Las tareas deben estar estrictamente relacionadas con el contenido temático ({silabo.contenido_tematico}) y los objetivos del sílabo de ESTE encuentro.
@@ -1518,11 +1472,12 @@ def generar_estudio_independiente(request):
             10. Sigue exactamente la misma estructura JSON que el ejemplo proporcionado, pero solo incluye los bloques de tarea hasta `tarea_{numero_actividades}`.
 
             Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior,
-            adaptado al sílabo actual (encuentro {silabo.encuentros}).
+            adaptado al sílabo actual (encuentro {encuentro}).
 
             Asegúrate de que todos los campos tengan valores coherentes y apropiados.
             Respeta las opciones disponibles para los campos que tienen listas predefinidas.
             """
+
 
             print("Prompt generado, enviando a la API...")
             logging.info("Prompt generado, enviando a la API...")
