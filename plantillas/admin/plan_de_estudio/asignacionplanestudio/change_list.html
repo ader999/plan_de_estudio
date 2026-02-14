@@ -9,3 +9,8 @@
     </a>
 </li>
 {% endblock %}
+
+{% block search %}
+{% include "admin/plan_de_estudio/asignacionplanestudio/search_form.html" with search_var="q" %}
+<!-- Note: result_count logic is handled inside search_form.html using cl directly. -->
+{% endblock %}

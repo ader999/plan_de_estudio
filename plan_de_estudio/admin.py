@@ -18,6 +18,8 @@ from .email_utils import enviar_correos_plan_incompleto
 from django.shortcuts import render, redirect
 from .utils.gemini_parser import parse_curriculum_with_ai
 import logging
+from django.http import JsonResponse
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +68,7 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
         if not search_term:
             # Mostrar los últimos 10 agregados por defecto si no hay término de búsqueda
-            queryset = queryset.order_by('-id')[:10]
+            queryset = queryset.order_by('-id')
         return queryset, use_distinct
     readonly_fields = ('total_horas',)  # 'th' es solo lectura en el formulario
 
@@ -169,8 +171,10 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     # Añade 'exportar_excel_boton' a list_display
     list_display = ('usuario', 'plan_de_estudio','fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
     readonly_fields = ('silabos_creados', 'guias_creadas')
-    autocomplete_fields = ['plan_de_estudio'] # Habilita buscador dinámico
-    list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'usuario') # Añadir filtros útiles
+    autocomplete_fields = ['plan_de_estudio', 'usuario'] # Habilita buscador dinámico
+    search_fields = ('usuario__username', 'usuario__first_name', 'usuario__last_name') # Habilita buscador por usuario
+    search_help_text = "Busque por nombre de usuario, nombre o apellido"
+    list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__año', 'plan_de_estudio__trimestre') # Añadir filtros útiles
 
     def completado_icono(self, obj):
         # Retorna True si silabos_creados es igual a 12
@@ -208,9 +212,32 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.enviar_recordatorios_view),
                 name='plan_de_estudio_asignacionplanestudio_enviar_recordatorios'
             ),
+            path(
+                'user-search/',
+                self.admin_site.admin_view(self.user_search_view),
+                name='plan_de_estudio_asignacionplanestudio_user_search'
+            ),
         ]
         # Añade las URLs personalizadas ANTES que las URLs por defecto
         return custom_urls + urls
+
+    def user_search_view(self, request):
+        term = request.GET.get('term', '')
+        users = User.objects.filter(
+            Q(username__icontains=term) | 
+            Q(first_name__icontains=term) | 
+            Q(last_name__icontains=term)
+        )[:20] # Limit to 20 results
+        
+        results = [
+            {
+                'id': user.id, 
+                'text': f"({user.username}) {user.first_name} {user.last_name}"
+            } 
+            for user in users
+        ]
+        return JsonResponse({'results': results})
+
 
     def enviar_recordatorios_view(self, request):
         try:

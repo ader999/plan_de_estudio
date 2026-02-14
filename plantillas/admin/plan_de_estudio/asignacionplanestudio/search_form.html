@@ -1,0 +1,108 @@
+{% load i18n static admin_urls %}
+{% if cl.search_fields %}
+<div id="toolbar">
+    <form id="changelist-search" method="get" role="search">
+        <div style="position: relative; display: inline-block; width: 300px;">
+            <!-- User Icon SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person"
+                viewBox="0 0 16 16"
+                style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #666; pointer-events: none; z-index: 10;">
+                <path
+                    d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1Zm-1 1-1 1H2l1-1s1-4 6-4 6 3 6 4Zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10Z" />
+            </svg>
+
+            <!-- Replace standard input with Select2 container -->
+            <style>
+                .select2-results__option {
+                    color: black !important;
+                }
+            </style>
+            <select id="search-autocomplete" name="usuario__id__exact" style="width: 100%; padding-left: 30px;">
+                <option value="" selected>Buscar usuario...</option>
+            </select>
+        </div>
+
+        {% if cl.result_count != cl.full_result_count %}
+        <span class="small quiet">
+            {% blocktranslate count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktranslate %} (<a href="?{% if cl.is_popup %}{{ is_popup_var }}=1{% endif %}{% if cl.add_facets %}&{% endif %}{% if cl.add_facets %}{{ is_facets_var }}{% endif %}">{% if cl.show_full_result_count %}{% blocktranslate with full_result_count=cl.full_result_count %}{{ full_result_count }} total{% endblocktranslate %}{% else %}{% translate "Show all" %}{% endif %}</a>)
+        </span>
+        {% endif %}
+        {% for pair in cl.params.items %}
+        {% if pair.0 != 'usuario__id__exact' and pair.0 != search_var %}<input type="hidden" name="{{ pair.0 }}" value="{{ pair.1 }}">{% endif %}
+        {% endfor %}
+
+    </form>
+</div>
+{% endif %}
+
+<!-- Load Admin Select2 assets -->
+<link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}">
+<link rel="stylesheet" href="{% static 'admin/css/autocomplete.css' %}">
+<script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}"></script>
+<script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+<script src="{% static 'admin/js/jquery.init.js' %}"></script>
+<script>
+    django.jQuery(document).ready(function($) {
+        $('#search-autocomplete').select2({
+            ajax: {
+                url: "{% url 'admin:plan_de_estudio_asignacionplanestudio_user_search' %}",
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        term: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            },
+            placeholder: 'Buscar usuario...',
+            minimumInputLength: 1,
+            language: {
+                inputTooShort: function () {
+                   return "Por favor ingrese 1 o más caracteres";
+                },
+                noResults: function () {
+                   return "No se encontraron resultados";
+                },
+                searching: function () {
+                   return "Buscando...";
+                }
+            }
+        });
+
+        // Handle selection
+        $('#search-autocomplete').on('select2:select', function (e) {
+            var data = e.params.data;
+            // Redirect to filter by this user
+            var url = new URL(window.location.href);
+            url.searchParams.set('usuario__id__exact', data.id);
+            // Clear other search params involving text search if we want strict mode
+            // url.searchParams.delete('q'); 
+            url.searchParams.delete('p'); // Reset pagination
+            window.location.href = url.toString();
+        });
+
+        // Handle clearing (if user clears the selection)
+        $('#search-autocomplete').on('select2:clear', function (e) {
+            var url = new URL(window.location.href);
+            url.searchParams.delete('usuario__id__exact');
+            window.location.href = url.toString();
+        });
+        
+        // Pre-select if URL has the param
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('usuario__id__exact');
+        if (userId) {
+             // Fetch the user name to display it (optional, but good UX)
+             // Since we have a custom endpoint now, we can try to fetch the specific user?
+             // Our custom endpoint searches by term.
+             // If we really want to show the name on load, we would need an endpoint to get user by ID.
+             // or just let it be.
+        }
+    });
+</script>
