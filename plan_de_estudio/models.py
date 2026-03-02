@@ -630,3 +630,11 @@ class Guia(models.Model):
 
     def __str__(self):
         return f"Guía {self.numero_encuentro} - {self.unidad} - {self.fecha}"
+
+def get_user_str(self):
+    nombre_completo = f"{self.first_name} {self.last_name}".strip()
+    if nombre_completo:
+        return f"({self.username}) {nombre_completo}"
+    return f"({self.username})"
+
+User.add_to_class("__str__", get_user_str)

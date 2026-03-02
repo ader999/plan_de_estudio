@@ -3,5 +3,6 @@
         "plan_de_estudio"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    "terminal.integrated.defaultLocation": "editor"
 }
