@@ -140,8 +140,16 @@ class Plan_de_estudio(models.Model):
 
 
 class AsignacionPlanEstudio(models.Model):
+    BLOQUE_CHOICES = (
+        ('Primer bloque - 8:00', 'Primer bloque - 8:00'),
+        ('Segundo bloque - 10:20', 'Segundo bloque - 10:20'),
+        ('Tercer bloque - 12:20', 'Tercer bloque - 12:20'),
+        ('Cuarto bloque - 2:30', 'Cuarto bloque - 2:30'),
+    )
+
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     plan_de_estudio = models.ForeignKey(Plan_de_estudio, on_delete=models.CASCADE)
+    bloque = models.CharField(max_length=50, choices=BLOQUE_CHOICES, verbose_name='Bloque', null=True, blank=True)
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
     silabos_creados = models.IntegerField(default=0)
     guias_creadas = models.IntegerField(default=0)

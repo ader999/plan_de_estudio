@@ -169,12 +169,12 @@ class FiltrarGuia(admin.ModelAdmin):
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     change_list_template = 'admin/plan_de_estudio/asignacionplanestudio/change_list.html'
     # Añade 'exportar_excel_boton' a list_display
-    list_display = ('usuario', 'plan_de_estudio','fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
+    list_display = ('usuario', 'plan_de_estudio', 'bloque', 'fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
     readonly_fields = ('silabos_creados', 'guias_creadas')
     autocomplete_fields = ['plan_de_estudio', 'usuario'] # Habilita buscador dinámico
     search_fields = ('usuario__username', 'usuario__first_name', 'usuario__last_name') # Habilita buscador por usuario
     search_help_text = "Busque por nombre de usuario, nombre o apellido"
-    list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__año', 'plan_de_estudio__trimestre') # Añadir filtros útiles
+    list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'bloque') # Añadir filtros útiles
 
     def completado_icono(self, obj):
         # Retorna True si silabos_creados es igual a 12
@@ -213,6 +213,11 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
                 name='plan_de_estudio_asignacionplanestudio_enviar_recordatorios'
             ),
             path(
+                'exportar-asignaciones/',
+                self.admin_site.admin_view(self.exportar_asignaciones_view),
+                name='plan_de_estudio_asignacionplanestudio_exportar_asignaciones'
+            ),
+            path(
                 'user-search/',
                 self.admin_site.admin_view(self.user_search_view),
                 name='plan_de_estudio_asignacionplanestudio_user_search'
@@ -237,6 +242,54 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
             for user in users
         ]
         return JsonResponse({'results': results})
+
+    def exportar_asignaciones_view(self, request):
+        from .forms import ExportarAsignacionesForm
+        from .export_asignaciones import generar_excel_asignaciones_multiples, generar_word_asignaciones_multiples
+        
+        if request.method == 'POST':
+            form = ExportarAsignacionesForm(request.POST)
+            if form.is_valid():
+                import datetime
+                from django.utils import timezone
+                trimestre = form.cleaned_data['trimestre']
+                carreras = form.cleaned_data['carreras']
+                años = form.cleaned_data['años']
+                
+                # Automatic date calculation based on trimester
+                current_year = timezone.now().year
+                if trimestre == 'I':
+                    fecha_inicio = datetime.date(current_year, 3, 1)
+                elif trimestre == 'II':
+                    fecha_inicio = datetime.date(current_year, 6, 1)
+                elif trimestre == 'III':
+                    fecha_inicio = datetime.date(current_year, 9, 1)
+                else: # IV
+                    fecha_inicio = datetime.date(current_year, 12, 1)
+
+                queryset = AsignacionPlanEstudio.objects.filter(
+                    plan_de_estudio__trimestre=trimestre,
+                    plan_de_estudio__carrera__in=carreras,
+                    plan_de_estudio__año__in=años
+                ).select_related('plan_de_estudio__carrera', 'plan_de_estudio__asignatura', 'usuario') \
+                 .order_by('plan_de_estudio__carrera__nombre', 'plan_de_estudio__año')
+
+                if 'export_excel' in request.POST:
+                    return generar_excel_asignaciones_multiples(queryset, fecha_inicio)
+                elif 'export_word' in request.POST:
+                    return generar_word_asignaciones_multiples(queryset, fecha_inicio)
+            else:
+                print("Formulario Invalido:", form.errors)
+        else:
+            form = ExportarAsignacionesForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Exportar Asignaciones',
+            'form': form,
+            'opts': self.model._meta,
+        }
+        return render(request, 'admin/plan_de_estudio/asignacionplanestudio/exportar_form.html', context)
 
 
     def enviar_recordatorios_view(self, request):

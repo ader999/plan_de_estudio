@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script src="{% url 'admin:jsi18n' %}"></script>
+    {{ form.media }}
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form action="" method="post" id="exportar_form">
+        {% csrf_token %}
+        <div>
+            <fieldset class="module aligned">
+                <h2>Opciones de Exportación</h2>
+                {% for field in form %}
+                    <div class="form-row">
+                        {{ field.errors }}
+                        <div class="field-box">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="help">{{ field.help_text|safe }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </fieldset>
+
+            <div class="submit-row">
+                <input type="submit" value="Exportar a Excel" class="default" name="export_excel">
+                <input type="submit" value="Exportar a Word" class="default" name="export_word" style="background:#555;">
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
