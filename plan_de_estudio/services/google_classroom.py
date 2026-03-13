@@ -355,17 +355,25 @@ def subir_tareas_desde_guia(guia):
         
         # 2. AGREGAR FECHA DE ENTREGA Y HORA LÍMITE
         if fecha_entrega:
-            work_data['dueDate'] = {
-                'year': fecha_entrega.year,
-                'month': fecha_entrega.month,
-                'day': fecha_entrega.day
-            }
-            # Fija la hora límite a las 23:59 UTC
-            work_data['dueTime'] = {
-                'hours': 23,
-                'minutes': 59,
-                'seconds': 59
-            }
+            import datetime
+            if isinstance(fecha_entrega, str):
+                try:
+                    fecha_entrega = datetime.datetime.strptime(fecha_entrega, "%Y-%m-%d").date()
+                except ValueError:
+                    pass
+            
+            if hasattr(fecha_entrega, 'year') and hasattr(fecha_entrega, 'month') and hasattr(fecha_entrega, 'day'):
+                work_data['dueDate'] = {
+                    'year': fecha_entrega.year,
+                    'month': fecha_entrega.month,
+                    'day': fecha_entrega.day
+                }
+                # Fija la hora límite a las 23:59 UTC
+                work_data['dueTime'] = {
+                    'hours': 23,
+                    'minutes': 59,
+                    'seconds': 59
+                }
 
         try:
             # 3. CREAR LA TAREA (COURSEWORK)
