@@ -170,7 +170,7 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     change_list_template = 'admin/plan_de_estudio/asignacionplanestudio/change_list.html'
     # Añade 'exportar_excel_boton' a list_display
     list_display = ('usuario', 'plan_de_estudio', 'bloque', 'fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
-    readonly_fields = ('silabos_creados', 'guias_creadas')
+    readonly_fields = ('silabos_creados', 'guias_creadas', 'curso_classroom_id', 'curso_classroom_url')
     autocomplete_fields = ['plan_de_estudio', 'usuario'] # Habilita buscador dinámico
     search_fields = ('usuario__username', 'usuario__first_name', 'usuario__last_name') # Habilita buscador por usuario
     search_help_text = "Busque por nombre de usuario, nombre o apellido"
@@ -506,3 +506,11 @@ admin.site.register(Guia, FiltrarGuia)
 admin.site.register(AsignacionPlanEstudio, AsignacionPlanEstudioAdmin)
 admin.site.register(PlanTematico, PlanTematicoAdmin)
 admin.site.register(ProgramaAsignatura2026, ProgramaAsignatura2026Admin)
+
+from .models import CredencialesGoogle
+@admin.register(CredencialesGoogle)
+class CredencialesGoogleAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'foto_perfil')
+    search_fields = ('usuario__username', 'usuario__email')
+    readonly_fields = ('token', 'refresh_token', 'token_uri', 'client_id', 'client_secret', 'scopes', 'foto_perfil')
+

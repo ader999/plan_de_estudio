@@ -8,9 +8,24 @@ from django.utils.regex_helper import Choice
 from multiselectfield import MultiSelectField
 from django.utils import timezone
 import datetime
+from django.conf import settings
 
+class CredencialesGoogle(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='credenciales_google')
+    token = models.TextField()
+    refresh_token = models.CharField(max_length=255, null=True, blank=True)
+    token_uri = models.CharField(max_length=255)
+    client_id = models.CharField(max_length=255)
+    client_secret = models.CharField(max_length=255)
+    scopes = models.TextField()
+    foto_perfil = models.URLField(max_length=2000, null=True, blank=True, verbose_name="Foto de perfil de Google")
+    
+    class Meta:
+        verbose_name = "Credenciales de Google"
+        verbose_name_plural = "Credenciales de Google"
 
-
+    def __str__(self):
+        return f"Credenciales de {self.usuario.username}"
 
 NUMEROS_ROMANOS = [
     ('I', 'I'),
@@ -158,6 +173,10 @@ class AsignacionPlanEstudio(models.Model):
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
     silabos_creados = models.IntegerField(default=0)
     guias_creadas = models.IntegerField(default=0)
+
+    # Google Classroom Integration Fields
+    curso_classroom_id = models.CharField(max_length=150, null=True, blank=True, verbose_name="ID Curso Classroom")
+    curso_classroom_url = models.URLField(max_length=500, null=True, blank=True, verbose_name="URL Curso Classroom")
 
     class Meta:
         # unique_together = ('usuario', 'plan_de_estudio')

@@ -1,0 +1,1 @@
+default_app_config = 'plan_de_estudio.apps.PlanDeEstudioConfig'

@@ -771,6 +771,14 @@ def guardar_guia(request, silabo_id=None, asignacion_id=None, id=None):
                     f"Relación bilateral establecida: Sílabo {silabo.id} apunta a Guía {guia.id}"
                 )
 
+                # Subir tareas a Google Classroom de forma asíncrona
+                import threading
+                from .services.google_classroom import subir_tareas_desde_guia
+                
+                # Ejecutar en segundo plano para no bloquear la respuesta
+                thread = threading.Thread(target=subir_tareas_desde_guia, args=(guia,))
+                thread.start()
+
                 # Generar URL para redirección a la página de éxito
                 success_url = reverse("success_view")
 
@@ -1365,6 +1373,16 @@ def generar_estudio_independiente(request):
             # Filtrar vacíos
             temas_cubiertos_guias = [t for t in temas_cubiertos_guias if t]
             
+            unidades_cubiertas_guias = list(set([str(g.get('unidad', '')) for g in guias_previas if g.get('unidad')]))
+            
+            info_progreso = f"""
+            ESTADO DE PROGRESO DEL CURSO:
+            - Encuentro actual: {encuentro} de 11.
+            - Total Unidades de la asignatura: {total_unidades}.
+            - Unidades ya cubiertas en guías anteriores: {', '.join(unidades_cubiertas_guias) if unidades_cubiertas_guias else 'Ninguna'}.
+            - Según la distribución del tiempo, deberías estar abordando temas de la: UNIDAD {unidad_esperada} (aproximadamente).
+            """
+            
             # Preparar contexto virtual si hay desfase
             contexto_virtual = ""
             if silabo.encuentros != encuentro and programa_2026:
@@ -1871,3 +1889,26 @@ def actualizar_guia(request, guia_id):
     }
 
     return render(request, 'actualizar_guia.html', context)
+from .services.google_classroom import iniciar_autorizacion, guardar_credenciales_desde_callback
+
+def google_authorize_view(request):
+    """Vista que redirige a Google para inicio de sesión y obtención de tokens"""
+    url_autorizacion = iniciar_autorizacion(request)
+    return redirect(url_autorizacion)
+
+def google_oauth2callback_view(request):
+    """La URL a la que Google enviará de regreso al usuario (Redirect URI)"""
+    # Verificamos si Google retornó un error
+    if 'error' in request.GET:
+        messages.error(request, 'Autorización denegada o cancelada por el usuario.')
+        return redirect('admin:index')
+        
+    try:
+        exito = guardar_credenciales_desde_callback(request, request.user)
+        if exito:
+            messages.success(request, '¡Tu cuenta de Google Classroom ha sido vinculada exitosamente!')
+    except Exception as e:
+        messages.error(request, f'Hubo un problema vinculando tu cuenta: {str(e)}')
+        
+    # Redirigimos de vuelta al admin de Django después del proceso
+    return redirect('admin:index')

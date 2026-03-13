@@ -38,7 +38,10 @@ urlpatterns = [
     path('cargar_guia/<int:silabo_id>/', views.cargar_guia, name='cargar_guia'),
     path('silabo/actualizar/<int:silabo_id>/', views.actualizar_silabo, name='actualizar_silabo'),
     path('guia/actualizar/<int:guia_id>/', views.actualizar_guia, name='actualizar_guia'),
-
+    
+    # Rutas para el login/oauth de Google Classroom 
+    path('google/authorize/', views.google_authorize_view, name='google_authorize'),
+    path('oauth2callback/', views.google_oauth2callback_view, name='oauth2callback'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
