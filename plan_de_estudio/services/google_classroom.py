@@ -88,8 +88,8 @@ def obtener_foto_perfil(credentials):
         print(f"Error obteniendo foto de perfil: {e}")
         return None
 
-def guardar_credenciales_desde_callback(request, usuario):
-    """Toma la respuesta de Google y guarda el token asociado al usuario de Django."""
+def manejar_callback_google(request):
+    """Maneja el retorno de Google, vinculando cuenta o iniciando sesión según corresponda."""
     state = request.session.get('state')
     
     redirect_uri = request.build_absolute_uri(reverse('oauth2callback'))
@@ -119,23 +119,55 @@ def guardar_credenciales_desde_callback(request, usuario):
     flow.fetch_token(authorization_response=authorization_response)
     credentials = flow.credentials
     
-    # Obtenemos la foto del perfil gracias al scope userinfo
-    foto_perfil = obtener_foto_perfil(credentials)
+    # Obtenemos info básica del usuario desde Google (incluye email y foto)
+    user_info_service = build('oauth2', 'v2', credentials=credentials)
+    user_info = user_info_service.userinfo().get().execute()
+    foto_perfil = user_info.get('picture')
+    email_google = user_info.get('email')
 
-    # Lo guardamos en el modelo CredencialesGoogle
-    CredencialesGoogle.objects.update_or_create(
-        usuario=usuario,
-        defaults={
-            'token': credentials.token,
-            'refresh_token': credentials.refresh_token,
-            'token_uri': credentials.token_uri,
-            'client_id': credentials.client_id,
-            'client_secret': credentials.client_secret,
-            'scopes': ','.join(credentials.scopes),
-            'foto_perfil': foto_perfil
-        }
-    )
-    return True
+    if request.user.is_authenticated:
+        # FLUJO DE VINCULACIÓN
+        usuario = request.user
+        CredencialesGoogle.objects.update_or_create(
+            usuario=usuario,
+            defaults={
+                'token': credentials.token,
+                'refresh_token': credentials.refresh_token,
+                'token_uri': credentials.token_uri,
+                'client_id': credentials.client_id,
+                'client_secret': credentials.client_secret,
+                'scopes': ','.join(credentials.scopes),
+                'foto_perfil': foto_perfil
+            }
+        )
+        return usuario, False
+    else:
+        # FLUJO DE INICIO DE SESIÓN
+        if not email_google:
+            raise Exception("No se pudo obtener el correo electrónico de Google.")
+            
+        # Buscar al usuario por correo electrónico
+        from django.contrib.auth.models import User
+        usuario = User.objects.filter(email__iexact=email_google).first()
+        
+        if not usuario:
+            raise Exception("No existe una cuenta en el sistema con ese correo electrónico.")
+            
+        # Verificar que el usuario tenga credenciales vinculadas
+        try:
+            credenciales = CredencialesGoogle.objects.get(usuario=usuario)
+        except CredencialesGoogle.DoesNotExist:
+            raise Exception("Tu cuenta existe pero no está vinculada a Google Classroom. Inicia sesión con contraseña y vincúlala primero.")
+            
+        # Actualizar token si es necesario
+        credenciales.token = credentials.token
+        if credentials.refresh_token:
+            credenciales.refresh_token = credentials.refresh_token
+        if foto_perfil:
+            credenciales.foto_perfil = foto_perfil
+        credenciales.save()
+        
+        return usuario, True
 
 def obtener_servicio_classroom(usuario):
     """Devuelve el cliente de la API de Classroom listo para ser utilizado."""

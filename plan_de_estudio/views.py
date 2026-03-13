@@ -1889,7 +1889,8 @@ def actualizar_guia(request, guia_id):
     }
 
     return render(request, 'actualizar_guia.html', context)
-from .services.google_classroom import iniciar_autorizacion, guardar_credenciales_desde_callback
+from django.contrib.auth import login as auth_login
+from .services.google_classroom import iniciar_autorizacion, manejar_callback_google
 
 def google_authorize_view(request):
     """Vista que redirige a Google para inicio de sesión y obtención de tokens"""
@@ -1901,14 +1902,21 @@ def google_oauth2callback_view(request):
     # Verificamos si Google retornó un error
     if 'error' in request.GET:
         messages.error(request, 'Autorización denegada o cancelada por el usuario.')
-        return redirect('admin:index')
+        return redirect('login' if not request.user.is_authenticated else 'admin:index')
         
     try:
-        exito = guardar_credenciales_desde_callback(request, request.user)
-        if exito:
-            messages.success(request, '¡Tu cuenta de Google Classroom ha sido vinculada exitosamente!')
+        usuario, es_nuevo_login = manejar_callback_google(request)
+        if usuario:
+            if es_nuevo_login:
+                auth_login(request, usuario)
+                messages.success(request, '¡Has iniciado sesión con Google exitosamente!')
+                return redirect('inicio')
+            else:
+                messages.success(request, '¡Tu cuenta de Google Classroom ha sido vinculada exitosamente!')
     except Exception as e:
-        messages.error(request, f'Hubo un problema vinculando tu cuenta: {str(e)}')
+        messages.error(request, f'{str(e)}')
+        if not request.user.is_authenticated:
+            return redirect('login')
         
-    # Redirigimos de vuelta al admin de Django después del proceso
+    # Redirigimos de vuelta al admin de Django después del proceso de vinculación
     return redirect('admin:index')

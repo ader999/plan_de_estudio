@@ -87,6 +87,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'plan_de_estudio.context_processors.google_classroom_context',
             ],
         },
     },
@@ -185,3 +186,7 @@ MINIO_STORAGE_AUTO_CREATE_BUCKET = True
 MINIO_STORAGE_AUTO_CREATE_POLICY = True
 MINIO_STORAGE_MEDIA_USE_PRESIGNED = True
 # Forzando el reinicio del servidor para registrar los templatetags
+
+# Configuración de sesión prolongada para no molestar continuamente al usuario
+SESSION_COOKIE_AGE = 7776000 # 3 meses de expiración en segundos
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False

@@ -42,11 +42,21 @@
                             <li class="nav-item dropdown" id="1p">
                                 <a class="nav-link dropdown-toggle" id="2p" href="#" role="button"
                                     data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-user-circle fa-fw fa-lg"></i> <span>{{ usuario }} </span>
+                                    {% if is_google_linked and google_profile_picture %}
+                                        <img src="{{ google_profile_picture }}" alt="Perfil" style="width: 48px; height: 48px; border-radius: 50%;" class="me-1">
+                                    {% else %}
+                                        <i class="fas fa-user-circle fa-fw fa-lg"></i>
+                                    {% endif %}
+                                    <span>{{ usuario }} </span>
                                 </a>
                                 <ul class="dropdown-menu">
+                                    {% if is_google_linked %}
+                                    <li><a class="dropdown-item" href="{% url 'google_authorize' %}"><i
+                                                class="fab fa-google fa-fw fa-lg text-primary"></i> <span>Volver a vincular</span></a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    {% endif %}
                                     <li><a class="dropdown-item" href="{% url 'logout' %}"><i
-                                                class="fas fa-sign-out-alt fa-fw fa-lg"></i> <span>Cerrar
+                                                class="fas fa-sign-out-alt fa-fw fa-lg text-danger"></i> <span>Cerrar
                                                 Sesión</span></a></li>
                                 </ul>
                             </li>
