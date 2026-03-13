@@ -55,11 +55,11 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
     class PlanDeEstudioResource(resources.ModelResource):
         class Meta:
             model = Plan_de_estudio
-            fields = ('carrera__nombre', 'año', 'trimestre', 'codigo', 'asignatura__nombre', 'horas_presenciales', 'horas_estudio_independiente','total_horas')
+            fields = ('carrera__nombre', 'pensol', 'año', 'trimestre', 'codigo', 'asignatura__nombre', 'horas_presenciales', 'horas_estudio_independiente','total_horas')
 
     list_per_page = 20  # Limitar a 20 elementos por página
-    list_display = ('carrera', 'año', 'trimestre', 'asignatura', 'pr')  # Mostrar los campos
-    list_filter = (CarreraFilter, 'año', 'trimestre')  # Filtros en el panel de administración, incluyendo 'carrera'
+    list_display = ('carrera', 'pensol', 'año', 'trimestre', 'asignatura', 'pr')  # Mostrar los campos
+    list_filter = (CarreraFilter, 'pensol', 'año', 'trimestre')  # Filtros en el panel de administración, incluyendo 'carrera'
     autocomplete_fields = ['asignatura', 'pr', 'pc', 'cr']
     search_fields = ('asignatura__nombre', 'codigo') # Para permitir búsqueda en autocomplete
     resource_class = PlanDeEstudioResource
@@ -74,7 +74,7 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
 
     fieldsets = (
         ('Datos Generales', {
-            'fields': ('carrera', 'año', 'trimestre', 'codigo', 'asignatura', 'pr', 'pc', 'cr', 'horas_presenciales', 'horas_estudio_independiente')
+            'fields': ('carrera', 'pensol', 'año', 'trimestre', 'codigo', 'asignatura', 'pr', 'pc', 'cr', 'horas_presenciales', 'horas_estudio_independiente')
         }),
         ('Documentos y Relaciones', {
             'fields': ('plan_tematico', 'plan_tematico_ref', 'documento_adjunto'),
@@ -174,7 +174,7 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     autocomplete_fields = ['plan_de_estudio', 'usuario'] # Habilita buscador dinámico
     search_fields = ('usuario__username', 'usuario__first_name', 'usuario__last_name') # Habilita buscador por usuario
     search_help_text = "Busque por nombre de usuario, nombre o apellido"
-    list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'bloque') # Añadir filtros útiles
+    list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__pensol', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'bloque') # Añadir filtros útiles
 
     def completado_icono(self, obj):
         # Retorna True si silabos_creados es igual a 12

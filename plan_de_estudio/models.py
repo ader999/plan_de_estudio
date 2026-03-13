@@ -29,6 +29,10 @@ TRIMESTRES_ROMANOS = [
     ('IV', 'IV'),
 ]
 
+PENSOL_CHOICES = [
+    ('2018', '2018'),
+    ('2026', '2026'),
+]
 
 
 class Carrera(models.Model):
@@ -70,6 +74,7 @@ class Plan_de_estudio(models.Model):
     carrera = models.ForeignKey(Carrera, on_delete=models.CASCADE)
     año = models.CharField(max_length=4, choices=NUMEROS_ROMANOS, null=False, unique=False, verbose_name='Año')
     trimestre = models.CharField(max_length=3, choices=TRIMESTRES_ROMANOS, null=False, unique=False, verbose_name='Trimestre')
+    pensol = models.CharField(max_length=4, choices=PENSOL_CHOICES, default='2018', verbose_name='Pensol')
     codigo = models.CharField(max_length=50, null=False, unique=True, verbose_name='Codigo')
     asignatura = models.ForeignKey('Asignatura', on_delete=models.CASCADE,null=False)
     pr = models.ForeignKey('Asignatura', null=True, blank=True, on_delete=models.CASCADE, related_name='pr_set')
