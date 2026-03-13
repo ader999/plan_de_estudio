@@ -98,7 +98,7 @@ def inicio(request):
     # Ajusta el filtro al campo correspondiente en AsignacionPlanEstudio para el usuario
     asignaciones = AsignacionPlanEstudio.objects.filter(
         usuario__username=nombre_de_usuario
-    )
+    ).order_by('-id')
     rango = range(1, 13)  # Crear el rango para pasarlo al template
 
     return render(

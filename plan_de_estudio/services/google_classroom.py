@@ -243,6 +243,69 @@ def crear_clase_e_invitar_maestro(asignacion):
         return False, str(e)
 
 
+import google.generativeai as genai
+
+def generar_datos_tarea_ia(actividad, tema, instrumento):
+    """
+    Usa la IA para estructurar el título, la descripción y generar una rúbrica 
+    (si aplica) a partir de los datos básicos de la guía.
+    """
+    # Configuramos la IA usando la clave del entorno (asegurarse de tenerla en .env)
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        print("GEMINI_API_KEY no configurada. Devolviendo datos originales.")
+        return None
+    
+    try:
+        genai.configure(api_key=api_key)
+        # Usamos el modelo solicitado por el usuario
+        model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
+        
+        prompt = f"""
+        Eres un asistente educativo experto que ayuda a automatizar la subida de tareas a Google Classroom.
+        Se te proporcionarán los siguientes datos de una actividad de aprendizaje:
+        
+        Tema del encuentro: {tema}
+        Actividad de aprendizaje: {actividad}
+        Instrumento de Evaluación: {instrumento}
+        
+        Tu tarea es devolver un JSON estricto con el siguiente formato:
+        {{
+            "titulo": "Un título corto y atractivo para la tarea basado en la actividad (máximo 60 caracteres)",
+            "descripcion": "Instrucciones detalladas y amigables para la tarea basadas en la actividad, formateadas lista para Classroom (puedes usar emojis educacionales simples).",
+            "rubrica": [
+                // Solo si el instrumento es "Rúbrica". Si no es Rúbrica, este array debe estar vacío [].
+                // Si es rúbrica, propón 2 o 3 criterios de evaluación generales según la actividad.
+                {{
+                    "title": "Nombre del criterio (ej. Comprensión del tema)",
+                    "description": "Descripción de lo que se evalúa",
+                    "levels": [
+                        {{"levelTitle": "Excelente", "description": "Describe excelencia", "points": 10}},
+                        {{"levelTitle": "Bueno", "description": "Describe buen trabajo", "points": 5}},
+                        {{"levelTitle": "Debe Mejorar", "description": "Describe qué falta", "points": 0}}
+                    ]
+                }}
+            ]
+        }}
+        Devuelve SOLO código JSON, sin decoraciones de markdown (no escribas ```json ... ```).
+        """
+        
+        response = model.generate_content(prompt)
+        # Limpiar posibles bloques de código de backticks en la respuesta
+        texto_limpio = response.text.strip()
+        if texto_limpio.startswith("```json"):
+            texto_limpio = texto_limpio[7:]
+        if texto_limpio.startswith("```"):
+            texto_limpio = texto_limpio[3:]
+        if texto_limpio.endswith("```"):
+            texto_limpio = texto_limpio[:-3]
+            
+        return json.loads(texto_limpio.strip())
+        
+    except Exception as e:
+        print(f"Error generando datos con la IA: {e}")
+        return None
+
 def subir_tareas_desde_guia(guia):
     """
     Sube las tareas de una Guía de Estudio Independiente a la clase de Google Classroom.
@@ -263,31 +326,105 @@ def subir_tareas_desde_guia(guia):
     if not servicio:
         return False, "No hay credenciales válidas para interactuar con Google Classroom."
 
-    def crear_tarea(num_tarea, titulo, descripcion, puntaje):
-        if not titulo or not descripcion:
+    def crear_tarea(num_tarea, titulo_original, descripcion_original, puntaje, fecha_entrega, instrumento_eval, tema_encuentro):
+        if not titulo_original or not descripcion_original:
             return None
+            
+        # 1. GENERAR DATOS MEJORADOS CON IA
+        datos_api = generar_datos_tarea_ia(descripcion_original, tema_encuentro, instrumento_eval)
         
-        # Limitar longitud si existiese validación y setear default
+        titulo_final = titulo_original.strip()[:60] + "..."
+        descripcion_final = f"{descripcion_original}\n\nVer plataforma PLANEAUML para detalles de evaluación y rúbrica."
+        rubrica_data = []
+
+        if datos_api:
+            titulo_final = datos_api.get("titulo", titulo_final)[:60]
+            descripcion_final = datos_api.get("descripcion", descripcion_final)
+            rubrica_data = datos_api.get("rubrica", [])
+
+        # Validar puntaje
         max_points = int(puntaje) if puntaje else 100
 
         work_data = {
-            'title': f"Actividad {num_tarea} - {titulo.strip()[:60]}...",
-            'description': f"{descripcion}\n\nVer plataforma PLANEAUML para detalles de evaluación y rúbrica.",
+            'title': f"Actividad {num_tarea} - {titulo_final}",
+            'description': descripcion_final,
             'state': 'PUBLISHED',
             'workType': 'ASSIGNMENT',
             'maxPoints': max_points
         }
+        
+        # 2. AGREGAR FECHA DE ENTREGA Y HORA LÍMITE
+        if fecha_entrega:
+            work_data['dueDate'] = {
+                'year': fecha_entrega.year,
+                'month': fecha_entrega.month,
+                'day': fecha_entrega.day
+            }
+            # Fija la hora límite a las 23:59 UTC
+            work_data['dueTime'] = {
+                'hours': 23,
+                'minutes': 59,
+                'seconds': 59
+            }
 
         try:
+            # 3. CREAR LA TAREA (COURSEWORK)
             tarea_creada = servicio.courses().courseWork().create(
                 courseId=curso_id,
                 body=work_data
             ).execute()
             print(f"Tarea {num_tarea} creada exitosamente: {tarea_creada.get('id')}")
+            tarea_id = tarea_creada.get('id')
+            
+            # 4. AÑADIR LA RÚBRICA (SI EXISTE)
+            if rubrica_data and len(rubrica_data) > 0:
+                print(f"Intentando crear rúbrica para tarea {num_tarea}...")
+                
+                # Para la API, el puntaje total de la rúbrica no puede exceder el maxPoints de la tarea
+                # Escalaremos visualmente o el profe lo ajustará. 
+                # Armar el body de la rúbrica
+                rubric_criteria = []
+                for idx, crit in enumerate(rubrica_data):
+                    levels = []
+                    for lev in crit.get("levels", []):
+                        levels.append({
+                            "title": lev.get("levelTitle", ""),
+                            "description": lev.get("description", ""),
+                            "points": float(lev.get("points", 0))
+                        })
+                    
+                    rubric_criteria.append({
+                        "id": f"crit_{idx}",
+                        "title": crit.get("title", f"Criterio {idx+1}"),
+                        "description": crit.get("description", ""),
+                        "levels": levels
+                    })
+                
+                rubric_body = {
+                    "courseId": curso_id,
+                    "courseWorkId": tarea_id,
+                    "criteria": rubric_criteria
+                }
+                
+                try:
+                    # Uso de API de Rubrics (Nuevos features requeridos)
+                    rubrica_creada = servicio.courses().courseWork().rubrics().create(
+                        courseId=curso_id,
+                        courseWorkId=tarea_id,
+                        body=rubric_body
+                    ).execute()
+                    print(f"Rúbrica creada para tarea {num_tarea}.")
+                except Exception as r_err:
+                    print(f"No se pudo crear la rúbrica mediante API. Error: {r_err}")
+                
             return tarea_creada
+            
         except Exception as e:
             print(f"Error creando tarea {num_tarea}: {e}")
             return None
+
+    # Obtenemos el tema del encuentro desde el modelo
+    tema_encuentro = guia.nombre_de_la_unidad if guia.nombre_de_la_unidad else "Actividades de Unidad"
 
     tareas_creadas = []
     
@@ -296,36 +433,48 @@ def subir_tareas_desde_guia(guia):
     if guia.actividad_aprendizaje_1:
          crear_tarea(
             num_tarea=1, 
-            titulo=guia.objetivo_aprendizaje_1 or "Actividad de la Guía",
-            descripcion=guia.actividad_aprendizaje_1,
-            puntaje=guia.puntaje_1
+            titulo_original=guia.objetivo_aprendizaje_1 or "Actividad de la Guía",
+            descripcion_original=guia.actividad_aprendizaje_1,
+            puntaje=guia.puntaje_1,
+            fecha_entrega=guia.fecha_entrega_1,
+            instrumento_eval=guia.instrumento_evaluacion_1,
+            tema_encuentro=tema_encuentro
         )
     
     # Tarea 2
     if guia.actividad_aprendizaje_2:
          crear_tarea(
             num_tarea=2, 
-            titulo=guia.objetivo_aprendizaje_2 or "Actividad de la Guía",
-            descripcion=guia.actividad_aprendizaje_2,
-            puntaje=guia.puntaje_2
+            titulo_original=guia.objetivo_aprendizaje_2 or "Actividad de la Guía",
+            descripcion_original=guia.actividad_aprendizaje_2,
+            puntaje=guia.puntaje_2,
+            fecha_entrega=guia.fecha_entrega_2,
+            instrumento_eval=guia.instrumento_evaluacion_2,
+            tema_encuentro=tema_encuentro
         )
 
     # Tarea 3
     if guia.actividad_aprendizaje_3:
          crear_tarea(
             num_tarea=3, 
-            titulo=guia.objetivo_aprendizaje_3 or "Actividad de la Guía",
-            descripcion=guia.actividad_aprendizaje_3,
-            puntaje=guia.puntaje_3
+            titulo_original=guia.objetivo_aprendizaje_3 or "Actividad de la Guía",
+            descripcion_original=guia.actividad_aprendizaje_3,
+            puntaje=guia.puntaje_3,
+            fecha_entrega=guia.fecha_entrega_3,
+            instrumento_eval=guia.instrumento_evaluacion_3,
+            tema_encuentro=tema_encuentro
         )
 
     # Tarea 4
     if guia.actividad_aprendizaje_4:
          crear_tarea(
             num_tarea=4, 
-            titulo=guia.objetivo_aprendizaje_4 or "Actividad de la Guía",
-            descripcion=guia.actividad_aprendizaje_4,
-            puntaje=guia.puntaje_4
+            titulo_original=guia.objetivo_aprendizaje_4 or "Actividad de la Guía",
+            descripcion_original=guia.actividad_aprendizaje_4,
+            puntaje=guia.puntaje_4,
+            fecha_entrega=guia.fecha_entrega_4,
+            instrumento_eval=guia.instrumento_evaluacion_4,
+            tema_encuentro=tema_encuentro
         )
 
     return True, "Tareas subidas a Google Classroom."
