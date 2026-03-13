@@ -445,10 +445,10 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
 
         asignaturas = Asignatura.objects.all()
 
-        # Obtener el plan temático efectivo y calcular unidades completadas
+        # Obtener el plan temático efectivo o el programa 2026 asociado
         plan_tematico = asignacion.plan_de_estudio.get_plan_tematico_efectivo()
-        num_unidades = plan_tematico.get_numero_unidades_completadas() if plan_tematico else 0
-        mostrar_ia = num_unidades >= 2
+        programa_2026 = asignacion.plan_de_estudio.programas_2026_asociados.first()
+        mostrar_ia = bool(plan_tematico) or bool(programa_2026)
 
         return render(
             request,
@@ -547,10 +547,10 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
         periodo_tiempo_choices = Silabo.PERIODO_TIEMPO_LIST
         tipo_objetivo_choices = Guia.TIPO_OBJETIVO_LIST
 
-        # Obtener el plan temático efectivo y calcular unidades completadas
+        # Obtener el plan temático efectivo o el programa 2026 asociado
         plan_tematico = asignacion.plan_de_estudio.get_plan_tematico_efectivo()
-        num_unidades = plan_tematico.get_numero_unidades_completadas() if plan_tematico else 0
-        mostrar_ia = num_unidades >= 2
+        programa_2026 = asignacion.plan_de_estudio.programas_2026_asociados.first()
+        mostrar_ia = bool(plan_tematico) or bool(programa_2026)
 
         return render(
             request,
