@@ -1,0 +1,237 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Términos de Servicio - PLANEAUML</title>
+    <meta name="description" content="Términos y condiciones de uso de PLANEAUML, plataforma de planificación académica para la Universidad de Managua.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="{% static 'img/logouml.ico' %}" type="image/x-icon">
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --text-dark: #202124;
+            --text-muted: #5f6368;
+            --border: #e8eaed;
+            --bg-light: #f8f9fa;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-dark);
+            background: #fff;
+            line-height: 1.7;
+        }
+        .hero-bar {
+            background: linear-gradient(135deg, #0d47a1 0%, #1a73e8 100%);
+            color: #fff;
+            padding: 3rem 0 2.5rem;
+        }
+        .hero-bar h1 { font-weight: 700; font-size: 2rem; }
+        .hero-bar p { opacity: .85; font-size: 1rem; }
+        .section-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.8rem 2rem;
+            margin-bottom: 1.5rem;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
+        }
+        .section-card h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin-bottom: 1rem;
+        }
+        .section-card p, .section-card li { color: #3c4043; font-size: .95rem; }
+        .contact-box {
+            background: var(--bg-light);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            padding: 1rem 1.4rem;
+        }
+        footer {
+            background: var(--bg-light);
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 0;
+            font-size: .85rem;
+            color: var(--text-muted);
+        }
+        .nav-back {
+            background: rgba(255,255,255,.15);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.4);
+            border-radius: 8px;
+            padding: .4rem .9rem;
+            text-decoration: none;
+            font-size: .9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            transition: background .2s;
+        }
+        .nav-back:hover { background: rgba(255,255,255,.25); color: #fff; }
+        .update-badge {
+            display: inline-block;
+            background: rgba(255,255,255,.2);
+            border-radius: 20px;
+            padding: .2rem .8rem;
+            font-size: .8rem;
+            margin-top: .5rem;
+        }
+        .num-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #e8f0fe;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: .8rem;
+            flex-shrink: 0;
+            margin-right: .5rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero-bar">
+    <div class="container">
+        <a href="{% url 'inicio' %}" class="nav-back mb-3 d-inline-flex">
+            <i class="fas fa-arrow-left"></i> Volver al inicio
+        </a>
+        <h1 class="mt-2">
+            <i class="fas fa-file-contract me-2"></i>Términos de Servicio
+        </h1>
+        <p class="mb-1">PLANEAUML &mdash; Plataforma de planificación académica para la UML</p>
+        <span class="update-badge"><i class="fas fa-calendar me-1"></i>Última actualización: 13 de marzo de 2026</span>
+    </div>
+</div>
+
+<!-- Content -->
+<div class="container py-5" style="max-width: 860px;">
+
+    <div class="section-card">
+        <h2><i class="fas fa-handshake"></i> Aceptación de los Términos</h2>
+        <p>
+            Al acceder y utilizar <strong>PLANEAUML</strong> (disponible en
+            <a href="https://planeauml.codeader.com" target="_blank">planeauml.codeader.com</a>),
+            aceptas estos Términos de Servicio en su totalidad. Si no estás de acuerdo con alguna
+            parte de estos términos, no debes utilizar la plataforma.
+        </p>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-university"></i> Descripción del Servicio</h2>
+        <p>
+            PLANEAUML es una plataforma web diseñada <strong>exclusivamente para docentes de la
+            Universidad Martin Lutero Sede Jalapa</strong>. Permite:
+        </p>
+        <ul>
+            <li>Crear y gestionar planes de estudio, sílabos y guías de aprendizaje independiente.</li>
+            <li>Generar documentos académicos en formatos Word y Excel.</li>
+            <li>Integrar opcionalmente con <strong>Google Classroom</strong> para publicar cursos y tareas de forma automatizada.</li>
+            <li>Utilizar inteligencia artificial para asistir en la generación de contenido académico.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-user-check"></i> Cuentas de Usuario y Acceso</h2>
+        <ul>
+            <li>El acceso a la plataforma es <strong>exclusivo para docentes autorizados</strong> de la UML. Las cuentas son creadas por el administrador del sistema.</li>
+            <li>Eres responsable de mantener la confidencialidad de tus credenciales de acceso.</li>
+            <li>No debes compartir tu cuenta ni tus tokens de acceso de Google con terceros.</li>
+            <li>La integración con Google Classroom requiere que vincules voluntariamente tu cuenta de Google, lo cual puedes revocar en cualquier momento.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-ban"></i> Uso Aceptable</h2>
+        <p>Al utilizar PLANEAUML, aceptas <strong>no</strong>:</p>
+        <ul>
+            <li>Usar la plataforma para fines distintos a la planificación académica institucional.</li>
+            <li>Intentar acceder a cuentas o datos de otros usuarios sin autorización.</li>
+            <li>Interferir con el funcionamiento normal de la plataforma o sus servidores.</li>
+            <li>Publicar contenido ilegal, ofensivo o que infrinja derechos de terceros en los documentos generados.</li>
+            <li>Usar las funciones de IA para generar contenido que viole las políticas de uso de la API de Google Gemini.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fab fa-google"></i> Integración con Google Classroom</h2>
+        <p>Al conectar tu cuenta de Google:</p>
+        <ul>
+            <li>Autorizas a PLANEAUML a crear cursos, publicar tareas y gestionar rúbricas en tu nombre dentro de Google Classroom.</li>
+            <li>Reconoces que las acciones realizadas en Classroom a través de PLANEAUML quedan registradas en tu cuenta de Google.</li>
+            <li>Puedes revocar el acceso en cualquier momento desde <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Permisos de tu cuenta de Google</a>.</li>
+            <li>El uso de las API de Google está sujeto a los <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Términos de Servicio de Google</a>.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-copyright"></i> Propiedad Intelectual</h2>
+        <p>
+            El contenido académico que generes en PLANEAUML (sílabos, guías, planes de estudio) es de tu
+            propiedad y responsabilidad. El código, diseño y funcionalidades de la plataforma pertenecen
+            a sus desarrolladores. Queda prohibida la reproducción o distribución de la plataforma sin autorización.
+        </p>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-exclamation-triangle"></i> Limitación de Responsabilidad</h2>
+        <p>
+            PLANEAUML se provee <strong>"tal como está"</strong>. No garantizamos disponibilidad ininterrumpida
+            ni que el servicio esté libre de errores. No somos responsables de:
+        </p>
+        <ul>
+            <li>Pérdida de datos o interrupciones del servicio por causas fuera de nuestro control.</li>
+            <li>Problemas causados por cambios en las API de Google Classroom o Gemini.</li>
+            <li>El contenido generado por la inteligencia artificial, el cual debe ser revisado por el docente antes de su uso oficial.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-sync-alt"></i> Modificaciones a los Términos</h2>
+        <p>
+            Nos reservamos el derecho de modificar estos términos en cualquier momento.
+            Los cambios serán publicados en esta misma página con la fecha de actualización correspondiente.
+            El uso continuado de la plataforma después de los cambios implica la aceptación de los nuevos términos.
+        </p>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-envelope"></i> Contacto</h2>
+        <div class="contact-box">
+            <p class="mb-1">Para cualquier consulta sobre estos Términos de Servicio, contáctanos en:</p>
+            <p class="mb-0">
+                <i class="fas fa-envelope me-1 text-primary"></i>
+                <a href="mailto:aderjasmirze@gmail.com">aderjasmirze@gmail.com</a><br>
+                <i class="fas fa-globe me-1 text-primary"></i>
+                <a href="https://planeauml.codeader.com" target="_blank">https://planeauml.codeader.com</a>
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="text-center">
+    <div class="container">
+        <p class="mb-0">&copy; 2026 PLANEAUML &mdash; Universidad Martin Lutero Sede Jalapa. Todos los derechos reservados.</p>
+        <p class="mb-0 mt-1">
+            <a href="{% url 'inicio' %}" class="text-decoration-none text-primary">Inicio</a> &middot;
+            <a href="{% url 'privacidad' %}" class="text-decoration-none text-primary">Política de Privacidad</a> &middot;
+            <a href="{% url 'terminos' %}" class="text-decoration-none text-primary">Términos de Servicio</a>
+        </p>
+    </div>
+</footer>
+
+</body>
+</html>

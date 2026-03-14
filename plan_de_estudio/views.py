@@ -1924,3 +1924,7 @@ def google_oauth2callback_view(request):
 def politicas_privacidad(request):
     """Renderiza la página de políticas de privacidad para la verificación de OAuth."""
     return render(request, 'privacidad.html')
+
+def terminos_servicio(request):
+    """Renderiza la página de Términos de Servicio para la verificación de OAuth."""
+    return render(request, 'terminos.html')
