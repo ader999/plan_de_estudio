@@ -1,0 +1,221 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - PLANEAUML</title>
+    <meta name="description" content="Política de privacidad de PLANEAUML: cómo gestionamos y protegemos los datos de los usuarios al integrar con Google Classroom.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="{% static 'img/logouml.ico' %}" type="image/x-icon">
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --text-dark: #202124;
+            --text-muted: #5f6368;
+            --border: #e8eaed;
+            --bg-light: #f8f9fa;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: var(--text-dark);
+            background: #fff;
+            line-height: 1.7;
+        }
+        .hero-bar {
+            background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+            color: #fff;
+            padding: 3rem 0 2.5rem;
+        }
+        .hero-bar h1 { font-weight: 700; font-size: 2rem; }
+        .hero-bar p { opacity: .85; font-size: 1rem; }
+        .section-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.8rem 2rem;
+            margin-bottom: 1.5rem;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
+        }
+        .section-card h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin-bottom: 1rem;
+        }
+        .section-card p, .section-card li { color: #3c4043; font-size: .95rem; }
+        .badge-google {
+            background: #e8f0fe;
+            color: #1a73e8;
+            border-radius: 6px;
+            padding: .15rem .55rem;
+            font-size: .8rem;
+            font-weight: 600;
+        }
+        .contact-box {
+            background: var(--bg-light);
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            padding: 1rem 1.4rem;
+        }
+        footer {
+            background: var(--bg-light);
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 0;
+            font-size: .85rem;
+            color: var(--text-muted);
+        }
+        .nav-back {
+            background: rgba(255,255,255,.15);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.4);
+            border-radius: 8px;
+            padding: .4rem .9rem;
+            text-decoration: none;
+            font-size: .9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            transition: background .2s;
+        }
+        .nav-back:hover { background: rgba(255,255,255,.25); color: #fff; }
+        .update-badge {
+            display: inline-block;
+            background: rgba(255,255,255,.2);
+            border-radius: 20px;
+            padding: .2rem .8rem;
+            font-size: .8rem;
+            margin-top: .5rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero-bar">
+    <div class="container">
+        <a href="{% url 'inicio' %}" class="nav-back mb-3 d-inline-flex">
+            <i class="fas fa-arrow-left"></i> Volver al inicio
+        </a>
+        <h1 class="mt-2">
+            <i class="fas fa-shield-alt me-2"></i>Política de Privacidad
+        </h1>
+        <p class="mb-1">PLANEAUML &mdash; Plataforma de planificación académica para la UML</p>
+        <span class="update-badge"><i class="fas fa-calendar me-1"></i>Última actualización: 13 de marzo de 2026</span>
+    </div>
+</div>
+
+<!-- Content -->
+<div class="container py-5" style="max-width: 860px;">
+
+    <div class="section-card">
+        <h2><i class="fas fa-info-circle"></i> ¿Qué es PLANEAUML?</h2>
+        <p>
+            PLANEAUML es una plataforma web desarrollada para la <strong>Universidad de Managua (UML)</strong>
+            que permite a los docentes crear, gestionar y publicar planes de estudio, sílabos y guías de
+            aprendizaje independiente, con integración opcional a <strong>Google Classroom</strong>.
+        </p>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-database"></i> Información que recopilamos</h2>
+        <p>Cuando conectas tu cuenta de Google a PLANEAUML, recopilamos únicamente:</p>
+        <ul>
+            <li><strong>Nombre completo y dirección de correo electrónico</strong> de tu cuenta de Google (para identificarte en la plataforma).</li>
+            <li><strong>Foto de perfil</strong> de Google (para mostrarla en la interfaz de la aplicación).</li>
+            <li><strong>Tokens de acceso y actualización de OAuth 2.0</strong> (para realizar acciones en Google Classroom en tu nombre).</li>
+            <li><strong>Datos de Google Classroom</strong>: creación de cursos, asignación de tareas y gestión de rúbricas dentro de las clases que administras.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-bullseye"></i> Cómo usamos tu información</h2>
+        <p>La información recopilada se utiliza <em>exclusivamente</em> para:</p>
+        <ul>
+            <li>Identificarte dentro de la plataforma PLANEAUML.</li>
+            <li>Actuar en tu nombre dentro de Google Classroom: crear cursos, publicar tareas y generar rúbricas basadas en los sílabos que hayas configurado.</li>
+            <li>Personalizar tu experiencia mostrando tu nombre y foto de perfil en la interfaz.</li>
+        </ul>
+        <p class="mb-0">
+            <strong>No utilizamos tus datos</strong> con fines publicitarios, de marketing ni para ninguna otra finalidad no descrita en esta política.
+        </p>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fab fa-google"></i> Cumplimiento de la Política de Datos de Google <span class="badge-google ms-1">Requerido por Google</span></h2>
+        <p>
+            El uso que PLANEAUML hace de la información recibida desde las API de Google cumple con la
+            <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Política de datos del usuario de los servicios de API de Google</a>,
+            incluidos los <strong>requisitos de uso limitado</strong>. En particular:
+        </p>
+        <ul>
+            <li>Solo leemos o modificamos los datos de Classroom necesarios para las funciones declaradas de la aplicación.</li>
+            <li>No transferimos datos de la API de Google a terceros, excepto cuando sea necesario para proporcionar o mejorar las funciones orientadas al usuario, para cumplir con la ley aplicable o como parte de una fusión, adquisición o venta de activos, con el consentimiento del usuario.</li>
+            <li>No utilizamos los datos de la API de Google para mostrar anuncios.</li>
+            <li>No permitimos que humanos lean datos privados del usuario de Google, salvo con permiso explícito del usuario, por razones de seguridad o cumplimiento legal.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-share-alt"></i> Compartir información con terceros</h2>
+        <p>
+            PLANEAUML <strong>no vende, alquila ni comparte</strong> tu información personal con ningún tercero.
+            Los únicos servicios externos que intervienen en el manejo de datos son:
+        </p>
+        <ul>
+            <li><strong>Google LLC</strong> (a través de las API de Google Classroom y OAuth 2.0) para completar las acciones que solicitas.</li>
+            <li><strong>Railway / Servidor de hosting</strong> donde se alojan los datos de forma segura.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-lock"></i> Seguridad de tus datos</h2>
+        <p>
+            Los tokens de acceso de Google se almacenan de forma cifrada en nuestra base de datos PostgreSQL.
+            La comunicación entre tu navegador y nuestro servidor siempre ocurre sobre <strong>HTTPS</strong>.
+            Solo los administradores autorizados de la plataforma tienen acceso técnico al servidor.
+        </p>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-user-shield"></i> Tus derechos</h2>
+        <p>En cualquier momento puedes:</p>
+        <ul>
+            <li><strong>Revocar el acceso</strong> de PLANEAUML a tu cuenta de Google desde <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Permisos de tu cuenta de Google</a>.</li>
+            <li><strong>Solicitar la eliminación</strong> de los datos almacenados contactándonos por correo electrónico.</li>
+            <li><strong>Acceder</strong> a la información almacenada sobre tu cuenta mediante solicitud directa.</li>
+        </ul>
+    </div>
+
+    <div class="section-card">
+        <h2><i class="fas fa-envelope"></i> Contacto</h2>
+        <div class="contact-box">
+            <p class="mb-1">Si tienes preguntas sobre esta política de privacidad, contáctanos en:</p>
+            <p class="mb-0">
+                <i class="fas fa-envelope me-1 text-primary"></i>
+                <a href="mailto:aderjasmirze@gmail.com">aderjasmirze@gmail.com</a><br>
+                <i class="fas fa-globe me-1 text-primary"></i>
+                <a href="https://planeauml.codeader.com" target="_blank">https://planeauml.codeader.com</a>
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="text-center">
+    <div class="container">
+        <p class="mb-0">&copy; 2026 PLANEAUML &mdash; Universidad de Managua (UML). Todos los derechos reservados.</p>
+        <p class="mb-0 mt-1">
+            <a href="{% url 'inicio' %}" class="text-decoration-none text-primary">Inicio</a> &middot;
+            <a href="{% url 'privacidad' %}" class="text-decoration-none text-primary">Política de Privacidad</a>
+        </p>
+    </div>
+</footer>
+
+</body>
+</html>

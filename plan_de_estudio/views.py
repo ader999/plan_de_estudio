@@ -1920,3 +1920,7 @@ def google_oauth2callback_view(request):
         
     # Redirigimos de vuelta al admin de Django después del proceso de vinculación
     return redirect('admin:index')
+
+def politicas_privacidad(request):
+    """Renderiza la página de políticas de privacidad para la verificación de OAuth."""
+    return render(request, 'privacidad.html')
