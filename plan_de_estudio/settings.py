@@ -171,9 +171,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/plan_de_estudio/'  # Cambia esto según tu necesidad
 
-# Storage configuration - using DEFAULT_FILE_STORAGE for compatibility with django-minio-storage 0.5.8
-DEFAULT_FILE_STORAGE = 'minio_storage.storage.MinioMediaStorage'
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+# Storage configuration - using STORAGES dictionary in Django 5.x
+STORAGES = {
+    "default": {
+        "BACKEND": "minio_storage.storage.MinioMediaStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # Minio storage settings
 MINIO_STORAGE_ENDPOINT = os.environ.get('MINIO_S3_ENDPOINT_URL')

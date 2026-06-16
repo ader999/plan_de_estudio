@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Plan_de_estudio, Asignatura, Carrera, Silabo, Guia, AsignacionPlanEstudio, PlanTematico, ProgramaAsignatura2026
+from .models import Plan_de_estudio, Asignatura, Carrera, Silabo, Guia, AsignacionPlanEstudio, PlanTematico, ProgramaAsignatura2026, CopiaSeguridad
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django import forms
@@ -513,4 +513,55 @@ class CredencialesGoogleAdmin(admin.ModelAdmin):
     list_display = ('usuario', 'foto_perfil')
     search_fields = ('usuario__username', 'usuario__email')
     readonly_fields = ('token', 'refresh_token', 'token_uri', 'client_id', 'client_secret', 'scopes', 'foto_perfil')
+
+
+@admin.register(CopiaSeguridad)
+class CopiaSeguridadAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/plan_de_estudio/copiaseguridad/change_list.html'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('backup-db/', self.admin_site.admin_view(self.backup_db_view), name='plan_de_estudio_copiaseguridad_backup_db'),
+            path('descargar-backup/', self.admin_site.admin_view(self.descargar_backup_view), name='plan_de_estudio_copiaseguridad_descargar_backup'),
+            path('ver-guia/', self.admin_site.admin_view(self.ver_guia_view), name='plan_de_estudio_copiaseguridad_ver_guia'),
+        ]
+        return custom_urls + urls
+
+    def backup_db_view(self, request):
+        from .utils.db_backup import run_backup
+        try:
+            filepath, filename, _ = run_backup(send_email=False)
+            msg = f"Copia de seguridad creada y guardada en MinIO correctamente: {filename}."
+            self.message_user(request, msg, level=messages.SUCCESS)
+        except Exception as e:
+            self.message_user(request, f"Error al generar la copia de seguridad: {str(e)}", level=messages.ERROR)
+        return HttpResponseRedirect("../")
+
+    def descargar_backup_view(self, request):
+        from .utils.db_backup import run_backup
+        from django.http import FileResponse
+        try:
+            filepath, filename, _ = run_backup(send_email=False)
+            response = FileResponse(open(filepath, 'rb'), as_attachment=True, filename=filename)
+            return response
+        except Exception as e:
+            self.message_user(request, f"Error al descargar la copia de seguridad: {str(e)}", level=messages.ERROR)
+            return HttpResponseRedirect("../")
+
+    def ver_guia_view(self, request):
+        return render(request, 'admin/plan_de_estudio/copiaseguridad/guia_backup.html', {
+            **self.admin_site.each_context(request),
+            'title': 'Guía de Restauración de Base de Datos',
+        })
+
 

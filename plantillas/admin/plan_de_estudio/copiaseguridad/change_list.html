@@ -1,0 +1,90 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main" style="max-width: 900px; margin: 20px auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    
+    <!-- Encabezado Principal (Usa var(--primary) y var(--primary-fg) nativos de Django) -->
+    <div class="module" style="background: var(--primary); color: var(--primary-fg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 25px; border: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 12px;">
+            <div style="background: rgba(255, 255, 255, 0.15); border-radius: 50%; padding: 10px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+                <!-- Settings/Config Icon -->
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-fg);"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </div>
+            <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: var(--primary-fg); border: none;">Acciones de Sistema y Configuración</h2>
+        </div>
+        <p style="margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--primary-fg); opacity: 0.9;">
+            Panel administrativo central para ejecutar tareas de mantenimiento de la aplicación, gestionar copias de seguridad de la base de datos y revisar la documentación de restauración.
+        </p>
+    </div>
+
+    <!-- Tabla de Acciones (Usa class="module" nativo de Django para heredar fondo y bordes correctos en claro/oscuro) -->
+    <div class="module" style="padding: 25px; margin-bottom: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 600; color: var(--body-fg); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">Lista de Herramientas y Acciones</h3>
+        
+        <div class="results" style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; border: 1px solid var(--border-color);">
+                <thead>
+                    <tr style="background: var(--darkened-bg); color: var(--body-fg); font-size: 13px; font-weight: 700; text-transform: uppercase;">
+                        <th style="padding: 12px 15px; border-bottom: 2px solid var(--border-color); width: 30%;">Herramienta / Acción</th>
+                        <th style="padding: 12px 15px; border-bottom: 2px solid var(--border-color); width: 50%;">Descripción</th>
+                        <th style="padding: 12px 15px; border-bottom: 2px solid var(--border-color); width: 20%; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 14px; color: var(--body-fg);">
+                    
+                    <!-- Fila 1: Respaldo MinIO -->
+                    <tr style="border-bottom: 1px solid var(--border-color); background: var(--body-bg);">
+                        <td style="padding: 18px 15px; font-weight: 600; color: var(--body-fg);">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <!-- Cloud Icon -->
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--link-color);"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a6 6 0 0 0 0-12z"></path></svg>
+                                Respaldar en MinIO
+                            </div>
+                        </td>
+                        <td style="padding: 18px 15px; line-height: 1.5; color: var(--body-fg); opacity: 0.95;">
+                            Genera una copia de la base de datos (con fallback a JSON) y la almacena de forma segura en MinIO (carpeta <code>copias_db/</code>).
+                        </td>
+                        <td style="padding: 18px 15px; text-align: center;">
+                            <a href="backup-db/" class="button" style="background: #e53e3e; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block; font-size: 13px; transition: background 0.2s;" onmouseover="this.style.background='#c53030';" onmouseout="this.style.background='#e53e3e';">Ejecutar</a>
+                        </td>
+                    </tr>
+                    
+                    <!-- Fila 2: Descargar Respaldo -->
+                    <tr style="border-bottom: 1px solid var(--border-color); background: var(--body-bg);">
+                        <td style="padding: 18px 15px; font-weight: 600; color: var(--body-fg);">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--link-color);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Descargar Respaldo Directo
+                            </div>
+                        </td>
+                        <td style="padding: 18px 15px; line-height: 1.5; color: var(--body-fg); opacity: 0.95;">
+                            Genera instantáneamente la copia de seguridad de la base de datos de producción y descarga el archivo directamente en su navegador.
+                        </td>
+                        <td style="padding: 18px 15px; text-align: center;">
+                            <a href="descargar-backup/" class="button" style="background: #319795; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block; font-size: 13px; transition: background 0.2s;" onmouseover="this.style.background='#287976';" onmouseout="this.style.background='#319795';">Descargar</a>
+                        </td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sección de Documentación -->
+    <div class="module" style="padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--body-fg);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--body-fg); border: none;">Documentación de Restauración</h3>
+        </div>
+        <p style="margin: 0 0 15px 0; color: var(--body-fg); font-size: 14.5px; line-height: 1.5; opacity: 0.9;">
+            Consulte la guía con las instrucciones y comandos necesarios para restaurar copias de seguridad en formato <strong>.dump</strong> y <strong>.json</strong>.
+        </p>
+        <a href="ver-guia/" class="button" style="background: var(--body-fg); color: var(--body-bg); padding: 10px 20px; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; border: 1px solid var(--border-color);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            Ver Guía de Restauración
+        </a>
+    </div>
+
+</div>
+{% endblock %}

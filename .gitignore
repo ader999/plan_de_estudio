@@ -1,11 +1,16 @@
 db.sqlite3
 venv
-__pycache__
+.venv
+__pycache__/
+*.pyc
 .env
 .env.temp
-media
-.idea
-/.idea
-plan_de_estudio/.idea
-/plan_de_estudio/.idea
-.venv
+media/
+.idea/
+.vscode/
+# Generated/Temporary files
+static/img/archivo_generado*.xlsx
+static/img/silabo.docx
+static/data/Hoja de cálculo sin título*
+temp_edit.py
+guia_backup.json

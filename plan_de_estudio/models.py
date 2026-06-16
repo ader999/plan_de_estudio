@@ -104,7 +104,7 @@ class Plan_de_estudio(models.Model):
     horas_estudio_independiente = models.IntegerField(null=False, unique=False, verbose_name="Horas de estudio independiente", validators=[MinValueValidator(1)])
 
     class Meta:
-        unique_together = ('carrera', 'asignatura')
+        unique_together = ('carrera', 'asignatura', 'pensol')
         verbose_name = "Plan de estudio"
         verbose_name_plural = "Planes de estudio"
 
@@ -116,13 +116,14 @@ class Plan_de_estudio(models.Model):
         if self.asignatura_id is None:
             raise ValidationError("Debes seleccionar una asignatura.")
 
-        # Verificar si ya existe un Plan_de_estudio con la misma asignatura en la misma carrera
+        # Verificar si ya existe un Plan_de_estudio con la misma asignatura en la misma carrera y el mismo pensol
         existing_plans = Plan_de_estudio.objects.filter(
             carrera=self.carrera,
-            asignatura=self.asignatura
+            asignatura=self.asignatura,
+            pensol=self.pensol
         ).exclude(pk=self.pk)  # Excluir el propio objeto si se está editando
         if existing_plans.exists():
-            raise ValidationError("No puedes insertar la misma asignatura en la misma carrera dos veces.")
+            raise ValidationError("No puedes insertar la misma asignatura en la misma carrera con el mismo Pensol dos veces.")
 
         # Validar que los campos de horas sean mayores que cero y no estén vacíos
         if self.horas_presenciales is None or not isinstance(self.horas_presenciales, int) or self.horas_presenciales <= 0:
@@ -662,6 +663,12 @@ class Guia(models.Model):
 
     def __str__(self):
         return f"Guía {self.numero_encuentro} - {self.unidad} - {self.fecha}"
+
+class CopiaSeguridad(Carrera):
+    class Meta:
+        proxy = True
+        verbose_name = "Copia de Seguridad"
+        verbose_name_plural = "Copias de Seguridad / Configuración"
 
 def get_user_str(self):
     nombre_completo = f"{self.first_name} {self.last_name}".strip()

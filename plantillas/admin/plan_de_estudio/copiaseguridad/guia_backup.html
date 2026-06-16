@@ -1,0 +1,55 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='plan_de_estudio' %}">Plan de estudio</a>
+&rsaquo; <a href="../">Copias de Seguridad / Configuración</a>
+&rsaquo; Guía de Restauración
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main" style="max-width: 900px; margin: 20px auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <div class="module" style="padding: 40px; border-radius: 12px; margin-bottom: 25px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg);">
+        
+        <!-- Encabezado de la Guía -->
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--body-fg);"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: var(--body-fg); border: none;">Guía de Restauración de Base de Datos</h2>
+            </div>
+            <a href="../" class="button" style="background: var(--darkened-bg); color: var(--body-fg); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 13px; display: inline-block;">
+                Volver
+            </a>
+        </div>
+
+        <!-- Sección 1 -->
+        <h3 style="color: var(--link-color); font-size: 18px; font-weight: 600; margin-top: 25px; margin-bottom: 10px;">1. Restauración de Archivos .dump (Nativo de PostgreSQL)</h3>
+        <p style="color: var(--body-fg); font-size: 15px; line-height: 1.6; margin-bottom: 15px; opacity: 0.9;">
+            Este es el formato comprimido nativo. Para restaurar este archivo en Railway, asegúrese de tener instalada la herramienta <code>pg_restore</code> de PostgreSQL y ejecute el siguiente comando en su terminal local:
+        </p>
+        <pre style="background: var(--darkened-bg); color: var(--body-fg); padding: 18px; border-radius: 8px; font-family: Courier, monospace; font-size: 14px; overflow-x: auto; border: 1px solid var(--border-color); line-height: 1.5; margin-bottom: 20px;">
+<span style="color: var(--link-color);">PGPASSWORD</span>="<span style="color: #ecc94b;">TU_PASSWORD_AQUI</span>" pg_restore -h <span style="color: var(--link-color);">TU_HOST_AQUI</span> -p <span style="color: var(--link-color);">TU_PUERTO_AQUI</span> -U <span style="color: var(--link-color);">TU_USUARIO_AQUI</span> -d <span style="color: var(--link-color);">TU_BASE_DATOS_AQUI</span> -c --no-owner --no-privileges <span style="color: #ecc94b;">NOMBRE_RESPALDO.dump</span>
+        </pre>
+        <div style="background: rgba(49, 130, 206, 0.15); border-left: 4px solid #3182ce; color: var(--body-fg); padding: 15px 20px; border-radius: 4px; font-size: 14.5px; margin-bottom: 30px; line-height: 1.5;">
+            <strong>Nota de comandos adicionales:</strong> El parámetro <code>-c</code> (clean) eliminará las tablas existentes antes de restaurarlas para evitar errores de duplicado. <code>--no-owner</code> y <code>--no-privileges</code> evitan errores de asignación de usuarios y permisos incompatibles entre entornos.
+        </div>
+
+        <!-- Sección 2 -->
+        <h3 style="color: var(--link-color); font-size: 18px; font-weight: 600; margin-top: 25px; margin-bottom: 10px;">2. Restauración de Archivos .json (Django loaddata)</h3>
+        <p style="color: var(--body-fg); font-size: 15px; line-height: 1.6; margin-bottom: 15px; opacity: 0.9;">
+            Si el sistema generó un archivo JSON debido a la falta de herramientas de Postgres en el servidor, puede cargarlo directamente a través del motor de base de datos que Django tenga configurado en su archivo <code>.env</code> local ejecutando:
+        </p>
+        <pre style="background: var(--darkened-bg); color: var(--body-fg); padding: 18px; border-radius: 8px; font-family: Courier, monospace; font-size: 14px; overflow-x: auto; border: 1px solid var(--border-color); line-height: 1.5; margin-bottom: 20px;">
+python manage.py loaddata <span style="color: #ecc94b;">NOMBRE_RESPALDO.json</span>
+        </pre>
+
+        <!-- Alerta de Advertencia -->
+        <div style="background: rgba(229, 62, 62, 0.15); border-left: 4px solid #e53e3e; color: var(--body-fg); padding: 15px 20px; border-radius: 4px; font-size: 14.5px; margin-top: 30px; line-height: 1.5;">
+            <strong>¡ATENCIÓN!</strong> La restauración de bases de datos sobrescribirá los datos del entorno seleccionado. Le recomendamos realizar siempre una descarga de seguridad manual del estado actual antes de proceder a una restauración.
+        </div>
+    </div>
+</div>
+{% endblock %}
