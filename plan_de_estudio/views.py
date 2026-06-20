@@ -99,7 +99,7 @@ def inicio(request):
     asignaciones = AsignacionPlanEstudio.objects.filter(
         usuario__username=nombre_de_usuario
     ).order_by('-id')
-    rango = range(1, 13)  # Crear el rango para pasarlo al template
+    rango = range(1, 12)  # Crear el rango para pasarlo al template
 
     return render(
         request,
@@ -895,7 +895,7 @@ def generar_silabo(request):
             encuentro = int(encuentro)
             if encuentro < 1 or encuentro > 11:
                 return JsonResponse(
-                    {"error": "El número de encuentro debe estar entre 1 y 12"},
+                    {"error": "El número de encuentro debe estar entre 1 y 11"},
                     status=400,
                 )
         except ValueError:

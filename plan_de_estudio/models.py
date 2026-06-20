@@ -341,7 +341,7 @@ class Silabo(models.Model):
     codigo = models.CharField(max_length=20)
 
     # Sección 1: Información general del plan de estudio (según imagen 1)
-    encuentros = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(12)])
+    encuentros = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(11)])
     fecha = models.DateField(verbose_name='Fecha')
     unidad = models.CharField(max_length=255, choices=UNIDAD_LIST)
     nombre_de_la_unidad = models.CharField(max_length=255, verbose_name='Nombre de la unidad')

@@ -141,8 +141,8 @@ class FiltarSilabo(admin.ModelAdmin):
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'encuentros':
-            kwargs['widget'] = forms.NumberInput(attrs={'min': '1', 'max': '10', 'step': '1'})
-            kwargs['validators'] = [MinValueValidator(1), MaxValueValidator(10)]
+            kwargs['widget'] = forms.NumberInput(attrs={'min': '1', 'max': '11', 'step': '1'})
+            kwargs['validators'] = [MinValueValidator(1), MaxValueValidator(11)]
         elif db_field.name == 'fecha':
             # Utiliza el widget de calendario AdminDateWidget para el campo de fecha.
             kwargs['widget'] = DateInput(attrs={'type': 'date'})
@@ -177,9 +177,9 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__pensol', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'bloque') # Añadir filtros útiles
 
     def completado_icono(self, obj):
-        # Retorna True si silabos_creados es igual a 12
-        # Ajusta el número 12 si el total esperado de sílabos es diferente
-        total_esperado = 12 # O obtén esto dinámicamente si es variable
+        # Retorna True si silabos_creados es igual a 11
+        # Ajusta el número 11 si el total esperado de sílabos es diferente
+        total_esperado = 11 # O obtén esto dinámicamente si es variable
         return obj.silabos_creados >= total_esperado # Usar >= por si acaso
     completado_icono.boolean = True
     completado_icono.short_description = 'Completado'
