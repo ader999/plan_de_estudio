@@ -12,71 +12,10 @@
     /* Estilo personalizado para las líneas divisorias */
     .hr-blue {
         height: 3px;
-        background-color: #0d6efd;
+        background-color: var(--corp-primary);
         opacity: 1;
         border: none;
         border-radius: 2px;
-    }
-
-    /* Estilos para el formulario con fondo oscuro - Paleta elegante */
-    .card-dark {
-        background-color: #3a4b4b;
-        color: #e0e7e7;
-        padding: 1.25rem;
-        border-radius: 0.25rem;
-    }
-
-    .card-dark label {
-        color: #a6cdcd;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-    }
-
-    .card-dark h2 {
-        color: #ffffff;
-        margin-bottom: 1.5rem;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-        letter-spacing: 1px;
-    }
-
-    .card-dark h5, .card-dark h6 {
-        color: #c4eaea;
-    }
-
-    /* Mejorar contraste en campos de formulario dentro del tema oscuro */
-    .card-dark .form-control, .card-dark .form-select {
-        background-color: #f8f9fa;
-        border: 1px solid #ced4da;
-        color: #212529;
-        border-radius: 4px;
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    }
-
-    .card-dark .form-control:focus, .card-dark .form-select:focus {
-        border-color: #81afc2;
-        box-shadow: 0 0 0 0.2rem rgba(129, 175, 194, 0.25);
-    }
-
-    /* Estilo para las cabeceras de las tarjetas */
-    .card-header-custom {
-        background-color: #2a3838;
-        color: #ffffff;
-        border-bottom: 2px solid #62a2a2;
-        padding: 1rem;
-        border-radius: 0.25rem 0.25rem 0 0;
-    }
-
-    /* Estilos para resaltar secciones y mejorar legibilidad */
-    .section-divider {
-        border-top: 1px solid rgba(166, 205, 205, 0.3);
-        margin: 1.5rem 0;
-    }
-
-    /* Estilo para tarjetas */
-    .card {
-        border: none;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     }
 
     /* Espaciado consistente para los campos */
@@ -85,9 +24,10 @@
     }
 
     h6 {
-        margin-top: 1rem;
+        margin-top: 1.5rem;
         margin-bottom: 1rem;
-        font-weight: 600;
+        font-weight: 700;
+        color: var(--text-primary);
     }
 </style>
 
@@ -105,7 +45,7 @@
             <div class="row justify-content-center">
                 <div class="col-lg-8 col-md-10">
                     <div class="card shadow-lg">
-                        <div class="card-body card-dark">
+                        <div class="card-body">
                             <!-- Contenido del Estudio Independiente -->
                             <h2 class="text-center mb-4">
                                 Guía de Estudio Independiente
@@ -198,13 +138,13 @@
                                 <!-- Información General -->
                                 <div class="card mb-4 mt-3">
                                     <div
-                                        class="card-header card-header-custom"
+                                        class="card-header"
                                     >
                                         <h5 class="mb-0">
                                             Información General
                                         </h5>
                                     </div>
-                                    <div class="card-body card-dark">
+                                    <div class="card-body">
                                         <!-- Campo para Número de Encuentro (oculto) -->
                                         <div class="mb-3 d-none">
                                             <label
@@ -284,13 +224,13 @@
                                 <!-- Tarea 1 -->
                                 <div class="card mb-4">
                                     <div
-                                        class="card-header card-header-custom"
+                                        class="card-header"
                                     >
                                         <h5 class="mb-0">
                                             Primera actividad
                                         </h5>
                                     </div>
-                                    <div class="card-body card-dark">
+                                    <div class="card-body">
                                         <div class="mb-3">
                                             <label
                                                 for="tipo_objetivo_1"
@@ -540,13 +480,13 @@
                                 <!-- Segunda actividad (opcional) -->
                                 <div class="card mb-4">
                                     <div
-                                        class="card-header card-header-custom"
+                                        class="card-header"
                                     >
                                         <h5 class="mb-0">
                                             Segunda actividad (opcional)
                                         </h5>
                                     </div>
-                                    <div class="card-body card-dark">
+                                    <div class="card-body">
                                         <div class="mb-3">
                                             <label class="form-label" for="tipo_objetivo_2">Tipo de Objetivo</label>
                                             <select
@@ -776,13 +716,13 @@
                                 <!-- Tercera actividad (opcional) -->
                                 <div class="card mb-4">
                                     <div
-                                        class="card-header card-header-custom"
+                                        class="card-header"
                                     >
                                         <h5 class="mb-0">
                                             Tercera actividad (opcional)
                                         </h5>
                                     </div>
-                                    <div class="card-body card-dark">
+                                    <div class="card-body">
                                         <div class="mb-3">
                                             <label
                                                 for="tipo_objetivo_3"
@@ -1023,10 +963,10 @@
 
                                 <!-- Cuarta actividad (opcional) -->
                                 <div class="card mb-4">
-                                    <div class="card-header card-header-custom">
+                                    <div class="card-header">
                                         <h5 class="mb-0">Cuarta actividad (opcional)</h5>
                                     </div>
-                                    <div class="card-body card-dark">
+                                    <div class="card-body">
                                         <div class="mb-3">
                                             <label class="form-label" for="tipo_objetivo_4">Tipo de Objetivo</label>
                                             <select
@@ -1332,48 +1272,44 @@
        Seleccionamos el contenedor principal por su ID #page-content.
        Este ID ya lo tienes en tu base.html, lo que lo hace perfecto para esto.
     */
-    .card-dark {
-        /* Anulamos los márgenes laterales que pone la clase .container de Bootstrap */
-        padding-left: 7px !important;  /* Margen izquierdo mínimo */
-        padding-right: 7px !important; /* Margen derecho mínimo */
-
-    }
+<style>
     .transition-btn {
-        transition: all 0.3s ease;
-        border-radius: 25px;
+        transition: all 0.2s ease;
+        border-radius: 20px;
         padding: 10px 25px;
     }
 
     .transition-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     .transition-btn:active {
         transform: translateY(-1px);
-        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
 
     .save-btn {
         font-size: 1.1rem;
-        font-weight: 500;
+        font-weight: 600;
         padding: 12px 25px;
-        background: linear-gradient(to right, #28a745, #20c997);
+        background: var(--corp-success);
         border: none;
+        color: white;
     }
 
     .save-btn:hover {
-        background: linear-gradient(to right, #20c997, #28a745);
+        background: var(--corp-success-hover);
     }
 
     .custom-alert {
         display: flex;
         align-items: center;
-        background-color: #fff3cd;
-        border: 2px solid #ffc107;
-        border-radius: 20px;
+        background-color: rgba(217, 119, 6, 0.12);
+        border: 1px solid var(--corp-warning);
+        border-radius: 12px;
         padding: 15px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         position: relative;
         overflow: hidden;
         animation: pulse 2s infinite;
@@ -1384,19 +1320,19 @@
         position: absolute;
         top: 0;
         left: 0;
-        width: 5px;
+        width: 4px;
         height: 100%;
-        background-color: #ffc107;
+        background-color: var(--corp-warning);
     }
 
     .custom-alert-icon {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 60px;
-        height: 60px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
-        background-color: #ffc107;
+        background-color: var(--corp-warning);
         color: #fff;
         margin-right: 15px;
         flex-shrink: 0;
@@ -1407,25 +1343,25 @@
     }
 
     .custom-alert-content h4 {
-        color: #856404;
+        color: var(--text-primary);
         font-weight: bold;
         margin-top: 0;
     }
 
     .custom-alert-content p {
-        color: #856404;
+        color: var(--text-secondary);
         font-weight: 500;
     }
 
     @keyframes pulse {
         0% {
-            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4);
         }
         70% {
-            box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+            box-shadow: 0 0 0 8px rgba(217, 119, 6, 0);
         }
         100% {
-            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
         }
     }
 
@@ -1434,11 +1370,11 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background-color: #fff;
-        border: 2px solid var(--color-azul-2);
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--corp-danger);
         padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
         z-index: 1000;
         animation: aparecer 0.3s ease-out;
         min-width: 300px;
@@ -1462,7 +1398,7 @@
     }
 
     .mensaje-error-icono {
-        color: var(--color-azul-3);
+        color: var(--corp-danger);
         margin-right: 15px;
         flex-shrink: 0;
     }
@@ -1473,13 +1409,13 @@
 
     .mensaje-error-texto h4 {
         margin-top: 0;
-        color: var(--color-azul-oscuro);
+        color: var(--text-primary);
         font-weight: bold;
         margin-bottom: 10px;
     }
 
     .mensaje-error-texto p {
-        color: var(--color-gris-1);
+        color: var(--text-secondary);
         margin-bottom: 0;
     }
 
@@ -1492,36 +1428,36 @@
         border: none;
         padding: 0;
         cursor: pointer;
-        color: var(--color-gris-2);
+        color: var(--text-muted);
         transition: color 0.2s;
     }
 
     .mensaje-error-cerrar:hover {
-        color: var(--color-azul-oscuro);
+        color: var(--text-primary);
     }
 
     .campo-invalido {
-        border: 2px solid #ff9800 !important;
-        background-color: #fff8e1 !important;
-        box-shadow: 0 0 5px rgba(255, 152, 0, 0.5) !important;
+        border: 1.5px solid var(--corp-warning) !important;
+        background-color: rgba(217, 119, 6, 0.1) !important;
+        box-shadow: 0 0 5px rgba(217, 119, 6, 0.4) !important;
         animation: pulso-naranja 1.5s infinite;
     }
 
     @keyframes pulso-naranja {
         0% {
-            box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+            box-shadow: 0 0 5px rgba(217, 119, 6, 0.3);
         }
         50% {
-            box-shadow: 0 0 10px rgba(255, 152, 0, 0.8);
+            box-shadow: 0 0 10px rgba(217, 119, 6, 0.6);
         }
         100% {
-            box-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+            box-shadow: 0 0 5px rgba(217, 119, 6, 0.3);
         }
     }
 
     /* Añadir un icono de advertencia a los campos inválidos */
     .campo-invalido:focus {
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff9800" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23d97706" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
         background-repeat: no-repeat;
         background-position: right 10px center;
         background-size: 20px;

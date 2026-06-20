@@ -3,97 +3,49 @@
 
 {% block content %}
 <style>
-    :root {
-        --classic-bg: #f0fdfa;
-        --classic-card: #abb2b9;
-        --classic-text: #047857;
-        --classic-text-light: #059669;
-        --classic-border: #a7f3d0;
-        --classic-shadow: rgba(16, 185, 129, 0.12);
-        --classic-hover: rgba(16, 185, 129, 0.06);
+    .pagination {
+        gap: 5px;
     }
-
-    body {
-        background-color: var(--classic-bg);
-        color: var(--classic-text);
-        font-family: 'Georgia', 'Times New Roman', serif;
-    }
-
-    .classic-card {
-        background: var(--classic-card);
-        border: 1px solid var(--classic-border);
-        box-shadow: 0 2px 8px var(--classic-shadow);
-        transition: all 0.3s ease;
-    }
-
-    .classic-card:hover {
-        box-shadow: 0 4px 12px var(--classic-shadow);
-        transform: translateY(-2px);
-    }
-
-    .classic-header {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-        color: white;
-        border-bottom: 3px solid #047857;
-    }
-
-    .classic-btn {
-        font-size: 0.85rem;
-        font-weight: 500;
-        border: none;
-        transition: all 0.2s ease;
-        text-decoration: none;
-    }
-
-    .btn-classic-primary { background-color: #059669; color: white; }
-    .btn-classic-primary:hover { background-color: #047857; color: white; }
-
-    .btn-classic-secondary { background-color: #6ee7b7; color: white; }
-    .btn-classic-secondary:hover { background-color: #34d399; color: white; }
-
-    .btn-classic-muted { background-color: #34d399; color: white; }
-    .btn-classic-muted:hover { background-color: #10b981; color: white; }
-
-    .btn-classic-dark { background-color: #047857; color: white; }
-    .btn-classic-dark:hover { background-color: #065f46; color: white; }
-
-    .btn-classic-light { background-color: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-    .btn-classic-light:hover { background-color: #d1fae5; color: #047857; }
-
-    .classic-badge {
-        background-color: #059669;
-        color: white;
-        font-size: 0.8rem;
-        padding: 0.4rem 0.8rem;
-    }
-
-    .classic-title {
-        color: #047857;
+    .pagination .page-link {
+        color: var(--text-secondary) !important;
+        background-color: var(--bg-secondary) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        padding: 8px 16px;
         font-weight: 600;
-        letter-spacing: 0.5px;
+        transition: all 0.2s ease;
     }
-
-    .classic-subtitle {
-        color: var(--classic-text-light);
-        font-size: 0.95rem;
-        font-style: italic;
+    .pagination .page-link:hover {
+        color: var(--text-primary) !important;
+        background-color: rgba(0, 0, 0, 0.05) !important;
+        border-color: rgba(0, 0, 0, 0.2) !important;
+        transform: translateY(-1px);
     }
-
-    .classic-icon {
-        opacity: 0.8;
-        margin-bottom: 1rem;
+    .pagination .page-item.active .page-link {
+        color: white !important;
+        background-color: var(--corp-primary) !important;
+        border-color: var(--corp-primary) !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+    }
+    .pagination .page-item.disabled .page-link {
+        color: var(--text-muted) !important;
+        background-color: rgba(0, 0, 0, 0.02) !important;
+        border-color: var(--border-color) !important;
+        opacity: 0.6;
     }
 </style>
 
-<div class="container py-5">
+<div class="container py-4">
     <!-- Header Section -->
     <div class="row justify-content-center mb-5">
         <div class="col-lg-8">
-            <div class="classic-card rounded-3 overflow-hidden">
-                <div class="classic-header text-center py-5">
-                    <i class="fas fa-graduation-cap fa-3x classic-icon"></i>
-                    <h1 class="display-6 fw-bold mb-3">Plan de Estudio</h1>
-                    <p class="lead mb-0 opacity-90">Selecciona una asignación para explorar su contenido académico</p>
+            <div class="card text-center py-4 px-3">
+                <div class="card-body">
+                    <div class="d-inline-flex justify-content-center align-items-center rounded-circle mb-3" style="width: 70px; height: 70px; background: rgba(37, 99, 235, 0.15);">
+                        <i class="fas fa-graduation-cap fa-2x text-primary"></i>
+                    </div>
+                    <h1 class="display-6 fw-bold mb-2">Plan de Estudio</h1>
+                    <p class="lead text-muted mb-0">Selecciona una asignación para explorar su contenido académico</p>
                 </div>
             </div>
         </div>
@@ -101,27 +53,41 @@
 
     <!-- Cards Section -->
     <div class="row justify-content-center">
-        {% if silabos_agrupados %}
-            {% for codigo, silabos in silabos_agrupados.items %}
-                {% with first_silabo=silabos|first %}
+        {% if page_obj %}
+            {% for asignacion in page_obj %}
                 <div class="col-xl-4 col-lg-6 col-md-8 mb-4">
-                    <div class="classic-card rounded-3 h-100">
+                    {% if asignacion.silabos_creados >= 11 %}
+                        <div class="card book-card book-completed shadow-sm h-100">
+                    {% else %}
+                        <div class="card book-card book-pending shadow-sm h-100">
+                    {% endif %}
+                        <div class="book-spine"></div>
+                        <div class="book-page-crease"></div>
+                        <div class="book-bookmark"></div>
+
                         <!-- Card Header -->
-                        <div class="card-header bg-light border-0 text-center py-4">
-                            <i class="fas fa-book-open fa-2x text-muted mb-3"></i>
-                            <h4 class="classic-title mb-0">{{ codigo }}</h4>
+                        <div class="card-header py-3">
+                            <h5 class="mb-0 text-primary">{{ asignacion.plan_de_estudio.asignatura.nombre }}</h5>
                         </div>
 
                         <!-- Card Body -->
-                        <div class="card-body px-4 py-4">
-                            <div class="text-center mb-4">
-                                <h6 class="classic-title mb-2">{{ first_silabo.asignatura.nombre }}</h6>
-                                <p class="classic-subtitle mb-3">{{ first_silabo.carrera.nombre }}</p>
-
-                                <span class="badge classic-badge rounded-pill">
-                                    <i class="fas fa-calendar-check me-1"></i>
-                                    {{ silabos|length }}/12 Encuentros
-                                </span>
+                        <div class="card-body d-flex flex-column justify-content-between p-4">
+                            <div class="mb-4">
+                                <p class="card-text text-start">
+                                    <strong>Carrera:</strong> {{ asignacion.plan_de_estudio.carrera }}<br>
+                                    <strong>Año:</strong> {{ asignacion.plan_de_estudio.año }}<br>
+                                    <strong>Trimestre:</strong> {{ asignacion.plan_de_estudio.trimestre }}<br>
+                                    <strong>Código de Asignatura:</strong> {{ asignacion.plan_de_estudio.codigo }}<br>
+                                    <strong>Horas Prácticas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales }}<br>
+                                    <strong>Horas Teóricas:</strong> {{ asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
+                                    <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
+                                </p>
+                                <div class="text-center mt-3">
+                                    <span class="badge bg-primary px-3 py-2 rounded-pill">
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        {{ asignacion.silabo_set.count }}/12 Encuentros
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Action Buttons -->
@@ -129,24 +95,24 @@
                                 <!-- Primary Row -->
                                 <div class="row g-2">
                                     <div class="col-4">
-                                        <a href="{% url 'detalle_silabo' %}?codigo={{ codigo }}"
-                                           class="btn btn-classic-primary classic-btn w-100 py-2">
-                                            <i class="fas fa-file-alt d-block mb-1"></i>
-                                            <small>S</small>ílabo</small>
+                                        <a href="{% url 'detalle_silabo' %}?codigo={{ asignacion.plan_de_estudio.codigo }}"
+                                           class="btn btn-primary w-100 py-2 d-flex flex-column align-items-center justify-content-center">
+                                            <i class="fas fa-file-alt mb-1"></i>
+                                            <span style="font-size: 0.8rem;">Sílabo</span>
                                         </a>
                                     </div>
                                     <div class="col-4">
-                                        <a href="{% url 'guia_autodidactica' %}?codigo={{ codigo }}"
-                                           class="btn btn-classic-secondary classic-btn w-100 py-2">
-                                            <i class="fas fa-compass d-block mb-1"></i>
-                                            <small>Guía</small>
+                                        <a href="{% url 'guia_autodidactica' %}?codigo={{ asignacion.plan_de_estudio.codigo }}"
+                                           class="btn btn-info w-100 py-2 d-flex flex-column align-items-center justify-content-center">
+                                            <i class="fas fa-compass mb-1"></i>
+                                            <span style="font-size: 0.8rem;">Guía</span>
                                         </a>
                                     </div>
                                     <div class="col-4">
-                                        <a href="{% url 'secuencia_didactica' %}?codigo={{ codigo }}"
-                                           class="btn btn-classic-muted classic-btn w-100 py-2">
-                                            <i class="fas fa-list-ol d-block mb-1"></i>
-                                            <small>Secuencia</small>
+                                        <a href="{% url 'secuencia_didactica' %}?codigo={{ asignacion.plan_de_estudio.codigo }}"
+                                           class="btn btn-success w-100 py-2 d-flex flex-column align-items-center justify-content-center">
+                                            <i class="fas fa-list-ol mb-1"></i>
+                                            <span style="font-size: 0.8rem;">Secuencia</span>
                                         </a>
                                     </div>
                                 </div>
@@ -154,34 +120,45 @@
                                 <!-- Secondary Row -->
                                 <div class="row g-2">
                                     <div class="col-6">
-                                        <a href="{% url 'descargar_secuencia_didactica' %}?codigo={{ codigo }}"
-                                           class="btn btn-classic-dark classic-btn w-100 py-2">
-                                            <i class="fas fa-file-word d-block mb-1"></i>
-                                            <small>Descargar Word</small>
+                                        <a href="{% url 'descargar_secuencia_didactica' %}?codigo={{ asignacion.plan_de_estudio.codigo }}"
+                                           class="btn btn-outline-secondary w-100 py-2 d-flex flex-column align-items-center justify-content-center">
+                                            <i class="fas fa-file-word mb-1"></i>
+                                            <span style="font-size: 0.75rem;">Word</span>
                                         </a>
                                     </div>
                                     <div class="col-6">
-                                        <a href="{% url 'generar_excel_original' %}?codigo={{ codigo }}"
-                                           class="btn btn-classic-light classic-btn w-100 py-2">
-                                            <i class="fas fa-file-excel d-block mb-1"></i>
-                                            <small>Exportar Excel</small>
+                                        <a href="{% url 'generar_excel_original' %}?codigo={{ asignacion.plan_de_estudio.codigo }}"
+                                           class="btn btn-warning w-100 py-2 d-flex flex-column align-items-center justify-content-center">
+                                            <i class="fas fa-file-excel mb-1"></i>
+                                            <span style="font-size: 0.75rem;">Excel</span>
                                         </a>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Card Footer -->
+                        <div class="card-footer text-muted d-flex justify-content-between">
+                            <span>Asignado el: {{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
+                            <span>
+                                {% if asignacion.silabos_creados >= 11 %}
+                                    <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
+                                {% else %}
+                                    <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>
+                                {% endif %}
+                            </span>
+                        </div>
                     </div>
                 </div>
-                {% endwith %}
             {% endfor %}
         {% else %}
             <!-- No Assignments Message -->
             <div class="col-lg-6">
-                <div class="classic-card rounded-3 text-center py-5">
+                <div class="card text-center py-5">
                     <div class="card-body">
                         <i class="fas fa-folder-open fa-4x text-muted mb-4 opacity-50"></i>
-                        <h4 class="classic-title mb-3">No hay asignaciones disponibles</h4>
-                        <p class="classic-subtitle mb-0">
+                        <h4 class="mb-3">No hay asignaciones disponibles</h4>
+                        <p class="text-muted mb-0">
                             No se encontraron asignaciones para tu usuario.<br>
                             Contacta al administrador si consideras que esto es un error.
                         </p>
@@ -190,59 +167,68 @@
             </div>
         {% endif %}
     </div>
+
+    <!-- Pagination Section -->
+    {% if page_obj.has_other_pages %}
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-8">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="Primero">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Último">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
 </div>
-
-<!-- Additional Custom Styles for Better UX -->
-<style>
-    .classic-card {
-        border-radius: 0.75rem !important;
-    }
-
-    .card-header {
-        border-radius: 0.75rem 0.75rem 0 0 !important;
-    }
-
-    .classic-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px var(--classic-shadow);
-    }
-
-    .classic-btn i {
-        font-size: 1.1rem;
-        opacity: 0.9;
-    }
-
-    @media (max-width: 768px) {
-        .container {
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-
-        .classic-header h1 {
-            font-size: 2rem;
-        }
-
-        .classic-btn {
-            font-size: 0.8rem;
-            padding: 0.5rem !important;
-        }
-
-        .classic-btn small {
-            font-size: 0.7rem;
-        }
-    }
-
-    /* Smooth transitions for all interactive elements */
-    .classic-card,
-    .classic-btn,
-    .badge {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Focus states for accessibility */
-    .classic-btn:focus {
-        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
-        outline: none;
-    }
-</style>
 {% endblock %}

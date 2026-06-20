@@ -411,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // pageIndex es 0-based. paginationItems[0] es 'Prev', paginationItems[1] es pág 1 (índice 0)
             if (paginationItems[pageIndex + 1]) { 
                 paginationItems[pageIndex + 1].classList.add('active');
+                paginationItems[pageIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
             const prevButtonLi = paginationUl.querySelector('.page-item:first-child');
             const nextButtonLi = paginationUl.querySelector('.page-item:last-child');

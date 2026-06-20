@@ -78,24 +78,21 @@
 
         <style>
             .custom-tab-btn {
-                color: rgba(255, 255, 255, 0.9) !important;
-                background-color: rgba(255, 255, 255, 0.1) !important;
-                border: 1px solid rgba(255, 255, 255, 0.2) !important;
-                backdrop-filter: blur(10px);
-                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-                font-weight: 500;
+                color: var(--text-secondary) !important;
+                background-color: rgba(255, 255, 255, 0.02) !important;
+                border: 1px solid var(--border-color) !important;
+                transition: all 0.2s ease !important;
+                font-weight: 600;
             }
             .custom-tab-btn:hover {
-                background-color: rgba(255, 255, 255, 0.2) !important;
-                transform: translateY(-1px);
+                background-color: rgba(255, 255, 255, 0.06) !important;
+                color: var(--text-primary) !important;
             }
             .custom-tab-btn.active {
-                color: #1f618d !important;
-                background-color: #ffffff !important;
-                font-weight: bold;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-                border-color: #ffffff !important;
-                transform: translateY(-1px);
+                color: white !important;
+                background-color: var(--corp-primary) !important;
+                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+                border-color: var(--corp-primary) !important;
             }
         </style>
 
@@ -106,8 +103,11 @@
                     {% if asignaciones_pendientes %}
                         {% for asignacion in asignaciones_pendientes %}
                             <div class="col">
-                                <div class="card shadow-sm h-100">
-                                <div class="card-header">
+                                <div class="card book-card book-pending shadow-sm h-100">
+                                    <div class="book-spine"></div>
+                                    <div class="book-page-crease"></div>
+                                    <div class="book-bookmark"></div>
+                                    <div class="card-header">
                                     <h5 class="mb-0">{{ asignacion.plan_de_estudio.asignatura }}</h5>
                                 </div>
                                 <div class="card-body">
@@ -184,52 +184,12 @@
                                         </div>
                                     {% endif %}
 
-                                    <!-- Añade estos estilos al archivo CSS -->
-                                    <style>
-                                        .div-red {
-                                            background: #e74c3c; /* Color rojo */
-                                        }
-                                        .div-green {
-                                            background: #2ecc71; /* Color verde */
-                                        }
-                                        .div-blue {
-                                            background: #3498db; /* Color azul para guías completadas */
-                                        }
-                                        .div-yellow {
-                                            background: #f1c40f; /* Color amarillo para guías pendientes */
-                                        }
-                                        .div-custom {
-                                            width: 30px;
-                                            height: 30px;
-                                            color: white;
-                                            font-weight: bold;
-                                            font-size: 16px;
-                                            display: flex;
-                                            justify-content: center;
-                                            align-items: center;
-                                            border-radius: 5px;
-                                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
-                                            transition: all 0.3s ease;
-                                        }
-                                        .div-custom:hover {
-                                            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
-                                        }
-                                        .div-custom p {
-                                            margin: 0;
-                                            padding: 0;
-                                        }
-                                        @media (max-width: 768px) {
-                                            .card {
-                                                width: 90%; /* Hacer que la tarjeta llene el 90% del ancho */
-                                                margin: 0 auto; /* Centrar la tarjeta */
-                                            }
-                                        }
-                                    </style>
+                                    <!-- Progress indicator styles are loaded globally from base.css -->
                                 </div>
 
                                     <!-- Footer de la tarjeta, muestra el estado de completado -->
                                     <div class="card-footer text-muted d-flex justify-content-between">
-                                        <span>Asignado a: {{ asignacion.usuario.username }}</span>
+                                        <span>Asignado el: {{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
                                         <span>
                                             {% if asignacion.silabos_creados == 11 %}
                                                 <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
@@ -244,18 +204,18 @@
                     {% else %}
                         <!-- Estado vacío (Pendientes) -->
                         <div class="col-12 d-flex justify-content-center mt-2 mb-5">
-                            <div class="card shadow-lg border-0 text-center mx-3" style="width: 100%; max-width: 550px; border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+                            <div class="card shadow-lg border-0 text-center mx-3" style="width: 100%; max-width: 550px; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
                                 <div class="card-body p-4 p-md-5">
                                     <div class="mb-4">
-                                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle" style="width: 90px; height: 90px; background: rgba(46, 204, 113, 0.1);">
+                                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle" style="width: 90px; height: 90px; background: rgba(16, 185, 129, 0.15);">
                                             <i class="fas fa-check-double text-success" style="font-size: 3.5rem;"></i>
                                         </div>
                                     </div>
-                                    <h3 class="fw-bold mb-3" style="color: #2c3e50;">¡Todo al día!</h3>
+                                    <h3 class="fw-bold mb-3">¡Todo al día!</h3>
                                     <p class="text-muted fs-5 mb-0" style="line-height: 1.6;">
                                         No tienes planes de estudio pendientes de completar.
                                         {% if not is_google_linked %}
-                                        <br><br><span style="font-size: 0.95rem;">Vincula tu cuenta de Google Classroom en la parte superior para trepar las tareas de tus guias a Classroom</span>
+                                        <br><br><span style="font-size: 0.95rem;">Vincula tu cuenta de Google Classroom en la parte superior para subir las tareas de tus guías a Classroom</span>
                                         {% endif %}
                                     </p>
                                 </div>
@@ -271,8 +231,11 @@
                     {% if asignaciones_completadas %}
                         {% for asignacion in asignaciones_completadas %}
                             <div class="col">
-                                <div class="card shadow-sm h-100">
-                                <div class="card-header">
+                                <div class="card book-card book-completed shadow-sm h-100">
+                                    <div class="book-spine"></div>
+                                    <div class="book-page-crease"></div>
+                                    <div class="book-bookmark"></div>
+                                    <div class="card-header">
                                     <h5 class="mb-0">{{ asignacion.plan_de_estudio.asignatura }}</h5>
                                 </div>
                                 <div class="card-body">
@@ -349,52 +312,12 @@
                                         </div>
                                     {% endif %}
 
-                                    <!-- Añade estos estilos al archivo CSS -->
-                                    <style>
-                                        .div-red {
-                                            background: #e74c3c; /* Color rojo */
-                                        }
-                                        .div-green {
-                                            background: #2ecc71; /* Color verde */
-                                        }
-                                        .div-blue {
-                                            background: #3498db; /* Color azul para guías completadas */
-                                        }
-                                        .div-yellow {
-                                            background: #f1c40f; /* Color amarillo para guías pendientes */
-                                        }
-                                        .div-custom {
-                                            width: 30px;
-                                            height: 30px;
-                                            color: white;
-                                            font-weight: bold;
-                                            font-size: 16px;
-                                            display: flex;
-                                            justify-content: center;
-                                            align-items: center;
-                                            border-radius: 5px;
-                                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
-                                            transition: all 0.3s ease;
-                                        }
-                                        .div-custom:hover {
-                                            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
-                                        }
-                                        .div-custom p {
-                                            margin: 0;
-                                            padding: 0;
-                                        }
-                                        @media (max-width: 768px) {
-                                            .card {
-                                                width: 90%; /* Hacer que la tarjeta llene el 90% del ancho */
-                                                margin: 0 auto; /* Centrar la tarjeta */
-                                            }
-                                        }
-                                    </style>
+                                    <!-- Progress indicator styles are loaded globally from base.css -->
                                 </div>
 
                                     <!-- Footer de la tarjeta, muestra el estado de completado -->
                                     <div class="card-footer text-muted d-flex justify-content-between">
-                                        <span>Asignado a: {{ asignacion.usuario.username }}</span>
+                                        <span>Asignado el: {{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
                                         <span>
                                             {% if asignacion.silabos_creados == 11 %}
                                                 <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
@@ -409,14 +332,14 @@
                     {% else %}
                         <!-- Estado vacío (Archivados) -->
                         <div class="col-12 d-flex justify-content-center mt-2 mb-5">
-                            <div class="card shadow-lg border-0 text-center mx-3" style="width: 100%; max-width: 550px; border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+                            <div class="card shadow-lg border-0 text-center mx-3" style="width: 100%; max-width: 550px; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
                                 <div class="card-body p-4 p-md-5">
                                     <div class="mb-4">
-                                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle" style="width: 90px; height: 90px; background: rgba(149, 165, 166, 0.1);">
+                                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle" style="width: 90px; height: 90px; background: rgba(0, 0, 0, 0.05);">
                                             <i class="fas fa-archive text-secondary" style="font-size: 3.5rem;"></i>
                                         </div>
                                     </div>
-                                    <h3 class="fw-bold mb-3" style="color: #2c3e50;">Sin planes archivados</h3>
+                                    <h3 class="fw-bold mb-3">Sin planes archivados</h3>
                                     <p class="text-muted fs-5 mb-0" style="line-height: 1.6;">
                                         Actualmente no tienes ningún plan de estudio completado para archivar.
                                     </p>

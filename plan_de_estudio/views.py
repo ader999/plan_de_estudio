@@ -157,48 +157,29 @@ def plan_estudio(request):
     usuario_autenticado = request.user
     nombre_de_usuario = request.user.get_full_name()
 
-    # Primero obtenemos las asignaciones del usuario autenticado
-    asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
+    # Primero obtenemos las asignaciones del usuario autenticado, ordenadas por fecha de asignación desc (los últimos asignados primero)
+    # Solo consideramos las asignaciones que tengan al menos un sílabo creado (para mantener el comportamiento original de la vista de datos)
+    asignaciones_list = AsignacionPlanEstudio.objects.filter(
+        usuario=usuario_autenticado
+    ).annotate(
+        num_silabos=Count('silabo_set')
+    ).filter(
+        num_silabos__gt=0
+    ).order_by('-fecha_asignacion')
 
-    # Luego obtenemos los silabos relacionados con esas asignaciones
-    silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones)
-
-    # Crear un diccionario para agrupar los silabos por código de plan de estudio
-    silabos_agrupados = {}
-
-    for silabo in silabos:
-        # Si el sílabo no tiene asignación de plan o plan de estudio, continuamos al siguiente
-        if not silabo.asignacion_plan or not silabo.asignacion_plan.plan_de_estudio:
-            continue
-
-        # Usamos el código del plan de estudio como clave
-        codigo = silabo.asignacion_plan.plan_de_estudio.codigo
-
-        # Si el código no existe en el diccionario, lo creamos
-        if codigo not in silabos_agrupados:
-            silabos_agrupados[codigo] = []
-
-        # Añadimos información útil al silabo para su uso en las plantillas
-        silabo.asignatura = silabo.asignacion_plan.plan_de_estudio.asignatura
-        silabo.carrera = silabo.asignacion_plan.plan_de_estudio.carrera
-        silabo.plan_de_estudio = silabo.asignacion_plan.plan_de_estudio
-
-        # Agregamos el sílabo a la lista correspondiente
-        silabos_agrupados[codigo].append(silabo)
-
-    # Para cada grupo de sílabos, añadimos información adicional
-    for codigo, grupo in silabos_agrupados.items():
-        # Ordenar por número de encuentro
-        grupo.sort(key=lambda s: s.encuentros)
+    # Paginación: 5 asignaciones por página
+    from django.core.paginator import Paginator
+    paginator = Paginator(asignaciones_list, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     # Obtener el año actual
     año_actual = datetime.datetime.now().year
 
     context = {
-        "silabos_agrupados": silabos_agrupados, 
-        "usuario": nombre_de_usuario, 
+        "page_obj": page_obj,
+        "usuario": nombre_de_usuario,
         "año_actual": año_actual,
-        "asignaciones": asignaciones
     }
 
     return render(request, "plan_estudio.html", context)

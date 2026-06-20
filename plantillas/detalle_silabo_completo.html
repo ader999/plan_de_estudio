@@ -262,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Así que el número de página 1 (índice 0) corresponde a paginationItems[1]
             if (paginationItems[pageIndex + 1]) { 
                 paginationItems[pageIndex + 1].classList.add('active');
+                paginationItems[pageIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
             // Habilitar/deshabilitar Prev/Next
             const prevButtonLi = paginationUl.querySelector('.page-item:first-child');

@@ -5,21 +5,8 @@
 
 {% block content %}
 <style>
-    /* Estilos para mejorar la apariencia del formulario */
-    .card-dark { background-color: #3a4b4b; color: #e0e7e7; padding: 1.25rem; border-radius: 0.25rem; }
-    .card-dark label { color: #a6cdcd; font-weight: 500; margin-bottom: 0.5rem; }
-    .card-dark .form-control, .card-dark .form-select { background-color: #f8f9fa; border: 1px solid #ced4da; color: #212529; }
-    .card-header-custom { background-color: #2a3838; color: #ffffff; border-bottom: 2px solid #62a2a2; padding: 1rem; }
-    .form-check-input:checked { background-color: #0d6efd; border-color: #0d6efd; }
     .form-check { margin-bottom: 0.5rem; }
-    .form-check-label { color: #e0e7e7; }
-    
-    /* Estilos para validación */
-    .border-danger { border-color: #dc3545 !important; }
-    .border-success { border-color: #198754 !important; }
-    .text-danger { color: #dc3545 !important; }
-    .border-danger-group { border: 1px solid #dc3545; padding: 10px; border-radius: 5px; }
-    .border-success-group { border: 1px solid #198754; padding: 10px; border-radius: 5px; }
+    .form-check-label { color: var(--text-secondary); }
     .form-check-group-container { padding: 5px; }
 </style>
 
@@ -47,7 +34,7 @@
         <div class="row justify-content-center">
             <div class="col-lg-8 col-md-10 col-sm-12">
                 <div class="card shadow-lg">
-                    <div class="card-body card-dark">
+                    <div class="card-body">
                         <h2 class="text-center mb-4">Formulario de Actualización</h2>
 
                         <!-- El action del formulario apunta a la URL de actualización con el ID -->
@@ -56,10 +43,10 @@
 
                             <!-- Sección 1: Información General -->
                             <div class="card mb-4 mt-3">
-                                <div class="card-header card-header-custom">
+                                <div class="card-header">
                                     <h5 class="mb-0">Información General</h5>
                                 </div>
-                                <div class="card-body card-dark">
+                                <div class="card-body">
                                     <div class="mb-3">
                                         <label for="fecha" class="form-label">Fecha</label>
                                         <input type="date" id="id_fecha" name="fecha" value="{{ silabo.fecha|date:'Y-m-d' }}" class="form-control" required>
@@ -85,10 +72,10 @@
 
                             <!-- Sección 2: Objetivos -->
                             <div class="card mb-4">
-                                <div class="card-header card-header-custom">
+                                <div class="card-header">
                                     <h5 class="mb-0">Objetivos</h5>
                                 </div>
-                                <div class="card-body card-dark">
+                                <div class="card-body">
                                     <div class="mb-3">
                                         <label for="objetivo_conceptual" class="form-label">Objetivo Conceptual</label>
                                         <textarea id="id_objetivo_conceptual" name="objetivo_conceptual" class="form-control" rows="3">{{ silabo.objetivo_conceptual }}</textarea>
@@ -106,10 +93,10 @@
 
                             <!-- Sección 3: Fases del Acto Mental -->
                             <div class="card mb-4">
-                                <div class="card-header card-header-custom">
+                                <div class="card-header">
                                     <h5 class="mb-0">Descripción de las fases del acto mental</h5>
                                 </div>
-                                <div class="card-body card-dark">
+                                <div class="card-body">
                                     <!-- Primer Momento -->
                                     <h6 class="mt-2">Primer Momento Didáctico (Fase Entrada)</h6>
                                     <div class="mb-3">
@@ -230,10 +217,10 @@
 
                             <!-- Sección 4: Evaluación Dinámica -->
                             <div class="card mb-4">
-                                <div class="card-header card-header-custom">
+                                <div class="card-header">
                                     <h5 class="mb-0">Evaluación Dinámica</h5>
                                 </div>
-                                <div class="card-body card-dark">
+                                <div class="card-body">
                                     <div class="mb-3">
                                         <label for="actividad_aprendizaje" class="form-label">Actividad de Aprendizaje</label>
                                         <textarea id="id_actividad_aprendizaje" name="actividad_aprendizaje" class="form-control" rows="2">{{ silabo.actividad_aprendizaje }}</textarea>

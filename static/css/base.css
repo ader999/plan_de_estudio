@@ -1,76 +1,165 @@
-/* Archivo: estilos.css */
+/* PLANEAUML - Corporate & Responsive Design System */
 :root {
-    --color-fondo: var(--color-gris-1);
-    --color-navar: var(--color-azul-2);
-    --color-fuente: white;
-    --color-fuente-navar: white;
-    --tamano-texto: 16px;
+    /* ==========================================================================
+       THEME CONFIGURATOR
+       To change the active theme, uncomment ONE block below and comment the others.
+       ========================================================================== */
 
-    /* Paleta de colores */
-    --color-azul-1: #2874a6;
-    --color-azul-2: #1f618d;
-    --color-azul-3: #2e86c1;
-    --color-gris-1: #717d7e;
-    --color-gris-2: #707b7c;
-    --color-azul-oscuro: #2e4053;
+    /* --- OPTION A: ELEGANT DARK THEME (Original SaaS Slate) --- */
+    /*
+    --bg-primary: #0f172a;       
+    --bg-secondary: #1e293b;     
+    --bg-tertiary: #0b0f19;      
+    
+    --text-primary: #f8fafc;     
+    --text-secondary: #cbd5e1;   
+    --text-muted: #64748b;       
+    
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-focus: #2563eb;
+
+    --bg-gradient-start: rgba(30, 41, 59, 0.7);
+    --bg-gradient-end: rgba(15, 23, 42, 0.8);
+    */
+
+    /* --- OPTION B: CUSTOM 90-95% LIGHT WHITE THEME (ACTIVE) --- */
+    --bg-primary: #ebebeb;       /* ~92% white: main background */
+    --bg-secondary: #f4f4f4;     /* ~96% white: surface background */
+    --bg-tertiary: #dcdcdc;      /* ~86% white: input background */
+    
+    --text-primary: #111111;     /* Very dark gray for high readability */
+    --text-secondary: #2c2c2c;   /* Dark gray for secondary/body text */
+    --text-muted: #595959;       /* Dark muted gray for helper details */
+    
+    --border-color: rgba(0, 0, 0, 0.12);
+    --border-focus: #2563eb;     /* Accent blue focus color */
+
+    --bg-gradient-start: rgba(244, 244, 244, 0.85);
+    --bg-gradient-end: rgba(235, 235, 235, 0.95);
+
+    /* --- OPTION C: PROFESSIONAL LIGHT THEME --- */
+    /*
+    --bg-primary: #f8fafc;       
+    --bg-secondary: #ffffff;     
+    --bg-tertiary: #e2e8f0;      
+    
+    --text-primary: #0f172a;     
+    --text-secondary: #334155;   
+    --text-muted: #64748b;       
+    
+    --border-color: rgba(0, 0, 0, 0.1);
+    --border-focus: #2563eb;
+
+    --bg-gradient-start: rgba(255, 255, 255, 0.8);
+    --bg-gradient-end: rgba(241, 245, 249, 0.9);
+    */
+
+    /* Solid Corporate Accents */
+    --corp-primary: #2563eb;     /* Royal Blue */
+    --corp-primary-hover: #1d4ed8;
+    
+    --corp-success: #059669;     /* Emerald Green */
+    --corp-success-hover: #047857;
+    
+    --corp-warning: #d97706;     /* Amber */
+    --corp-warning-hover: #b45309;
+    
+    --corp-danger: #dc2626;      /* Crimson Red */
+    --corp-danger-hover: #b91c1c;
+    
+    --corp-info: #0284c7;        /* Sky Blue */
+    --corp-info-hover: #0369a1;
+    
+    --corp-dark: #334155;
+    --corp-dark-hover: #475569;
+    
+    /* ==========================================================================
+       FONT CONFIGURATOR
+       To change the main font, customize the --font-main variable.
+       ========================================================================== */
+    --font-serif: 'Times New Roman', Times, Georgia, serif;
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    
+    --font-main: var(--font-serif); /* Active font: Serif (Times New Roman) */
+    --border-radius: 14px;
 }
 
-/* Estilos base para el cuerpo */
+/* Global Reset & Body Background */
+*, *::before, *::after {
+    font-family: var(--font-main) !important;
+}
+
 body {
-    background: linear-gradient(135deg,
-            var(--color-azul-1),
-            var(--color-azul-2),
-            var(--color-azul-3),
-            var(--color-gris-1),
-            var(--color-gris-2),
-            var(--color-azul-oscuro));
-    background-size: 400% 1800%;
-    animation: gradientBG 30s ease infinite;
-    color: var(--color-fuente);
-    font-family: Arial, sans-serif;
-    position: relative;
-    overflow-x: hidden;
+    background: radial-gradient(circle at top, var(--bg-secondary) 0%, var(--bg-primary) 100%) no-repeat fixed !important;
+    background-color: var(--bg-primary) !important;
+    color: var(--text-secondary) !important;
+    font-family: var(--font-main) !important;
+    line-height: 1.6;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
 }
 
-@keyframes gradientBG {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #475569;
 }
 
-/* Estilos para el contenido principal */
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
+}
+
+a {
+    color: var(--corp-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+a:hover {
+    color: var(--corp-primary-hover);
+    text-decoration: none;
+}
+
+/* Page Layout Spacing */
 main {
     flex-grow: 1;
-    padding-top: 85px;
-    /* Espacio para la navbar fija */
-    padding-bottom: 30px;
+    padding-top: 95px;
+    padding-bottom: 40px;
     position: relative;
     z-index: 1;
 }
 
-/* NAVBAR PRINCIPAL - corrección completa */
+#page-content {
+    margin-top: 20px;
+    padding: 20px;
+}
+
+/* Navbar Style */
 #main-navbar {
-    background-color: var(--color-azul-2) !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    border-bottom: 2px solid var(--color-azul-3);
+    background-color: var(--bg-secondary) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    border-bottom: 1px solid var(--border-color) !important;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     z-index: 1030;
-    min-height: 80px;
-    padding: 5px 15px;
+    min-height: 70px;
+    padding: 5px 20px;
 }
 
 #navbar-container {
@@ -80,314 +169,463 @@ main {
     width: 100%;
 }
 
-/* Logo de la navbar */
 #navbar-brand {
     font-weight: 700;
-    letter-spacing: 1px;
-    color: white !important;
+    color: var(--text-primary) !important;
     font-size: 1.3rem;
     display: flex;
     align-items: center;
-    gap: 10px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-    /* Posicionamiento absoluto para que el logo "cuelgue" */
-    position: absolute;
-    top: 5px;
-    left: 15px;
-    z-index: 1040;
+    gap: 12px;
+    text-shadow: none;
+    transition: opacity 0.2s ease;
 }
-
 #navbar-brand:hover {
-    transform: scale(1.02);
+    opacity: 0.9;
+    transform: none;
 }
 
 #navbar-brand img {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-    /* Mobile Default: Visible size that fits navbar */
-    height: 50px;
+    height: 44px;
     width: auto;
+    filter: drop-shadow(0 2px 8px rgba(37, 99, 235, 0.3));
 }
 
-/* Desktop Override: Slightly larger logo */
-@media (min-width: 768px) {
-    #navbar-brand {
-        position: static;
-        top: auto;
-        left: auto;
-        z-index: auto;
-    }
-
-    #navbar-brand img {
-        height: 60px;
-    }
-}
-
-/* Botón toggler */
 #navbar-toggler {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: none !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 8px;
     padding: 0.5rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    margin-left: auto;
+    transition: all 0.2s ease;
 }
-
 #navbar-toggler:hover {
-    background-color: var(--color-azul-3) !important;
-    transform: scale(1.05);
+    background-color: rgba(255, 255, 255, 0.1) !important;
 }
-
 #navbar-toggler-icon {
     filter: brightness(2);
 }
 
-/* OFFCANVAS MENU - ajustes completos */
+/* Offcanvas Slide-out Drawer */
 #offcanvasNavbar {
-    background-color: var(--color-azul-oscuro) !important;
-    max-width: 350px;
+    background-color: var(--bg-secondary) !important;
+    background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%) !important;
+    border-left: 1px solid var(--border-color) !important;
+    max-width: 340px;
     width: 85% !important;
-    background: linear-gradient(180deg, #2c3e50, #1e5799);
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
-    position: fixed;
-    z-index: 1050;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15);
 }
 
-/* Efecto de fondo con patrón de puntos */
 #offcanvasNavbar::before {
+    display: none; /* remove dot pattern */
+}
+
+#offcanvasNavbar .offcanvas-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#offcanvasNavbarLabel {
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    padding: 1rem !important;
+    width: 100% !important;
+    margin-bottom: 0px !important;
+    box-shadow: none !important;
+}
+#offcanvasNavbarLabel img {
+    height: 70px !important;
+    filter: drop-shadow(0 4px 12px rgba(37, 99, 235, 0.4));
+}
+#offcanvasNavbarLabel h5 {
+    margin-top: 10px;
+    font-size: 1.3rem;
+    color: var(--text-primary);
+    text-shadow: none;
+}
+
+#offcanvas-close-btn {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 50%;
+    padding: 0.5rem;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+#offcanvas-close-btn:hover {
+    background-color: var(--corp-danger) !important;
+    opacity: 1;
+}
+
+#offcanvas-nav {
+    gap: 10px;
+    width: 100%;
+}
+#offcanvasNavbar .nav-item {
+    width: 100%;
+}
+
+#offcanvasNavbar .nav-link,
+#offcanvasNavbar .dropdown-toggle {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid var(--border-color) !important;
+    border-left: 3px solid transparent !important;
+    color: var(--text-secondary) !important;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    box-shadow: none;
+}
+#offcanvasNavbar .nav-link:hover,
+#offcanvasNavbar .dropdown-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-left-color: var(--corp-primary) !important;
+    color: var(--text-primary) !important;
+    transform: translateX(2px);
+}
+#offcanvasNavbar .nav-link.active,
+#offcanvasNavbar .dropdown-toggle.active {
+    background-color: rgba(37, 99, 235, 0.1) !important;
+    border-left-color: var(--corp-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+#offcanvasNavbar .nav-link i,
+#offcanvasNavbar .dropdown-toggle i {
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+}
+#offcanvasNavbar .nav-link:hover i,
+#offcanvasNavbar .dropdown-toggle:hover i,
+#offcanvasNavbar .nav-link.active i {
+    color: var(--corp-primary);
+}
+
+/* Dropdown styling in sidebar */
+#offcanvasNavbar .dropdown-menu {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+#offcanvasNavbar .dropdown-item {
+    color: var(--text-secondary) !important;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: transparent;
+    transition: all 0.2s ease;
+}
+#offcanvasNavbar .dropdown-item:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Footer Style */
+#page-footer {
+    background-color: var(--bg-secondary) !important;
+    border-top: 1px solid var(--border-color) !important;
+    padding: 2.5rem 0;
+    color: var(--text-muted);
+    margin-top: auto;
+}
+
+.btn-custom {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary) !important;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+.btn-custom:hover {
+    background-color: var(--corp-primary);
+    border-color: var(--corp-primary);
+    color: white !important;
+    transform: translateY(-1px);
+}
+
+/* Generic Cards / Surfaces mapping */
+.card, .corp-card {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--border-radius) !important;
+    color: var(--text-secondary) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.25) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    overflow: hidden;
+}
+.card:hover, .corp-card:hover {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Book Card Styling */
+.card.book-card {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    /* Soft round corners for the right side, sharp/square corners on the left side to look like a book spine */
+    border-radius: 4px 16px 16px 4px !important;
+    position: relative;
+    padding: 0 !important;
+    padding-left: 28px !important; /* Space for the book spine */
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+    /* Simulate stacked pages on the right and bottom edges */
+    border-right: 5px solid rgba(255, 255, 255, 0.15) !important;
+    border-bottom: 4px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 
+                3px 3px 0px rgba(0, 0, 0, 0.15) !important;
+    overflow: hidden;
+}
+
+.card.book-card:hover {
+    transform: translateY(-5px) scale(1.01) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.45), 
+                4px 4px 0px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Spine container */
+.book-spine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 28px;
+    height: 100%;
+    border-right: 1px solid rgba(0, 0, 0, 0.5);
+    border-radius: 4px 0 0 4px;
+    z-index: 10;
+    transition: background-color 0.3s ease;
+}
+
+/* Base spine shading & texture */
+.book-spine::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    background-size: 20px 20px;
-    pointer-events: none;
-    z-index: 0;
+    background: linear-gradient(90deg, 
+        rgba(0, 0, 0, 0.5) 0%, 
+        rgba(255, 255, 255, 0.2) 25%, 
+        rgba(0, 0, 0, 0.15) 75%, 
+        rgba(0, 0, 0, 0.65) 100%
+    );
+    z-index: 11;
 }
 
-/* Encabezado del offcanvas */
-#offcanvasNavbar .offcanvas-header {
-    padding: 1.5rem 1rem;
-    position: relative;
-    z-index: 1;
+/* Horizontal ridges on the spine */
+.book-spine::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 45px,
+        rgba(0, 0, 0, 0.4) 45px,
+        rgba(0, 0, 0, 0.4) 47px,
+        rgba(255, 255, 255, 0.15) 47px,
+        rgba(255, 255, 255, 0.15) 49px
+    );
+    z-index: 12;
+}
+
+/* Spine Colors based on state */
+.book-pending .book-spine {
+    background-color: var(--corp-primary) !important; /* Blue for pending */
+}
+
+.book-completed .book-spine {
+    background-color: var(--corp-success) !important; /* Green for completed */
+}
+
+/* Crease fold shadow on the page side */
+.book-page-crease {
+    position: absolute;
+    top: 0;
+    left: 28px;
+    width: 12px;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(0, 0, 0, 0.35) 0%, 
+        rgba(0, 0, 0, 0) 100%
+    );
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* Ribbon Bookmark */
+.book-bookmark {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    width: 14px;
+    height: 38px;
+    z-index: 15;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%);
+    transition: height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.book-pending .book-bookmark {
+    background-color: var(--corp-danger) !important; /* Red ribbon for pending */
+}
+
+.book-completed .book-bookmark {
+    background-color: #f59e0b !important; /* Gold/Amber ribbon for completed */
+}
+
+.book-card:hover .book-bookmark {
+    height: 48px; /* Animates/pulls down on hover */
+}
+
+
+.card-header, .card-footer {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border-color: var(--border-color) !important;
+    padding: 1.25rem 1.5rem !important;
+}
+
+/* Corporate Buttons */
+.btn {
+    border-radius: 8px !important;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    border: none !important;
+}
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.btn-primary { background-color: var(--corp-primary) !important; color: white !important; }
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active { background-color: var(--corp-primary-hover) !important; }
+
+.btn-success { background-color: var(--corp-success) !important; color: white !important; }
+.btn-success:hover, .btn-success:focus, .btn-success:active { background-color: var(--corp-success-hover) !important; }
+
+.btn-warning { background-color: var(--corp-warning) !important; color: white !important; }
+.btn-warning:hover, .btn-warning:focus, .btn-warning:active { background-color: var(--corp-warning-hover) !important; }
+
+.btn-danger { background-color: var(--corp-danger) !important; color: white !important; }
+.btn-danger:hover, .btn-danger:focus, .btn-danger:active { background-color: var(--corp-danger-hover) !important; }
+
+.btn-info { background-color: var(--corp-info) !important; color: white !important; }
+.btn-info:hover, .btn-info:focus, .btn-info:active { background-color: var(--corp-info-hover) !important; }
+
+.btn-outline-secondary {
+    background-color: transparent !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+.btn-outline-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Unified Inputs Styling */
+.form-control, .form-select {
+    background-color: var(--bg-tertiary) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    padding: 0.65rem 0.9rem !important;
+    font-size: 0.95rem;
+    transition: all 0.2s ease !important;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--border-focus) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+    background-color: var(--bg-tertiary) !important;
+}
+.form-control::placeholder {
+    color: var(--text-muted) !important;
+}
+.form-label {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Toast override for modern feel */
+.toast {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 10px !important;
+}
+
+/* Symmetrical Layout for Mobile first */
+@media (max-width: 767.98px) {
+    #page-content {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        margin-top: 75px !important;
+    }
+    
+    .card, .corp-card {
+        border-radius: 12px !important;
+        padding: 1rem !important;
+    }
+    
+    .btn {
+        width: 100%;
+        padding: 0.75rem 1rem !important;
+    }
+    
+    #navbar-brand {
+        font-size: 1.15rem;
+    }
+    
+    #navbar-brand img {
+        height: 38px;
+    }
+}
+
+/* Progress indicator boxes (1 to 11) */
+.div-custom {
+    width: 32px;
+    height: 32px;
+    color: white;
+    font-weight: 700;
+    font-size: 0.95rem;
     display: flex;
     justify-content: center;
-    width: 100%;
-}
-
-/* Título dentro del offcanvas - contenedor simplificado */
-#offcanvasNavbarLabel {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    width: 260px;
-    padding: 1.2rem 0.8rem;
-    border: 2px solid var(--color-gris-1);
-    border-radius: 10px;
-    background-color: rgba(46, 64, 83, 0.7);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    margin-bottom: 15px;
-}
-
-#offcanvasNavbarLabel h5 {
-    margin-top: 15px;
-    margin-bottom: 0;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: white;
-    font-size: 1.6rem;
-    text-shadow: 0 0 15px rgba(46, 134, 193, 0.8);
-}
-
-#offcanvasNavbarLabel img {
-    filter: drop-shadow(0 0 15px rgba(46, 134, 193, 0.8));
-    height: 90px !important;
-}
-
-/* Botón para cerrar offcanvas */
-#offcanvas-close-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background-color: rgba(255, 255, 255, 0.2) !important;
-    border-radius: 50%;
-    padding: 0.6rem;
-    transition: all 0.3s ease;
-    opacity: 0.8;
-    z-index: 2;
-}
-
-#offcanvas-close-btn:hover {
-    background-color: var(--color-azul-3) !important;
-    opacity: 1;
-}
-
-/* Cuerpo del offcanvas */
-#offcanvasNavbar .offcanvas-body {
-    padding: 0 1rem;
-    position: relative;
-    z-index: 1;
-}
-
-/* Menú de navegación dentro del offcanvas */
-#offcanvas-nav {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
-}
-
-#offcanvasNavbar .nav-item {
-    width: 260px;
-    margin: 0;
-}
-
-/* Botones de navegación */
-#offcanvasNavbar .nav-link,
-#offcanvasNavbar .dropdown-toggle {
-    background-color: var(--color-gris-1) !important;
-    color: white !important;
-    border-radius: 8px;
-    padding: 14px 16px;
-    font-weight: 500;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    text-align: left;
-    width: 100%;
-    justify-content: flex-start;
-    border-left: 3px solid var(--color-azul-3);
-    border-right: 3px solid var(--color-azul-3);
-}
-
-#offcanvasNavbar .nav-link:hover,
-#offcanvasNavbar .dropdown-toggle:hover {
-    background-color: var(--color-gris-2) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-}
-
-#offcanvasNavbar .nav-link.active,
-#offcanvasNavbar .dropdown-toggle.active {
-    background-color: var(--color-azul-oscuro) !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    border-left: 3px solid var(--color-azul-1);
-}
-
-/* Iconos en los botones */
-#offcanvasNavbar .nav-link i,
-#offcanvasNavbar .dropdown-toggle i {
-    margin-right: 15px;
-    font-size: 1.1rem;
-    color: white;
-    width: 20px;
-    text-align: center;
-}
-
-/* Dropdown menu */
-#offcanvasNavbar .dropdown-menu {
-    width: 100%;
-    margin: 5px 0;
-    background-color: var(--color-azul-oscuro);
-    border: 1px solid var(--color-gris-1);
-    border-radius: 8px;
-    padding: 0.8rem;
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
-}
-
-#offcanvasNavbar .dropdown-item {
-    color: white !important;
-    padding: 10px 15px;
     border-radius: 6px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    margin-bottom: 5px;
-    background-color: rgba(113, 125, 126, 0.2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+.div-custom:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+    transform: translateY(-1px);
+}
+.div-custom p {
+    margin: 0;
+    padding: 0;
+}
+.div-red {
+    background: var(--corp-danger);
+}
+.div-green {
+    background: var(--corp-success);
+}
+.div-blue {
+    background: var(--corp-primary);
+}
+.div-yellow {
+    background: var(--corp-warning);
 }
 
-#offcanvasNavbar .dropdown-item:hover {
-    background-color: var(--color-gris-1);
-}
-
-#offcanvasNavbar .dropdown-item i {
-    margin-right: 10px;
-    color: white;
-    font-size: 1.1rem;
-    opacity: 0.9;
-}
-
-/* FOOTER */
-#page-footer,
-.footer {
-    background-color: var(--color-azul-oscuro);
-    color: white;
-    padding: 2rem 0;
-    margin-top: auto;
-    position: relative;
-    z-index: 10;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
-    border-top: 2px solid var(--color-azul-3);
-}
-
-/* Botones de redes sociales */
-.btn-custom {
-    background-color: transparent;
-    border: 1px solid white;
-    color: white !important;
-    margin: 5px;
-    transition: all 0.3s ease;
-}
-
-.btn-custom:hover {
-    background-color: var(--color-azul-3);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.social-links {
-    margin-bottom: 15px;
-}
-
-/* Contenedor general */
-.container {
-    position: relative;
-    z-index: 1;
-}
-
-#page-content {
-    margin-top: 20px;
-    padding: 20px;
-    border-radius: 10px;
-}
-
-/* Ajustes para dispositivos móviles */
-
-@media (max-width: 767.98px) {
-
-    /*
-       Seleccionamos el contenedor principal por su ID #page-content.
-       Este ID ya lo tienes en tu base.html, lo que lo hace perfecto para esto.
-    */
-    #page-content {
-        /* Anulamos los márgenes laterales que pone la clase .container de Bootstrap */
-        padding-left: 3px !important;
-        /* Margen izquierdo mínimo */
-        padding-right: 3px !important;
-        /* Margen derecho mínimo */
-
-        /* Forzamos que el ancho máximo sea el 100% de la pantalla */
-        max-width: 100% !important;
-
-        /* Opcional: Reducimos un poco el margen superior en pantallas pequeñas */
-        margin-top: 85px !important;
-
-    }
-
+/* Override text-white classes to ensure they use dark font on light theme */
+h1.text-white, h2.text-white, h3.text-white, h4.text-white, h5.text-white, h6.text-white,
+.card-title.text-white, .page-main-header.text-white, .page-main-header .text-white {
+    color: var(--text-primary) !important;
 }

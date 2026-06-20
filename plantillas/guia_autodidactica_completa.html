@@ -135,6 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
             paginationItems.forEach(item => item.classList.remove('active'));
             if (paginationItems[pageIndex + 1]) { 
                 paginationItems[pageIndex + 1].classList.add('active');
+                paginationItems[pageIndex + 1].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
             const prevButtonLi = paginationUl.querySelector('.page-item:first-child');
             const nextButtonLi = paginationUl.querySelector('.page-item:last-child');
