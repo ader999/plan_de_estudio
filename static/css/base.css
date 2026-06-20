@@ -587,6 +587,90 @@ main {
     #navbar-brand img {
         height: 38px;
     }
+
+    /* Optimization for form pages (syllabus & guides) on mobile */
+    #page-content:has(.form-page-container) {
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+    }
+
+    .form-page-container {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .form-page-container .container,
+    .form-page-container .container-fluid {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .form-page-container .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .form-page-container [class*="col-"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    /* Outer cards acting as wrappers should be completely borderless/transparent on mobile */
+    .form-page-container .card.shadow-lg {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+
+    .form-page-container .card.shadow-lg > .card-body {
+        padding: 0 !important;
+    }
+
+    /* Inner cards (sections like "Información General", "Objetivos", "Primera Actividad", etc.) */
+    .form-page-container .card:not(.shadow-lg) {
+        border-radius: 8px !important;
+        margin-left: 2px !important;
+        margin-right: 2px !important;
+        margin-bottom: 10px !important;
+        background-color: var(--bg-secondary) !important;
+        border: 1px solid var(--border-color) !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .form-page-container .card:not(.shadow-lg) .card-header {
+        padding: 10px 12px !important;
+    }
+
+    .form-page-container .card:not(.shadow-lg) .card-body {
+        padding: 12px 10px !important;
+    }
+
+    .form-page-container .mb-3 {
+        margin-bottom: 0.85rem !important;
+    }
+
+    .form-page-container .form-control,
+    .form-page-container .form-select {
+        width: 100% !important;
+        padding: 0.55rem 0.65rem !important;
+    }
+
+    /* Ejes transversales/checkbox lists margins */
+    .form-page-container .form-check-group-container {
+        padding: 4px !important;
+    }
+
+    /* Sum of points counter styling to make sure it looks neat on mobile */
+    .form-page-container .d-flex.justify-content-center.align-items-center {
+        gap: 0.5rem !important;
+    }
 }
 
 /* Progress indicator boxes (1 to 11) */
