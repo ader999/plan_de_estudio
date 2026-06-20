@@ -113,8 +113,11 @@ class Plan_de_estudio(models.Model):
 
     def clean(self):
 
+        if self.carrera_id is None:
+            raise ValidationError({'carrera': "Debes seleccionar una carrera."})
+
         if self.asignatura_id is None:
-            raise ValidationError("Debes seleccionar una asignatura.")
+            raise ValidationError({'asignatura': "Debes seleccionar una asignatura."})
 
         # Verificar si ya existe un Plan_de_estudio con la misma asignatura en la misma carrera y el mismo pensol
         existing_plans = Plan_de_estudio.objects.filter(
@@ -187,8 +190,8 @@ class AsignacionPlanEstudio(models.Model):
         return f"{self.usuario} - {self.plan_de_estudio}"
 
     def clean(self):
-        if not self.plan_de_estudio:
-            raise ValidationError("Debes asignar un plan de estudio.")
+        if self.plan_de_estudio_id is None:
+            raise ValidationError({'plan_de_estudio': "Debes asignar un plan de estudio."})
             
         now = timezone.now()
         mes = now.month
