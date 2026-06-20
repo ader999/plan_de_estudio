@@ -101,11 +101,21 @@ def inicio(request):
     ).order_by('-id')
     rango = range(1, 12)  # Crear el rango para pasarlo al template
 
+    asignaciones_pendientes = [a for a in asignaciones if a.silabos_creados < 11]
+    asignaciones_completadas = [a for a in asignaciones if a.silabos_creados >= 11]
+
     return render(
         request,
         "inicio.html",
-        {"asignaciones": asignaciones, "rango": rango, "usuario": nombre_de_usuario},
+        {
+            "asignaciones": asignaciones,
+            "asignaciones_pendientes": asignaciones_pendientes,
+            "asignaciones_completadas": asignaciones_completadas,
+            "rango": rango,
+            "usuario": nombre_de_usuario
+        },
     )
+
 
 
 def acerca_de(request):

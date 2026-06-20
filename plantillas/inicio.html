@@ -59,169 +59,373 @@
             </div>
         </div>
 
-        <div class="row row-cols-1 g-4" style="max-width: 840px;">  <!-- Ajuste de ancho máximo para centrado -->
-            {% if asignaciones %}
+    <!-- Tabs Navigation -->
+    <div class="d-flex flex-column align-items-center w-100">
+        <ul class="nav nav-pills justify-content-center mb-4 gap-2" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active px-4 py-2 rounded-pill shadow-sm custom-tab-btn" id="pills-pendientes-tab" data-bs-toggle="pill" data-bs-target="#pills-pendientes" type="button" role="tab" aria-controls="pills-pendientes" aria-selected="true">
+                    <i class="fas fa-clock me-2"></i> Pendientes 
+                    <span class="badge bg-danger ms-2">{{ asignaciones_pendientes|length }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link px-4 py-2 rounded-pill shadow-sm custom-tab-btn" id="pills-completadas-tab" data-bs-toggle="pill" data-bs-target="#pills-completadas" type="button" role="tab" aria-controls="pills-completadas" aria-selected="false">
+                    <i class="fas fa-archive me-2"></i> Archivados 
+                    <span class="badge bg-success ms-2">{{ asignaciones_completadas|length }}</span>
+                </button>
+            </li>
+        </ul>
 
-            {% for asignacion in asignaciones %}
-                <div class="col">
-                    <div class="card shadow-sm h-100">
-                    <div class="card-header">
-                        <h5 class="mb-0">{{ asignacion.plan_de_estudio.asignatura }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">
-                            <strong>Carrera:</strong> {{ asignacion.plan_de_estudio.carrera }}<br>
-                            <strong>Año:</strong> {{ asignacion.plan_de_estudio.año }}<br>
-                            <strong>Trimestre:</strong> {{ asignacion.plan_de_estudio.trimestre }}<br>
-                            <strong>Código de Asignatura:</strong> {{ asignacion.plan_de_estudio.codigo }}<br>
-                            <strong>Horas Prácticas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales }}<br>
-                            <strong>Horas Teóricas:</strong> {{ asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
-                            <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
-                        </p>
+        <style>
+            .custom-tab-btn {
+                color: rgba(255, 255, 255, 0.9) !important;
+                background-color: rgba(255, 255, 255, 0.1) !important;
+                border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                backdrop-filter: blur(10px);
+                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+                font-weight: 500;
+            }
+            .custom-tab-btn:hover {
+                background-color: rgba(255, 255, 255, 0.2) !important;
+                transform: translateY(-1px);
+            }
+            .custom-tab-btn.active {
+                color: #1f618d !important;
+                background-color: #ffffff !important;
+                font-weight: bold;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+                border-color: #ffffff !important;
+                transform: translateY(-1px);
+            }
+        </style>
 
-                        {% if asignacion.plan_de_estudio.plan_tematico %}
-                            <a href="{{ asignacion.plan_de_estudio.plan_tematico.url }}" class="btn btn-primary mb-2" target="_blank">
-                                <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Plan Temático
-                            </a>
-                        {% else %}
-                            <p class="text-muted">No se ha asignado un plan temático.</p>
-                        {% endif %}
+        <div class="tab-content w-100 d-flex justify-content-center" id="pills-tabContent" style="max-width: 840px;">
+            <!-- PESTAÑA: PENDIENTES -->
+            <div class="tab-pane fade show active w-100" id="pills-pendientes" role="tabpanel" aria-labelledby="pills-pendientes-tab">
+                <div class="row row-cols-1 g-4">
+                    {% if asignaciones_pendientes %}
+                        {% for asignacion in asignaciones_pendientes %}
+                            <div class="col">
+                                <div class="card shadow-sm h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">{{ asignacion.plan_de_estudio.asignatura }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Carrera:</strong> {{ asignacion.plan_de_estudio.carrera }}<br>
+                                        <strong>Año:</strong> {{ asignacion.plan_de_estudio.año }}<br>
+                                        <strong>Trimestre:</strong> {{ asignacion.plan_de_estudio.trimestre }}<br>
+                                        <strong>Código de Asignatura:</strong> {{ asignacion.plan_de_estudio.codigo }}<br>
+                                        <strong>Horas Prácticas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales }}<br>
+                                        <strong>Horas Teóricas:</strong> {{ asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
+                                        <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
+                                    </p>
 
-                        {% if asignacion.plan_de_estudio.documento_adjunto %}
-                            <a href="{{ asignacion.plan_de_estudio.documento_adjunto.url }}" class="btn btn-success mb-2" target="_blank">
-                                <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Documento Adjunto
-                            </a>
-                        {% endif %}
+                                    {% if asignacion.plan_de_estudio.plan_tematico %}
+                                        <a href="{{ asignacion.plan_de_estudio.plan_tematico.url }}" class="btn btn-primary mb-2" target="_blank">
+                                            <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Plan Temático
+                                        </a>
+                                    {% else %}
+                                        <p class="text-muted">No se ha asignado un plan temático.</p>
+                                    {% endif %}
 
-                        <!-- Botón para llenar el silabo, solo aparece si no está completado -->
-                        {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < 11 %}
-                            <div class="d-flex flex-column align-items-center mb-3">
-                                <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente o si ya se completaron los 11 -->
-                                <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"
-                                   class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
-                                   {% if asignacion.silabos_creados >= 11 %}
-                                   disabled title="Ya se han completado los 11 sílabos"
-                                   {% elif asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}
-                                   disabled title="Debe crear la guía del sílabo anterior antes de continuar"
-                                   {% endif %}>
-                                    <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
-                                </a>
+                                    {% if asignacion.plan_de_estudio.documento_adjunto %}
+                                        <a href="{{ asignacion.plan_de_estudio.documento_adjunto.url }}" class="btn btn-success mb-2" target="_blank">
+                                            <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Documento Adjunto
+                                        </a>
+                                    {% endif %}
 
-                                <!-- Indicadores numéricos para sílabos -->
-                                <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
-                                    {% for i in rango %}
-                                        <div class="mx-1 my-1 div-custom {% if i <= asignacion.silabos_creados %}div-green{% else %}div-red{% endif %}">
-                                            <p class="text-center">{{ i }}</p>
+                                    <!-- Botón para llenar el silabo, solo aparece si no está completado -->
+                                    {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < 11 %}
+                                        <div class="d-flex flex-column align-items-center mb-3">
+                                            <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente o si ya se completaron los 11 -->
+                                            <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"
+                                               class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                               {% if asignacion.silabos_creados >= 11 %}
+                                               disabled title="Ya se han completado los 11 sílabos"
+                                               {% elif asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}
+                                               disabled title="Debe crear la guía del sílabo anterior antes de continuar"
+                                               {% endif %}>
+                                                <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
+                                            </a>
+
+                                            <!-- Indicadores numéricos para sílabos -->
+                                            <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
+                                                {% for i in rango %}
+                                                    <div class="mx-1 my-1 div-custom {% if i <= asignacion.silabos_creados %}div-green{% else %}div-red{% endif %}">
+                                                        <p class="text-center">{{ i }}</p>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
                                         </div>
-                                    {% endfor %}
+
+                                        <div class="d-flex flex-column align-items-center">
+                                            <!-- Botón para generar guía de estudio independiente -->
+                                            <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"
+                                               class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= 11 %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                               {% if asignacion.silabos_creados == 0 %}
+                                               disabled title="Debe crear al menos un sílabo primero"
+                                               {% elif asignacion.guias_creadas >= 11 %}
+                                               disabled title="Ya se han completado las 11 guías"
+                                               {% elif asignacion.guias_creadas >= asignacion.silabos_creados %}
+                                               disabled title="Debe crear el siguiente sílabo antes de continuar con más guías"
+                                               {% endif %}>
+                                                <i class="fas fa-book-reader fa-lg me-2"></i> Generar Guía
+                                            </a>
+
+                                            <!-- Indicadores numéricos para guías -->
+                                            <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
+                                                {% for i in rango %}
+                                                    <div class="mx-1 my-1 div-custom {% if i <= asignacion.guias_creadas|default:0 %}div-blue{% else %}div-yellow{% endif %}">
+                                                        <p class="text-center">{{ i }}</p>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+
+                                    <!-- Añade estos estilos al archivo CSS -->
+                                    <style>
+                                        .div-red {
+                                            background: #e74c3c; /* Color rojo */
+                                        }
+                                        .div-green {
+                                            background: #2ecc71; /* Color verde */
+                                        }
+                                        .div-blue {
+                                            background: #3498db; /* Color azul para guías completadas */
+                                        }
+                                        .div-yellow {
+                                            background: #f1c40f; /* Color amarillo para guías pendientes */
+                                        }
+                                        .div-custom {
+                                            width: 30px;
+                                            height: 30px;
+                                            color: white;
+                                            font-weight: bold;
+                                            font-size: 16px;
+                                            display: flex;
+                                            justify-content: center;
+                                            align-items: center;
+                                            border-radius: 5px;
+                                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+                                            transition: all 0.3s ease;
+                                        }
+                                        .div-custom:hover {
+                                            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+                                        }
+                                        .div-custom p {
+                                            margin: 0;
+                                            padding: 0;
+                                        }
+                                        @media (max-width: 768px) {
+                                            .card {
+                                                width: 90%; /* Hacer que la tarjeta llene el 90% del ancho */
+                                                margin: 0 auto; /* Centrar la tarjeta */
+                                            }
+                                        }
+                                    </style>
+                                </div>
+
+                                    <!-- Footer de la tarjeta, muestra el estado de completado -->
+                                    <div class="card-footer text-muted d-flex justify-content-between">
+                                        <span>Asignado a: {{ asignacion.usuario.username }}</span>
+                                        <span>
+                                            {% if asignacion.silabos_creados == 11 %}
+                                                <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
+                                            {% else %}
+                                                <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div class="d-flex flex-column align-items-center">
-                                <!-- Botón para generar guía de estudio independiente -->
-                                <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"
-                                   class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= 11 %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
-                                   {% if asignacion.silabos_creados == 0 %}
-                                   disabled title="Debe crear al menos un sílabo primero"
-                                   {% elif asignacion.guias_creadas >= 11 %}
-                                   disabled title="Ya se han completado las 11 guías"
-                                   {% elif asignacion.guias_creadas >= asignacion.silabos_creados %}
-                                   disabled title="Debe crear el siguiente sílabo antes de continuar con más guías"
-                                   {% endif %}>
-                                    <i class="fas fa-book-reader fa-lg me-2"></i> Generar Guía
-                                </a>
-
-                                <!-- Indicadores numéricos para guías -->
-                                <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
-                                    {% for i in rango %}
-                                        <div class="mx-1 my-1 div-custom {% if i <= asignacion.guias_creadas|default:0 %}div-blue{% else %}div-yellow{% endif %}">
-                                            <p class="text-center">{{ i }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Estado vacío (Pendientes) -->
+                        <div class="col-12 d-flex justify-content-center mt-2 mb-5">
+                            <div class="card shadow-lg border-0 text-center mx-3" style="width: 100%; max-width: 550px; border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+                                <div class="card-body p-4 p-md-5">
+                                    <div class="mb-4">
+                                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle" style="width: 90px; height: 90px; background: rgba(46, 204, 113, 0.1);">
+                                            <i class="fas fa-check-double text-success" style="font-size: 3.5rem;"></i>
                                         </div>
-                                    {% endfor %}
+                                    </div>
+                                    <h3 class="fw-bold mb-3" style="color: #2c3e50;">¡Todo al día!</h3>
+                                    <p class="text-muted fs-5 mb-0" style="line-height: 1.6;">
+                                        No tienes planes de estudio pendientes de completar.
+                                        {% if not is_google_linked %}
+                                        <br><br><span style="font-size: 0.95rem;">Vincula tu cuenta de Google Classroom en la parte superior para trepar las tareas de tus guias a Classroom</span>
+                                        {% endif %}
+                                    </p>
                                 </div>
                             </div>
-                        {% endif %}
-
-                        <!-- Añade estos estilos al archivo CSS -->
-                        <style>
-                            .div-red {
-                                background: #e74c3c; /* Color rojo */
-                            }
-                            .div-green {
-                                background: #2ecc71; /* Color verde */
-                            }
-                            .div-blue {
-                                background: #3498db; /* Color azul para guías completadas */
-                            }
-                            .div-yellow {
-                                background: #f1c40f; /* Color amarillo para guías pendientes */
-                            }
-                            .div-custom {
-                                width: 30px;
-                                height: 30px;
-                                color: white;
-                                font-weight: bold;
-                                font-size: 16px;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                border-radius: 5px;
-                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
-                                transition: all 0.3s ease;
-                            }
-                            .div-custom:hover {
-                                box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
-                            }
-                            .div-custom p {
-                                margin: 0;
-                                padding: 0;
-                            }
-                            @media (max-width: 768px) {
-                            .card {
-                                width: 90%; /* Hacer que la tarjeta llene el 90% del ancho */
-                                margin: 0 auto; /* Centrar la tarjeta */
-                            }
-                        }
-
-                        </style>
-                    </div>
-
-                        <!-- Footer de la tarjeta, muestra el estado de completado -->
-                        <div class="card-footer text-muted d-flex justify-content-between">
-                            <span>Asignado a: {{ asignacion.usuario.username }}</span>
-                            <span>
-                                {% if asignacion.silabos_creados == 11 %}
-                                    <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
-                                {% else %}
-                                    <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>
-                                {% endif %}
-                            </span>
                         </div>
-                    </div>
-                </div>
-            {% endfor %}
-
-            {% else %}
-            <!-- Estado vacío (Advertencia mejorada) -->
-            <div class="col-12 d-flex justify-content-center mt-2 mb-5">
-                <div class="card shadow-lg border-0 text-center mx-3" style="width: 100%; max-width: 550px; border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
-                    <div class="card-body p-4 p-md-5">
-                        <div class="mb-4">
-                            <div class="d-inline-flex justify-content-center align-items-center rounded-circle" style="width: 90px; height: 90px; background: rgba(243, 156, 18, 0.1);">
-                                <i class="fas fa-folder-open text-warning" style="font-size: 3.5rem;"></i>
-                            </div>
-                        </div>
-                        <h3 class="fw-bold mb-3" style="color: #2c3e50;">Aún no hay asignaciones</h3>
-                        <p class="text-muted fs-5 mb-0" style="line-height: 1.6;">
-                            Actualmente no tienes ningún plan de estudio asignado.
-                            {% if not is_google_linked %}
-                            <br><br><span style="font-size: 0.95rem;">Vincula tu cuenta de Google Classroom en la parte superior para trepar las tareas de tus guias a Classroom</span>
-                            {% endif %}
-                        </p>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
-            {% endif %}
+
+            <!-- PESTAÑA: ARCHIVADOS -->
+            <div class="tab-pane fade w-100" id="pills-completadas" role="tabpanel" aria-labelledby="pills-completadas-tab">
+                <div class="row row-cols-1 g-4">
+                    {% if asignaciones_completadas %}
+                        {% for asignacion in asignaciones_completadas %}
+                            <div class="col">
+                                <div class="card shadow-sm h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">{{ asignacion.plan_de_estudio.asignatura }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        <strong>Carrera:</strong> {{ asignacion.plan_de_estudio.carrera }}<br>
+                                        <strong>Año:</strong> {{ asignacion.plan_de_estudio.año }}<br>
+                                        <strong>Trimestre:</strong> {{ asignacion.plan_de_estudio.trimestre }}<br>
+                                        <strong>Código de Asignatura:</strong> {{ asignacion.plan_de_estudio.codigo }}<br>
+                                        <strong>Horas Prácticas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales }}<br>
+                                        <strong>Horas Teóricas:</strong> {{ asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
+                                        <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
+                                    </p>
+
+                                    {% if asignacion.plan_de_estudio.plan_tematico %}
+                                        <a href="{{ asignacion.plan_de_estudio.plan_tematico.url }}" class="btn btn-primary mb-2" target="_blank">
+                                            <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Plan Temático
+                                        </a>
+                                    {% else %}
+                                        <p class="text-muted">No se ha asignado un plan temático.</p>
+                                    {% endif %}
+
+                                    {% if asignacion.plan_de_estudio.documento_adjunto %}
+                                        <a href="{{ asignacion.plan_de_estudio.documento_adjunto.url }}" class="btn btn-success mb-2" target="_blank">
+                                            <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Documento Adjunto
+                                        </a>
+                                    {% endif %}
+
+                                    <!-- Botón para llenar el silabo, solo aparece si no está completado -->
+                                    {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < 11 %}
+                                        <div class="d-flex flex-column align-items-center mb-3">
+                                            <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente o si ya se completaron los 11 -->
+                                            <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"
+                                               class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                               {% if asignacion.silabos_creados >= 11 %}
+                                               disabled title="Ya se han completado los 11 sílabos"
+                                               {% elif asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}
+                                               disabled title="Debe crear la guía del sílabo anterior antes de continuar"
+                                               {% endif %}>
+                                                <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
+                                            </a>
+
+                                            <!-- Indicadores numéricos para sílabos -->
+                                            <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
+                                                {% for i in rango %}
+                                                    <div class="mx-1 my-1 div-custom {% if i <= asignacion.silabos_creados %}div-green{% else %}div-red{% endif %}">
+                                                        <p class="text-center">{{ i }}</p>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex flex-column align-items-center">
+                                            <!-- Botón para generar guía de estudio independiente -->
+                                            <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"
+                                               class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= 11 %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                               {% if asignacion.silabos_creados == 0 %}
+                                               disabled title="Debe crear al menos un sílabo primero"
+                                               {% elif asignacion.guias_creadas >= 11 %}
+                                               disabled title="Ya se han completado las 11 guías"
+                                               {% elif asignacion.guias_creadas >= asignacion.silabos_creados %}
+                                               disabled title="Debe crear el siguiente sílabo antes de continuar con más guías"
+                                               {% endif %}>
+                                                <i class="fas fa-book-reader fa-lg me-2"></i> Generar Guía
+                                            </a>
+
+                                            <!-- Indicadores numéricos para guías -->
+                                            <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
+                                                {% for i in rango %}
+                                                    <div class="mx-1 my-1 div-custom {% if i <= asignacion.guias_creadas|default:0 %}div-blue{% else %}div-yellow{% endif %}">
+                                                        <p class="text-center">{{ i }}</p>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+
+                                    <!-- Añade estos estilos al archivo CSS -->
+                                    <style>
+                                        .div-red {
+                                            background: #e74c3c; /* Color rojo */
+                                        }
+                                        .div-green {
+                                            background: #2ecc71; /* Color verde */
+                                        }
+                                        .div-blue {
+                                            background: #3498db; /* Color azul para guías completadas */
+                                        }
+                                        .div-yellow {
+                                            background: #f1c40f; /* Color amarillo para guías pendientes */
+                                        }
+                                        .div-custom {
+                                            width: 30px;
+                                            height: 30px;
+                                            color: white;
+                                            font-weight: bold;
+                                            font-size: 16px;
+                                            display: flex;
+                                            justify-content: center;
+                                            align-items: center;
+                                            border-radius: 5px;
+                                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+                                            transition: all 0.3s ease;
+                                        }
+                                        .div-custom:hover {
+                                            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+                                        }
+                                        .div-custom p {
+                                            margin: 0;
+                                            padding: 0;
+                                        }
+                                        @media (max-width: 768px) {
+                                            .card {
+                                                width: 90%; /* Hacer que la tarjeta llene el 90% del ancho */
+                                                margin: 0 auto; /* Centrar la tarjeta */
+                                            }
+                                        }
+                                    </style>
+                                </div>
+
+                                    <!-- Footer de la tarjeta, muestra el estado de completado -->
+                                    <div class="card-footer text-muted d-flex justify-content-between">
+                                        <span>Asignado a: {{ asignacion.usuario.username }}</span>
+                                        <span>
+                                            {% if asignacion.silabos_creados == 11 %}
+                                                <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
+                                            {% else %}
+                                                <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Estado vacío (Archivados) -->
+                        <div class="col-12 d-flex justify-content-center mt-2 mb-5">
+                            <div class="card shadow-lg border-0 text-center mx-3" style="width: 100%; max-width: 550px; border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='scale(1)';">
+                                <div class="card-body p-4 p-md-5">
+                                    <div class="mb-4">
+                                        <div class="d-inline-flex justify-content-center align-items-center rounded-circle" style="width: 90px; height: 90px; background: rgba(149, 165, 166, 0.1);">
+                                            <i class="fas fa-archive text-secondary" style="font-size: 3.5rem;"></i>
+                                        </div>
+                                    </div>
+                                    <h3 class="fw-bold mb-3" style="color: #2c3e50;">Sin planes archivados</h3>
+                                    <p class="text-muted fs-5 mb-0" style="line-height: 1.6;">
+                                        Actualmente no tienes ningún plan de estudio completado para archivar.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 
