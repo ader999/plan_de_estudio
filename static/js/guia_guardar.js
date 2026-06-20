@@ -580,6 +580,15 @@ function guardarFormulario() {
     error: function (xhr, status, error) {
       console.error("Error en la solicitud AJAX:", error);
       ocultarSpinnerGuardar();
+      try {
+        var errorResponse = JSON.parse(xhr.responseText);
+        if (errorResponse && errorResponse.error) {
+          alert("Error al guardar el estudio independiente: " + errorResponse.error);
+          return;
+        }
+      } catch (e) {
+        console.error("No se pudo parsear la respuesta de error:", e);
+      }
       alert("Error al comunicarse con el servidor");
     },
   });

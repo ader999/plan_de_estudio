@@ -410,6 +410,45 @@ def obtener_estudios_independientes(asignacion_id):
     return guias
 
 
+def get_previous_scores(asignacion, exclude_silabo_id=None, exclude_guia_id=None):
+    scores = {
+        'I Corte Evaluativo': 0,
+        'II Corte Evaluativo': 0,
+        'III Corte Evaluativo': 0
+    }
+    
+    # Sum syllabus scores
+    silabos = Silabo.objects.filter(asignacion_plan=asignacion)
+    if exclude_silabo_id:
+        silabos = silabos.exclude(id=exclude_silabo_id)
+        
+    for s in silabos:
+        corte = s.periodo_tiempo_programado
+        if corte:
+            corte = corte.strip()
+        if corte in scores and s.puntaje:
+            scores[corte] += s.puntaje
+            
+    # Sum guide scores
+    guias = Guia.objects.filter(silabo__asignacion_plan=asignacion)
+    if exclude_guia_id:
+        guias = guias.exclude(id=exclude_guia_id)
+        
+    for g in guias:
+        for p, c in [
+            (g.puntaje_1, g.periodo_tiempo_programado_1),
+            (g.puntaje_2, g.periodo_tiempo_programado_2),
+            (g.puntaje_3, g.periodo_tiempo_programado_3),
+            (g.puntaje_4, g.periodo_tiempo_programado_4),
+        ]:
+            if p and c:
+                c_clean = c.strip()
+                if c_clean in scores:
+                    scores[c_clean] += p
+                    
+    return scores
+
+
 @login_required
 def ver_formulario_silabo(request, asignacion_id=None, id=None):
     """
@@ -441,6 +480,8 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
         programa_2026 = asignacion.plan_de_estudio.programas_2026_asociados.first()
         mostrar_ia = bool(plan_tematico) or bool(programa_2026)
 
+        previous_scores = get_previous_scores(asignacion)
+
         return render(
             request,
             "formulario_silabo.html",
@@ -452,6 +493,8 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
                 "encuentro": silabos_creados + 1,
                 "asignaturas": asignaturas,
                 "mostrar_ia": mostrar_ia,
+                "previous_scores": previous_scores,
+                "previous_scores_json": json.dumps(previous_scores),
             },
         )
 
@@ -543,6 +586,13 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
         programa_2026 = asignacion.plan_de_estudio.programas_2026_asociados.first()
         mostrar_ia = bool(plan_tematico) or bool(programa_2026)
 
+        exclude_guia_id = None
+        if silabo:
+            existing_guia = Guia.objects.filter(silabo=silabo).first()
+            if existing_guia:
+                exclude_guia_id = existing_guia.id
+        previous_scores = get_previous_scores(asignacion, exclude_guia_id=exclude_guia_id)
+
         return render(
             request,
             "formulario_estudio_independiente.html",
@@ -561,6 +611,8 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
                 "periodo_tiempo_choices": periodo_tiempo_choices,
                 "tipo_objetivo_choices": tipo_objetivo_choices,
                 "mostrar_ia": mostrar_ia,
+                "previous_scores": previous_scores,
+                "previous_scores_json": json.dumps(previous_scores),
             },
         )
 
@@ -740,6 +792,7 @@ def guardar_guia(request, silabo_id=None, asignacion_id=None, id=None):
                 guia.fecha_entrega_4 = data.get("fecha_entrega_4")
 
                 # Guardar la guía
+                guia.full_clean()
                 guia.save()
 
                 # Actualizar también el sílabo para establecer la relación bilateral
@@ -786,6 +839,10 @@ def guardar_guia(request, silabo_id=None, asignacion_id=None, id=None):
 
             except json.JSONDecodeError:
                 return JsonResponse({"error": "Formato JSON inválido"}, status=400)
+        except ValidationError as e:
+            errors = {field: error[0] for field, error in e.message_dict.items()} if hasattr(e, 'message_dict') else {'__all__': e.messages[0]}
+            error_msg = "; ".join([f"{field}: {'; '.join(msgs)}" for field, msgs in e.message_dict.items()]) if hasattr(e, 'message_dict') else str(e)
+            return JsonResponse({"success": False, "errors": errors, "error": error_msg}, status=400)
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
@@ -1698,6 +1755,8 @@ def actualizar_silabo(request, silabo_id):
             # El contexto se pasará al final para volver a renderizar el formulario
             pass  # Permite que el código continúe hasta el render final
 
+    previous_scores = get_previous_scores(silabo.asignacion_plan, exclude_silabo_id=silabo.id)
+
     # Contexto para peticiones GET o si falla la validación en POST
     context = {
         'silabo': silabo,  # La instancia del sílabo para poblar los campos
@@ -1715,6 +1774,8 @@ def actualizar_silabo(request, silabo_id):
         'PERIODO_TIEMPO_LIST': Silabo.PERIODO_TIEMPO_LIST,
         'AGENTE_EVALUADOR_LIST': Silabo.AGENTE_EVALUADOR_LIST,
         'INSTRUMENTO_EVALUACION_LIST': Silabo.INSTRUMENTO_EVALUACION_LIST,
+        'previous_scores': previous_scores,
+        'previous_scores_json': json.dumps(previous_scores),
     }
 
     return render(request, 'actualizar_silabo.html', context)
@@ -1865,6 +1926,8 @@ def actualizar_guia(request, guia_id):
            messages.error(request, final_error_message)
            pass
 
+    previous_scores = get_previous_scores(silabo.asignacion_plan, exclude_guia_id=guia.id)
+
     context = {
         'guia': guia,
         'silabo': silabo,
@@ -1877,6 +1940,8 @@ def actualizar_guia(request, guia_id):
         'INSTRUMENTO_EVALUACION_LIST': Silabo.INSTRUMENTO_EVALUACION_LIST,
         'AGENTE_EVALUADOR_LIST': Silabo.AGENTE_EVALUADOR_LIST,
         'PERIODO_TIEMPO_LIST': Silabo.PERIODO_TIEMPO_LIST,
+        'previous_scores': previous_scores,
+        'previous_scores_json': json.dumps(previous_scores),
     }
 
     return render(request, 'actualizar_guia.html', context)

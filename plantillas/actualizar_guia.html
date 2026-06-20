@@ -194,6 +194,112 @@
                             </div>
                             {% endfor %}
 
+                             <!-- Card de Puntaje Acumulado -->
+                             <div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(37,99,235,0.05) 0%, rgba(29,78,216,0.05) 100%); border-left: 5px solid var(--corp-primary) !important;">
+                                 <div class="card-body">
+                                     <h5 class="card-title fw-bold text-primary mb-3">
+                                         <i class="fas fa-calculator me-2"></i>Puntaje Acumulado del Curso
+                                     </h5>
+                                     <div class="row text-center g-2">
+                                         <div class="col-4">
+                                             <div class="p-2 border rounded bg-white shadow-sm">
+                                                 <small class="text-muted d-block" style="font-size: 0.75rem;">I Corte</small>
+                                                 <span id="acumulado_corte_1" class="fw-bold text-dark" style="font-size: 1rem;">0</span>
+                                             </div>
+                                         </div>
+                                         <div class="col-4">
+                                             <div class="p-2 border rounded bg-white shadow-sm">
+                                                 <small class="text-muted d-block" style="font-size: 0.75rem;">II Corte</small>
+                                                 <span id="acumulado_corte_2" class="fw-bold text-dark" style="font-size: 1rem;">0</span>
+                                             </div>
+                                         </div>
+                                         <div class="col-4">
+                                             <div class="p-2 border rounded bg-white shadow-sm">
+                                                 <small class="text-muted d-block" style="font-size: 0.75rem;">III Corte</small>
+                                                 <span id="acumulado_corte_3" class="fw-bold text-dark" style="font-size: 1rem;">0</span>
+                                             </div>
+                                         </div>
+                                         <div class="col-12 mt-2">
+                                             <div class="p-2 border rounded bg-primary text-white shadow-sm">
+                                                 <small class="d-block text-white-50" style="font-size: 0.75rem;">Total Acumulado</small>
+                                                 <span id="acumulado_total" class="fw-bold fs-5">0</span>
+                                             </div>
+                                         </div>
+                                     </div>
+                                     <!-- Contenedor para la advertencia de corte superado -->
+                                     <div id="corte_warning_msg" class="d-none"></div>
+                                 </div>
+                             </div>
+                             <script>
+                                 $(document).ready(function() {
+                                     const previousScores = JSON.parse('{{ previous_scores_json|safe }}');
+                                     
+                                     function updateAccumulatedScores() {
+                                         const currentScores = {
+                                             'I Corte Evaluativo': 0,
+                                             'II Corte Evaluativo': 0,
+                                             'III Corte Evaluativo': 0
+                                         };
+                                         
+                                         // Sumar los campos del formulario actual (tareas 1 a 4)
+                                         for (let i = 1; i <= 4; i++) {
+                                             const puntajeVal = parseFloat($(`#puntaje_${i}`).val()) || 0;
+                                             const corteVal = $(`#periodo_tiempo_programado_${i}`).val();
+                                             
+                                             if (corteVal && currentScores.hasOwnProperty(corteVal)) {
+                                                 currentScores[corteVal] += puntajeVal;
+                                             }
+                                         }
+                                         
+                                         const corte1 = (previousScores['I Corte Evaluativo'] || 0) + currentScores['I Corte Evaluativo'];
+                                         const corte2 = (previousScores['II Corte Evaluativo'] || 0) + currentScores['II Corte Evaluativo'];
+                                         const corte3 = (previousScores['III Corte Evaluativo'] || 0) + currentScores['III Corte Evaluativo'];
+                                         const total = corte1 + corte2 + corte3;
+                                         
+                                         $('#acumulado_corte_1').text(corte1);
+                                         $('#acumulado_corte_2').text(corte2);
+                                         $('#acumulado_corte_3').text(corte3);
+                                         $('#acumulado_total').text(total);
+
+                                         // Validación de límites por corte (100 puntos)
+                                         const limit = 100;
+                                         let warnings = [];
+                                         
+                                         // Resetear clases de advertencia
+                                         $('#acumulado_corte_1').closest('.border').removeClass('bg-warning text-dark border-warning').addClass('bg-white text-dark');
+                                         $('#acumulado_corte_2').closest('.border').removeClass('bg-warning text-dark border-warning').addClass('bg-white text-dark');
+                                         $('#acumulado_corte_3').closest('.border').removeClass('bg-warning text-dark border-warning').addClass('bg-white text-dark');
+                                         $('#corte_warning_msg').addClass('d-none').html('');
+                                         
+                                         if (corte1 > limit) {
+                                             $('#acumulado_corte_1').closest('.border').removeClass('bg-white text-dark').addClass('bg-warning text-dark border-warning');
+                                             warnings.push('I Corte Evaluativo');
+                                         }
+                                         if (corte2 > limit) {
+                                             $('#acumulado_corte_2').closest('.border').removeClass('bg-white text-dark').addClass('bg-warning text-dark border-warning');
+                                             warnings.push('II Corte Evaluativo');
+                                         }
+                                         if (corte3 > limit) {
+                                             $('#acumulado_corte_3').closest('.border').removeClass('bg-white text-dark').addClass('bg-warning text-dark border-warning');
+                                             warnings.push('III Corte Evaluativo');
+                                         }
+                                         
+                                         if (warnings.length > 0) {
+                                             const msg = `<div class="alert alert-warning py-2 px-3 mt-3 mb-0" style="font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--corp-warning);">
+                                                 <i class="fas fa-exclamation-triangle me-2"></i><strong>¡Atención!</strong> El puntaje acumulado en <strong>${warnings.join(' y ')}</strong> supera los 100 puntos.
+                                             </div>`;
+                                             $('#corte_warning_msg').html(msg).removeClass('d-none');
+                                         }
+                                     }
+                                     
+                                     // Escuchar cambios en todos los inputs de puntaje y selects de periodo
+                                     $(document).on('input change', '[id^="puntaje_"], [id^="periodo_tiempo_programado_"]', updateAccumulatedScores);
+                                     
+                                     // Inicialización
+                                     updateAccumulatedScores();
+                                 });
+                             </script>
+
                             <!-- Botón para actualizar -->
                             <div class="row justify-content-center mt-4 mb-3">
                                <div class="col-lg-6 col-md-8 col-sm-12 text-center">
