@@ -590,8 +590,8 @@ main {
 
     /* Optimization for form pages (syllabus & guides) on mobile */
     #page-content:has(.form-page-container) {
-        padding-left: 4px !important;
-        padding-right: 4px !important;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
     }
 
     .form-page-container {
@@ -635,9 +635,10 @@ main {
 
     /* Inner cards (sections like "Información General", "Objetivos", "Primera Actividad", etc.) */
     .form-page-container .card:not(.shadow-lg) {
+        padding: 0 !important; /* Reset outer padding on inner cards to override global card padding */
         border-radius: 8px !important;
-        margin-left: 2px !important;
-        margin-right: 2px !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
         margin-bottom: 10px !important;
         background-color: var(--bg-secondary) !important;
         border: 1px solid var(--border-color) !important;
@@ -645,11 +646,11 @@ main {
     }
 
     .form-page-container .card:not(.shadow-lg) .card-header {
-        padding: 10px 12px !important;
+        padding: 10px 10px !important;
     }
 
     .form-page-container .card:not(.shadow-lg) .card-body {
-        padding: 12px 10px !important;
+        padding: 10px 6px !important;
     }
 
     .form-page-container .mb-3 {
