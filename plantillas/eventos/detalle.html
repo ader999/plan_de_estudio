@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5 pt-4">
+    <!-- Navegación de migas de pan (Breadcrumb) -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ evento.nombre }}</li>
+        </ol>
+    </nav>
+
+    <!-- Alertas/Mensajes -->
+    {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Encabezado del Evento -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-body p-4 bg-light">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
+                        <h1 class="display-6 fw-bold mb-0 text-primary">{{ evento.nombre }}</h1>
+                        {% if evento.esta_activo %}
+                            <span class="badge bg-success text-uppercase py-2 px-3">En Curso</span>
+                        {% elif evento.ha_finalizado %}
+                            <span class="badge bg-secondary text-uppercase py-2 px-3">Finalizado</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark text-uppercase py-2 px-3">Próximo</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-muted lead mb-3">{{ evento.descripcion|default:"Este evento no tiene una descripción detallada." }}</p>
+                    
+                    <div class="d-flex flex-wrap gap-4 text-muted small">
+                        <div>
+                            <i class="far fa-calendar-alt text-primary me-2"></i>
+                            <strong>Inicio:</strong> {{ evento.fecha_inicio|date:"d M Y, H:i" }}
+                        </div>
+                        <div>
+                            <i class="far fa-calendar-check text-danger me-2"></i>
+                            <strong>Cierre:</strong> {{ evento.fecha_fin|date:"d M Y, H:i" }}
+                        </div>
+                        <div>
+                            <i class="fas fa-medal text-warning me-2"></i>
+                            <strong>Puntos Máximos:</strong> <span class="badge bg-primary">{{ evento.total_criterios_score }} pts</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <div class="d-flex flex-column gap-2">
+                        {% if es_jurado and evento.esta_activo %}
+                            <a href="{% url 'eventos:evaluar_participantes' evento.id %}" class="btn btn-success btn-lg shadow-sm">
+                                <i class="fas fa-star me-2"></i>Evaluar Equipos
+                            </a>
+                        {% endif %}
+
+                        {% if evento.ha_finalizado or es_administrador %}
+                            <a href="{% url 'eventos:resultados_evento' evento.id %}" class="btn btn-dark btn-lg shadow-sm">
+                                <i class="fas fa-trophy text-warning me-2"></i>Ver Tabla de Posiciones
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna de Información del Evento -->
+        <div class="col-lg-8">
+            <!-- Proyectos Participantes -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0 text-dark">
+                        <i class="fas fa-users text-info me-2"></i>Equipos / Proyectos Participantes ({{ participantes.count }})
+                    </h5>
+                    {% if es_administrador %}
+                        <a href="{% url 'eventos:gestionar_participantes' evento.id %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-cog me-1"></i>Gestionar
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if participantes %}
+                        <div class="list-group list-group-flush">
+                            {% for participante in participantes %}
+                                <div class="list-group-item px-0 py-3 border-bottom">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1 fw-bold text-dark">{{ participante.nombre }}</h6>
+                                    </div>
+                                    <p class="mb-2 text-muted small">{{ participante.descripcion|default:"Sin descripción disponible." }}</p>
+                                    {% if participante.integrantes %}
+                                        <div class="small">
+                                            <span class="text-secondary"><i class="fas fa-user-friends me-1"></i>Integrantes:</span>
+                                            <span class="text-muted">{{ participante.integrantes }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users-slash fa-3x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No se han registrado participantes para este evento.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Criterios de Evaluación -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0 text-dark">
+                        <i class="fas fa-list-check text-warning me-2"></i>Criterios de Evaluación ({{ criterios.count }})
+                    </h5>
+                    {% if es_administrador %}
+                        <a href="{% url 'eventos:gestionar_criterios' evento.id %}" class="btn btn-sm btn-outline-warning text-dark border-warning">
+                            <i class="fas fa-cog me-1"></i>Gestionar
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if criterios %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Criterio</th>
+                                        <th>Descripción</th>
+                                        <th class="text-center" style="width: 120px;">Puntaje Máx</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for criterio in criterios %}
+                                        <tr>
+                                            <td class="fw-bold">{{ criterio.nombre }}</td>
+                                            <td class="text-muted small">{{ criterio.descripcion|default:"-" }}</td>
+                                            <td class="text-center"><span class="badge bg-primary fs-6">{{ criterio.puntaje_maximo }}</span></td>
+                                        </tr>
+                                    {% endfor %}
+                                    <tr class="table-info fw-bold">
+                                        <td colspan="2">Puntaje Total del Evento</td>
+                                        <td class="text-center"><span class="badge bg-dark fs-6">{{ evento.total_criterios_score }}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No se han definido criterios de evaluación aún.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Lateral de Administración y Jurados -->
+        <div class="col-lg-4">
+            <!-- Panel del Jurado -->
+            {% if evento.requiere_jurado %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="card-title fw-bold mb-0 text-dark">
+                            <i class="fas fa-gavel text-primary me-2"></i>Jurado Asignado
+                        </h5>
+                        {% if es_administrador %}
+                            <a href="{% url 'eventos:gestionar_jurado' evento.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i>Asignar
+                            </a>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if jurados %}
+                            <div class="list-group list-group-flush">
+                                {% for j in jurados %}
+                                    <div class="list-group-item px-0 py-2 border-bottom d-flex align-items-center gap-2">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-user-tie"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">{{ j.usuario.get_full_name|default:j.usuario.username }}</div>
+                                            <small class="text-muted">@{{ j.usuario.username }}</small>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-3">
+                                <i class="fas fa-user-slash fa-2x text-muted mb-2"></i>
+                                <p class="text-muted mb-0">No hay jurados asignados para este evento.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Opciones del Administrador/Creador -->
+            {% if es_administrador %}
+                <div class="card border-primary border-opacity-25 shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="card-title fw-bold mb-0">
+                            <i class="fas fa-sliders-h me-2"></i>Administración de Evento
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">Eres el creador o administrador de este evento. Tienes control total sobre su configuración y participantes.</p>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'eventos:editar_evento' evento.id %}" class="btn btn-outline-primary text-start">
+                                <i class="fas fa-edit me-2"></i>Editar Datos del Evento
+                            </a>
+                            <a href="{% url 'eventos:gestionar_criterios' evento.id %}" class="btn btn-outline-warning text-dark text-start">
+                                <i class="fas fa-list-check me-2"></i>Editar Criterios
+                            </a>
+                            <a href="{% url 'eventos:gestionar_participantes' evento.id %}" class="btn btn-outline-info text-start">
+                                <i class="fas fa-users me-2"></i>Editar Participantes
+                            </a>
+                            {% if evento.requiere_jurado %}
+                                <a href="{% url 'eventos:gestionar_jurado' evento.id %}" class="btn btn-outline-secondary text-start">
+                                    <i class="fas fa-gavel me-2"></i>Configurar Jurado
+                                </a>
+                            {% endif %}
+                            
+                            <hr class="my-2">
+                            
+                            <a href="{% url 'eventos:eliminar_evento' evento.id %}" class="btn btn-outline-danger text-start">
+                                <i class="fas fa-trash-alt me-2"></i>Eliminar Evento
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

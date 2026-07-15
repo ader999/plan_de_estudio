@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5 pt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-danger text-white py-3">
+                    <h4 class="card-title fw-bold mb-0 text-center">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                    </h4>
+                </div>
+                <div class="card-body p-4 text-center">
+                    <p class="lead">¿Estás completamente seguro de que deseas eliminar permanentemente este {{ tipo }}?</p>
+                    
+                    <div class="alert alert-warning border-warning text-start">
+                        <h6 class="fw-bold"><i class="fas fa-info-circle me-1"></i>Detalles:</h6>
+                        <strong>Nombre:</strong> {{ objeto.nombre }}<br>
+                        <span class="small text-muted">Esta acción no se puede deshacer. Se eliminarán de forma permanente todos los datos asociados (criterios, participantes y calificaciones).</span>
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-around">
+                            {% if tipo == 'evento' %}
+                                <a href="{% url 'eventos:detalle_evento' objeto.id %}" class="btn btn-outline-secondary px-4 fw-bold">
+                                    Cancelar
+                                </a>
+                            {% else %}
+                                <a href="{% url 'eventos:lista_eventos' %}" class="btn btn-outline-secondary px-4 fw-bold">
+                                    Cancelar
+                                </a>
+                            {% endif %}
+                            
+                            <button type="submit" class="btn btn-danger px-4 fw-bold shadow-sm">
+                                <i class="fas fa-trash-alt me-2"></i>Eliminar Permanentemente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5 pt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Gestionar Jurado</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Formulario para agregar Jurados -->
+        <div class="col-lg-5 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-user-plus me-2"></i>Asignar Miembro del Jurado
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if usuarios_disponibles %}
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="usuario_id" class="form-label fw-bold">Seleccionar Usuario del Sistema</label>
+                                <select name="usuario_id" id="usuario_id" class="form-select select2" required>
+                                    <option value="" disabled selected>Selecciona un usuario...</option>
+                                    {% for usuario_disp in usuarios_disponibles %}
+                                        <option value="{{ usuario_disp.id }}">
+                                            {{ usuario_disp.get_full_name|default:usuario_disp.username }} ({{ usuario_disp.username }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text text-muted">
+                                    Solo se muestran los usuarios que no han sido asignados como jurado de este evento.
+                                </div>
+                            </div>
+
+                            <div class="d-grid mt-4">
+                                <button type="submit" class="btn btn-primary fw-bold shadow-sm">
+                                    <i class="fas fa-save me-2"></i>Asignar Jurado
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>No hay más usuarios disponibles en el sistema para asignar como jurado.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Jurados asignados -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title fw-bold mb-0 text-dark">
+                        <i class="fas fa-gavel text-primary me-2"></i>Jurado Asignado para el Evento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if jurados %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Nombre de Usuario</th>
+                                        <th class="text-center" style="width: 80px;">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for j in jurados %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ j.usuario.get_full_name|default:j.usuario.username }}</div>
+                                            </td>
+                                            <td class="text-muted small">@{{ j.usuario.username }}</td>
+                                            <td class="text-center">
+                                                <form action="{% url 'eventos:eliminar_jurado' j.id %}" method="post" onsubmit="return confirm('¿Estás seguro de remover a este usuario del jurado? Se eliminarán todas las calificaciones que haya realizado en este evento.');" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Remover del jurado">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-user-slash fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted fw-bold">No hay jurados asignados</h5>
+                            <p class="text-muted small">Asigna usuarios existentes para que actúen como jurados en la evaluación.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white py-3 text-end">
+                    <a href="{% url 'eventos:detalle_evento' evento.id %}" class="btn btn-primary px-4 fw-bold">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al Evento
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

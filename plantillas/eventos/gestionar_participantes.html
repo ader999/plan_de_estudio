@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5 pt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Gestionar Participantes</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Formulario para agregar participante -->
+        <div class="col-lg-5 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white py-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-user-plus me-2"></i>Agregar Proyecto o Equipo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label fw-bold">Nombre del Proyecto/Equipo</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <div class="text-danger small mt-1">{{ form.nombre.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label fw-bold">Descripción (Opcional)</label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="text-danger small mt-1">{{ form.descripcion.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.integrantes.id_for_label }}" class="form-label fw-bold">Integrantes del Equipo (Opcional)</label>
+                            {{ form.integrantes }}
+                            {% if form.integrantes.errors %}
+                                <div class="text-danger small mt-1">{{ form.integrantes.errors }}</div>
+                            {% endif %}
+                            <div class="form-text text-muted">Escribe los nombres separados por comas. Recuerda que no se registrarán como usuarios de Django.</div>
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-info text-white fw-bold shadow-sm">
+                                <i class="fas fa-save me-2"></i>Registrar Participante
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de participantes registrados -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title fw-bold mb-0 text-dark">
+                        <i class="fas fa-users text-info me-2"></i>Participantes Registrados
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if participantes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Integrantes</th>
+                                        <th class="text-center" style="width: 80px;">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for participante in participantes %}
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold text-dark">{{ participante.nombre }}</div>
+                                                <small class="text-muted d-block text-truncate" style="max-width: 250px;" title="{{ participante.descripcion }}">{{ participante.descripcion|default:"Sin descripción" }}</small>
+                                            </td>
+                                            <td class="small text-muted">{{ participante.integrantes|default:"No especificados" }}</td>
+                                            <td class="text-center">
+                                                <form action="{% url 'eventos:eliminar_participante' participante.id %}" method="post" onsubmit="return confirm('¿Estás seguro de eliminar este participante? Esto borrará todas las evaluaciones recibidas.');" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar participante">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users-slash fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted fw-bold">No hay participantes registrados</h5>
+                            <p class="text-muted small">Agrega proyectos o equipos participantes usando el panel izquierdo.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white py-3 text-end">
+                    <a href="{% url 'eventos:detalle_evento' evento.id %}" class="btn btn-primary px-4 fw-bold">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al Evento
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

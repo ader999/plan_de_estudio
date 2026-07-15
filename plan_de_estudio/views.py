@@ -27,13 +27,13 @@ from django.urls import reverse
 from django.core.files.storage import default_storage
 # Importaciones para IA
 import openai  # Importar openai directamente, sin la clase OpenAI
-import google.generativeai as genai
+from google import genai
 import httpx
 from .ai_generators import DateTimeEncoder  # Importar el encoder personalizado
 
 # Cargar variables de entorno
 load_dotenv()
-genai.configure(api_key=os.environ.get("GOOGLE_GENERATIVE_API_KEY"))
+# La configuración de API se maneja localmente en cada servicio mediante genai.Client()
 
 
 @login_required

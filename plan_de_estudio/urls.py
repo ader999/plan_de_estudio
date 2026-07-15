@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from plan_de_estudio import views
 from django.conf.urls.static import static
 from django.conf import settings
@@ -8,6 +8,7 @@ from django.conf import settings
 urlpatterns = [
     #path('admin/', admin.site.urls),
     path('',views.inicio, name='inicio'),
+    path('eventos/', include('eventos.urls')),
     path('acerca/', views.acerca_de, name='acerca'),
     path('admin/',admin.site.urls,),
     path('login/', views.login_view, name='login'),

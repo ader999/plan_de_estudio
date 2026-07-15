@@ -1,9 +1,10 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai.errors import APIError
 from dotenv import load_dotenv
 
 load_dotenv()
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+client = genai.Client()
 
 filepath = "../static/data/datos_ejemplo.txt"  # Corrección del nombre del archivo
 
@@ -35,15 +36,14 @@ generation_config = {
 }
 
 try:
-    model = genai.GenerativeModel(
-        model_name="gemini-1.5-pro-002",
-        generation_config=generation_config
+    response = client.models.generate_content(
+        model="gemini-1.5-pro-002",
+        contents=prompt_completo,
+        config=generation_config
     )
-    chat_session = model.start_chat()
-    response = chat_session.send_message(prompt_completo)
     print(response.text)
 
-except genai.errors.GenerativeAIError as e: # Manejo de errores más específico
+except APIError as e: # Manejo de errores más específico
     print(f"Error en la API de Gemini: {e}")
 except Exception as e:
     print(f"Error general: {e}")

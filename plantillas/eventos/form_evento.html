@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5 pt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
+            {% if evento %}
+                <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Editar</li>
+            {% else %}
+                <li class="breadcrumb-item active" aria-current="page">Crear Evento</li>
+            {% endif %}
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card border-0 shadow-lg rounded-3">
+                <div class="card-header bg-primary text-white py-3">
+                    <h3 class="card-title fw-bold mb-0 text-center">
+                        {% if evento %}
+                            <i class="fas fa-edit me-2"></i>Editar Evento
+                        {% else %}
+                            <i class="fas fa-calendar-plus me-2"></i>Crear Nuevo Evento
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label fw-bold">Nombre del Evento</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.nombre.errors }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text text-muted">Asigna un nombre claro y descriptivo.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label fw-bold">Descripción</label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.descripcion.errors }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text text-muted">Explica de qué trata el evento, objetivos y reglas básicas.</div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label fw-bold">Fecha y Hora de Inicio</label>
+                                {{ form.fecha_inicio }}
+                                {% if form.fecha_inicio.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.fecha_inicio.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.fecha_fin.id_for_label }}" class="form-label fw-bold">Fecha y Hora de Cierre</label>
+                                {{ form.fecha_fin }}
+                                {% if form.fecha_fin.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.fecha_fin.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-4 bg-light p-3 rounded border">
+                            <div class="form-check form-switch d-flex align-items-center gap-2">
+                                {{ form.requiere_jurado }}
+                                <label class="form-check-label fw-bold mb-0" for="{{ form.requiere_jurado.id_for_label }}">
+                                    ¿Este evento requiere evaluación de jurado?
+                                </label>
+                            </div>
+                            <div class="form-text text-muted ms-4 ps-2">
+                                Si está activado, podrás registrar usuarios como jurado para evaluar a los participantes con criterios específicos.
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            {% if evento %}
+                                <a href="{% url 'eventos:detalle_evento' evento.id %}" class="btn btn-outline-secondary px-4">
+                                    Cancelar
+                                </a>
+                            {% else %}
+                                <a href="{% url 'eventos:lista_eventos' %}" class="btn btn-outline-secondary px-4">
+                                    Cancelar
+                                </a>
+                            {% endif %}
+                            
+                            <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">
+                                <i class="fas fa-save me-2"></i>Guardar Evento
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

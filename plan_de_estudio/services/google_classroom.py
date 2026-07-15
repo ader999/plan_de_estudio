@@ -275,7 +275,7 @@ def crear_clase_e_invitar_maestro(asignacion):
         return False, str(e)
 
 
-import google.generativeai as genai
+from google import genai
 
 def generar_datos_tarea_ia(actividad, tema, instrumento):
     """
@@ -289,9 +289,7 @@ def generar_datos_tarea_ia(actividad, tema, instrumento):
         return None
     
     try:
-        genai.configure(api_key=api_key)
-        # Usamos el modelo solicitado por el usuario
-        model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
+        client = genai.Client(api_key=api_key)
         
         prompt = f"""
         Eres un asistente educativo experto que ayuda a automatizar la subida de tareas a Google Classroom.
@@ -322,7 +320,10 @@ def generar_datos_tarea_ia(actividad, tema, instrumento):
         Devuelve SOLO código JSON, sin decoraciones de markdown (no escribas ```json ... ```).
         """
         
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-3.1-flash-lite-preview',
+            contents=prompt,
+        )
         # Limpiar posibles bloques de código de backticks en la respuesta
         texto_limpio = response.text.strip()
         if texto_limpio.startswith("```json"):

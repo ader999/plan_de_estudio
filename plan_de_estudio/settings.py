@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'plan_de_estudio',
+    'eventos',
     'widget_tweaks',
     'import_export',
     'minio_storage',

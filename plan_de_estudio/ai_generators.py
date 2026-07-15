@@ -9,7 +9,8 @@ import logging
 import re
 import requests
 from dotenv import load_dotenv
-import google.generativeai as genai
+from google import genai
+from google.genai.errors import APIError
 import time
 import datetime
 # CORRECCIÓN: Se importa la librería openai al inicio para mantener un estilo consistente.
@@ -45,20 +46,17 @@ def usar_modelo_google(prompt_completo, generation_config):
 
     try:
         # Configurar la API
-        genai.configure(api_key=api_key)
-
-        # Crear el modelo y sesión de chat
-        model = genai.GenerativeModel(
-            model_name="gemini-3-flash-preview",
-            generation_config=generation_config
-        )
-        chat_session = model.start_chat()
+        client = genai.Client(api_key=api_key)
 
         # Generar respuesta
-        response = chat_session.send_message(prompt_completo)
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=prompt_completo,
+            config=generation_config
+        )
         return response.text.strip()
 
-    except genai.errors.GenerativeAIError as e:
+    except APIError as e:
         raise RuntimeError(f"Error en la API de Gemini: {e}")
     except Exception as e:
         raise RuntimeError(f"Error inesperado: {e}")

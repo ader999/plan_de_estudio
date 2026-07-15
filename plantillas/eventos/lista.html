@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5 pt-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold text-primary mb-1">
+                <i class="fas fa-calendar-alt me-2"></i>Eventos y Evaluaciones
+            </h1>
+            <p class="text-muted lead">Crea eventos, define jurados y califica proyectos o equipos académicos.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'eventos:crear_evento' %}" class="btn btn-primary btn-lg shadow-sm hover-up">
+                <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Evento
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Tabs para clasificar eventos -->
+    <ul class="nav nav-tabs nav-justified mb-4 shadow-sm rounded-top bg-light" id="eventosTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active py-3 fw-bold" id="activos-tab" data-bs-toggle="tab" data-bs-target="#activos" type="button" role="tab" aria-controls="activos" aria-selected="true">
+                <i class="fas fa-play-circle text-success me-2"></i>Activos ({{ eventos_activos.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link py-3 fw-bold" id="proximos-tab" data-bs-toggle="tab" data-bs-target="#proximos" type="button" role="tab" aria-controls="proximos" aria-selected="false">
+                <i class="fas fa-clock text-warning me-2"></i>Próximos ({{ eventos_proximos.count }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link py-3 fw-bold" id="finalizados-tab" data-bs-toggle="tab" data-bs-target="#finalizados" type="button" role="tab" aria-controls="finalizados" aria-selected="false">
+                <i class="fas fa-check-double text-muted me-2"></i>Finalizados ({{ eventos_finalizados.count }})
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="eventosTabsContent">
+        <!-- Eventos Activos -->
+        <div class="tab-pane fade show active" id="activos" role="tabpanel" aria-labelledby="activos-tab">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for evento in eventos_activos %}
+                    {% include 'eventos/event_card.html' with status="activo" status_class="success" %}
+                {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <div class="card border-0 shadow-sm py-5">
+                            <div class="card-body">
+                                <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                                <h3 class="text-muted fw-bold">No hay eventos activos en este momento</h3>
+                                <p class="text-muted">Crea un evento nuevo o espera a que comience uno programado.</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Eventos Próximos -->
+        <div class="tab-pane fade" id="proximos" role="tabpanel" aria-labelledby="proximos-tab">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for evento in eventos_proximos %}
+                    {% include 'eventos/event_card.html' with status="proximo" status_class="warning" %}
+                {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <div class="card border-0 shadow-sm py-5">
+                            <div class="card-body">
+                                <i class="fas fa-hourglass-end fa-4x text-muted mb-3"></i>
+                                <h3 class="text-muted fw-bold">No hay eventos programados</h3>
+                                <p class="text-muted">No se registran eventos con fecha de inicio futura.</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Eventos Finalizados -->
+        <div class="tab-pane fade" id="finalizados" role="tabpanel" aria-labelledby="finalizados-tab">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for evento in eventos_finalizados %}
+                    {% include 'eventos/event_card.html' with status="finalizado" status_class="secondary" %}
+                {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <div class="card border-0 shadow-sm py-5">
+                            <div class="card-body">
+                                <i class="fas fa-history fa-4x text-muted mb-3"></i>
+                                <h3 class="text-muted fw-bold">No hay eventos finalizados aún</h3>
+                                <p class="text-muted">Los eventos completados aparecerán aquí.</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-up {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .hover-up:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .nav-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        border-bottom: 3px solid transparent;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        background-color: transparent;
+        border-bottom: 3px solid #0d6efd;
+    }
+</style>
+{% endblock %}

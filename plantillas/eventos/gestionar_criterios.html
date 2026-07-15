@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5 pt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Gestionar Criterios</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Formulario para agregar criterios -->
+        <div class="col-lg-5 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>Agregar Criterio de Evaluación
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.nombre.id_for_label }}" class="form-label fw-bold">Nombre del Criterio</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.errors %}
+                                <div class="text-danger small mt-1">{{ form.nombre.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label fw-bold">Descripción (Opcional)</label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.errors %}
+                                <div class="text-danger small mt-1">{{ form.descripcion.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.puntaje_maximo.id_for_label }}" class="form-label fw-bold">Puntaje Máximo</label>
+                            {{ form.puntaje_maximo }}
+                            {% if form.puntaje_maximo.errors %}
+                                <div class="text-danger small mt-1">{{ form.puntaje_maximo.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-warning fw-bold shadow-sm text-dark">
+                                <i class="fas fa-save me-2"></i>Agregar Criterio
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de criterios agregados -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title fw-bold mb-0 text-dark">
+                        <i class="fas fa-list-check me-2 text-warning"></i>Criterios del Evento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if criterios %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Criterio</th>
+                                        <th>Descripción</th>
+                                        <th class="text-center" style="width: 100px;">Puntaje</th>
+                                        <th class="text-center" style="width: 80px;">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for criterio in criterios %}
+                                        <tr>
+                                            <td class="fw-bold">{{ criterio.nombre }}</td>
+                                            <td class="text-muted small">{{ criterio.descripcion|default:"-" }}</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary fs-6">{{ criterio.puntaje_maximo }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <form action="{% url 'eventos:eliminar_criterio' criterio.id %}" method="post" onsubmit="return confirm('¿Estás seguro de eliminar este criterio? Esto borrará las evaluaciones registradas con él.');" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar criterio">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    <tr class="table-info fw-bold">
+                                        <td colspan="2">Puntaje Total Calculado:</td>
+                                        <td class="text-center"><span class="badge bg-dark fs-6">{{ evento.total_criterios_score }} pts</span></td>
+                                        <td></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted fw-bold">No hay criterios registrados</h5>
+                            <p class="text-muted small">Agrega criterios en el panel izquierdo para evaluar a los participantes.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-white py-3 text-end">
+                    <a href="{% url 'eventos:detalle_evento' evento.id %}" class="btn btn-primary px-4 fw-bold">
+                        <i class="fas fa-arrow-left me-2"></i>Volver al Evento
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

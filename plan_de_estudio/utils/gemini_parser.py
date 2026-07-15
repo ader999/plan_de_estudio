@@ -3,14 +3,14 @@ import os
 import io
 import json
 import docx
-import google.generativeai as genai
+from google import genai
 
 # Configure Gemini
 def configure_gemini():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY not found in environment variables.")
-    genai.configure(api_key=api_key)
+    return genai.Client(api_key=api_key)
 
 from docx.document import Document
 from docx.oxml.table import CT_Tbl
@@ -59,7 +59,7 @@ def parse_curriculum_with_ai(docx_file):
     Parses a curriculum .docx file using Gemini and returns a JSON dictionary 
     compatible with ProgramaAsignatura2026 model.
     """
-    configure_gemini()
+    client = configure_gemini()
     
     # Extract text preserving order
     text_content = extract_text_from_docx(docx_file)
@@ -130,8 +130,10 @@ def parse_curriculum_with_ai(docx_file):
     # We trust it can handle the full syllabus.
     full_prompt = prompt + "\n\n" + text_content 
     
-    model = genai.GenerativeModel('gemini-3-flash-preview')
-    response = model.generate_content(full_prompt)
+    response = client.models.generate_content(
+        model='gemini-3-flash-preview',
+        contents=full_prompt,
+    )
     
     try:
         # Clean response if it contains markdown code blocks
