@@ -1,27 +1,27 @@
-{% extends 'base.html' %}
+{% extends 'eventos/base_eventos.html' %}
 
 {% block content %}
-<div class="container my-5 pt-4">
+<div class="container my-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}" class="text-primary fw-semibold">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}" class="text-primary fw-semibold">{{ evento.nombre }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">Evaluar Equipos</li>
         </ol>
     </nav>
 
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body p-4 bg-success bg-opacity-10 rounded">
+    <div class="card border-0 shadow-sm mb-4 bg-white">
+        <div class="card-body p-4 bg-success bg-opacity-10 rounded border border-success border-opacity-25">
             <div class="d-flex align-items-center gap-3 mb-2">
                 <h2 class="h3 fw-bold text-success mb-0"><i class="fas fa-star me-2"></i>Panel de Evaluación del Jurado</h2>
             </div>
-            <p class="text-muted mb-0">
-                Bienvenido, <strong>{{ usuario }}</strong>. Como jurado asignado para el evento <strong>{{ evento.nombre }}</strong>, puedes evaluar a cada equipo participante basándote en los criterios definidos.
+            <p class="text-dark mb-0">
+                Bienvenido, <strong>{{ usuario }}</strong>. Como jurado asignado para el evento <strong class="text-primary">{{ evento.nombre }}</strong>, puedes evaluar a cada equipo participante basándote en los criterios definidos.
             </p>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm bg-white">
         <div class="card-header bg-white py-3">
             <h5 class="card-title fw-bold mb-0 text-dark">
                 <i class="fas fa-users text-success me-2"></i>Equipos a Evaluar
@@ -33,29 +33,29 @@
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>Nombre del Equipo / Proyecto</th>
-                                <th>Descripción</th>
-                                <th class="text-center" style="width: 150px;">Estado de Evaluación</th>
-                                <th class="text-center" style="width: 150px;">Acción</th>
+                                <th class="text-dark">Nombre del Equipo / Proyecto</th>
+                                <th class="text-dark">Descripción</th>
+                                <th class="text-center text-dark" style="width: 170px;">Estado de Evaluación</th>
+                                <th class="text-center text-dark" style="width: 150px;">Acción</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for participante in participantes %}
                                 <tr>
                                     <td>
-                                        <div class="fw-bold text-dark">{{ participante.nombre }}</div>
+                                        <div class="fw-bold text-dark fs-6">{{ participante.nombre }}</div>
                                         {% if participante.integrantes %}
-                                            <small class="text-muted"><i class="fas fa-user-friends me-1"></i>{{ participante.integrantes }}</small>
+                                            <small class="text-secondary"><i class="fas fa-user-friends me-1 text-primary"></i>{{ participante.integrantes }}</small>
                                         {% endif %}
                                     </td>
-                                    <td class="text-muted small">{{ participante.descripcion|default:"Sin descripción" }}</td>
+                                    <td class="text-secondary small">{{ participante.descripcion|default:"Sin descripción" }}</td>
                                     <td class="text-center">
                                         {% if participante.estado_evaluacion == 'Completado' %}
-                                            <span class="badge bg-success py-2 px-3 text-uppercase"><i class="fas fa-check-circle me-1"></i>Completado</span>
+                                            <span class="badge bg-success py-2 px-3 text-uppercase fw-bold"><i class="fas fa-check-circle me-1"></i>Completado</span>
                                         {% elif participante.estado_evaluacion == 'Incompleto' %}
-                                            <span class="badge bg-warning text-dark py-2 px-3 text-uppercase"><i class="fas fa-exclamation-triangle me-1"></i>Incompleto</span>
+                                            <span class="badge bg-warning text-dark py-2 px-3 text-uppercase fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>Incompleto</span>
                                         {% else %}
-                                            <span class="badge bg-secondary py-2 px-3 text-uppercase"><i class="far fa-circle me-1"></i>Pendiente</span>
+                                            <span class="badge bg-secondary py-2 px-3 text-uppercase fw-bold"><i class="far fa-circle me-1"></i>Pendiente</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-center">
@@ -75,7 +75,7 @@
             {% else %}
                 <div class="text-center py-5">
                     <i class="fas fa-users-slash fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted fw-bold">No hay participantes registrados</h5>
+                    <h5 class="text-secondary fw-bold">No hay participantes registrados</h5>
                     <p class="text-muted">No se registran participantes en el evento para evaluar.</p>
                 </div>
             {% endif %}

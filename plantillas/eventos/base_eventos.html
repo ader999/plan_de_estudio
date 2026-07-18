@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es" class="h-100">
+
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}UMLRanking | PLANEAUML{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'img/logouml.ico' %}" type="image/x-icon">
+
+    <!-- Estilos exclusivos para el módulo de Eventos -->
+    <style>
+        :root {
+            --ev-bg-app: #f1f5f9;
+            --ev-bg-surface: #ffffff;
+            --ev-bg-header: #0f172a;
+            --ev-text-primary: #0f172a;
+            --ev-text-secondary: #334155;
+            --ev-text-muted: #64748b;
+            --ev-border-color: #e2e8f0;
+            --ev-accent-primary: #2563eb;
+            --ev-accent-primary-hover: #1d4ed8;
+            --ev-accent-success: #059669;
+            --ev-accent-warning: #d97706;
+            --ev-accent-danger: #dc2626;
+            --ev-radius: 12px;
+        }
+
+        body.eventos-app {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+            background-color: var(--ev-bg-app) !important;
+            color: var(--ev-text-secondary) !important;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* RESET DE TIPOGRAFÍA Y CONTRASTE DE TEXTO */
+        body.eventos-app h1, 
+        body.eventos-app h2, 
+        body.eventos-app h3, 
+        body.eventos-app h4, 
+        body.eventos-app h5, 
+        body.eventos-app h6 {
+            color: var(--ev-text-primary);
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 700;
+        }
+
+        body.eventos-app p, 
+        body.eventos-app span, 
+        body.eventos-app div, 
+        body.eventos-app label, 
+        body.eventos-app table {
+            font-family: 'Inter', sans-serif !important;
+        }
+
+        /* HEADER Y NAVBAR DEDICADA */
+        .eventos-navbar {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+            border-bottom: 2px solid rgba(37, 99, 235, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 0.75rem 1.5rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+        }
+
+        .eventos-navbar .navbar-brand {
+            color: #ffffff !important;
+            font-weight: 800;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .eventos-navbar .navbar-brand i {
+            color: #38bdf8;
+        }
+
+        /* Botón "Regresar a Planea" */
+        .btn-regresar-planea {
+            background: rgba(255, 255, 255, 0.12) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+            border-radius: 50px !important;
+            padding: 0.45rem 1.2rem !important;
+            font-weight: 600 !important;
+            font-size: 0.9rem !important;
+            transition: all 0.25s ease !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none !important;
+        }
+
+        .btn-regresar-planea:hover {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border-color: #ffffff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.25);
+        }
+
+        .eventos-nav-link {
+            color: #cbd5e1 !important;
+            font-weight: 500;
+            padding: 0.5rem 0.9rem !important;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .eventos-nav-link:hover, .eventos-nav-link.active {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* MAIN CONTENT AREA */
+        .eventos-main-wrapper {
+            flex: 1 0 auto;
+            padding-top: 90px;
+            padding-bottom: 50px;
+        }
+
+        /* CARDS & CONTRASTE */
+        body.eventos-app .card {
+            background-color: var(--ev-bg-surface) !important;
+            border: 1px solid var(--ev-border-color) !important;
+            border-radius: var(--ev-radius) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+            color: var(--ev-text-secondary) !important;
+        }
+
+        body.eventos-app .card-header {
+            background-color: #ffffff !important;
+            border-bottom: 1px solid var(--ev-border-color) !important;
+            color: var(--ev-text-primary) !important;
+        }
+
+        body.eventos-app .card-header.bg-primary {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+            color: #ffffff !important;
+        }
+
+        body.eventos-app .card-header.bg-primary h1,
+        body.eventos-app .card-header.bg-primary h2,
+        body.eventos-app .card-header.bg-primary h3,
+        body.eventos-app .card-header.bg-primary h4,
+        body.eventos-app .card-header.bg-primary h5,
+        body.eventos-app .card-header.bg-primary .card-title,
+        body.eventos-app .card-header.bg-primary span,
+        body.eventos-app .card-header.bg-primary i {
+            color: #ffffff !important;
+        }
+
+        body.eventos-app .card-header.bg-dark {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+            color: #ffffff !important;
+        }
+
+        body.eventos-app .card-header.bg-dark h1,
+        body.eventos-app .card-header.bg-dark h2,
+        body.eventos-app .card-header.bg-dark h3,
+        body.eventos-app .card-header.bg-dark h4,
+        body.eventos-app .card-header.bg-dark h5,
+        body.eventos-app .card-header.bg-dark .card-title,
+        body.eventos-app .card-header.bg-dark span,
+        body.eventos-app .card-header.bg-dark i {
+            color: #ffffff !important;
+        }
+
+        /* FORM CONTROLS & CONTRAST */
+        body.eventos-app .form-control,
+        body.eventos-app .form-select {
+            background-color: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: var(--ev-text-primary) !important;
+            border-radius: 8px !important;
+            padding: 0.65rem 0.9rem !important;
+        }
+
+        body.eventos-app .form-control:focus,
+        body.eventos-app .form-select:focus {
+            border-color: var(--ev-accent-primary) !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+        }
+
+        body.eventos-app .form-label {
+            color: var(--ev-text-primary) !important;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        body.eventos-app .form-text, body.eventos-app .text-muted {
+            color: #64748b !important;
+        }
+
+        /* TABLAS & CONTRASTE */
+        body.eventos-app table {
+            color: var(--ev-text-primary) !important;
+        }
+
+        body.eventos-app th {
+            color: var(--ev-text-primary) !important;
+            font-weight: 700;
+        }
+
+        body.eventos-app td {
+            color: var(--ev-text-secondary) !important;
+        }
+
+        /* BUTTONS */
+        body.eventos-app .btn-primary {
+            background-color: var(--ev-accent-primary) !important;
+            border-color: var(--ev-accent-primary) !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        body.eventos-app .btn-primary:hover {
+            background-color: var(--ev-accent-primary-hover) !important;
+            border-color: var(--ev-accent-primary-hover) !important;
+        }
+
+        body.eventos-app .btn-success {
+            background-color: var(--ev-accent-success) !important;
+            border-color: var(--ev-accent-success) !important;
+            color: #ffffff !important;
+        }
+
+        body.eventos-app .btn-warning {
+            background-color: var(--ev-accent-warning) !important;
+            border-color: var(--ev-accent-warning) !important;
+            color: #ffffff !important;
+        }
+
+        body.eventos-app .btn-danger {
+            background-color: var(--ev-accent-danger) !important;
+            border-color: var(--ev-accent-danger) !important;
+            color: #ffffff !important;
+        }
+
+        body.eventos-app .btn-outline-secondary {
+            border: 1px solid #cbd5e1 !important;
+            color: var(--ev-text-secondary) !important;
+            background: #ffffff !important;
+        }
+
+        body.eventos-app .btn-outline-secondary:hover {
+            background: #f1f5f9 !important;
+            color: var(--ev-text-primary) !important;
+        }
+
+        /* IMAGE BANNER STYLING FOR EVENTS */
+        .event-card-img-wrapper {
+            height: 190px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+        }
+
+        .event-card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .event-card-img {
+            transform: scale(1.05);
+        }
+
+        .event-card-placeholder-icon {
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .event-detail-banner {
+            max-height: 320px;
+            width: 100%;
+            object-fit: cover;
+            border-radius: var(--ev-radius);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* FOOTER */
+        .eventos-footer {
+            background-color: #0f172a;
+            color: #94a3b8;
+            padding: 1.8rem 0;
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        .eventos-footer a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        .eventos-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="eventos-app">
+    <!-- Navbar exclusiva para el módulo de Eventos -->
+    <header>
+        <nav class="navbar navbar-expand-lg eventos-navbar">
+            <div class="container-fluid">
+                <!-- Marca / Título del módulo -->
+                <a class="navbar-brand me-3" href="{% url 'eventos:lista_eventos' %}">
+                    <i class="fas fa-trophy"></i>
+                    <span>UMLRanking</span>
+                </a>
+
+                <!-- BOTÓN PRINCIPAL: REGRESAR A PLANEA -->
+                <a href="{% url 'inicio' %}" class="btn-regresar-planea me-auto">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Regresar a Planea</span>
+                </a>
+
+                <!-- Botón toggler para pantallas pequeñas -->
+                <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarEventosContent" aria-controls="navbarEventosContent" aria-expanded="false"
+                    aria-label="Navegación de eventos">
+                    <i class="fas fa-bars fa-lg text-white"></i>
+                </button>
+
+                <!-- Menú desplegable -->
+                <div class="collapse navbar-collapse" id="navbarEventosContent">
+                    <ul class="navbar-nav ms-auto align-items-center gap-2 mt-2 mt-lg-0">
+                        <li class="nav-item">
+                            <a class="eventos-nav-link" href="{% url 'eventos:lista_eventos' %}">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Lista de Eventos</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="eventos-nav-link" href="{% url 'eventos:crear_evento' %}">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Crear Evento</span>
+                            </a>
+                        </li>
+                        
+                        <!-- Menú Usuario -->
+                        <li class="nav-item dropdown ms-lg-2">
+                            <a class="eventos-nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle fa-lg"></i>
+                                <span>{{ usuario }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item py-2" href="{% url 'inicio' %}">
+                                        <i class="fas fa-home me-2 text-primary"></i>Inicio Planea
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item py-2 text-danger" href="{% url 'logout' %}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="eventos-main-wrapper">
+        <div class="container">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="eventos-footer text-center">
+        <div class="container">
+            <p class="mb-1 fw-medium">&copy; {{ year|default:"2026" }} PLANEAUML - UMLRanking: Sistema de Gestión de Eventos y Evaluaciones</p>
+            <p class="mb-0 small text-muted">Diseñado para evaluación de proyectos académicos y jurados en tiempo real.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

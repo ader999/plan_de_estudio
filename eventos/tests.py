@@ -147,3 +147,16 @@ class EvaluacionTestCase(TestCase):
         
         promedio = sum(scores) / len(scores)
         self.assertEqual(promedio, 25.0)
+
+    def test_evento_mismadia_diferente_hora(self):
+        ahora = timezone.now()
+        # Evento que termina más tarde el mismo día
+        evento_mismo_dia = Evento.objects.create(
+            nombre="Evento Mismo Día",
+            fecha_inicio=ahora - timedelta(minutes=30),
+            fecha_fin=ahora + timedelta(hours=3),
+            creado_por=self.creador
+        )
+        self.assertTrue(evento_mismo_dia.esta_activo)
+        self.assertFalse(evento_mismo_dia.ha_finalizado)
+

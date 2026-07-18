@@ -1,11 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'eventos/base_eventos.html' %}
 
 {% block content %}
-<div class="container my-5 pt-4">
+<div class="container my-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}" class="text-primary fw-semibold">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}" class="text-primary fw-semibold">{{ evento.nombre }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">Gestionar Criterios</li>
         </ol>
     </nav>
@@ -13,9 +13,9 @@
     <div class="row">
         <!-- Formulario para agregar criterios -->
         <div class="col-lg-5 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-warning text-dark py-3">
-                    <h5 class="card-title fw-bold mb-0">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-header bg-warning py-3">
+                    <h5 class="card-title fw-bold mb-0 text-dark">
                         <i class="fas fa-plus-circle me-2"></i>Agregar Criterio de Evaluación
                     </h5>
                 </div>
@@ -58,7 +58,7 @@
 
         <!-- Tabla de criterios agregados -->
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm bg-white">
                 <div class="card-header bg-white py-3">
                     <h5 class="card-title fw-bold mb-0 text-dark">
                         <i class="fas fa-list-check me-2 text-warning"></i>Criterios del Evento
@@ -70,17 +70,17 @@
                             <table class="table table-hover align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Criterio</th>
-                                        <th>Descripción</th>
-                                        <th class="text-center" style="width: 100px;">Puntaje</th>
-                                        <th class="text-center" style="width: 80px;">Acción</th>
+                                        <th class="text-dark">Criterio</th>
+                                        <th class="text-dark">Descripción</th>
+                                        <th class="text-center text-dark" style="width: 100px;">Puntaje</th>
+                                        <th class="text-center text-dark" style="width: 80px;">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for criterio in criterios %}
                                         <tr>
-                                            <td class="fw-bold">{{ criterio.nombre }}</td>
-                                            <td class="text-muted small">{{ criterio.descripcion|default:"-" }}</td>
+                                            <td class="fw-bold text-dark">{{ criterio.nombre }}</td>
+                                            <td class="text-secondary small">{{ criterio.descripcion|default:"-" }}</td>
                                             <td class="text-center">
                                                 <span class="badge bg-primary fs-6">{{ criterio.puntaje_maximo }}</span>
                                             </td>
@@ -94,8 +94,8 @@
                                             </td>
                                         </tr>
                                     {% endfor %}
-                                    <tr class="table-info fw-bold">
-                                        <td colspan="2">Puntaje Total Calculado:</td>
+                                    <tr class="table-primary fw-bold">
+                                        <td colspan="2" class="text-dark">Puntaje Total Calculado:</td>
                                         <td class="text-center"><span class="badge bg-dark fs-6">{{ evento.total_criterios_score }} pts</span></td>
                                         <td></td>
                                     </tr>
@@ -105,7 +105,7 @@
                     {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
-                            <h5 class="text-muted fw-bold">No hay criterios registrados</h5>
+                            <h5 class="text-secondary fw-bold">No hay criterios registrados</h5>
                             <p class="text-muted small">Agrega criterios en el panel izquierdo para evaluar a los participantes.</p>
                         </div>
                     {% endif %}

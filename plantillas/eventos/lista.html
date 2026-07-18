@@ -1,17 +1,18 @@
-{% extends 'base.html' %}
+{% extends 'eventos/base_eventos.html' %}
 {% load static %}
 
 {% block content %}
-<div class="container my-5 pt-4">
-    <div class="row mb-4 align-items-center">
+<div class="container my-4">
+    <!-- Encabezado de Lista de Eventos -->
+    <div class="row mb-4 align-items-center bg-white p-4 rounded shadow-sm border">
         <div class="col-md-8">
-            <h1 class="display-5 fw-bold text-primary mb-1">
-                <i class="fas fa-calendar-alt me-2"></i>Eventos y Evaluaciones
+            <h1 class="display-6 fw-bold text-primary mb-1">
+                <i class="fas fa-trophy me-2 text-primary"></i>UMLRanking
             </h1>
-            <p class="text-muted lead">Crea eventos, define jurados y califica proyectos o equipos académicos.</p>
+            <p class="text-muted lead mb-0">Crea eventos, gestiona jurados y evalúa proyectos o equipos académicos con criterios personalizados.</p>
         </div>
-        <div class="col-md-4 text-md-end">
-            <a href="{% url 'eventos:crear_evento' %}" class="btn btn-primary btn-lg shadow-sm hover-up">
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="{% url 'eventos:crear_evento' %}" class="btn btn-primary btn-lg shadow-sm hover-up fw-bold px-4">
                 <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Evento
             </a>
         </div>
@@ -21,7 +22,7 @@
         <div class="row">
             <div class="col-12">
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
                         {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
@@ -31,7 +32,7 @@
     {% endif %}
 
     <!-- Tabs para clasificar eventos -->
-    <ul class="nav nav-tabs nav-justified mb-4 shadow-sm rounded-top bg-light" id="eventosTabs" role="tablist">
+    <ul class="nav nav-pills nav-justified mb-4 p-2 shadow-sm rounded bg-white border" id="eventosTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active py-3 fw-bold" id="activos-tab" data-bs-toggle="tab" data-bs-target="#activos" type="button" role="tab" aria-controls="activos" aria-selected="true">
                 <i class="fas fa-play-circle text-success me-2"></i>Activos ({{ eventos_activos.count }})
@@ -57,10 +58,10 @@
                     {% include 'eventos/event_card.html' with status="activo" status_class="success" %}
                 {% empty %}
                     <div class="col-12 text-center py-5">
-                        <div class="card border-0 shadow-sm py-5">
+                        <div class="card border-0 shadow-sm py-5 bg-white">
                             <div class="card-body">
                                 <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
-                                <h3 class="text-muted fw-bold">No hay eventos activos en este momento</h3>
+                                <h3 class="text-secondary fw-bold">No hay eventos activos en este momento</h3>
                                 <p class="text-muted">Crea un evento nuevo o espera a que comience uno programado.</p>
                             </div>
                         </div>
@@ -76,10 +77,10 @@
                     {% include 'eventos/event_card.html' with status="proximo" status_class="warning" %}
                 {% empty %}
                     <div class="col-12 text-center py-5">
-                        <div class="card border-0 shadow-sm py-5">
+                        <div class="card border-0 shadow-sm py-5 bg-white">
                             <div class="card-body">
                                 <i class="fas fa-hourglass-end fa-4x text-muted mb-3"></i>
-                                <h3 class="text-muted fw-bold">No hay eventos programados</h3>
+                                <h3 class="text-secondary fw-bold">No hay eventos programados</h3>
                                 <p class="text-muted">No se registran eventos con fecha de inicio futura.</p>
                             </div>
                         </div>
@@ -95,10 +96,10 @@
                     {% include 'eventos/event_card.html' with status="finalizado" status_class="secondary" %}
                 {% empty %}
                     <div class="col-12 text-center py-5">
-                        <div class="card border-0 shadow-sm py-5">
+                        <div class="card border-0 shadow-sm py-5 bg-white">
                             <div class="card-body">
                                 <i class="fas fa-history fa-4x text-muted mb-3"></i>
-                                <h3 class="text-muted fw-bold">No hay eventos finalizados aún</h3>
+                                <h3 class="text-secondary fw-bold">No hay eventos finalizados aún</h3>
                                 <p class="text-muted">Los eventos completados aparecerán aquí.</p>
                             </div>
                         </div>
@@ -117,15 +118,13 @@
         transform: translateY(-3px);
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
     }
-    .nav-tabs .nav-link {
-        color: #6c757d;
-        border: none;
-        border-bottom: 3px solid transparent;
+    .nav-pills .nav-link {
+        color: #475569;
+        border-radius: 8px;
     }
-    .nav-tabs .nav-link.active {
-        color: #0d6efd;
-        background-color: transparent;
-        border-bottom: 3px solid #0d6efd;
+    .nav-pills .nav-link.active {
+        color: #ffffff;
+        background-color: #2563eb;
     }
 </style>
 {% endblock %}

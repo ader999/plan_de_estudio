@@ -36,7 +36,7 @@ def lista_eventos(request):
 def crear_evento(request):
     nombre_de_usuario = request.user.get_full_name() or request.user.username
     if request.method == 'POST':
-        form = EventoForm(request.POST)
+        form = EventoForm(request.POST, request.FILES)
         if form.is_valid():
             evento = form.save(commit=False)
             evento.creado_por = request.user
@@ -64,7 +64,7 @@ def editar_evento(request, evento_id):
         return redirect('eventos:detalle_evento', evento_id=evento.id)
 
     if request.method == 'POST':
-        form = EventoForm(request.POST, instance=evento)
+        form = EventoForm(request.POST, request.FILES, instance=evento)
         if form.is_valid():
             form.save()
             messages.success(request, f"El evento '{evento.nombre}' ha sido actualizado.")

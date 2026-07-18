@@ -1,12 +1,12 @@
-{% extends 'base.html' %}
+{% extends 'eventos/base_eventos.html' %}
 
 {% block content %}
-<div class="container my-5 pt-4">
+<div class="container my-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}" class="text-primary fw-semibold">Eventos</a></li>
             {% if evento %}
-                <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}" class="text-primary fw-semibold">{{ evento.nombre }}</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Editar</li>
             {% else %}
                 <li class="breadcrumb-item active" aria-current="page">Crear Evento</li>
@@ -17,8 +17,8 @@
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10">
             <div class="card border-0 shadow-lg rounded-3">
-                <div class="card-header bg-primary text-white py-3">
-                    <h3 class="card-title fw-bold mb-0 text-center">
+                <div class="card-header bg-primary py-3">
+                    <h3 class="card-title fw-bold mb-0 text-center text-white">
                         {% if evento %}
                             <i class="fas fa-edit me-2"></i>Editar Evento
                         {% else %}
@@ -26,8 +26,8 @@
                         {% endif %}
                     </h3>
                 </div>
-                <div class="card-body p-4">
-                    <form method="post" novalidate>
+                <div class="card-body p-4 bg-white">
+                    <form method="post" enctype="multipart/form-data" novalidate>
                         {% csrf_token %}
                         
                         {% if form.non_field_errors %}
@@ -60,6 +60,28 @@
                             <div class="form-text text-muted">Explica de qué trata el evento, objetivos y reglas básicas.</div>
                         </div>
 
+                        <!-- Campo para subir Imagen del Evento -->
+                        <div class="mb-3 p-3 bg-light rounded border">
+                            <label for="{{ form.imagen.id_for_label }}" class="form-label fw-bold">
+                                <i class="fas fa-image me-2 text-primary"></i>Imagen del Evento (opcional)
+                            </label>
+                            
+                            {% if evento and evento.imagen %}
+                                <div class="mb-2 d-flex align-items-center gap-3">
+                                    <img src="{{ evento.imagen.url }}" alt="Imagen actual" class="rounded border shadow-sm" style="max-height: 90px; object-fit: cover;">
+                                    <div class="small text-muted">Imagen actual cargada. Sube una nueva para reemplazarla.</div>
+                                </div>
+                            {% endif %}
+
+                            {{ form.imagen }}
+                            {% if form.imagen.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.imagen.errors }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text text-muted">Formatos permitidos: JPG, PNG, WEBP, GIF.</div>
+                        </div>
+
                         <div class="row mb-3">
                             <div class="col-md-6 mb-3 mb-md-0">
                                 <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label fw-bold">Fecha y Hora de Inicio</label>
@@ -84,7 +106,7 @@
                         <div class="mb-4 bg-light p-3 rounded border">
                             <div class="form-check form-switch d-flex align-items-center gap-2">
                                 {{ form.requiere_jurado }}
-                                <label class="form-check-label fw-bold mb-0" for="{{ form.requiere_jurado.id_for_label }}">
+                                <label class="form-check-label fw-bold mb-0 text-dark" for="{{ form.requiere_jurado.id_for_label }}">
                                     ¿Este evento requiere evaluación de jurado?
                                 </label>
                             </div>
@@ -95,11 +117,11 @@
 
                         <div class="d-flex justify-content-between align-items-center mt-4">
                             {% if evento %}
-                                <a href="{% url 'eventos:detalle_evento' evento.id %}" class="btn btn-outline-secondary px-4">
+                                <a href="{% url 'eventos:detalle_evento' evento.id %}" class="btn btn-outline-secondary px-4 fw-semibold">
                                     Cancelar
                                 </a>
                             {% else %}
-                                <a href="{% url 'eventos:lista_eventos' %}" class="btn btn-outline-secondary px-4">
+                                <a href="{% url 'eventos:lista_eventos' %}" class="btn btn-outline-secondary px-4 fw-semibold">
                                     Cancelar
                                 </a>
                             {% endif %}

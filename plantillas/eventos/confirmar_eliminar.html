@@ -1,22 +1,22 @@
-{% extends 'base.html' %}
+{% extends 'eventos/base_eventos.html' %}
 
 {% block content %}
-<div class="container my-5 pt-4">
+<div class="container my-4">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            <div class="card border-0 shadow-lg">
-                <div class="card-header bg-danger text-white py-3">
-                    <h4 class="card-title fw-bold mb-0 text-center">
+            <div class="card border-0 shadow-lg bg-white">
+                <div class="card-header bg-danger py-3">
+                    <h4 class="card-title fw-bold mb-0 text-center text-white">
                         <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
                     </h4>
                 </div>
                 <div class="card-body p-4 text-center">
-                    <p class="lead">¿Estás completamente seguro de que deseas eliminar permanentemente este {{ tipo }}?</p>
+                    <p class="lead text-dark fw-medium">¿Estás completamente seguro de que deseas eliminar permanentemente este {{ tipo }}?</p>
                     
                     <div class="alert alert-warning border-warning text-start">
-                        <h6 class="fw-bold"><i class="fas fa-info-circle me-1"></i>Detalles:</h6>
-                        <strong>Nombre:</strong> {{ objeto.nombre }}<br>
-                        <span class="small text-muted">Esta acción no se puede deshacer. Se eliminarán de forma permanente todos los datos asociados (criterios, participantes y calificaciones).</span>
+                        <h6 class="fw-bold text-dark"><i class="fas fa-info-circle me-1"></i>Detalles:</h6>
+                        <strong class="text-dark">Nombre:</strong> <span class="text-dark">{{ objeto.nombre }}</span><br>
+                        <span class="small text-secondary d-block mt-1">Esta acción no se puede deshacer. Se eliminarán de forma permanente todos los datos asociados (criterios, participantes y calificaciones).</span>
                     </div>
 
                     <form method="post" class="mt-4">

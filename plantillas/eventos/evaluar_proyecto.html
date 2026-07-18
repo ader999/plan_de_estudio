@@ -1,12 +1,12 @@
-{% extends 'base.html' %}
+{% extends 'eventos/base_eventos.html' %}
 
 {% block content %}
-<div class="container my-5 pt-4">
+<div class="container my-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'eventos:evaluar_participantes' evento.id %}">Evaluar Equipos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}" class="text-primary fw-semibold">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}" class="text-primary fw-semibold">{{ evento.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:evaluar_participantes' evento.id %}" class="text-primary fw-semibold">Evaluar Equipos</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ participante.nombre }}</li>
         </ol>
     </nav>
@@ -14,14 +14,14 @@
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <!-- Información del Participante -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body p-4 bg-success bg-opacity-10 rounded">
+            <div class="card border-0 shadow-sm mb-4 bg-white">
+                <div class="card-body p-4 bg-success bg-opacity-10 rounded border border-success border-opacity-25">
                     <h5 class="text-success fw-bold mb-1"><i class="fas fa-users me-2"></i>Evaluando al Participante</h5>
                     <h3 class="fw-bold text-dark">{{ participante.nombre }}</h3>
-                    <p class="text-muted small mb-2">{{ participante.descripcion|default:"Sin descripción." }}</p>
+                    <p class="text-secondary small mb-2">{{ participante.descripcion|default:"Sin descripción." }}</p>
                     {% if participante.integrantes %}
                         <div class="small">
-                            <span class="text-secondary"><i class="fas fa-user-friends me-1"></i>Integrantes:</span>
+                            <span class="text-primary fw-semibold"><i class="fas fa-user-friends me-1"></i>Integrantes:</span>
                             <span class="text-dark">{{ participante.integrantes }}</span>
                         </div>
                     {% endif %}
@@ -29,7 +29,7 @@
             </div>
 
             <!-- Formulario de Evaluación -->
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm bg-white">
                 <div class="card-header bg-white py-3 border-bottom">
                     <h5 class="card-title fw-bold mb-0 text-dark">
                         <i class="fas fa-clipboard-list text-primary me-2"></i>Criterios de Calificación
@@ -58,7 +58,7 @@
                                     </span>
                                 </div>
                                 
-                                <p class="text-muted small mb-2">{{ field.help_text }}</p>
+                                <p class="text-secondary small mb-2">{{ field.help_text }}</p>
                                 
                                 <div class="row align-items-center">
                                     <div class="col-8 col-sm-9">
@@ -85,9 +85,9 @@
                         {% endfor %}
 
                         <!-- Resumen y Total -->
-                        <div class="bg-light p-3 rounded mb-4 d-flex justify-content-between align-items-center border border-info border-opacity-20">
+                        <div class="bg-light p-3 rounded mb-4 d-flex justify-content-between align-items-center border border-info border-opacity-30">
                             <div>
-                                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calculator text-info me-2"></i>Puntaje Total Asignado</h5>
+                                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-calculator text-primary me-2"></i>Puntaje Total Asignado</h5>
                                 <small class="text-muted">Suma de las puntuaciones en cada criterio.</small>
                             </div>
                             <div class="text-end">
@@ -97,7 +97,7 @@
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mt-4">
-                            <a href="{% url 'eventos:evaluar_participantes' evento.id %}" class="btn btn-outline-secondary px-4">
+                            <a href="{% url 'eventos:evaluar_participantes' evento.id %}" class="btn btn-outline-secondary px-4 fw-semibold">
                                 Cancelar
                             </a>
                             <button type="submit" class="btn btn-success px-5 fw-bold shadow-sm">
@@ -113,7 +113,7 @@
 
 <style>
     .border-bottom-dashed {
-        border-bottom: 1px dashed #dee2e6;
+        border-bottom: 1px dashed #cbd5e1;
     }
     .border-bottom-dashed:last-of-type {
         border-bottom: none;

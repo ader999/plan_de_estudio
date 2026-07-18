@@ -9,6 +9,7 @@ class Evento(models.Model):
     fecha_inicio = models.DateTimeField(verbose_name="Fecha de Inicio")
     fecha_fin = models.DateTimeField(verbose_name="Fecha de Cierre")
     requiere_jurado = models.BooleanField(default=True, verbose_name="¿Requiere Jurado?")
+    imagen = models.ImageField(upload_to='eventos/imagenes/', blank=True, null=True, verbose_name="Imagen del Evento")
     creado_por = models.ForeignKey(User, on_delete=models.CASCADE, related_name="eventos_creados")
     creado_en = models.DateTimeField(auto_now_add=True)
 

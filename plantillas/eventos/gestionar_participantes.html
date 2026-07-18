@@ -1,11 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'eventos/base_eventos.html' %}
 
 {% block content %}
-<div class="container my-5 pt-4">
+<div class="container my-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}" class="text-primary fw-semibold">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}" class="text-primary fw-semibold">{{ evento.nombre }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">Gestionar Participantes</li>
         </ol>
     </nav>
@@ -13,9 +13,9 @@
     <div class="row">
         <!-- Formulario para agregar participante -->
         <div class="col-lg-5 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-info text-white py-3">
-                    <h5 class="card-title fw-bold mb-0">
+            <div class="card border-0 shadow-sm bg-white">
+                <div class="card-header bg-primary py-3">
+                    <h5 class="card-title fw-bold mb-0 text-white">
                         <i class="fas fa-user-plus me-2"></i>Agregar Proyecto o Equipo
                     </h5>
                 </div>
@@ -44,11 +44,11 @@
                             {% if form.integrantes.errors %}
                                 <div class="text-danger small mt-1">{{ form.integrantes.errors }}</div>
                             {% endif %}
-                            <div class="form-text text-muted">Escribe los nombres separados por comas. Recuerda que no se registrarán como usuarios de Django.</div>
+                            <div class="form-text text-muted">Escribe los nombres separados por comas.</div>
                         </div>
 
                         <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-info text-white fw-bold shadow-sm">
+                            <button type="submit" class="btn btn-primary fw-bold shadow-sm">
                                 <i class="fas fa-save me-2"></i>Registrar Participante
                             </button>
                         </div>
@@ -59,10 +59,10 @@
 
         <!-- Lista de participantes registrados -->
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm bg-white">
                 <div class="card-header bg-white py-3">
                     <h5 class="card-title fw-bold mb-0 text-dark">
-                        <i class="fas fa-users text-info me-2"></i>Participantes Registrados
+                        <i class="fas fa-users text-primary me-2"></i>Participantes Registrados
                     </h5>
                 </div>
                 <div class="card-body">
@@ -71,9 +71,9 @@
                             <table class="table table-hover align-middle">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Nombre</th>
-                                        <th>Integrantes</th>
-                                        <th class="text-center" style="width: 80px;">Acción</th>
+                                        <th class="text-dark">Nombre</th>
+                                        <th class="text-dark">Integrantes</th>
+                                        <th class="text-center text-dark" style="width: 80px;">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -81,9 +81,9 @@
                                         <tr>
                                             <td>
                                                 <div class="fw-bold text-dark">{{ participante.nombre }}</div>
-                                                <small class="text-muted d-block text-truncate" style="max-width: 250px;" title="{{ participante.descripcion }}">{{ participante.descripcion|default:"Sin descripción" }}</small>
+                                                <small class="text-secondary d-block text-truncate" style="max-width: 250px;" title="{{ participante.descripcion }}">{{ participante.descripcion|default:"Sin descripción" }}</small>
                                             </td>
-                                            <td class="small text-muted">{{ participante.integrantes|default:"No especificados" }}</td>
+                                            <td class="small text-secondary">{{ participante.integrantes|default:"No especificados" }}</td>
                                             <td class="text-center">
                                                 <form action="{% url 'eventos:eliminar_participante' participante.id %}" method="post" onsubmit="return confirm('¿Estás seguro de eliminar este participante? Esto borrará todas las evaluaciones recibidas.');" class="d-inline">
                                                     {% csrf_token %}
@@ -100,7 +100,7 @@
                     {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-users-slash fa-4x text-muted mb-3"></i>
-                            <h5 class="text-muted fw-bold">No hay participantes registrados</h5>
+                            <h5 class="text-secondary fw-bold">No hay participantes registrados</h5>
                             <p class="text-muted small">Agrega proyectos o equipos participantes usando el panel izquierdo.</p>
                         </div>
                     {% endif %}

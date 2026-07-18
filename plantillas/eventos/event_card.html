@@ -1,43 +1,57 @@
 <div class="col">
-    <div class="card h-100 border-0 shadow-sm hover-up overflow-hidden">
-        <div class="card-header bg-{{ status_class }} text-white py-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="badge bg-white text-{{ status_class }} text-uppercase fw-bold shadow-sm">
-                    {{ status }}
-                </span>
-                <small><i class="far fa-user me-1"></i>{{ evento.creado_por.get_full_name|default:evento.creado_por.username }}</small>
+    <div class="card h-100 border-0 shadow-sm hover-up overflow-hidden d-flex flex-column">
+        <!-- Imagen del Evento -->
+        <div class="event-card-img-wrapper position-relative">
+            {% if evento.imagen %}
+                <img src="{{ evento.imagen.url }}" class="event-card-img" alt="{{ evento.nombre }}">
+            {% else %}
+                <div class="d-flex align-items-center justify-content-center h-100 w-100">
+                    <i class="fas fa-calendar-alt event-card-placeholder-icon"></i>
+                </div>
+            {% endif %}
+            
+            <!-- Badge de Estado sobre la imagen -->
+            <span class="position-absolute top-0 end-0 m-3 badge {% if status == 'activo' %}bg-success{% elif status == 'proximo' %}bg-warning text-dark{% else %}bg-secondary{% endif %} text-uppercase fw-bold shadow-sm px-3 py-2">
+                {% if status == 'activo' %}<i class="fas fa-play-circle me-1"></i>En Curso
+                {% elif status == 'proximo' %}<i class="fas fa-clock me-1"></i>Próximo
+                {% else %}<i class="fas fa-check-circle me-1"></i>Finalizado{% endif %}
+            </span>
+        </div>
+
+        <div class="card-header border-bottom bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <small class="text-muted"><i class="far fa-user me-1 text-primary"></i><strong>Creado por:</strong> {{ evento.creado_por.get_full_name|default:evento.creado_por.username }}</small>
             </div>
-            <h4 class="card-title fw-bold mt-2 mb-0 text-truncate" title="{{ evento.nombre }}">
+            <h4 class="card-title fw-bold mt-1 mb-0 text-truncate text-dark" title="{{ evento.nombre }}">
                 {{ evento.nombre }}
             </h4>
         </div>
+
         <div class="card-body d-flex flex-column justify-content-between">
             <div>
-                <p class="card-text text-muted text-break" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                <p class="card-text text-secondary small text-break mb-3" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 4.2em;">
                     {{ evento.descripcion|default:"Sin descripción para este evento." }}
                 </p>
                 
-                <hr class="my-3 text-muted opacity-25">
-                
-                <div class="small mb-2">
-                    <span class="text-muted d-block mb-1">
+                <div class="small mb-3 p-2 bg-light rounded border">
+                    <span class="text-secondary d-block mb-1">
                         <i class="far fa-calendar-alt text-primary me-2"></i><strong>Inicio:</strong> {{ evento.fecha_inicio|date:"d/m/Y H:i" }}
                     </span>
-                    <span class="text-muted d-block">
+                    <span class="text-secondary d-block">
                         <i class="far fa-calendar-check text-danger me-2"></i><strong>Cierre:</strong> {{ evento.fecha_fin|date:"d/m/Y H:i" }}
                     </span>
                 </div>
 
-                <div class="row text-center mt-3 g-2">
+                <div class="row text-center g-2 mb-2">
                     <div class="col-4">
                         <div class="border rounded py-2 bg-light">
-                            <h6 class="fw-bold mb-0">{{ evento.participantes.count }}</h6>
+                            <h6 class="fw-bold mb-0 text-dark">{{ evento.participantes.count }}</h6>
                             <small class="text-muted" style="font-size: 0.75rem;">Proyectos</small>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="border rounded py-2 bg-light">
-                            <h6 class="fw-bold mb-0">
+                            <h6 class="fw-bold mb-0 text-dark">
                                 {% if evento.requiere_jurado %}
                                     {{ evento.jurados.count }}
                                 {% else %}
@@ -56,21 +70,20 @@
                 </div>
             </div>
 
-            <div class="mt-4">
+            <div class="mt-3">
                 <div class="d-grid gap-2">
-                    <a href="{% url 'eventos:detalle_evento' evento.id %}" class="btn btn-outline-primary shadow-sm">
+                    <a href="{% url 'eventos:detalle_evento' evento.id %}" class="btn btn-outline-primary shadow-sm fw-bold">
                         <i class="fas fa-info-circle me-1"></i>Ver Detalles
                     </a>
                     
                     {% if status == 'activo' %}
-                        <!-- Comprobar si el usuario actual es jurado del evento -->
-                        <a href="{% url 'eventos:evaluar_participantes' evento.id %}" class="btn btn-success shadow-sm">
+                        <a href="{% url 'eventos:evaluar_participantes' evento.id %}" class="btn btn-success shadow-sm fw-bold">
                             <i class="fas fa-star me-1"></i>Evaluar Equipos
                         </a>
                     {% endif %}
                     
                     {% if status == 'finalizado' %}
-                        <a href="{% url 'eventos:resultados_evento' evento.id %}" class="btn btn-dark shadow-sm">
+                        <a href="{% url 'eventos:resultados_evento' evento.id %}" class="btn btn-dark shadow-sm fw-bold">
                             <i class="fas fa-trophy text-warning me-1"></i>Ver Resultados
                         </a>
                     {% endif %}

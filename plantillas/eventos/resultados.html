@@ -1,11 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'eventos/base_eventos.html' %}
 
 {% block content %}
-<div class="container my-5 pt-4">
+<div class="container my-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}">Eventos</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}">{{ evento.nombre }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:lista_eventos' %}" class="text-primary fw-semibold">Eventos</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'eventos:detalle_evento' evento.id %}" class="text-primary fw-semibold">{{ evento.nombre }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">Resultados</li>
         </ol>
     </nav>
@@ -14,7 +14,7 @@
     {% if es_previsualizacion %}
         <div class="alert alert-warning border-warning shadow-sm mb-4 d-flex align-items-center gap-2">
             <i class="fas fa-exclamation-triangle fa-lg text-warning"></i>
-            <div>
+            <div class="text-dark">
                 <strong>Previsualización de Administrador:</strong> Este evento está activo o programado. Los resultados no son finales y están ocultos para los usuarios generales.
             </div>
         </div>
@@ -25,7 +25,7 @@
         <div class="col-12">
             <i class="fas fa-trophy text-warning fa-4x mb-2 animate-bounce"></i>
             <h1 class="display-5 fw-bold text-dark mb-1">Cuadro de Honor y Resultados</h1>
-            <p class="text-muted lead">Puntuaciones del jurado calculadas para el evento <strong>{{ evento.nombre }}</strong>.</p>
+            <p class="text-secondary lead">Puntuaciones del jurado calculadas para el evento <strong class="text-primary">{{ evento.nombre }}</strong>.</p>
         </div>
     </div>
 
@@ -36,13 +36,13 @@
             {% if resultados|length >= 2 %}
                 {% with segundo=resultados.1 %}
                 <div class="col-md-4 col-sm-6 order-2 order-md-1">
-                    <div class="card border-0 shadow-sm text-center podium-card podium-2 bg-light">
+                    <div class="card border-0 shadow-sm text-center podium-card podium-2 bg-white">
                         <div class="card-body py-4">
                             <div class="podium-badge bg-secondary mb-2 mx-auto d-flex align-items-center justify-content-center text-white rounded-circle" style="width: 50px; height: 50px; font-size: 1.5rem;">
                                 <i class="fas fa-medal"></i>
                             </div>
                             <h4 class="fw-bold text-dark mt-2 mb-1 text-truncate">{{ segundo.participante.nombre }}</h4>
-                            <p class="text-muted small mb-3">Segundo Puesto</p>
+                            <p class="text-secondary small mb-3">Segundo Puesto</p>
                             <div class="display-6 fw-bold text-secondary">{{ segundo.puntaje_promedio }}</div>
                             <small class="text-muted">Promedio de {{ segundo.evaluadores_count }} evaluador(es)</small>
                         </div>
@@ -60,7 +60,7 @@
                             <i class="fas fa-crown text-white"></i>
                         </div>
                         <h3 class="fw-bold text-primary mt-2 mb-1 text-truncate">{{ primero.participante.nombre }}</h3>
-                        <p class="text-muted small mb-3 fw-bold text-uppercase tracking-wider">Ganador del Evento</p>
+                        <p class="text-secondary small mb-3 fw-bold text-uppercase tracking-wider">Ganador del Evento</p>
                         <div class="display-5 fw-bold text-primary">{{ primero.puntaje_promedio }}</div>
                         <small class="text-muted">Promedio de {{ primero.evaluadores_count }} evaluador(es)</small>
                     </div>
@@ -72,13 +72,13 @@
             {% if resultados|length >= 3 %}
                 {% with tercero=resultados.2 %}
                 <div class="col-md-4 col-sm-6 order-3 order-md-3">
-                    <div class="card border-0 shadow-sm text-center podium-card podium-3 bg-light">
+                    <div class="card border-0 shadow-sm text-center podium-card podium-3 bg-white">
                         <div class="card-body py-4">
                             <div class="podium-badge bg-bronze mb-2 mx-auto d-flex align-items-center justify-content-center text-white rounded-circle" style="width: 50px; height: 50px; font-size: 1.5rem; background-color: #cd7f32 !important;">
                                 <i class="fas fa-medal"></i>
                             </div>
                             <h4 class="fw-bold text-dark mt-2 mb-1 text-truncate">{{ tercero.participante.nombre }}</h4>
-                            <p class="text-muted small mb-3">Tercer Puesto</p>
+                            <p class="text-secondary small mb-3">Tercer Puesto</p>
                             <div class="display-6 fw-bold text-bronze" style="color: #cd7f32;">{{ tercero.puntaje_promedio }}</div>
                             <small class="text-muted">Promedio de {{ tercero.evaluadores_count }} evaluador(es)</small>
                         </div>
@@ -90,7 +90,7 @@
     {% endif %}
 
     <!-- Tabla Detallada de Clasificación -->
-    <div class="card border-0 shadow-sm mb-5">
+    <div class="card border-0 shadow-sm mb-5 bg-white">
         <div class="card-header bg-white py-3">
             <h5 class="card-title fw-bold mb-0 text-dark">
                 <i class="fas fa-list-ol text-primary me-2"></i>Tabla de Clasificación General
@@ -101,19 +101,19 @@
                 <table class="table table-hover table-striped align-middle mb-0">
                     <thead class="table-dark">
                         <tr>
-                            <th class="text-center" style="width: 80px;">Puesto</th>
-                            <th>Proyecto / Equipo</th>
-                            <th class="text-center" style="width: 150px;">Evaluadores</th>
+                            <th class="text-center text-white" style="width: 80px;">Puesto</th>
+                            <th class="text-white">Proyecto / Equipo</th>
+                            <th class="text-center text-white" style="width: 150px;">Evaluadores</th>
                             
                             <!-- Columnas dinámicas de criterios -->
                             {% for criterio in criterios %}
-                                <th class="text-center small" style="font-size: 0.8rem;" title="{{ criterio.nombre }} (Máx: {{ criterio.puntaje_maximo }} pts)">
+                                <th class="text-center small text-white" style="font-size: 0.85rem;" title="{{ criterio.nombre }} (Máx: {{ criterio.puntaje_maximo }} pts)">
                                     {{ criterio.nombre|truncatechars:15 }}<br>
                                     <span class="badge bg-secondary font-monospace">{{ criterio.puntaje_maximo }}p</span>
                                 </th>
                             {% endfor %}
                             
-                            <th class="text-center" style="width: 150px; font-size: 0.95rem;">Puntaje Promedio</th>
+                            <th class="text-center text-white" style="width: 150px; font-size: 0.95rem;">Puntaje Promedio</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -133,7 +133,7 @@
                                 <td>
                                     <div class="fw-bold text-dark">{{ res.participante.nombre }}</div>
                                     {% if res.participante.integrantes %}
-                                        <small class="text-muted d-block text-truncate" style="max-width: 250px;"><i class="fas fa-user-friends me-1"></i>{{ res.participante.integrantes }}</small>
+                                        <small class="text-secondary d-block text-truncate" style="max-width: 250px;"><i class="fas fa-user-friends me-1 text-primary"></i>{{ res.participante.integrantes }}</small>
                                     {% endif %}
                                 </td>
                                 <td class="text-center">
@@ -142,8 +142,7 @@
                                 
                                 <!-- Desglose de puntuaciones promedio por criterio -->
                                 {% for criterio in criterios %}
-                                    <td class="text-center font-monospace">
-                                        <!-- Obtener la puntuación para este criterio en particular -->
+                                    <td class="text-center font-monospace text-dark">
                                         {% for c_id, score in res.desglose_criterios.items %}
                                             {% if c_id == criterio.id %}
                                                 {{ score }}
@@ -152,7 +151,7 @@
                                     </td>
                                 {% endfor %}
                                 
-                                <td class="text-center fw-bold fs-5 text-primary bg-primary bg-opacity-5">
+                                <td class="text-center fw-bold fs-5 text-primary bg-primary bg-opacity-10">
                                     {{ res.puntaje_promedio }} <span class="text-muted" style="font-size: 0.8rem;">/ {{ evento.total_criterios_score }}</span>
                                 </td>
                             </tr>
@@ -160,7 +159,7 @@
                             <tr>
                                 <td colspan="{{ 4|add:criterios.count }}" class="text-center py-5">
                                     <i class="fas fa-info-circle fa-3x text-muted mb-2"></i>
-                                    <h5 class="text-muted">No se registran evaluaciones aún</h5>
+                                    <h5 class="text-secondary">No se registran evaluaciones aún</h5>
                                     <p class="text-muted small mb-0">Cuando los jurados comiencen a evaluar, los resultados se computarán en esta tabla.</p>
                                 </td>
                             </tr>
