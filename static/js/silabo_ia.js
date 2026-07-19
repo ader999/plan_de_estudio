@@ -252,6 +252,14 @@ function autocompletarFormularioGuardar(silaboData) {
   );
 
   // Sección 4: Evaluación dinámica
+  if (silaboData.actividad_aprendizaje && !silaboData.actividad_aprendizaje.toLowerCase().includes("no se realizará")) {
+    $("#sin_evaluacion_dinamica").prop("checked", false);
+    if (typeof toggleEvaluacionDinamica === "function") {
+      toggleEvaluacionDinamica();
+    } else {
+      $("#container_evaluacion_dinamica").show();
+    }
+  }
   $("#id_actividad_aprendizaje").val(silaboData.actividad_aprendizaje || "");
   setCheckboxMultiple("tecnica_evaluacion", silaboData.tecnica_evaluacion);
   setCheckboxMultiple("tipo_evaluacion", silaboData.tipo_evaluacion);

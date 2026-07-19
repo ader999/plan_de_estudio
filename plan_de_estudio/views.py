@@ -1731,15 +1731,26 @@ def actualizar_silabo(request, silabo_id):
             silabo.detalle_eje_transversal = request.POST.get('detalle_eje_transversal')
 
             # Sección 4: Evaluación Dinámica
-            silabo.actividad_aprendizaje = request.POST.get('actividad_aprendizaje')
-            silabo.tecnica_evaluacion = request.POST.getlist('tecnica_evaluacion')
-            silabo.tipo_evaluacion = request.POST.getlist('tipo_evaluacion')
-            silabo.periodo_tiempo_programado = request.POST.get('periodo_tiempo_programado')
-            silabo.tiempo_minutos = request.POST.get('tiempo_minutos')
-            silabo.agente_evaluador = request.POST.getlist('agente_evaluador')
-            silabo.instrumento_evaluacion = request.POST.get('instrumento_evaluacion')
-            silabo.criterios_evaluacion = request.POST.get('criterios_evaluacion')
-            silabo.puntaje = request.POST.get('puntaje')
+            if request.POST.get('sin_evaluacion_dinamica'):
+                silabo.actividad_aprendizaje = "No se realizará evaluación en clase"
+                silabo.tecnica_evaluacion = []
+                silabo.tipo_evaluacion = []
+                silabo.periodo_tiempo_programado = ""
+                silabo.tiempo_minutos = 0
+                silabo.agente_evaluador = []
+                silabo.instrumento_evaluacion = ""
+                silabo.criterios_evaluacion = "No se realizará evaluación en clase"
+                silabo.puntaje = 0
+            else:
+                silabo.actividad_aprendizaje = request.POST.get('actividad_aprendizaje')
+                silabo.tecnica_evaluacion = request.POST.getlist('tecnica_evaluacion')
+                silabo.tipo_evaluacion = request.POST.getlist('tipo_evaluacion')
+                silabo.periodo_tiempo_programado = request.POST.get('periodo_tiempo_programado')
+                silabo.tiempo_minutos = request.POST.get('tiempo_minutos') or 0
+                silabo.agente_evaluador = request.POST.getlist('agente_evaluador')
+                silabo.instrumento_evaluacion = request.POST.get('instrumento_evaluacion')
+                silabo.criterios_evaluacion = request.POST.get('criterios_evaluacion')
+                silabo.puntaje = request.POST.get('puntaje') or 0
 
             # Es una buena práctica ejecutar la validación del modelo manualmente
             silabo.full_clean()

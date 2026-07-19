@@ -60,7 +60,9 @@ $(document).ready(function() {
  * @returns {boolean} true si todos los campos obligatorios están completados, false en caso contrario
  */
 function validarCamposObligatorios() {
-  const camposObligatorios = [
+  const sinEvaluacion = $("#sin_evaluacion_dinamica").is(":checked");
+
+  let camposObligatorios = [
     "id_fecha",
     "id_unidad",
     "id_nombre_de_la_unidad",
@@ -92,13 +94,35 @@ function validarCamposObligatorios() {
   ];
 
   // IDs de grupos de Checkboxes obligatorios (usar el 'name' del input)
-  const checkboxGroupsObligatorios = [
+  let checkboxGroupsObligatorios = [
     "tipo_tercer_momento",
     "eje_transversal",
     "tipo_evaluacion",
     "tecnica_evaluacion",
     "agente_evaluador",
   ];
+
+  if (sinEvaluacion) {
+    const camposSeccion4 = [
+      "id_actividad_aprendizaje",
+      "id_periodo_tiempo_programado",
+      "id_tiempo_minutos",
+      "id_instrumento_evaluacion",
+      "id_criterios_evaluacion",
+      "id_puntaje",
+    ];
+    const groupsSeccion4 = [
+      "tipo_evaluacion",
+      "tecnica_evaluacion",
+      "agente_evaluador",
+    ];
+    camposObligatorios = camposObligatorios.filter(
+      (id) => !camposSeccion4.includes(id),
+    );
+    checkboxGroupsObligatorios = checkboxGroupsObligatorios.filter(
+      (g) => !groupsSeccion4.includes(g),
+    );
+  }
 
   let formValido = true;
   let primerElementoConError = null;
