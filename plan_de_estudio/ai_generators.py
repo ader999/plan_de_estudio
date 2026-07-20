@@ -30,36 +30,38 @@ class DateTimeEncoder(json.JSONEncoder):
 def usar_modelo_google(prompt_completo, generation_config):
     """
     Usa el modelo de Google Gemini para generar una respuesta basada en el prompt dado.
-
-    Args:
-        prompt_completo (str): Prompt que contiene las instrucciones y datos.
-        generation_config (dict): Configuración para la generación del modelo.
-
-    Returns:
-        str: Respuesta generada por el modelo.
+    Incluye reintentos automáticos para mitigar saturación (HTTP 503) o problemas de red.
     """
-    # Cargar la clave API desde .env
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise ValueError("GOOGLE_GENERATIVE_API_KEY no está configurada en el archivo .env")
+        raise ValueError("GEMINI_API_KEY no está configurada en el archivo .env")
 
-    try:
-        # Configurar la API
-        client = genai.Client(api_key=api_key)
-
-        # Generar respuesta
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=prompt_completo,
-            config=generation_config
-        )
-        return response.text.strip()
-
-    except APIError as e:
-        raise RuntimeError(f"Error en la API de Gemini: {e}")
-    except Exception as e:
-        raise RuntimeError(f"Error inesperado: {e}")
+    client = genai.Client(api_key=api_key)
+    max_retries = 3
+    
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = client.models.generate_content(
+                model="gemini-3-flash-preview",
+                contents=prompt_completo,
+                config=generation_config
+            )
+            return response.text.strip()
+        except APIError as e:
+            if attempt < max_retries and ("503" in str(e) or "UNAVAILABLE" in str(e).upper() or "overloaded" in str(e).lower()):
+                wait_time = attempt * 3
+                logging.warning(f"Gemini API 503/UNAVAILABLE (Intento {attempt}/{max_retries}). Reintentando en {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise RuntimeError(f"Error en la API de Gemini: {e}")
+        except Exception as e:
+            if attempt < max_retries:
+                wait_time = attempt * 2
+                logging.warning(f"Error inesperado en Gemini (Intento {attempt}/{max_retries}): {e}. Reintentando en {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise RuntimeError(f"Error inesperado en Gemini: {e}")
 
 
 # CORRECCIÓN: Se cambió el nombre del parámetro 'CANTIDAD_MAXIMA_TOKEN' a 'max_tokens'

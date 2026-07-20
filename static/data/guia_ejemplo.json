@@ -55,7 +55,7 @@
       "tipo": "integer",
       "descripcion": "Número de encuentro",
       "min_value": 1,
-      "max_value": 12
+      "max_value": 11
     },
     "fecha": {
       "tipo": "date",
