@@ -188,17 +188,23 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
         return f"S:{obj.silabos_creados}, G:{obj.guias_creadas}"
     progreso_silabos_guias.short_description = 'Progreso (S/G)'
 
-    # Método para generar el botón de exportar
+    # Método para generar el botón de exportar y ver planeación
     def exportar_excel_boton(self, obj):
-        # Crea la URL para la vista de exportación específica para este objeto (obj)
-        url = reverse('admin:plan_de_estudio_asignacionplanestudio_exportar_excel', args=[obj.pk])
-        # Retorna el HTML del botón como un enlace
-        return format_html('<a class="button" href="{}">Exportar Excel</a>', url)
-    exportar_excel_boton.short_description = 'Exportar Sílabos/Guías' # Nombre de la columna
-    exportar_excel_boton.allow_tags = True # Necesario para renderizar HTML (aunque format_html es preferido)
+        url_excel = reverse('admin:plan_de_estudio_asignacionplanestudio_exportar_excel', args=[obj.pk])
+        url_planeacion = reverse('ver_planeacion', args=[obj.pk])
+        return format_html(
+            '<div style="display:flex; flex-direction:column; gap:5px; min-width:110px;">'
+            '<a class="button" href="{}" style="text-align:center; padding:4px 8px; font-weight:600;">Exportar Excel</a>'
+            '<a class="button" href="{}" style="text-align:center; padding:4px 8px; font-weight:600; background:#198754; color:white; border-color:#198754;">Ver Planeación</a>'
+            '</div>',
+            url_excel, url_planeacion
+        )
+    exportar_excel_boton.short_description = 'Acciones' # Nombre de la columna
+    exportar_excel_boton.allow_tags = True # Necesario para renderizar HTML
 
     # Método para añadir URLs personalizadas al admin de este modelo
     def get_urls(self):
+        from . import views
         urls = super().get_urls()
         custom_urls = [
             # Define la URL que coincide con la usada en 'reverse' dentro de exportar_excel_boton
@@ -206,6 +212,11 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
                 '<int:asignacion_id>/exportar_excel/', # La URL que captura el ID
                 self.admin_site.admin_view(generar_excel_admin), # Llama a la vista importada, protegida por admin
                 name='plan_de_estudio_asignacionplanestudio_exportar_excel' # Nombre para usar en 'reverse'
+            ),
+            path(
+                '<int:asignacion_id>/ver_planeacion/',
+                self.admin_site.admin_view(views.ver_planeacion),
+                name='plan_de_estudio_asignacionplanestudio_ver_planeacion'
             ),
             path(
                 'enviar-recordatorios/',

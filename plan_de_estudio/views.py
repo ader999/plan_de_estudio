@@ -1995,3 +1995,93 @@ def politicas_privacidad(request):
 def terminos_servicio(request):
     """Renderiza la página de Términos de Servicio para la verificación de OAuth."""
     return render(request, 'terminos.html')
+
+
+@login_required
+def ver_planeacion(request, asignacion_id):
+    """
+    Vista e interfaz intuitiva para visualizar toda la planeación (sílabos y guías por encuentro)
+    asociada a una AsignacionPlanEstudio específica.
+    """
+    asignacion = get_object_or_404(AsignacionPlanEstudio, pk=asignacion_id)
+    
+    # Obtener sílabos asociados a la asignación, ordenados por número de encuentro
+    silabos = Silabo.objects.filter(asignacion_plan=asignacion).order_by('encuentros')
+    silabo_map = {s.encuentros: s for s in silabos}
+    
+    # Obtener guías asociadas a los sílabos de esta asignación
+    guias = Guia.objects.filter(silabo__in=silabos)
+    guia_map = {}
+    for g in guias:
+        if g.silabo_id and g.silabo:
+            guia_map[g.silabo.encuentros] = g
+        elif g.numero_encuentro:
+            guia_map[g.numero_encuentro] = g
+
+    def extract_tareas(guia):
+        if not guia:
+            return []
+        tareas = []
+        for i in (1, 2, 3):
+            obj = getattr(guia, f'objetivo_aprendizaje_{i}', None)
+            act = getattr(guia, f'actividad_aprendizaje_{i}', None)
+            cont = getattr(guia, f'contenido_tematico_{i}', None)
+            if obj or act or cont:
+                tareas.append({
+                    'num': i,
+                    'tipo_objetivo': getattr(guia, f'tipo_objetivo_{i}', '') or '',
+                    'objetivo': obj or '',
+                    'contenido': cont or '',
+                    'actividad': act or '',
+                    'tecnica': getattr(guia, f'tecnica_evaluacion_{i}', '') or '',
+                    'tipo_evaluacion': getattr(guia, f'tipo_evaluacion_{i}', '') or '',
+                    'instrumento': getattr(guia, f'instrumento_evaluacion_{i}', '') or '',
+                    'criterios': getattr(guia, f'criterios_evaluacion_{i}', '') or '',
+                    'agente': getattr(guia, f'agente_evaluador_{i}', '') or '',
+                    'tiempo': getattr(guia, f'tiempo_minutos_{i}', None),
+                    'recursos': getattr(guia, f'recursos_didacticos_{i}', '') or '',
+                    'periodo': getattr(guia, f'periodo_tiempo_programado_{i}', '') or '',
+                    'puntaje': getattr(guia, f'puntaje_{i}', None),
+                    'fecha_entrega': getattr(guia, f'fecha_entrega_{i}', None),
+                })
+        return tareas
+
+    encuentros_list = []
+    total_encuentros = 11
+    if silabos.exists():
+        max_enc = max([s.encuentros for s in silabos] + [11])
+        total_encuentros = max_enc
+
+    for num in range(1, total_encuentros + 1):
+        silabo_item = silabo_map.get(num)
+        guia_item = guia_map.get(num)
+        
+        if not guia_item and silabo_item:
+            g_qs = Guia.objects.filter(silabo=silabo_item)
+            if g_qs.exists():
+                guia_item = g_qs.first()
+                
+        tareas_list = extract_tareas(guia_item)
+        
+        encuentros_list.append({
+            'numero': num,
+            'silabo': silabo_item,
+            'guia': guia_item,
+            'tareas': tareas_list,
+            'tiene_silabo': silabo_item is not None,
+            'tiene_guia': guia_item is not None and len(tareas_list) > 0,
+            'completo': silabo_item is not None and (guia_item is not None and len(tareas_list) > 0)
+        })
+
+    silabos_count = len([e for e in encuentros_list if e['tiene_silabo']])
+    guias_count = len([e for e in encuentros_list if e['tiene_guia']])
+
+    context = {
+        'asignacion': asignacion,
+        'encuentros_list': encuentros_list,
+        'silabos_count': silabos_count,
+        'guias_count': guias_count,
+        'total_encuentros': total_encuentros,
+    }
+    return render(request, 'ver_planeacion.html', context)
+
