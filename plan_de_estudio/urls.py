@@ -9,6 +9,7 @@ urlpatterns = [
     #path('admin/', admin.site.urls),
     path('',views.inicio, name='inicio'),
     path('eventos/', include('eventos.urls')),
+    path('api/eventos/', include('eventos.api_urls')),
     path('acerca/', views.acerca_de, name='acerca'),
     path('admin/',admin.site.urls,),
     path('login/', views.login_view, name='login'),

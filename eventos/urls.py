@@ -1,9 +1,13 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'eventos'
 
 urlpatterns = [
+    # REST API DRF
+    path('api/', include('eventos.api_urls')),
+
+
     path('', views.lista_eventos, name='lista_eventos'),
     path('crear/', views.crear_evento, name='crear_evento'),
     path('<int:evento_id>/', views.detalle_evento, name='detalle_evento'),
