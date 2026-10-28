@@ -75,6 +75,15 @@ class EventosAPITestCase(TestCase):
         self.assertIn('token', response.data)
         self.assertEqual(response.data['user']['username'], 'creador')
 
+    def test_login_con_espacios_al_inicio_y_final(self):
+        response = self.client.post('/api/eventos/auth/login/', {
+            'username': '  creador  ',
+            'password': '  password123  '
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+        self.assertEqual(response.data['user']['username'], 'creador')
+
     def test_login_fallido(self):
         response = self.client.post('/api/eventos/auth/login/', {
             'username': 'creador',

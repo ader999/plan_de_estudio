@@ -35,8 +35,11 @@ def api_login(request):
     Inicia sesión con username y password.
     Retorna el Token DRF y la información del usuario autenticado.
     """
-    username = request.data.get('username')
-    password = request.data.get('password')
+    raw_username = request.data.get('username')
+    raw_password = request.data.get('password')
+
+    username = raw_username.strip() if isinstance(raw_username, str) else (str(raw_username).strip() if raw_username is not None else '')
+    password = raw_password.strip() if isinstance(raw_password, str) else (str(raw_password).strip() if raw_password is not None else '')
 
     if not username or not password:
         return Response(
