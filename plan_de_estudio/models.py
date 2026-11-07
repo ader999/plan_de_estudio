@@ -673,6 +673,27 @@ class CopiaSeguridad(Carrera):
         verbose_name = "Copia de Seguridad"
         verbose_name_plural = "Copias de Seguridad / Configuración"
 
+class ConfiguracionSistema(models.Model):
+    permitir_descarga_plan_tematico = models.BooleanField(
+        default=True,
+        verbose_name="Permitir a docentes descargar plan temático",
+        help_text="Si está activo, los docentes podrán visualizar y descargar los planes temáticos en su panel de inicio."
+    )
+    actualizado_el = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Configuración del Sistema"
+        verbose_name_plural = "Configuración del Sistema"
+
+    @classmethod
+    def get_solo(cls):
+        obj, _ = cls.objects.get_or_create(id=1)
+        return obj
+
+    def __str__(self):
+        return "Configuración del Sistema"
+
+
 def get_user_str(self):
     nombre_completo = f"{self.first_name} {self.last_name}".strip()
     if nombre_completo:

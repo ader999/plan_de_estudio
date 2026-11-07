@@ -594,6 +594,13 @@ main {
         padding-right: 2px !important;
     }
 
+    /* Optimization for syllabus, guides & didactic sequences reading views on mobile */
+    #page-content:has(.blog-post-style),
+    #page-content:has(.main-page-container) {
+        padding-left: 3px !important;
+        padding-right: 3px !important;
+    }
+
     .form-page-container {
         padding-left: 0 !important;
         padding-right: 0 !important;

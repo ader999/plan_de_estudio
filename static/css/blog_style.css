@@ -385,11 +385,72 @@
 @media (max-width: 767.98px) {
     .container {
         /* Anulamos los márgenes laterales que pone la clase .container de Bootstrap */
-        padding-left: 3px !important; /* Margen izquierdo mínimo */
-        padding-right: 3px !important; /* Margen derecho mínimo */
+        padding-left: 2px !important;
+        padding-right: 2px !important;
     }
-    
+
+    .main-page-container,
+    .blog-post-style {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .content-component-wrapper {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
     .post-article {
-        padding: 1.25rem;
+        padding: 1.15rem 0.85rem !important; /* Maximiza espacio horizontal de lectura */
+        margin-left: 2px !important;
+        margin-right: 2px !important;
+        margin-bottom: 1.5rem !important;
+        border-radius: 12px !important;
+    }
+
+    .post-header h2.h3 {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    .page-main-header {
+        margin-bottom: 1.5rem !important;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    .page-main-header h1 {
+        font-size: 1.7rem !important;
+        line-height: 1.25 !important;
+    }
+
+    .page-main-header .lead {
+        font-size: 1.05rem !important;
+    }
+
+    .content-block {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .content-block p, 
+    .evaluation-details p,
+    .text-content {
+        line-height: 1.65 !important;
+        font-size: 0.98rem !important;
+        word-break: break-word;
+    }
+
+    .momentos-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.85rem !important;
+    }
+
+    .momento-card {
+        padding: 0.9rem 0.75rem !important;
     }
 }

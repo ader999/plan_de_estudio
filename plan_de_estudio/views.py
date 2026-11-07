@@ -83,6 +83,8 @@ def detalle_silabo(request, codigo=None):
     for codigo_grupo, grupo in silabos_agrupados.items():
         # Ordenar por número de encuentro
         grupo.sort(key=lambda s: s.encuentros)
+        # Limitar a un máximo de 11 encuentros según el estándar académico
+        silabos_agrupados[codigo_grupo] = grupo[:11]
 
     # Obtener el año actual
     año_actual = datetime.datetime.now().year
@@ -232,6 +234,8 @@ def guia_autodidactica(request, codigo=None):
     for codigo_grupo, grupo in silabos_agrupados.items():
         # Ordenar por número de encuentro
         grupo.sort(key=lambda s: s.encuentros)
+        # Limitar a un máximo de 11 encuentros según el estándar académico
+        silabos_agrupados[codigo_grupo] = grupo[:11]
 
     # Obtener el año actual
     año_actual = datetime.datetime.now().year
@@ -297,6 +301,8 @@ def secuencia_didactica(request, codigo=None):
     for codigo_grupo, grupo in silabos_agrupados.items():
         # Ordenar por número de encuentro
         grupo.sort(key=lambda s: s.encuentros)
+        # Limitar a un máximo de 11 encuentros según el estándar académico
+        silabos_agrupados[codigo_grupo] = grupo[:11]
 
     # Obtener el año actual
     año_actual = datetime.datetime.now().year

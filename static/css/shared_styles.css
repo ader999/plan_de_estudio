@@ -29,6 +29,16 @@
     padding: calc(var(--spacing-unit) * 2) var(--spacing-unit);
 }
 
+@media (max-width: 767.98px) {
+    .main-page-container {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        padding-top: 0.5rem !important;
+        margin: 0 auto !important;
+        max-width: 100% !important;
+    }
+}
+
 a {
     color: var(--color-accent);
     text-decoration: none;
