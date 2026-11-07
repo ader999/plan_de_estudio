@@ -1,5 +1,24 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-07] Corrección de SyntaxError en `context_processors.py`
+
+### Contexto del Problema
+Al acceder a la página principal (`/` o `planeauml.codeader.com`), el servidor arrojaba un error `SyntaxError at /: invalid character '…' (U+2026) (context_processors.py, line 14)` durante la ejecución de `plan_de_estudio.views.inicio`.
+La línea 14 de `context_processors.py` había quedado truncada con el carácter suspensivo (`credenciales = Creden…`), impidiendo que Django pudiera compilar el módulo de procesadores de contexto.
+
+### Cambios Realizados
+- **`plan_de_estudio/context_processors.py`**:
+  - Se completó la función `google_classroom_context(request)` restaurando la recuperación de `CredencialesGoogle` (`credenciales = CredencialesGoogle.objects.get(usuario=request.user)`).
+  - Se integró de manera segura la obtención de `config_sistema` (`ConfiguracionSistema.get_solo()`) con manejo de excepciones preventivo.
+
+### Verificación
+- Se ejecutó `python -m py_compile plan_de_estudio/context_processors.py` y `python -m compileall` sin errores de sintaxis.
+- Se verificó `manage.py check` (0 incidencias).
+- Se comprobó mediante el cliente de pruebas de Django la respuesta HTTP 200 en `/` (con sesión de usuario) y la redirección correspondiente para usuarios anónimos.
+- Se ejecutó la suite completa de pruebas unitarias (`manage.py test`): 45 pruebas exitosas (**OK**).
+
+---
+
 ## [2026-11-07] Corrección de Encuentros (Estandarización a 11) y Optimización de Márgenes Móviles
 
 ### Contexto del Problema

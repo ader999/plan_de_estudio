@@ -11,4 +11,21 @@ def google_classroom_context(request):
 
     if request.user.is_authenticated:
         try:
-            credenciales = Creden…
+            credenciales = CredencialesGoogle.objects.get(usuario=request.user)
+            is_google_linked = True
+            google_profile_picture = credenciales.foto_perfil
+        except CredencialesGoogle.DoesNotExist:
+            pass
+
+    config_sistema = None
+    try:
+        config_sistema = ConfiguracionSistema.get_solo()
+    except Exception:
+        pass
+
+    return {
+        'is_google_linked': is_google_linked,
+        'google_profile_picture': google_profile_picture,
+        'config_sistema': config_sistema,
+    }
+
