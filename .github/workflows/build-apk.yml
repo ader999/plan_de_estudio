@@ -84,8 +84,8 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
           echo "$ANDROID_KEYSTORE_BASE64" | tr -d '\n\r ' | base64 -d > android.keystore
-          VERSION_CODE=$((GITHUB_RUN_NUMBER + 1))
-          VERSION_NAME="1.0.${VERSION_CODE}"
+          export VERSION_CODE=$((GITHUB_RUN_NUMBER + 1))
+          export VERSION_NAME="1.0.${VERSION_CODE}"
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
 
