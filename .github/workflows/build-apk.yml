@@ -1,0 +1,186 @@
+name: Build and Release Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Configure Android SDK shim and Bubblewrap
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          if [ -z "$SDK_ROOT" ] || [ ! -d "$SDK_ROOT" ]; then
+            echo "Android SDK not found on runner" >&2
+            exit 1
+          fi
+
+          CMDLINE_BIN=""
+          if [ -d "$SDK_ROOT/cmdline-tools/latest/bin" ]; then
+            CMDLINE_BIN="$SDK_ROOT/cmdline-tools/latest/bin"
+          else
+            CMDLINE_BIN="$(find "$SDK_ROOT/cmdline-tools" -maxdepth 2 -type d -name bin | sort -V | tail -n 1)"
+          fi
+
+          if [ -z "$CMDLINE_BIN" ]; then
+            echo "Android cmdline-tools bin not found under $SDK_ROOT" >&2
+            exit 1
+          fi
+
+          if [ -x "$CMDLINE_BIN/sdkmanager" ]; then
+            yes | "$CMDLINE_BIN/sdkmanager" --licenses >/dev/null 2>&1 || true
+          fi
+
+          SHIM_DIR="$RUNNER_TEMP/android-sdk-shim"
+          rm -rf "$SHIM_DIR"
+          mkdir -p "$SHIM_DIR"
+          ln -s "$CMDLINE_BIN" "$SHIM_DIR/bin"
+          for dir in build-tools cmdline-tools licenses platforms platform-tools; do
+            if [ -e "$SDK_ROOT/$dir" ]; then
+              ln -s "$SDK_ROOT/$dir" "$SHIM_DIR/$dir"
+            fi
+          done
+
+          mkdir -p "$HOME/.bubblewrap"
+          cat > "$HOME/.bubblewrap/config.json" <<EOF
+          {
+            "jdkPath": "$JAVA_HOME",
+            "androidSdkPath": "$SHIM_DIR"
+          }
+          EOF
+
+      - name: Install Bubblewrap CLI
+        working-directory: twa
+        run: npm install --no-audit --no-fund
+
+      - name: Decode signing keystore and bump TWA version
+        working-directory: twa
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | tr -d '\n\r ' | base64 -d > android.keystore
+          VERSION_CODE=$((GITHUB_RUN_NUMBER + 1))
+          VERSION_NAME="1.0.${VERSION_CODE}"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          version_code = int(os.environ["VERSION_CODE"])
+          version_name = os.environ["VERSION_NAME"]
+          key_alias = os.environ.get("ANDROID_KEY_ALIAS", "planeauml").strip() or "planeauml"
+
+          manifest_path = Path("twa-manifest.json")
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          manifest["appVersionCode"] = version_code
+          manifest["appVersionName"] = version_name
+          manifest["appVersion"] = version_name
+          manifest["startUrl"] = f"/?source=twa&apk_version={version_code}"
+          manifest["signingKey"] = {
+              "path": "./android.keystore",
+              "alias": key_alias,
+          }
+          manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Generate and build signed TWA APK
+        working-directory: twa
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASS }}
+        run: |
+          env -u ANDROID_SDK_ROOT ./node_modules/.bin/bubblewrap update --skipVersionUpgrade
+          env -u ANDROID_SDK_ROOT ./node_modules/.bin/bubblewrap build --skipPwaValidation
+          cp app-release-signed.apk PLANEAUML.apk
+          cp app-release-bundle.aab PLANEAUML.aab
+
+      - name: Verify APK signature and generate version metadata
+        working-directory: twa
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          REPO_NAME: ${{ github.repository }}
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+          if [ -z "$APKSIGNER" ]; then
+            echo "apksigner not found" >&2
+            exit 1
+          fi
+
+          CERT_INFO="$("$APKSIGNER" verify --print-certs PLANEAUML.apk)"
+          echo "$CERT_INFO"
+          SHA256_RAW="$(echo "$CERT_INFO" | awk -F': ' '/SHA-256 digest:/ {print $2; exit}')"
+          export APK_CERT_SHA256="$SHA256_RAW"
+
+          python3 - <<'PY'
+          import datetime
+          import json
+          import os
+          from pathlib import Path
+
+          version_code = int(os.environ["VERSION_CODE"])
+          version_name = os.environ["VERSION_NAME"]
+          tag = f"v{version_name}"
+          repo = os.environ["REPO_NAME"]
+          apk_bytes = Path("PLANEAUML.apk").stat().st_size
+
+          payload = {
+              "version_code": version_code,
+              "version_name": version_name,
+              "package_id": "com.planeauml.pwa",
+              "mandatory": True,
+              "release_tag": tag,
+              "commit_sha": os.environ["COMMIT_SHA"][:7],
+              "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "apk_size_bytes": apk_bytes,
+              "cert_sha256": os.environ.get("APK_CERT_SHA256", ""),
+              "download_url": f"https://github.com/{repo}/releases/download/{tag}/PLANEAUML.apk",
+          }
+          Path("app-version.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Publish GitHub Release with APK
+        working-directory: twa
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${VERSION_NAME}"
+          SHORT_SHA="${GITHUB_SHA::7}"
+          NOTES="Compilación automática de PLANEAUML Android (APK v${VERSION_NAME}, código ${VERSION_CODE}) desde commit ${SHORT_SHA}."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" PLANEAUML.apk PLANEAUML.aab app-version.json --clobber
+            gh release edit "$TAG" --latest --notes "$NOTES"
+          else
+            gh release create "$TAG" PLANEAUML.apk PLANEAUML.aab app-version.json \
+              --latest \
+              --title "PLANEAUML v${VERSION_NAME}" \
+              --notes "$NOTES"
+          fi

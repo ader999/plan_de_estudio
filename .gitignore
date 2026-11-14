@@ -14,3 +14,23 @@ static/img/silabo.docx
 static/data/Hoja de cálculo sin título*
 temp_edit.py
 guia_backup.json
+
+# Bubblewrap TWA build artifacts (kept out of repo)
+twa/node_modules/
+twa/package-lock.json
+twa/app/
+twa/build/
+twa/.gradle/
+twa/gradle/
+twa/gradlew
+twa/gradlew.bat
+twa/build.gradle
+twa/gradle.properties
+twa/settings.gradle
+twa/manifest-checksum.txt
+twa/store_icon.png
+twa/android.keystore
+twa/*.apk
+twa/*.aab
+twa/*.idsig
+twa/app-version.json

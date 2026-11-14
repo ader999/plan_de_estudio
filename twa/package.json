@@ -1,0 +1,9 @@
+{
+  "name": "planeauml_twa",
+  "version": "1.0.0",
+  "description": "Trusted Web Activity wrapper for PLANEAUML",
+  "private": true,
+  "dependencies": {
+    "@bubblewrap/cli": "^1.27.0"
+  }
+}

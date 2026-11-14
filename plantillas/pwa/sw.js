@@ -1,4 +1,4 @@
-{% load static %}const SW_VERSION = 'planeauml-v1';
+{% load static %}const SW_VERSION = 'planeauml-v2';
 const STATIC_CACHE = `static-${SW_VERSION}`;
 const PAGES_CACHE = `pages-${SW_VERSION}`;
 const OFFLINE_URL = "{% url 'pwa_offline' %}";
@@ -32,6 +32,7 @@ const CDN_HOSTS = new Set([
 
 const BYPASS_PREFIXES = [
     '/admin/',
+    '/app/',
     '/login/',
     '/logout/',
     '/google/',

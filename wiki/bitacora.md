@@ -1,5 +1,18 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-14] Compilación Automática de APK en Cada Push, Actualización Obligatoria en TWA y Centro de Recursos
+- **CI/CD Android TWA (`.github/workflows/build-apk.yml`, `twa/`)**:
+  - Se añadió la configuración base `twa/twa-manifest.json` y `twa/package.json` (`@bubblewrap/cli`) junto con el workflow `Build and Release Android APK` disparado en cada `push` a `main`.
+  - Se configuraron los secretos de firma en GitHub (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASS`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASS`) usando el mismo keystore (`com.planeauml.pwa`) para permitir actualizaciones sobre la APK instalada sin desinstalar y mantener válido `assetlinks.json`.
+  - En cada compilación se incrementa automáticamente `appVersionCode` (`GITHUB_RUN_NUMBER + 1`), se inyecta `startUrl` con `/?source=twa&apk_version=<VERSION_CODE>`, se verifica la firma con `apksigner` y se publica en GitHub Releases (`latest`) los artefactos `PLANEAUML.apk`, `PLANEAUML.aab` y `app-version.json`.
+- **Actualización Obligatoria en APK (`plan_de_estudio/pwa_views.py`, `plantillas/pwa/body.html`, `plantillas/pwa/sw.js`)**:
+  - Nuevos endpoints `/app/version.json` (`app_version_view`, caché TTL de 60s contra GitHub Releases con respaldo por variables de entorno) y `/app/descargar-apk/` (`app_download_view`).
+  - Se incrementó `SW_VERSION` a `planeauml-v2` y se excluyó `/app/` del caché del Service Worker.
+  - En `plantillas/pwa/body.html` se detecta cuando la app se ejecuta dentro de la APK TWA (`?source=twa&apk_version=...` o `referrer` `android-app://com.planeauml.pwa`) y, si existe una compilación superior disponible, se muestra una pantalla bloqueante no cerrable para descargar e instalar la nueva APK; el acceso desde navegador web normal permanece libre.
+- **Sección "Centro de Recursos" (`plantillas/base.html`, `plantillas/tutoriales.html`, `plan_de_estudio/urls.py`, `plan_de_estudio/views.py`)**:
+  - Se renombró la entrada de menú y página `Tutoriales` a **Centro de Recursos** (`/centro-de-recursos/`, manteniendo redirección desde `/tutoriales/`).
+  - Se integró una tarjeta destacada para descargar la última APK oficial de PLANEAUML con versión, paquete y tamaño cuando esté disponible.
+
 ## [2026-11-14] Soporte PWA, Service Worker Tolerante a Redes Lentas y Endpoint TWA (`assetlinks.json`)
 - **Iconos PWA**: Generados `static/img/pwa-icon-192.png`, `static/img/pwa-icon-512.png` y `static/img/pwa-icon-512-maskable.png` a partir de `static/img/logouml.png`.
 - **Vistas y Rutas PWA/TWA (`plan_de_estudio/pwa_views.py`, `plan_de_estudio/urls.py`)**:

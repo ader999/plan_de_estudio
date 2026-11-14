@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 from plan_de_estudio import views, pwa_views
 from django.conf.urls.static import static
 from django.conf import settings
@@ -11,6 +12,8 @@ urlpatterns = [
     path('sw.js', pwa_views.service_worker_view, name='pwa_sw'),
     path('offline/', pwa_views.offline_view, name='pwa_offline'),
     path('.well-known/assetlinks.json', pwa_views.assetlinks_view, name='pwa_assetlinks'),
+    path('app/version.json', pwa_views.app_version_view, name='app_version'),
+    path('app/descargar-apk/', pwa_views.app_download_view, name='app_download_apk'),
 
     #path('admin/', admin.site.urls),
     path('',views.inicio, name='inicio'),
@@ -40,7 +43,12 @@ urlpatterns = [
     path('formulario_guia/<int:asignacion_id>/', views.ver_formulario_guia, name='ver_formulario_guia'),
     path('guardar_silabo/<int:asignacion_id>/', views.guardar_silabo, name='guardar_silabo'),
     path('guardar-guia/<int:silabo_id>/', views.guardar_guia, name='guardar_guia'),
-    path('tutoriales/', views.vista_tutoriales, name='tutoriales'),
+    path('centro-de-recursos/', views.vista_tutoriales, name='tutoriales'),
+    path(
+        'tutoriales/',
+        RedirectView.as_view(pattern_name='tutoriales', permanent=False),
+        name='tutoriales_legacy_redirect',
+    ),
 
     # Ruta para cargar guía específica de un sílabo
     path('cargar_guia/<int:silabo_id>/', views.cargar_guia, name='cargar_guia'),

@@ -36,11 +36,119 @@
     #pwa-offline-banner.visible {
         display: inline-flex;
     }
+    #pwa-force-update-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 100000;
+        background: rgba(15, 23, 42, 0.92);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 1.25rem;
+        align-items: center;
+        justify-content: center;
+    }
+    #pwa-force-update-overlay.visible {
+        display: flex;
+    }
+    .pwa-update-card {
+        width: 100%;
+        max-width: 440px;
+        background: #1e293b;
+        color: #f8fafc;
+        border: 1px solid rgba(59, 130, 246, 0.35);
+        border-radius: 18px;
+        padding: 1.75rem 1.5rem;
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+        text-align: center;
+    }
+    .pwa-update-badge {
+        display: inline-block;
+        background: rgba(37, 99, 235, 0.22);
+        color: #93c5fd;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+        border-radius: 999px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        margin-bottom: 0.85rem;
+    }
+    .pwa-update-card h2 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        margin-bottom: 0.6rem;
+        color: #ffffff;
+    }
+    .pwa-update-card p {
+        font-size: 0.92rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+    .pwa-update-steps {
+        text-align: left;
+        background: rgba(15, 23, 42, 0.65);
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        font-size: 0.84rem;
+        color: #e2e8f0;
+        margin-bottom: 1.2rem;
+    }
+    .pwa-update-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.8rem 1.1rem;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.96rem;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+    }
+    .pwa-update-btn-primary {
+        background: #2563eb;
+        color: #ffffff !important;
+        margin-bottom: 0.6rem;
+    }
+    .pwa-update-btn-primary:hover {
+        background: #1d4ed8;
+    }
+    .pwa-update-btn-secondary {
+        background: transparent;
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
 </style>
 
 <div id="pwa-nav-progress" aria-hidden="true"></div>
 <div id="pwa-offline-banner" role="status" aria-live="polite">
     <span>Sin conexión: mostrando vistas disponibles en caché</span>
+</div>
+<div id="pwa-force-update-overlay" role="dialog" aria-modal="true" aria-labelledby="pwa-force-update-title">
+    <div class="pwa-update-card">
+        <span class="pwa-update-badge" id="pwa-force-update-version">Nueva versión disponible</span>
+        <h2 id="pwa-force-update-title">Actualización obligatoria de PLANEAUML</h2>
+        <p id="pwa-force-update-message">
+            Hay una nueva versión de la aplicación Android disponible. Debes descargar e instalar la actualización para continuar.
+        </p>
+        <div class="pwa-update-steps">
+            1. Toca <strong>Descargar nueva APK</strong>.<br>
+            2. Abre el archivo descargado e instala encima de la app actual (no hace falta desinstalar).<br>
+            3. Vuelve a abrir <strong>PLANEAUML</strong> desde el ícono actualizado.
+        </div>
+        <a id="pwa-force-update-download" href="/app/descargar-apk/" class="pwa-update-btn pwa-update-btn-primary" download>
+            <i class="fas fa-download"></i>
+            <span>Descargar nueva APK</span>
+        </a>
+        <button type="button" id="pwa-force-update-recheck" class="pwa-update-btn pwa-update-btn-secondary">
+            Ya la instalé · Comprobar de nuevo
+        </button>
+    </div>
 </div>
 
 <script>
@@ -78,7 +186,7 @@
     window.addEventListener('offline', updateOnlineStatus);
     updateOnlineStatus();
 
-    const downloadPrefixes = ['/generar_docx', '/generar_excel', '/descargar-'];
+    const downloadPrefixes = ['/generar_docx', '/generar_excel', '/descargar-', '/app/descargar-apk'];
 
     document.addEventListener('click', function (event) {
         const anchor = event.target.closest('a[href]');
@@ -111,5 +219,132 @@
             });
         });
     }
+
+    const TWA_PACKAGE_REFERRER = 'android-app://com.planeauml.pwa';
+    const TWA_SESSION_KEY = 'planeauml_is_twa';
+    const APK_INSTALLED_KEY = 'planeauml_installed_apk_version';
+    const APK_REQUIRED_KEY = 'planeauml_required_apk_version';
+    const APK_REQUIRED_NAME_KEY = 'planeauml_required_apk_name';
+
+    function detectTwaContext() {
+        const params = new URLSearchParams(window.location.search);
+        const sourceParam = params.get('source');
+        const apkVersionRaw = params.get('apk_version');
+        const apkVersionParam = apkVersionRaw ? parseInt(apkVersionRaw, 10) : NaN;
+        const referrer = document.referrer || '';
+
+        if (sourceParam === 'twa' || referrer.startsWith(TWA_PACKAGE_REFERRER)) {
+            sessionStorage.setItem(TWA_SESSION_KEY, '1');
+        }
+        if (!Number.isNaN(apkVersionParam) && apkVersionParam > 0) {
+            sessionStorage.setItem(TWA_SESSION_KEY, '1');
+            localStorage.setItem(APK_INSTALLED_KEY, String(apkVersionParam));
+        }
+
+        const isTwa = sessionStorage.getItem(TWA_SESSION_KEY) === '1';
+        const storedInstalled = parseInt(localStorage.getItem(APK_INSTALLED_KEY) || '', 10);
+        const installedVersion = !Number.isNaN(apkVersionParam) && apkVersionParam > 0
+            ? apkVersionParam
+            : (!Number.isNaN(storedInstalled) && storedInstalled > 0 ? storedInstalled : 1);
+
+        return { isTwa: isTwa, installedVersion: installedVersion };
+    }
+
+    function showMandatoryUpdateOverlay(installedVersion, latestCode, latestName, downloadUrl) {
+        const overlay = document.getElementById('pwa-force-update-overlay');
+        if (!overlay) return;
+
+        const versionBadge = document.getElementById('pwa-force-update-version');
+        const messageEl = document.getElementById('pwa-force-update-message');
+        const downloadEl = document.getElementById('pwa-force-update-download');
+        const recheckEl = document.getElementById('pwa-force-update-recheck');
+
+        if (versionBadge) {
+            versionBadge.textContent = `Versión requerida: v${latestName || ('1.0.' + latestCode)} (actual: #${installedVersion})`;
+        }
+        if (messageEl) {
+            messageEl.textContent = `Tu aplicación instalada (compilación #${installedVersion}) está desactualizada. Descarga e instala la nueva versión v${latestName || ('1.0.' + latestCode)} para continuar usando PLANEAUML.`;
+        }
+        if (downloadEl && downloadUrl) {
+            downloadEl.setAttribute('href', downloadUrl);
+        }
+        if (recheckEl && !recheckEl.dataset.bound) {
+            recheckEl.dataset.bound = '1';
+            recheckEl.addEventListener('click', function () {
+                checkTwaMandatoryUpdate(true);
+            });
+        }
+
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+        overlay.classList.add('visible');
+    }
+
+    async function checkTwaMandatoryUpdate(forceReloadOnMatch) {
+        if (window.location.pathname === '/offline/') return;
+
+        const ctx = detectTwaContext();
+        if (!ctx.isTwa) return;
+
+        const cachedRequired = parseInt(localStorage.getItem(APK_REQUIRED_KEY) || '', 10);
+        const cachedRequiredName = localStorage.getItem(APK_REQUIRED_NAME_KEY) || '';
+        if (!Number.isNaN(cachedRequired) && cachedRequired > ctx.installedVersion) {
+            showMandatoryUpdateOverlay(ctx.installedVersion, cachedRequired, cachedRequiredName, '/app/descargar-apk/');
+        }
+
+        if (navigator.onLine === false) return;
+
+        const controller = new AbortController();
+        const timer = setTimeout(function () { controller.abort(); }, 5000);
+
+        try {
+            const response = await fetch('/app/version.json', {
+                cache: 'no-store',
+                signal: controller.signal,
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!response.ok) return;
+            const data = await response.json();
+            if (!data || !data.available || !data.mandatory) return;
+
+            const latestCode = parseInt(data.latest_version_code, 10);
+            if (Number.isNaN(latestCode) || latestCode <= 0) return;
+
+            localStorage.setItem(APK_REQUIRED_KEY, String(latestCode));
+            if (data.latest_version_name) {
+                localStorage.setItem(APK_REQUIRED_NAME_KEY, String(data.latest_version_name));
+            }
+
+            if (latestCode > ctx.installedVersion) {
+                showMandatoryUpdateOverlay(
+                    ctx.installedVersion,
+                    latestCode,
+                    data.latest_version_name || '',
+                    data.download_url || '/app/descargar-apk/'
+                );
+            } else if (forceReloadOnMatch) {
+                window.location.reload();
+            }
+        } catch (_) {
+            // Keep app responsive offline or on transient network errors
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    window.addEventListener('keydown', function (event) {
+        const overlay = document.getElementById('pwa-force-update-overlay');
+        if (event.key === 'Escape' && overlay && overlay.classList.contains('visible')) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }, true);
+
+    window.addEventListener('load', function () {
+        checkTwaMandatoryUpdate(false);
+    });
+    window.addEventListener('online', function () {
+        checkTwaMandatoryUpdate(false);
+    });
 })();
 </script>

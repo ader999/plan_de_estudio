@@ -1,6 +1,6 @@
 import datetime
 import json
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
@@ -853,4 +853,80 @@ class PwaAndTwaEndpointsTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, '/manifest.json')
         self.assertContains(resp, '/sw.js')
+        self.assertContains(resp, 'Centro de Recursos')
+        self.assertContains(resp, 'pwa-force-update-overlay')
+
+    def test_app_version_y_descarga_apk_desde_metadata_remota(self):
+        import os
+        from urllib.error import URLError
+        from plan_de_estudio import pwa_views
+
+        pwa_views.clear_apk_metadata_cache()
+        fake_payload = {
+            'version_code': 7,
+            'version_name': '1.0.7',
+            'package_id': 'com.planeauml.pwa',
+            'mandatory': True,
+            'release_tag': 'v1.0.7',
+            'commit_sha': 'abc1234',
+            'apk_size_bytes': 2621440,
+            'download_url': 'https://example.org/releases/v1.0.7/PLANEAUML.apk',
+        }
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps(fake_payload).encode('utf-8')
+        mock_response.__enter__.return_value = mock_response
+
+        with patch('plan_de_estudio.pwa_views.urlopen', return_value=mock_response):
+            resp = self.client.get(reverse('app_version'))
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('no-cache', resp['Cache-Control'])
+            data = resp.json()
+            self.assertTrue(data['available'])
+            self.assertEqual(data['latest_version_code'], 7)
+            self.assertEqual(data['latest_version_name'], '1.0.7')
+            self.assertEqual(data['apk_size_mb'], 2.5)
+            self.assertEqual(data['download_url'], '/app/descargar-apk/')
+
+            dl_resp = self.client.get(reverse('app_download_apk'))
+            self.assertEqual(dl_resp.status_code, 302)
+            self.assertEqual(
+                dl_resp['Location'],
+                'https://example.org/releases/v1.0.7/PLANEAUML.apk',
+            )
+
+        pwa_views.clear_apk_metadata_cache()
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop('APK_MIN_VERSION_CODE', None)
+            with patch('plan_de_estudio.pwa_views.urlopen', side_effect=URLError('offline')):
+                fallback_resp = self.client.get(reverse('app_version'))
+                self.assertEqual(fallback_resp.status_code, 200)
+                fallback_data = fallback_resp.json()
+                self.assertFalse(fallback_data['available'])
+                self.assertEqual(fallback_data['latest_version_code'], 1)
+
+    def test_centro_de_recursos_y_redireccion_tutoriales(self):
+        from plan_de_estudio import pwa_views
+
+        pwa_views.clear_apk_metadata_cache()
+        fake_payload = {
+            'version_code': 4,
+            'version_name': '1.0.4',
+            'download_url': 'https://example.org/PLANEAUML.apk',
+        }
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps(fake_payload).encode('utf-8')
+        mock_response.__enter__.return_value = mock_response
+
+        with patch('plan_de_estudio.pwa_views.urlopen', return_value=mock_response):
+            resp = self.client.get(reverse('tutoriales'))
+            self.assertEqual(resp.status_code, 200)
+            self.assertContains(resp, 'Centro de Recursos')
+            self.assertContains(resp, 'Descargar APK')
+            self.assertContains(resp, reverse('app_download_apk'))
+            self.assertContains(resp, 'v1.0.4')
+
+        legacy = self.client.get('/tutoriales/')
+        self.assertEqual(legacy.status_code, 302)
+        self.assertEqual(legacy['Location'], reverse('tutoriales'))
+
 

@@ -21,6 +21,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Silabo, Guia, AsignacionPlanEstudio, Asignatura, Plan_de_estudio, ModeloIAConfig
 
 from .forms import SilaboForm
+from . import pwa_views
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Count
 from django.urls import reverse
@@ -1830,12 +1831,13 @@ def vista_tutoriales(request):
     except Exception as e:
         print(f"ERROR: No se pudo obtener la URL de los videos desde MinIO. Detalle: {e}")
 
-    # Creamos el contexto para la plantilla con las URLs de ambos videos.
+    # Creamos el contexto para la plantilla con las URLs de ambos videos y la APK.
     # El video general se usará para las secciones de sílabo y guía.
     contexto = {
         'login_video_url': login_video_url,
         'silabo_video_url': general_tutorial_url,
         'guia_video_url': general_tutorial_url,
+        'apk_info': pwa_views.get_latest_apk_metadata(),
     }
 
     return render(request, 'tutoriales.html', contexto)

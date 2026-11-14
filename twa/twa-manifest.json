@@ -1,0 +1,43 @@
+{
+  "packageId": "com.planeauml.pwa",
+  "host": "planeauml.codeader.com",
+  "name": "PLANEAUML",
+  "launcherName": "PLANEAUML",
+  "display": "standalone",
+  "themeColor": "#2563EB",
+  "themeColorDark": "#0F172A",
+  "navigationColor": "#0F172A",
+  "navigationColorDark": "#0F172A",
+  "navigationDividerColor": "#00000000",
+  "navigationDividerColorDark": "#00000000",
+  "backgroundColor": "#EBEBEB",
+  "enableNotifications": true,
+  "startUrl": "/?source=twa&apk_version=1",
+  "iconUrl": "https://planeauml.codeader.com/static/img/pwa-icon-512.png",
+  "maskableIconUrl": "https://planeauml.codeader.com/static/img/pwa-icon-512-maskable.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "planeauml"
+  },
+  "appVersionName": "1.0.1",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://planeauml.codeader.com/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://planeauml.codeader.com/",
+  "minSdkVersion": 24,
+  "orientation": "default",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersion": "1.0.1"
+}
