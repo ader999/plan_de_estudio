@@ -893,6 +893,8 @@ class PwaAndTwaEndpointsTest(TestCase):
                 dl_resp['Location'],
                 'https://example.org/releases/v1.0.7/PLANEAUML.apk',
             )
+            dl_head_resp = self.client.head(reverse('app_download_apk'))
+            self.assertEqual(dl_head_resp.status_code, 302)
 
         pwa_views.clear_apk_metadata_cache()
         with patch.dict(os.environ, {}, clear=False):

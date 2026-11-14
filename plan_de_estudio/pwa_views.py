@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_safe
 
 GITHUB_APK_VERSION_URL = (
     "https://github.com/ader999/plan_de_estudio/releases/latest/download/app-version.json"
@@ -186,7 +186,7 @@ def assetlinks_view(request):
 
 
 @never_cache
-@require_GET
+@require_safe
 def app_version_view(request):
     """Return the latest compiled Android TWA APK metadata for mandatory update checks."""
     metadata = get_latest_apk_metadata()
@@ -196,7 +196,7 @@ def app_version_view(request):
 
 
 @never_cache
-@require_GET
+@require_safe
 def app_download_view(request):
     """Redirect directly to the latest signed Android APK release artifact."""
     metadata = get_latest_apk_metadata()
