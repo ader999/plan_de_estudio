@@ -121,12 +121,14 @@
                                         <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
                                     </p>
 
-                                    {% if asignacion.plan_de_estudio.plan_tematico %}
-                                        <a href="{{ asignacion.plan_de_estudio.plan_tematico.url }}" class="btn btn-primary mb-2" target="_blank">
-                                            <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Plan Temático
-                                        </a>
-                                    {% else %}
-                                        <p class="text-muted">No se ha asignado un plan temático.</p>
+                                    {% if not config_sistema or config_sistema.permitir_descarga_plan_tematico %}
+                                        {% if asignacion.plan_de_estudio.plan_tematico %}
+                                            <a href="{{ asignacion.plan_de_estudio.plan_tematico.url }}" class="btn btn-primary mb-2" target="_blank">
+                                                <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Plan Temático
+                                            </a>
+                                        {% else %}
+                                            <p class="text-muted">No se ha asignado un plan temático.</p>
+                                        {% endif %}
                                     {% endif %}
 
                                     {% if asignacion.plan_de_estudio.documento_adjunto %}
@@ -249,12 +251,14 @@
                                         <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
                                     </p>
 
-                                    {% if asignacion.plan_de_estudio.plan_tematico %}
-                                        <a href="{{ asignacion.plan_de_estudio.plan_tematico.url }}" class="btn btn-primary mb-2" target="_blank">
-                                            <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Plan Temático
-                                        </a>
-                                    {% else %}
-                                        <p class="text-muted">No se ha asignado un plan temático.</p>
+                                    {% if not config_sistema or config_sistema.permitir_descarga_plan_tematico %}
+                                        {% if asignacion.plan_de_estudio.plan_tematico %}
+                                            <a href="{{ asignacion.plan_de_estudio.plan_tematico.url }}" class="btn btn-primary mb-2" target="_blank">
+                                                <img src="{% static 'img/archivo.png' %}" alt="" style="height: 34px">Plan Temático
+                                            </a>
+                                        {% else %}
+                                            <p class="text-muted">No se ha asignado un plan temático.</p>
+                                        {% endif %}
                                     {% endif %}
 
                                     {% if asignacion.plan_de_estudio.documento_adjunto %}

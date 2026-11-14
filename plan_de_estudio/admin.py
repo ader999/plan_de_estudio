@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Plan_de_estudio, Asignatura, Carrera, Silabo, Guia,
     AsignacionPlanEstudio, PlanTematico, ProgramaAsignatura2026,
-    CopiaSeguridad, ModeloIAConfig, ProveedorIA
+    CopiaSeguridad, ModeloIAConfig, ProveedorIA, ConfiguracionSistema
 )
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -551,6 +551,7 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context.update({
+            'config_sistema': ConfiguracionSistema.get_solo(),
             'modelos_ia': ModeloIAConfig.objects.select_related('proveedor_custom').all().order_by('orden', 'id'),
             'modelos_docentes': ModeloIAConfig.objects.filter(activo=True, disponible_docentes=True).order_by('orden', 'id'),
             'modelo_extraccion': ModeloIAConfig.objects.filter(activo=True, usar_para_extraccion=True).first(),
@@ -566,6 +567,7 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
             path('backup-db/', self.admin_site.admin_view(self.backup_db_view), name='plan_de_estudio_copiaseguridad_backup_db'),
             path('descargar-backup/', self.admin_site.admin_view(self.descargar_backup_view), name='plan_de_estudio_copiaseguridad_descargar_backup'),
             path('ver-guia/', self.admin_site.admin_view(self.ver_guia_view), name='plan_de_estudio_copiaseguridad_ver_guia'),
+            path('toggle-descarga-plan-tematico/', self.admin_site.admin_view(self.toggle_descarga_plan_tematico_view), name='plan_de_estudio_copiaseguridad_toggle_descarga_plan_tematico'),
             path('guardar-proveedor-ia/', self.admin_site.admin_view(self.guardar_proveedor_ia_view), name='plan_de_estudio_copiaseguridad_guardar_proveedor_ia'),
             path('eliminar-proveedor-ia/<int:proveedor_id>/', self.admin_site.admin_view(self.eliminar_proveedor_ia_view), name='plan_de_estudio_copiaseguridad_eliminar_proveedor_ia'),
             path('consultar-modelos-ia/', self.admin_site.admin_view(self.consultar_modelos_ia_view), name='plan_de_estudio_copiaseguridad_consultar_modelos_ia'),
@@ -574,6 +576,32 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
             path('configurar-extraccion-2026/', self.admin_site.admin_view(self.configurar_extraccion_2026_view), name='plan_de_estudio_copiaseguridad_configurar_extraccion_2026'),
         ]
         return custom_urls + urls
+
+    def toggle_descarga_plan_tematico_view(self, request):
+        """Habilita o desactiva la visualización y descarga de planes temáticos para docentes."""
+        changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
+        if request.method != 'POST':
+            return HttpResponseRedirect(changelist_url)
+        if not self.has_view_permission(request):
+            return HttpResponseForbidden()
+
+        config = ConfiguracionSistema.get_solo()
+        accion = (request.POST.get('accion') or '').strip()
+        if accion == 'activar':
+            config.permitir_descarga_plan_tematico = True
+        elif accion == 'desactivar':
+            config.permitir_descarga_plan_tematico = False
+        else:
+            config.permitir_descarga_plan_tematico = not config.permitir_descarga_plan_tematico
+        config.save()
+
+        estado = "habilitada" if config.permitir_descarga_plan_tematico else "desactivada"
+        self.message_user(
+            request,
+            f"La descarga de planes temáticos por parte de los docentes ha sido {estado}.",
+            level=messages.SUCCESS
+        )
+        return HttpResponseRedirect(changelist_url)
 
     def guardar_proveedor_ia_view(self, request):
         changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')

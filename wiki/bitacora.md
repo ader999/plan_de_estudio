@@ -1,5 +1,14 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-14] Opción en Configuración para Activar/Desactivar Descarga de Planes Temáticos para Docentes
+- **Panel Admin (`plan_de_estudio/admin.py`, `plantillas/admin/plan_de_estudio/copiaseguridad/change_list.html`)**:
+  - Se integró `ConfiguracionSistema.get_solo()` en `CopiaSeguridadAdmin.changelist_view` y se añadió la ruta `toggle-descarga-plan-tematico/` (`toggle_descarga_plan_tematico_view`).
+  - En la tabla **Lista de Herramientas y Acciones** de **Copias de Seguridad / Configuración** se agregó la fila **Descarga de Plan Temático (Docentes)** con indicador de estado (`Habilitada` / `Desactivada`) y botón de acción (`Desactivar` / `Activar`).
+- **Panel de Docentes (`plantillas/inicio.html`)**:
+  - Se condicionó la visualización del botón y enlace de descarga **Plan Temático** (y el aviso cuando no hay plan asignado) en las pestañas **Pendientes** y **Archivados** al valor de `config_sistema.permitir_descarga_plan_tematico` (inyectado globalmente por `google_classroom_context`).
+- **Pruebas (`plan_de_estudio/tests.py`)**:
+  - Se agregó `ConfiguracionPlanTematicoDescargaTest` validando el toggle desde el admin, restricción de permisos para docentes y visibilidad/ocultamiento del enlace en `/`. Suite completa: 39 pruebas pasando (**OK**).
+
 ## [2026-11-14] Corrección de Alertas Silenciosas al Generar Sílabo y Control de Encuentro 1–11
 - **Diagnóstico**: Al presionar el botón **Generar** en `plantillas/formulario_silabo.html` cuando ocurría un error (por ejemplo, al quedar el formulario en `Encuentro (12)` y ser rechazado con HTTP 400 por `generar_silabo`, o ante cualquier error de IA/red), `mostrarMensajeError` en `static/js/silabo_guardar.js` intentaba insertar la alerta en `$("#form-guardar-silabo .card-footer")`, un selector inexistente en `formulario_silabo.html`, ocultando completamente el error y dando la apariencia de que el botón no hacía nada.
 - **Alertas y Manejo de Errores (`plantillas/formulario_silabo.html`, `static/js/silabo_guardar.js`, `static/js/silabo_ia.js`)**:

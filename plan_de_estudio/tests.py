@@ -1,15 +1,18 @@
 import datetime
 import json
+import shutil
+import tempfile
 from unittest.mock import MagicMock, patch
 
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
 from plan_de_estudio.models import (
     Asignatura, Carrera, Plan_de_estudio, AsignacionPlanEstudio, Silabo, Guia,
-    ModeloIAConfig, ProveedorIA, ProgramaAsignatura2026
+    ModeloIAConfig, ProveedorIA, ProgramaAsignatura2026, ConfiguracionSistema
 )
 from plan_de_estudio.forms import SilaboForm, ExportarAsignacionesForm
 
@@ -1026,6 +1029,118 @@ class SilaboFormularioYGeneracionTest(TestCase):
         })
         self.assertEqual(resp_none.status_code, 400)
         self.assertIn('número válido', resp_none.json()['error'])
+
+
+class ConfiguracionPlanTematicoDescargaTest(TestCase):
+    def setUp(self):
+        self.temp_media = tempfile.mkdtemp()
+        self.override = override_settings(MEDIA_ROOT=self.temp_media)
+        self.override.enable()
+        self.patcher_crear = patch('plan_de_estudio.signals.crear_clase_e_invitar_maestro')
+        self.patcher_crear.start()
+
+        self.admin_user = User.objects.create_superuser(
+            username="admin_cfg", email="admin_cfg@example.com", password="adminpassword"
+        )
+        self.docente_user = User.objects.create_user(
+            username="docente_cfg", password="docentepassword"
+        )
+        self.carrera = Carrera.objects.create(
+            nombre="Ingeniería Civil", codigo="IC01", cine_2011=111, cine_2013=222,
+            area_formacion="Tecnología", area_disiplinaria=1
+        )
+        self.asig_pendiente = Asignatura.objects.create(nombre="Estructuras I")
+        self.asig_completada = Asignatura.objects.create(nombre="Estructuras II")
+
+        self.plan_pendiente = Plan_de_estudio.objects.create(
+            carrera=self.carrera, año="III", trimestre="I", pensol="2026", codigo="EST101",
+            asignatura=self.asig_pendiente, horas_presenciales=40, horas_estudio_independiente=40,
+            plan_tematico=SimpleUploadedFile("plan_pendiente.pdf", b"%PDF-1.4 dummy", content_type="application/pdf"),
+        )
+        self.plan_completado = Plan_de_estudio.objects.create(
+            carrera=self.carrera, año="IV", trimestre="I", pensol="2026", codigo="EST201",
+            asignatura=self.asig_completada, horas_presenciales=40, horas_estudio_independiente=40,
+            plan_tematico=SimpleUploadedFile("plan_completado.pdf", b"%PDF-1.4 dummy", content_type="application/pdf"),
+        )
+
+        self.asig_p = AsignacionPlanEstudio.objects.create(
+            usuario=self.docente_user, plan_de_estudio=self.plan_pendiente, silabos_creados=0
+        )
+        self.asig_c = AsignacionPlanEstudio.objects.create(
+            usuario=self.docente_user, plan_de_estudio=self.plan_completado, silabos_creados=11
+        )
+
+    def tearDown(self):
+        self.patcher_crear.stop()
+        self.override.disable()
+        shutil.rmtree(self.temp_media, ignore_errors=True)
+
+    def test_admin_toggle_descarga_plan_tematico(self):
+        config = ConfiguracionSistema.get_solo()
+        self.assertTrue(config.permitir_descarga_plan_tematico)
+
+        client = Client()
+        client.login(username="admin_cfg", password="adminpassword")
+
+        changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
+        toggle_url = reverse('admin:plan_de_estudio_copiaseguridad_toggle_descarga_plan_tematico')
+
+        resp = client.get(changelist_url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Descarga de Plan Temático (Docentes)")
+        self.assertContains(resp, "Habilitada")
+        self.assertContains(resp, "Desactivar")
+
+        # Desactivar descarga
+        resp_off = client.post(toggle_url, {'accion': 'desactivar'})
+        self.assertEqual(resp_off.status_code, 302)
+        config.refresh_from_db()
+        self.assertFalse(config.permitir_descarga_plan_tematico)
+
+        resp = client.get(changelist_url)
+        self.assertContains(resp, "Desactivada")
+        self.assertContains(resp, "Activar")
+
+        # Reactivar descarga
+        resp_on = client.post(toggle_url, {'accion': 'activar'})
+        self.assertEqual(resp_on.status_code, 302)
+        config.refresh_from_db()
+        self.assertTrue(config.permitir_descarga_plan_tematico)
+
+    def test_docente_no_puede_modificar_configuracion(self):
+        client = Client()
+        client.login(username="docente_cfg", password="docentepassword")
+        toggle_url = reverse('admin:plan_de_estudio_copiaseguridad_toggle_descarga_plan_tematico')
+        resp = client.post(toggle_url, {'accion': 'desactivar'})
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/admin/login/', resp['Location'])
+        self.assertTrue(ConfiguracionSistema.get_solo().permitir_descarga_plan_tematico)
+
+    def test_docente_inicio_muestra_u_oculta_descarga_plan_tematico(self):
+        client = Client()
+        client.login(username="docente_cfg", password="docentepassword")
+
+        # Habilitada por defecto: se muestran ambos botones (pendientes y archivados)
+        resp_habilitado = client.get(reverse('inicio'))
+        self.assertEqual(resp_habilitado.status_code, 200)
+        html_hab = resp_habilitado.content.decode('utf-8')
+        self.assertIn(self.plan_pendiente.plan_tematico.url, html_hab)
+        self.assertIn(self.plan_completado.plan_tematico.url, html_hab)
+        self.assertIn("Plan Temático", html_hab)
+
+        # Desactivada: no se renderizan los enlaces ni el texto de plan temático
+        config = ConfiguracionSistema.get_solo()
+        config.permitir_descarga_plan_tematico = False
+        config.save()
+
+        resp_deshabilitado = client.get(reverse('inicio'))
+        self.assertEqual(resp_deshabilitado.status_code, 200)
+        html_des = resp_deshabilitado.content.decode('utf-8')
+        self.assertNotIn(self.plan_pendiente.plan_tematico.url, html_des)
+        self.assertNotIn(self.plan_completado.plan_tematico.url, html_des)
+        self.assertNotIn("Plan Temático", html_des)
+        self.assertNotIn("No se ha asignado un plan temático.", html_des)
+
 
 
 
