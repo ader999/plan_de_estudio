@@ -1,5 +1,28 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-14] Soporte PWA, Service Worker Tolerante a Redes Lentas y Endpoint TWA (`assetlinks.json`)
+- **Iconos PWA**: Generados `static/img/pwa-icon-192.png`, `static/img/pwa-icon-512.png` y `static/img/pwa-icon-512-maskable.png` a partir de `static/img/logouml.png`.
+- **Vistas y Rutas PWA/TWA (`plan_de_estudio/pwa_views.py`, `plan_de_estudio/urls.py`)**:
+  - `/manifest.json` (`manifest_view`): Manifiesto Web App con `display: standalone`, colores corporativos e iconos 192/512/maskable.
+  - `/sw.js` (`service_worker_view`): Service Worker en raíz (`Service-Worker-Allowed: /`, `no-cache`).
+  - `/offline/` (`offline_view`): Vista autónoma de respaldo sin dependencias externas (`plantillas/pwa/offline.html`).
+  - `/.well-known/assetlinks.json` (`assetlinks_view`): Verificación Digital Asset Links configurable mediante `ANDROID_PACKAGE_NAME` y `ANDROID_ASSETLINKS_SHA256`.
+- **Resiliencia en Malas Conexiones (`plantillas/pwa/sw.js`)**:
+  - Caché `Stale-While-Revalidate` para `/static/` y `Cache-First` para CDNs externos (Bootstrap, FontAwesome, jQuery, Google Fonts) para eliminar bloqueos de renderizado.
+  - Estrategia `Network-First` con timeout (`4.5s` si hay copia en caché, `12s` en primera visita) y respaldo automático en caché o `/offline/` para vistas de lectura, excluyendo rutas sensibles (`/admin/`, `/login/`, `/google/`, `/oauth2callback/`, `/api/`, descargas y generación IA) y limpiando caché de páginas al cerrar sesión (`/logout/`).
+- **Integración Global (`plantillas/pwa/head.html`, `plantillas/pwa/body.html`)**:
+  - Incluido en `plantillas/base.html` y `plantillas/eventos/base_eventos.html` con barra superior de progreso de navegación, indicador de modo sin conexión y registro automático del Service Worker.
+- **Pruebas (`plan_de_estudio/tests.py`)**: Agregada la clase `PwaAndTwaEndpointsTest` validando manifiesto, Service Worker, vista offline, `assetlinks.json` e integración en plantillas base.
+
+## [2026-11-14] Proveedores Personalizados de IA (`ProveedorIA`) y Mejoras Visuales en Admin
+- **Modelo y Migración**: Se agregó el modelo `ProveedorIA` (`nombre`, `formato_api` con soporte para OpenAI-compatible, Google Gemini y Anthropic, y `base_url` con método `base_url_normalizada()`) y se vinculó mediante `proveedor_custom` a `ModeloIAConfig` (migración `0021_proveedoria_alter_modeloiaconfig_proveedor_and_more`).
+- **Panel Admin (`Copias de Seguridad / Configuración`)**:
+  - Se añadió formulario desplegable (`+ Agregar nuevo proveedor personalizado`) y opción `+ Agregar nuevo proveedor personalizado...` directamente dentro del selector `Proveedor de IA *`.
+  - Se añadieron endpoints `guardar-proveedor-ia/` y `eliminar-proveedor-ia/<id>/` en `CopiaSeguridadAdmin` y soporte de `custom:<id>` en `consultar-modelos-ia/` y `guardar-modelo-ia/`.
+  - Se corrigió el recorte vertical de texto en los `<select>` del formulario en modo oscuro (`height: auto; min-height: 36px; line-height: 1.4; padding: 7px 10px;`).
+- **Generación y Extracción**: `ai_generators.py` (`listar_modelos_disponibles`, `generar_texto_crudo_ai`, `get_default_config`, `generar_respuesta_ai`) y `utils/gemini_parser.py` (`parse_curriculum_with_ai`) resuelven ahora el `base_url` y `formato_api` de proveedores personalizados.
+- **Pruebas**: Ampliada la suite en `plan_de_estudio/tests.py` para cubrir creación, consulta de modelos, guardado de modelos, despacho de generación y eliminación de `ProveedorIA`.
+
 ## [2026-11-14] Gestión Dinámica de Proveedores, Keys y Modelos de IA en Copias de Seguridad / Configuración
 
 ### Contexto

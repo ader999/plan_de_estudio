@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from plan_de_estudio.models import (
     Asignatura, Carrera, Plan_de_estudio, AsignacionPlanEstudio, Silabo, Guia,
-    ModeloIAConfig, ProgramaAsignatura2026
+    ModeloIAConfig, ProveedorIA, ProgramaAsignatura2026
 )
 from plan_de_estudio.forms import SilaboForm, ExportarAsignacionesForm
 
@@ -726,3 +726,131 @@ class ModeloIAConfigAndAdminTest(TestCase):
             self.assertEqual(kwargs["proveedor"], "deepseek")
             self.assertEqual(kwargs["modelo_id"], "deepseek-chat")
             self.assertEqual(kwargs["api_key"], "sk-ds-extractor-4321")
+
+    def test_admin_puede_crear_usar_y_eliminar_proveedor_personalizado(self):
+        from django.contrib.auth.models import User
+
+        admin_user = User.objects.create_superuser('admin_custom_prov', 'admin_cp@test.com', 'pass12345')
+        client = Client()
+        client.force_login(admin_user)
+
+        resp_crear = client.post(
+            reverse('admin:plan_de_estudio_copiaseguridad_guardar_proveedor_ia'),
+            {
+                'nombre_proveedor': 'Mi Ollama Local',
+                'formato_api': 'openai_compatible',
+                'base_url': 'http://localhost:11434/v1/chat/completions',
+            },
+        )
+        self.assertEqual(resp_crear.status_code, 302)
+        prov = ProveedorIA.objects.get(nombre='Mi Ollama Local')
+        self.assertEqual(prov.formato_api, 'openai_compatible')
+        self.assertEqual(prov.base_url_normalizada, 'http://localhost:11434/v1')
+
+        with patch('plan_de_estudio.admin.listar_modelos_disponibles', return_value=[
+            {'id': 'llama3.1:8b', 'name': 'llama3.1:8b'}
+        ]) as mock_list:
+            resp_list = client.post(
+                reverse('admin:plan_de_estudio_copiaseguridad_consultar_modelos_ia'),
+                data=json.dumps({'proveedor': f'custom:{prov.id}', 'api_key': 'sk-local-123'}),
+                content_type='application/json',
+            )
+            self.assertEqual(resp_list.status_code, 200)
+            self.assertEqual(resp_list.json()['modelos'][0]['id'], 'llama3.1:8b')
+            mock_list.assert_called_once_with(
+                'custom',
+                'sk-local-123',
+                base_url='http://localhost:11434/v1',
+                formato_api='openai_compatible',
+            )
+
+        resp_save_model = client.post(
+            reverse('admin:plan_de_estudio_copiaseguridad_guardar_modelo_ia'),
+            {
+                'proveedor': f'custom:{prov.id}',
+                'api_key': 'sk-local-123',
+                'modelo_id': 'llama3.1:8b',
+                'nombre_mostrar': 'Ollama - Llama 3.1',
+                'disponible_docentes': 'on',
+            },
+        )
+        self.assertEqual(resp_save_model.status_code, 302)
+        modelo = ModeloIAConfig.objects.get(modelo_id='llama3.1:8b')
+        self.assertEqual(modelo.proveedor, 'custom')
+        self.assertEqual(modelo.proveedor_custom_id, prov.id)
+        self.assertEqual(modelo.proveedor_display_nombre, 'Mi Ollama Local')
+
+        from plan_de_estudio.ai_generators import generar_respuesta_ai, get_default_config
+        default_cfg = get_default_config(str(modelo.id))
+        with patch('plan_de_estudio.ai_generators.usar_modelo_openai', return_value='{"descripcion": "Ollama OK"}') as mock_openai:
+            out = generar_respuesta_ai('Hola', modelo_seleccionado=str(modelo.id), **default_cfg)
+            self.assertEqual(out['descripcion'], 'Ollama OK')
+            mock_openai.assert_called_once()
+            _, kw = mock_openai.call_args
+            self.assertEqual(kw['base_url'], 'http://localhost:11434/v1')
+            self.assertEqual(kw['model'], 'llama3.1:8b')
+            self.assertEqual(kw['api_key'], 'sk-local-123')
+
+        resp_del = client.post(
+            reverse('admin:plan_de_estudio_copiaseguridad_eliminar_proveedor_ia', args=[prov.id])
+        )
+        self.assertEqual(resp_del.status_code, 302)
+        self.assertFalse(ProveedorIA.objects.filter(id=prov.id).exists())
+
+
+class PwaAndTwaEndpointsTest(TestCase):
+    def test_manifest_json_valido(self):
+        resp = self.client.get(reverse('pwa_manifest'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('application/manifest+json', resp['Content-Type'])
+        data = resp.json()
+        self.assertEqual(data['short_name'], 'PLANEAUML')
+        self.assertEqual(data['display'], 'standalone')
+        self.assertEqual(data['start_url'], '/?source=pwa')
+        sizes = {icon['sizes'] for icon in data['icons']}
+        self.assertIn('192x192', sizes)
+        self.assertIn('512x512', sizes)
+
+    def test_service_worker_cabeceras_y_contenido(self):
+        resp = self.client.get(reverse('pwa_sw'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('application/javascript', resp['Content-Type'])
+        self.assertEqual(resp['Service-Worker-Allowed'], '/')
+        self.assertIn('no-cache', resp['Cache-Control'])
+        body = resp.content.decode('utf-8')
+        self.assertIn("const OFFLINE_URL = \"/offline/\"", body)
+        self.assertIn('fetchWithTimeout', body)
+
+    def test_offline_page_disponible(self):
+        resp = self.client.get(reverse('pwa_offline'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Sin conexión')
+
+    def test_assetlinks_vacio_y_configurado(self):
+        import os
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop('ANDROID_ASSETLINKS_SHA256', None)
+            resp_empty = self.client.get(reverse('pwa_assetlinks'))
+            self.assertEqual(resp_empty.status_code, 200)
+            self.assertEqual(resp_empty.json(), [])
+
+        with patch.dict(
+            os.environ,
+            {
+                'ANDROID_PACKAGE_NAME': 'com.planeauml.app',
+                'ANDROID_ASSETLINKS_SHA256': 'AA:BB:CC:DD',
+            },
+        ):
+            resp_cfg = self.client.get(reverse('pwa_assetlinks'))
+            self.assertEqual(resp_cfg.status_code, 200)
+            data = resp_cfg.json()
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0]['target']['package_name'], 'com.planeauml.app')
+            self.assertEqual(data[0]['target']['sha256_cert_fingerprints'], ['AA:BB:CC:DD'])
+
+    def test_plantillas_base_incluyen_manifest_y_sw(self):
+        resp = self.client.get(reverse('login'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, '/manifest.json')
+        self.assertContains(resp, '/sw.js')
+

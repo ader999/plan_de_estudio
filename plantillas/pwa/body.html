@@ -1,0 +1,115 @@
+<style>
+    #pwa-nav-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 3px;
+        background: linear-gradient(90deg, #2563eb, #38bdf8);
+        z-index: 99999;
+        opacity: 0;
+        transition: width 0.35s ease, opacity 0.2s ease;
+        pointer-events: none;
+    }
+    #pwa-nav-progress.active {
+        opacity: 1;
+        width: 82%;
+    }
+    #pwa-offline-banner {
+        display: none;
+        position: fixed;
+        bottom: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 99998;
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 0.55rem 1rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+    }
+    #pwa-offline-banner.visible {
+        display: inline-flex;
+    }
+</style>
+
+<div id="pwa-nav-progress" aria-hidden="true"></div>
+<div id="pwa-offline-banner" role="status" aria-live="polite">
+    <span>Sin conexión: mostrando vistas disponibles en caché</span>
+</div>
+
+<script>
+(function () {
+    const progressEl = document.getElementById('pwa-nav-progress');
+    const offlineBanner = document.getElementById('pwa-offline-banner');
+    let progressTimer = null;
+
+    function startProgress() {
+        if (!progressEl) return;
+        clearTimeout(progressTimer);
+        progressEl.style.width = '18%';
+        progressEl.classList.add('active');
+        requestAnimationFrame(() => {
+            progressEl.style.width = '82%';
+        });
+        progressTimer = setTimeout(stopProgress, 10000);
+    }
+
+    function stopProgress() {
+        if (!progressEl) return;
+        clearTimeout(progressTimer);
+        progressEl.classList.remove('active');
+        progressEl.style.width = '0%';
+    }
+
+    function updateOnlineStatus() {
+        if (!offlineBanner) return;
+        offlineBanner.classList.toggle('visible', !navigator.onLine);
+    }
+
+    window.addEventListener('pageshow', stopProgress);
+    window.addEventListener('popstate', stopProgress);
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    const downloadPrefixes = ['/generar_docx', '/generar_excel', '/descargar-'];
+
+    document.addEventListener('click', function (event) {
+        const anchor = event.target.closest('a[href]');
+        if (!anchor) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (anchor.hasAttribute('download') || anchor.target === '_blank') return;
+
+        const href = anchor.getAttribute('href') || '';
+        if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) return;
+
+        try {
+            const targetUrl = new URL(anchor.href, window.location.origin);
+            if (targetUrl.origin !== window.location.origin) return;
+
+            if (targetUrl.pathname.startsWith('/logout') && navigator.serviceWorker && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_PAGES_CACHE' });
+            }
+
+            if (downloadPrefixes.some((p) => targetUrl.pathname.startsWith(p))) return;
+            startProgress();
+        } catch (_) {
+            // Ignore malformed URLs
+        }
+    });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {
+                // Keep app functional even if SW registration fails
+            });
+        });
+    }
+})();
+</script>

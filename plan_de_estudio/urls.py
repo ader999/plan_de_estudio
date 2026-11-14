@@ -1,11 +1,17 @@
 from django.contrib import admin
 from django.urls import path, include
-from plan_de_estudio import views
+from plan_de_estudio import views, pwa_views
 from django.conf.urls.static import static
 from django.conf import settings
 
 
 urlpatterns = [
+    # PWA y Trusted Web Activity (TWA)
+    path('manifest.json', pwa_views.manifest_view, name='pwa_manifest'),
+    path('sw.js', pwa_views.service_worker_view, name='pwa_sw'),
+    path('offline/', pwa_views.offline_view, name='pwa_offline'),
+    path('.well-known/assetlinks.json', pwa_views.assetlinks_view, name='pwa_assetlinks'),
+
     #path('admin/', admin.site.urls),
     path('',views.inicio, name='inicio'),
     path('eventos/', include('eventos.urls')),
