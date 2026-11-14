@@ -140,11 +140,18 @@ def parse_curriculum_with_ai(docx_file, modelo_config_id=None):
     full_prompt = prompt + "\n\n" + text_content
 
     if selected_config:
+        base_url = None
+        formato_api = None
+        if selected_config.proveedor_custom:
+            base_url = selected_config.proveedor_custom.base_url_normalizada
+            formato_api = selected_config.proveedor_custom.formato_api
         raw_text = generar_texto_crudo_ai(
             full_prompt,
             proveedor=selected_config.proveedor,
             modelo_id=selected_config.modelo_id,
             api_key=selected_config.api_key,
+            base_url=base_url,
+            formato_api=formato_api,
             system_prompt="You are an expert curriculum analyzer. Return ONLY valid JSON.",
         )
     else:

@@ -35,7 +35,45 @@ class DateTimeEncoder(json.JSONEncoder):
         return super(DateTimeEncoder, self).default(obj)
 
 
-def listar_modelos_disponibles(proveedor, api_key):
+def _listar_modelos_openai_compatible(api_key, base_url=None):
+    """Lista modelos desde un endpoint compatible con OpenAI (/models)."""
+    base_url_norm = (base_url or "").strip().rstrip("/")
+    if base_url_norm.endswith("/chat/completions"):
+        base_url_norm = base_url_norm[:-len("/chat/completions")]
+
+    try:
+        client = OpenAI(api_key=api_key, base_url=base_url_norm) if base_url_norm else OpenAI(api_key=api_key)
+        resp = client.models.list()
+        modelos = []
+        for m in getattr(resp, "data", resp):
+            mid = getattr(m, "id", "") or ""
+            if not mid:
+                continue
+            modelos.append({"id": mid, "name": mid})
+        modelos.sort(key=lambda x: x["id"])
+        return modelos
+    except Exception:
+        if not base_url_norm:
+            raise
+        resp = requests.get(
+            f"{base_url_norm}/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            raise RuntimeError(f"Error al consultar modelos ({resp.status_code}): {resp.text}")
+        data = resp.json().get("data", [])
+        modelos = []
+        for m in data:
+            mid = m.get("id")
+            if mid:
+                name = m.get("name") or mid
+                modelos.append({"id": mid, "name": f"{name} ({mid})" if name != mid else mid})
+        modelos.sort(key=lambda x: x["id"])
+        return modelos
+
+
+def listar_modelos_disponibles(proveedor, api_key, base_url=None, formato_api=None):
     """
     Consulta la API del proveedor indicado usando la key proporcionada
     y devuelve la lista de modelos disponibles para generación de contenido.
@@ -43,6 +81,16 @@ def listar_modelos_disponibles(proveedor, api_key):
     api_key = (api_key or "").strip()
     if not api_key:
         raise ValueError("Debe ingresar una API Key para consultar los modelos disponibles.")
+
+    if proveedor == "custom":
+        fmt = formato_api or "openai_compatible"
+        if fmt == "google":
+            return listar_modelos_disponibles("google", api_key)
+        if fmt == "anthropic":
+            return listar_modelos_disponibles("anthropic", api_key)
+        if not base_url:
+            raise ValueError("El proveedor personalizado debe tener una URL base configurada.")
+        return _listar_modelos_openai_compatible(api_key, base_url=base_url)
 
     if proveedor == "google":
         client = genai.Client(api_key=api_key)
@@ -495,12 +543,30 @@ def resolver_config_modelo(modelo_seleccionado):
     return ("google", "gemini-3-flash-preview", None, None)
 
 
-def generar_texto_crudo_ai(prompt_completo, proveedor, modelo_id=None, api_key=None, system_prompt=None, **kwargs):
+def generar_texto_crudo_ai(prompt_completo, proveedor, modelo_id=None, api_key=None, system_prompt=None, base_url=None, formato_api=None, **kwargs):
     """
     Genera texto sin post-procesamiento usando el proveedor, modelo y API key especificados.
     Usado tanto por generar_respuesta_ai como por el extractor de Programas de asignatura 2026.
     """
     max_tokens = kwargs.get("max_tokens", CANTIDAD_MAXIMA_TOKEN)
+
+    if proveedor == "custom":
+        fmt = formato_api or "openai_compatible"
+        if fmt == "google":
+            proveedor = "google"
+        elif fmt == "anthropic":
+            proveedor = "anthropic"
+        else:
+            if not base_url:
+                raise ValueError("El proveedor personalizado no tiene una URL base configurada.")
+            return usar_modelo_openai(
+                prompt_completo,
+                max_tokens=max_tokens,
+                model=modelo_id,
+                api_key=api_key,
+                base_url=base_url,
+                system_prompt=system_prompt,
+            )
 
     if proveedor == "openai":
         return usar_modelo_openai(
@@ -577,8 +643,12 @@ def get_default_config(modelo='google'):
     if not modelo:
         modelo = 'deepseek'
     elif str(modelo).strip().isdigit():
-        proveedor, modelo_id, _, _ = resolver_config_modelo(modelo)
-        modelo = proveedor
+        proveedor, modelo_id, _, config_obj = resolver_config_modelo(modelo)
+        if proveedor == 'custom' and config_obj and config_obj.proveedor_custom:
+            fmt = config_obj.proveedor_custom.formato_api
+            modelo = 'google' if fmt == 'google' else ('anthropic' if fmt == 'anthropic' else 'openai')
+        else:
+            modelo = proveedor
     else:
         modelo_id = None
 
@@ -595,7 +665,7 @@ def get_default_config(modelo='google'):
             "temperature": 0.7,
             "timeout": 60
         }
-    elif modelo in ('openai', 'groq', 'openrouter', 'anthropic'):
+    elif modelo in ('openai', 'groq', 'openrouter', 'anthropic', 'custom'):
         return {
             "model": modelo_id or "o4-mini",
             "max_tokens": CANTIDAD_MAXIMA_TOKEN
@@ -627,8 +697,13 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
             modelo_seleccionado = 'google'
             logging.info(f"No se especificó modelo, usando {modelo_seleccionado} por defecto")
 
-        proveedor, modelo_id, api_key, _ = resolver_config_modelo(modelo_seleccionado)
+        proveedor, modelo_id, api_key, config_obj = resolver_config_modelo(modelo_seleccionado)
         respuesta_ai = None
+        base_url = None
+        formato_api = None
+        if config_obj and config_obj.proveedor_custom:
+            base_url = config_obj.proveedor_custom.base_url_normalizada
+            formato_api = config_obj.proveedor_custom.formato_api
 
         if proveedor == 'deepseek':
             max_tokens = kwargs.get('max_tokens', CANTIDAD_MAXIMA_TOKEN)
@@ -658,7 +733,7 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
                     )
                 else:
                     raise e
-        elif proveedor == 'google':
+        elif proveedor == 'google' or (proveedor == 'custom' and formato_api == 'google'):
             generation_config = kwargs.get('generation_config')
             if not generation_config:
                 generation_config = get_default_config('google')
@@ -677,6 +752,8 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
                 proveedor=proveedor,
                 modelo_id=modelo_id,
                 api_key=api_key,
+                base_url=base_url,
+                formato_api=formato_api,
                 **call_kwargs,
             )
 

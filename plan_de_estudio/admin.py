@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Plan_de_estudio, Asignatura, Carrera, Silabo, Guia,
     AsignacionPlanEstudio, PlanTematico, ProgramaAsignatura2026,
-    CopiaSeguridad, ModeloIAConfig
+    CopiaSeguridad, ModeloIAConfig, ProveedorIA
 )
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -551,10 +551,12 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context.update({
-            'modelos_ia': ModeloIAConfig.objects.all().order_by('orden', 'id'),
+            'modelos_ia': ModeloIAConfig.objects.select_related('proveedor_custom').all().order_by('orden', 'id'),
             'modelos_docentes': ModeloIAConfig.objects.filter(activo=True, disponible_docentes=True).order_by('orden', 'id'),
             'modelo_extraccion': ModeloIAConfig.objects.filter(activo=True, usar_para_extraccion=True).first(),
-            'proveedores_ia': ModeloIAConfig.PROVEEDOR_CHOICES,
+            'proveedores_ia': [c for c in ModeloIAConfig.PROVEEDOR_CHOICES if c[0] != 'custom'],
+            'proveedores_custom': ProveedorIA.objects.all().order_by('nombre'),
+            'formatos_api': ProveedorIA.FORMATO_API_CHOICES,
         })
         return super().changelist_view(request, extra_context=extra_context)
 
@@ -564,12 +566,63 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
             path('backup-db/', self.admin_site.admin_view(self.backup_db_view), name='plan_de_estudio_copiaseguridad_backup_db'),
             path('descargar-backup/', self.admin_site.admin_view(self.descargar_backup_view), name='plan_de_estudio_copiaseguridad_descargar_backup'),
             path('ver-guia/', self.admin_site.admin_view(self.ver_guia_view), name='plan_de_estudio_copiaseguridad_ver_guia'),
+            path('guardar-proveedor-ia/', self.admin_site.admin_view(self.guardar_proveedor_ia_view), name='plan_de_estudio_copiaseguridad_guardar_proveedor_ia'),
+            path('eliminar-proveedor-ia/<int:proveedor_id>/', self.admin_site.admin_view(self.eliminar_proveedor_ia_view), name='plan_de_estudio_copiaseguridad_eliminar_proveedor_ia'),
             path('consultar-modelos-ia/', self.admin_site.admin_view(self.consultar_modelos_ia_view), name='plan_de_estudio_copiaseguridad_consultar_modelos_ia'),
             path('guardar-modelo-ia/', self.admin_site.admin_view(self.guardar_modelo_ia_view), name='plan_de_estudio_copiaseguridad_guardar_modelo_ia'),
             path('accion-modelo-ia/<int:modelo_id>/', self.admin_site.admin_view(self.accion_modelo_ia_view), name='plan_de_estudio_copiaseguridad_accion_modelo_ia'),
             path('configurar-extraccion-2026/', self.admin_site.admin_view(self.configurar_extraccion_2026_view), name='plan_de_estudio_copiaseguridad_configurar_extraccion_2026'),
         ]
         return custom_urls + urls
+
+    def guardar_proveedor_ia_view(self, request):
+        changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
+        if request.method != 'POST':
+            return HttpResponseRedirect(changelist_url)
+        if not self.has_view_permission(request):
+            return HttpResponseForbidden()
+
+        nombre = (request.POST.get('nombre_proveedor') or '').strip()
+        formato_api = (request.POST.get('formato_api') or 'openai_compatible').strip()
+        base_url = (request.POST.get('base_url') or '').strip()
+
+        if not nombre:
+            self.message_user(request, "Debe ingresar el nombre del proveedor.", level=messages.ERROR)
+            return HttpResponseRedirect(changelist_url)
+
+        valid_formatos = {code for code, _ in ProveedorIA.FORMATO_API_CHOICES}
+        if formato_api not in valid_formatos:
+            self.message_user(request, "Seleccione un formato de API válido.", level=messages.ERROR)
+            return HttpResponseRedirect(changelist_url)
+
+        if formato_api == 'openai_compatible' and not base_url:
+            self.message_user(request, "Debe ingresar la URL Base de la API para proveedores compatibles con OpenAI.", level=messages.ERROR)
+            return HttpResponseRedirect(changelist_url)
+
+        if ProveedorIA.objects.filter(nombre__iexact=nombre).exists():
+            self.message_user(request, f"Ya existe un proveedor llamado '{nombre}'.", level=messages.ERROR)
+            return HttpResponseRedirect(changelist_url)
+
+        prov = ProveedorIA.objects.create(
+            nombre=nombre,
+            formato_api=formato_api,
+            base_url=base_url,
+        )
+        self.message_user(request, f"Proveedor '{prov.nombre}' agregado correctamente. Ahora puede seleccionarlo en el formulario de modelos.", level=messages.SUCCESS)
+        return HttpResponseRedirect(changelist_url)
+
+    def eliminar_proveedor_ia_view(self, request, proveedor_id):
+        changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
+        if request.method != 'POST':
+            return HttpResponseRedirect(changelist_url)
+        if not self.has_view_permission(request):
+            return HttpResponseForbidden()
+
+        prov = get_object_or_404(ProveedorIA, pk=proveedor_id)
+        nombre = prov.nombre
+        prov.delete()
+        self.message_user(request, f"Proveedor '{nombre}' eliminado.", level=messages.SUCCESS)
+        return HttpResponseRedirect(changelist_url)
 
     def consultar_modelos_ia_view(self, request):
         if request.method != 'POST':
@@ -583,9 +636,23 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
                 payload = request.POST
             proveedor = (payload.get('proveedor') or '').strip()
             api_key = (payload.get('api_key') or '').strip()
-            if not proveedor:
+            if not proveedor or proveedor == '__new_provider__':
                 return JsonResponse({'success': False, 'error': 'Seleccione un proveedor de IA.'}, status=400)
-            modelos = listar_modelos_disponibles(proveedor, api_key)
+
+            base_url = None
+            formato_api = None
+            if proveedor.startswith('custom:'):
+                prov_id = proveedor.split(':', 1)[1]
+                if not prov_id.isdigit():
+                    return JsonResponse({'success': False, 'error': 'Proveedor personalizado inválido.'}, status=400)
+                prov_obj = ProveedorIA.objects.filter(pk=int(prov_id)).first()
+                if not prov_obj:
+                    return JsonResponse({'success': False, 'error': 'El proveedor personalizado no existe.'}, status=404)
+                proveedor = 'custom'
+                base_url = prov_obj.base_url_normalizada
+                formato_api = prov_obj.formato_api
+
+            modelos = listar_modelos_disponibles(proveedor, api_key, base_url=base_url, formato_api=formato_api)
             return JsonResponse({'success': True, 'modelos': modelos})
         except ValueError as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
@@ -600,7 +667,7 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
         if not self.has_view_permission(request):
             return HttpResponseForbidden()
 
-        proveedor = (request.POST.get('proveedor') or '').strip()
+        proveedor_raw = (request.POST.get('proveedor') or '').strip()
         api_key = (request.POST.get('api_key') or '').strip()
         modelo_id = (request.POST.get('modelo_id') or '').strip()
         modelo_id_custom = (request.POST.get('modelo_id_custom') or '').strip()
@@ -611,10 +678,23 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
         if modelo_id == '__custom__':
             modelo_id = modelo_id_custom
 
-        valid_proveedores = {code for code, _ in ModeloIAConfig.PROVEEDOR_CHOICES}
-        if proveedor not in valid_proveedores:
-            self.message_user(request, "Seleccione un proveedor de IA válido.", level=messages.ERROR)
-            return HttpResponseRedirect(changelist_url)
+        proveedor = proveedor_raw
+        proveedor_custom = None
+        if proveedor_raw.startswith('custom:'):
+            prov_id = proveedor_raw.split(':', 1)[1]
+            if not prov_id.isdigit():
+                self.message_user(request, "Proveedor personalizado inválido.", level=messages.ERROR)
+                return HttpResponseRedirect(changelist_url)
+            proveedor_custom = ProveedorIA.objects.filter(pk=int(prov_id)).first()
+            if not proveedor_custom:
+                self.message_user(request, "El proveedor personalizado seleccionado no existe.", level=messages.ERROR)
+                return HttpResponseRedirect(changelist_url)
+            proveedor = 'custom'
+        else:
+            valid_proveedores = {code for code, _ in ModeloIAConfig.PROVEEDOR_CHOICES if code != 'custom'}
+            if proveedor not in valid_proveedores:
+                self.message_user(request, "Seleccione un proveedor de IA válido.", level=messages.ERROR)
+                return HttpResponseRedirect(changelist_url)
 
         if not api_key:
             self.message_user(request, "Debe ingresar la Key de IA.", level=messages.ERROR)
@@ -626,6 +706,7 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
 
         modelo_obj = ModeloIAConfig.objects.create(
             proveedor=proveedor,
+            proveedor_custom=proveedor_custom,
             api_key=api_key,
             modelo_id=modelo_id,
             nombre_mostrar=nombre_mostrar,

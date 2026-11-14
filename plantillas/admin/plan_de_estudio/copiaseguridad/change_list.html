@@ -81,23 +81,85 @@
             Agregue un proveedor y su Key de IA para consultar los modelos disponibles, habilitarlos en la lista de los docentes (Sílabo y Guía) y definir el modelo que extrae texto en <strong>Programas de asignatura 2026</strong>.
         </p>
 
+        <!-- Botón y formulario desplegable para agregar proveedor personalizado -->
+        <div style="margin-bottom: 18px;">
+            <button type="button" id="btn-toggle-nuevo-proveedor" style="background: var(--darkened-bg); color: var(--body-fg); border: 1px solid var(--border-color); padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                + Agregar nuevo proveedor personalizado
+            </button>
+        </div>
+
+        <div id="panel-nuevo-proveedor" style="display: none; background: var(--darkened-bg); padding: 20px; border-radius: 10px; border: 1px dashed var(--link-color); margin-bottom: 22px;">
+            <h4 style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: var(--body-fg);">Agregar Nuevo Proveedor de IA</h4>
+            <form method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_guardar_proveedor_ia' %}">
+                {% csrf_token %}
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px;">
+                    <div>
+                        <label for="id_nombre_proveedor" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Nombre del Proveedor *</label>
+                        <input type="text" id="id_nombre_proveedor" name="nombre_proveedor" required placeholder="Ej: Mistral, xAI Grok, Ollama, Together AI" style="width: 100%; height: auto; min-height: 36px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label for="id_formato_api" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Formato de API *</label>
+                        <select id="id_formato_api" name="formato_api" style="width: 100%; height: auto; min-height: 36px; line-height: 1.4; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
+                            {% for codigo, etiqueta in formatos_api %}
+                            <option value="{{ codigo }}">{{ etiqueta }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div id="grupo-base-url" style="margin-bottom: 14px;">
+                    <label for="id_base_url" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">URL Base de la API *</label>
+                    <input type="url" id="id_base_url" name="base_url" placeholder="Ej: https://api.mistral.ai/v1 o https://api.x.ai/v1" style="width: 100%; height: auto; min-height: 36px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px; box-sizing: border-box;">
+                    <div style="font-size: 12px; opacity: 0.75; margin-top: 4px; color: var(--body-fg);">Debe apuntar al prefijo base compatible con OpenAI (normalmente terminado en <code>/v1</code>).</div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button type="submit" style="background: #2b6cb0; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                        Guardar Proveedor
+                    </button>
+                    <button type="button" id="btn-cancelar-nuevo-proveedor" style="background: transparent; color: var(--body-fg); border: 1px solid var(--border-color); padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+
+            {% if proveedores_custom %}
+            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+                <div style="font-weight: 600; font-size: 13px; margin-bottom: 8px; color: var(--body-fg);">Proveedores personalizados guardados:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    {% for pc in proveedores_custom %}
+                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 6px; background: var(--body-bg); border: 1px solid var(--border-color); font-size: 12.5px; color: var(--body-fg);">
+                        <span><strong>{{ pc.nombre }}</strong>{% if pc.base_url %} (<code>{{ pc.base_url }}</code>){% endif %}</span>
+                        <form method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_eliminar_proveedor_ia' pc.id %}" style="display: inline; margin: 0;" onsubmit="return confirm('¿Eliminar el proveedor {{ pc.nombre }} y sus modelos asociados?');">
+                            {% csrf_token %}
+                            <button type="submit" style="background: #e53e3e; color: white; border: none; border-radius: 4px; padding: 2px 7px; font-size: 11px; cursor: pointer;">&times;</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
         <!-- Formulario para agregar Proveedor, Key de IA y Modelo -->
         <form id="form-agregar-ia" method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_guardar_modelo_ia' %}" style="background: var(--darkened-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 22px;">
             {% csrf_token %}
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 15px;">
                 <div>
                     <label for="id_proveedor_ia" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Proveedor de IA *</label>
-                    <select id="id_proveedor_ia" name="proveedor" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
+                    <select id="id_proveedor_ia" name="proveedor" required style="width: 100%; height: auto; min-height: 36px; line-height: 1.4; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
                         {% for codigo, etiqueta in proveedores_ia %}
                         <option value="{{ codigo }}">{{ etiqueta }}</option>
                         {% endfor %}
+                        {% for pc in proveedores_custom %}
+                        <option value="custom:{{ pc.id }}">{{ pc.nombre }} (Personalizado)</option>
+                        {% endfor %}
+                        <option value="__new_provider__">+ Agregar nuevo proveedor...</option>
                     </select>
                 </div>
 
                 <div>
                     <label for="id_api_key_ia" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Key de IA (API Key) *</label>
                     <div style="display: flex; gap: 6px;">
-                        <input type="password" id="id_api_key_ia" name="api_key" required placeholder="Pegue su API Key aquí..." style="flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
+                        <input type="password" id="id_api_key_ia" name="api_key" required placeholder="Pegue su API Key aquí..." style="flex: 1; height: auto; min-height: 36px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
                         <button type="button" id="btn-toggle-key" style="padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); cursor: pointer; font-size: 12px;">Ver</button>
                     </div>
                 </div>
@@ -113,16 +175,16 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 15px;">
                 <div>
                     <label for="id_modelo_ia" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Modelo disponible *</label>
-                    <select id="id_modelo_ia" name="modelo_id" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
+                    <select id="id_modelo_ia" name="modelo_id" required style="width: 100%; height: auto; min-height: 36px; line-height: 1.4; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
                         <option value="">-- Consulte modelos o seleccione personalizado --</option>
                         <option value="__custom__">Escribir ID de modelo manualmente...</option>
                     </select>
-                    <input type="text" id="id_modelo_ia_custom" name="modelo_id_custom" placeholder="Ej: gemini-2.5-flash, gpt-4o-mini, deepseek-chat" style="display: none; width: 100%; margin-top: 8px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px; box-sizing: border-box;">
+                    <input type="text" id="id_modelo_ia_custom" name="modelo_id_custom" placeholder="Ej: gemini-2.5-flash, gpt-4o-mini, deepseek-chat" style="display: none; width: 100%; margin-top: 8px; height: auto; min-height: 36px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px; box-sizing: border-box;">
                 </div>
 
                 <div>
                     <label for="id_nombre_mostrar_ia" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Nombre visible (opcional)</label>
-                    <input type="text" id="id_nombre_mostrar_ia" name="nombre_mostrar" placeholder="Ej: Google - Gemini 2.5 Flash" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px; box-sizing: border-box;">
+                    <input type="text" id="id_nombre_mostrar_ia" name="nombre_mostrar" placeholder="Ej: Google - Gemini 2.5 Flash" style="width: 100%; height: auto; min-height: 36px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px; box-sizing: border-box;">
                 </div>
             </div>
 
@@ -151,7 +213,7 @@
                 <label for="id_modelo_extraccion_2026" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13.5px;">
                     Modelo predeterminado para extraer texto en "Programas de asignatura 2026"
                 </label>
-                <select id="id_modelo_extraccion_2026" name="modelo_extraccion_id" style="width: 100%; max-width: 460px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
+                <select id="id_modelo_extraccion_2026" name="modelo_extraccion_id" style="width: 100%; max-width: 460px; height: auto; min-height: 36px; line-height: 1.4; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
                     <option value="env_default" {% if not modelo_extraccion %}selected{% endif %}>Predeterminado del sistema (.env - Google Gemini)</option>
                     {% for m in modelos_ia %}
                     <option value="{{ m.id }}" {% if modelo_extraccion and modelo_extraccion.id == m.id %}selected{% endif %}>
@@ -184,7 +246,7 @@
                 <tbody style="font-size: 13.5px; color: var(--body-fg);">
                     {% for m in modelos_ia %}
                     <tr style="border-bottom: 1px solid var(--border-color); background: var(--body-bg);">
-                        <td style="padding: 12px; font-weight: 600;">{{ m.get_proveedor_display }}</td>
+                        <td style="padding: 12px; font-weight: 600;">{{ m.proveedor_display_nombre }}</td>
                         <td style="padding: 12px;">
                             <div style="font-weight: 600;">{{ m.nombre_mostrar }}</div>
                             <div style="font-size: 12px; opacity: 0.75;"><code>{{ m.modelo_id }}</code></div>
@@ -268,6 +330,56 @@
         const inputModeloCustom = document.getElementById('id_modelo_ia_custom');
         const inputNombreMostrar = document.getElementById('id_nombre_mostrar_ia');
 
+        const btnToggleNuevoProv = document.getElementById('btn-toggle-nuevo-proveedor');
+        const btnCancelarNuevoProv = document.getElementById('btn-cancelar-nuevo-proveedor');
+        const panelNuevoProv = document.getElementById('panel-nuevo-proveedor');
+        const inputNombreProv = document.getElementById('id_nombre_proveedor');
+        const selectFormatoApi = document.getElementById('id_formato_api');
+        const grupoBaseUrl = document.getElementById('grupo-base-url');
+        const inputBaseUrl = document.getElementById('id_base_url');
+
+        function abrirPanelNuevoProveedor() {
+            if (panelNuevoProv) {
+                panelNuevoProv.style.display = 'block';
+                if (inputNombreProv) inputNombreProv.focus();
+            }
+        }
+
+        function cerrarPanelNuevoProveedor() {
+            if (panelNuevoProv) {
+                panelNuevoProv.style.display = 'none';
+            }
+            if (selectProveedor && selectProveedor.value === '__new_provider__') {
+                selectProveedor.selectedIndex = 0;
+            }
+        }
+
+        if (btnToggleNuevoProv) {
+            btnToggleNuevoProv.addEventListener('click', function() {
+                if (panelNuevoProv.style.display === 'none' || !panelNuevoProv.style.display) {
+                    abrirPanelNuevoProveedor();
+                } else {
+                    cerrarPanelNuevoProveedor();
+                }
+            });
+        }
+
+        if (btnCancelarNuevoProv) {
+            btnCancelarNuevoProv.addEventListener('click', cerrarPanelNuevoProveedor);
+        }
+
+        function actualizarVisibilidadBaseUrl() {
+            if (!selectFormatoApi || !grupoBaseUrl || !inputBaseUrl) return;
+            const esOpenAIComp = selectFormatoApi.value === 'openai_compatible';
+            grupoBaseUrl.style.display = esOpenAIComp ? 'block' : 'none';
+            inputBaseUrl.required = esOpenAIComp;
+        }
+
+        if (selectFormatoApi) {
+            selectFormatoApi.addEventListener('change', actualizarVisibilidadBaseUrl);
+            actualizarVisibilidadBaseUrl();
+        }
+
         if (btnToggleKey && inputKey) {
             btnToggleKey.addEventListener('click', function() {
                 if (inputKey.type === 'password') {
@@ -284,6 +396,10 @@
 
         if (selectProveedor) {
             selectProveedor.addEventListener('change', function() {
+                if (this.value === '__new_provider__') {
+                    abrirPanelNuevoProveedor();
+                    return;
+                }
                 selectModelo.innerHTML = '<option value="">-- Consulte modelos o seleccione personalizado --</option><option value="__custom__">Escribir ID de modelo manualmente...</option>';
                 inputModeloCustom.style.display = 'none';
                 inputModeloCustom.required = false;
@@ -304,7 +420,7 @@
                     inputModeloCustom.style.display = 'none';
                     inputModeloCustom.required = false;
                     if (this.value && (!inputNombreMostrar.value || inputNombreMostrar.value === ultimoAutoNombre)) {
-                        const provLabel = selectProveedor.options[selectProveedor.selectedIndex].text;
+                        const provLabel = selectProveedor.options[selectProveedor.selectedIndex].text.replace(' (Personalizado)', '');
                         ultimoAutoNombre = provLabel + ' - ' + this.value;
                         inputNombreMostrar.value = ultimoAutoNombre;
                     }
@@ -317,6 +433,12 @@
                 const proveedor = selectProveedor.value;
                 const apiKey = inputKey.value.trim();
                 const csrfToken = document.querySelector('#form-agregar-ia [name=csrfmiddlewaretoken]').value;
+
+                if (!proveedor || proveedor === '__new_provider__') {
+                    estadoConsulta.textContent = 'Seleccione un proveedor válido primero.';
+                    estadoConsulta.style.color = '#e53e3e';
+                    return;
+                }
 
                 if (!apiKey) {
                     estadoConsulta.textContent = 'Ingrese una API Key primero.';

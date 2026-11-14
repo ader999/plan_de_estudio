@@ -694,6 +694,47 @@ class ConfiguracionSistema(models.Model):
         return "Configuración del Sistema"
 
 
+class ProveedorIA(models.Model):
+    """
+    Proveedores de IA personalizados agregados por el administrador.
+    """
+    FORMATO_API_CHOICES = [
+        ('openai_compatible', 'Compatible con OpenAI (Chat Completions /v1)'),
+        ('google', 'Google Gemini'),
+        ('anthropic', 'Anthropic (Claude)'),
+    ]
+
+    nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre del Proveedor")
+    formato_api = models.CharField(
+        max_length=30,
+        choices=FORMATO_API_CHOICES,
+        default='openai_compatible',
+        verbose_name="Tipo / Formato de API"
+    )
+    base_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default="",
+        verbose_name="URL Base de la API"
+    )
+    creado_el = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Proveedor de IA"
+        verbose_name_plural = "Proveedores de IA"
+        ordering = ['nombre']
+
+    @property
+    def base_url_normalizada(self):
+        url = (self.base_url or "").strip().rstrip("/")
+        if url.endswith("/chat/completions"):
+            url = url[:-len("/chat/completions")]
+        return url
+
+    def __str__(self):
+        return self.nombre
+
+
 class ModeloIAConfig(models.Model):
     """
     Configuración de proveedores, claves API y modelos de IA disponibles
@@ -706,12 +747,21 @@ class ModeloIAConfig(models.Model):
         ('groq', 'Groq'),
         ('openrouter', 'OpenRouter'),
         ('anthropic', 'Anthropic (Claude)'),
+        ('custom', 'Proveedor Personalizado'),
     ]
 
     proveedor = models.CharField(
         max_length=50,
         choices=PROVEEDOR_CHOICES,
         verbose_name="Proveedor de IA"
+    )
+    proveedor_custom = models.ForeignKey(
+        ProveedorIA,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='modelos',
+        verbose_name="Proveedor personalizado"
     )
     nombre_mostrar = models.CharField(
         max_length=150,
@@ -743,9 +793,17 @@ class ModeloIAConfig(models.Model):
         verbose_name_plural = "Modelos de IA"
         ordering = ['orden', 'id']
 
+    @property
+    def proveedor_display_nombre(self):
+        if self.proveedor_custom:
+            return self.proveedor_custom.nombre
+        return self.get_proveedor_display()
+
     def save(self, *args, **kwargs):
+        if self.proveedor_custom:
+            self.proveedor = 'custom'
         if not self.nombre_mostrar:
-            self.nombre_mostrar = f"{self.get_proveedor_display()} - {self.modelo_id}"
+            self.nombre_mostrar = f"{self.proveedor_display_nombre} - {self.modelo_id}"
         if not self.activo and self.usar_para_extraccion:
             self.usar_para_extraccion = False
         super().save(*args, **kwargs)
@@ -760,7 +818,7 @@ class ModeloIAConfig(models.Model):
         return f"{key[:4]}{'•' * 8}{key[-4:]}"
 
     def __str__(self):
-        return self.nombre_mostrar or f"{self.get_proveedor_display()} - {self.modelo_id}"
+        return self.nombre_mostrar or f"{self.proveedor_display_nombre} - {self.modelo_id}"
 
 
 def get_user_str(self):
