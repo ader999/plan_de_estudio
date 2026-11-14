@@ -1,5 +1,28 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-14] Gestión Dinámica de Proveedores, Keys y Modelos de IA en Copias de Seguridad / Configuración
+
+### Contexto
+Se requería administrar desde la sección **Copias de Seguridad / Configuración** del panel administrativo los proveedores de IA, sus claves API y los modelos disponibles tanto para la lista mostrada a los docentes (Sílabo y Guía de Estudio Independiente) como para la extracción de texto en **Programas de asignatura 2026** (`.docx`), manteniendo compatibilidad con la configuración previa basada en variables de entorno (`.env`).
+
+### Cambios Realizados
+- **`plan_de_estudio/models.py` y migración `0020_modeloiaconfig.py`**:
+  - Se creó el modelo `ModeloIAConfig` para almacenar `proveedor` (`google`, `openai`, `deepseek`, `groq`, `openrouter`, `anthropic`), `api_key`, `modelo_id`, `nombre_mostrar`, `disponible_docentes`, `usar_para_extraccion` (único por defecto mediante `save()`) y `activo`, junto con la propiedad `api_key_enmascarada`.
+- **`plan_de_estudio/ai_generators.py`**:
+  - Se añadió `listar_modelos_disponibles(proveedor, api_key)` para consultar en vivo los modelos disponibles de cada proveedor.
+  - Se añadieron `resolver_config_modelo`, `generar_texto_crudo_ai` y soporte para Anthropic/Groq/OpenRouter además de Google Gemini, OpenAI y DeepSeek con claves dinámicas, preservando los identificadores legados (`google`, `openai`, `deepseek`) y variables `.env` como fallback.
+- **`plan_de_estudio/utils/gemini_parser.py`**:
+  - Se actualizó `parse_curriculum_with_ai(docx_file, modelo_config_id=None)` para usar el modelo seleccionado en la importación o el modelo configurado por defecto (`usar_para_extraccion=True`), manteniendo el fallback a `.env`.
+- **`plan_de_estudio/admin.py` y plantillas de administración**:
+  - En `CopiaSeguridadAdmin` y `plantillas/admin/plan_de_estudio/copiaseguridad/change_list.html` se agregó el formulario de proveedor/key/consulta dinámica de modelos, el selector rápido del modelo extractor para **Programas de asignatura 2026**, la tabla de modelos configurados con acciones (visibilidad para docentes, extractor 2026, activar/desactivar, eliminar) y la vista previa de modelos visibles para docentes.
+  - En `ProgramaAsignatura2026Admin.import_docx_view` y `plantillas/admin/plan_de_estudio/programaasignatura2026/import_form.html` se agregó el selector del modelo de IA para extraer texto desde `.docx`.
+- **`plan_de_estudio/views.py` y plantillas de docentes**:
+  - `ver_formulario_silabo` y `ver_formulario_guia` envían `modelos_ia` activos y habilitados para docentes a `formulario_silabo.html` y `formulario_estudio_independiente.html`, con respaldo automático a las opciones legadas si no hay registros configurados.
+- **`Procfile`**:
+  - Se añadió `python manage.py migrate --noinput &&` previo al arranque de `gunicorn` para aplicar automáticamente las migraciones pendientes en producción (Railway).
+
+---
+
 ## [2026-11-07] Corrección de SyntaxError en `context_processors.py`
 
 ### Contexto del Problema

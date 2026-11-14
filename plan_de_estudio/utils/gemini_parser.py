@@ -2,6 +2,7 @@
 import os
 import io
 import json
+import re
 import docx
 from google import genai
 
@@ -54,13 +55,21 @@ def extract_text_from_docx(docx_file):
             
     return "\n\n".join(full_text)
 
-def parse_curriculum_with_ai(docx_file):
+def parse_curriculum_with_ai(docx_file, modelo_config_id=None):
     """
-    Parses a curriculum .docx file using Gemini and returns a JSON dictionary 
-    compatible with ProgramaAsignatura2026 model.
+    Parses a curriculum .docx file using the configured extraction AI model
+    (or Gemini .env fallback) and returns a JSON dictionary compatible with ProgramaAsignatura2026 model.
     """
-    client = configure_gemini()
-    
+    from plan_de_estudio.models import ModeloIAConfig
+    from plan_de_estudio.ai_generators import generar_texto_crudo_ai
+
+    selected_config = None
+    if modelo_config_id and str(modelo_config_id) != "env_default":
+        if str(modelo_config_id).isdigit():
+            selected_config = ModeloIAConfig.objects.filter(id=int(modelo_config_id), activo=True).first()
+    elif modelo_config_id != "env_default":
+        selected_config = ModeloIAConfig.objects.filter(usar_para_extraccion=True, activo=True).first()
+
     # Extract text preserving order
     text_content = extract_text_from_docx(docx_file)
     
@@ -128,20 +137,34 @@ def parse_curriculum_with_ai(docx_file):
     
     # We remove the truncation. Gemini 1.5/pro/flash has a very large context window.
     # We trust it can handle the full syllabus.
-    full_prompt = prompt + "\n\n" + text_content 
-    
-    response = client.models.generate_content(
-        model='gemini-3-flash-preview',
-        contents=full_prompt,
-    )
-    
+    full_prompt = prompt + "\n\n" + text_content
+
+    if selected_config:
+        raw_text = generar_texto_crudo_ai(
+            full_prompt,
+            proveedor=selected_config.proveedor,
+            modelo_id=selected_config.modelo_id,
+            api_key=selected_config.api_key,
+            system_prompt="You are an expert curriculum analyzer. Return ONLY valid JSON.",
+        )
+    else:
+        client = configure_gemini()
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview',
+            contents=full_prompt,
+        )
+        raw_text = response.text
+
     try:
         # Clean response if it contains markdown code blocks
-        clean_response = response.text.replace("```json", "").replace("```", "").strip()
+        clean_response = (raw_text or "").replace("```json", "").replace("```", "").strip()
+        json_match = re.search(r'\{.*\}', clean_response, re.DOTALL)
+        if json_match:
+            clean_response = json_match.group(0).strip()
         data = json.loads(clean_response)
         return data
     except Exception as e:
         print(f"Error parsing AI response: {e}")
-        print(f"Response text: {response.text}")
+        print(f"Response text: {raw_text}")
         return {}
 

@@ -71,6 +71,317 @@
         </div>
     </div>
 
+    <!-- Sección de Configuración de Proveedores y Modelos de IA -->
+    <div class="module" style="padding: 25px; margin-bottom: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--link-color);"><path d="M12 2a4 4 0 0 1 4 4v2h2a4 4 0 0 1 0 8h-2v2a4 4 0 0 1-8 0v-2H6a4 4 0 0 1 0-8h2V6a4 4 0 0 1 4-4z"></path></svg>
+            <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--body-fg); border: none;">Proveedores y Modelos de Inteligencia Artificial</h3>
+        </div>
+        <p style="margin: 0 0 18px 0; color: var(--body-fg); font-size: 14px; line-height: 1.5; opacity: 0.9;">
+            Agregue un proveedor y su Key de IA para consultar los modelos disponibles, habilitarlos en la lista de los docentes (Sílabo y Guía) y definir el modelo que extrae texto en <strong>Programas de asignatura 2026</strong>.
+        </p>
+
+        <!-- Formulario para agregar Proveedor, Key de IA y Modelo -->
+        <form id="form-agregar-ia" method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_guardar_modelo_ia' %}" style="background: var(--darkened-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 22px;">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label for="id_proveedor_ia" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Proveedor de IA *</label>
+                    <select id="id_proveedor_ia" name="proveedor" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
+                        {% for codigo, etiqueta in proveedores_ia %}
+                        <option value="{{ codigo }}">{{ etiqueta }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="id_api_key_ia" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Key de IA (API Key) *</label>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="password" id="id_api_key_ia" name="api_key" required placeholder="Pegue su API Key aquí..." style="flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
+                        <button type="button" id="btn-toggle-key" style="padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); cursor: pointer; font-size: 12px;">Ver</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <button type="button" id="btn-consultar-modelos" style="background: #2b6cb0; color: white; border: none; padding: 9px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                    Consultar modelos disponibles
+                </button>
+                <span id="estado-consulta-modelos" style="font-size: 13px; color: var(--body-fg); opacity: 0.9;"></span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label for="id_modelo_ia" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Modelo disponible *</label>
+                    <select id="id_modelo_ia" name="modelo_id" required style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
+                        <option value="">-- Consulte modelos o seleccione personalizado --</option>
+                        <option value="__custom__">Escribir ID de modelo manualmente...</option>
+                    </select>
+                    <input type="text" id="id_modelo_ia_custom" name="modelo_id_custom" placeholder="Ej: gemini-2.5-flash, gpt-4o-mini, deepseek-chat" style="display: none; width: 100%; margin-top: 8px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px; box-sizing: border-box;">
+                </div>
+
+                <div>
+                    <label for="id_nombre_mostrar_ia" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13px;">Nombre visible (opcional)</label>
+                    <input type="text" id="id_nombre_mostrar_ia" name="nombre_mostrar" placeholder="Ej: Google - Gemini 2.5 Flash" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 18px; font-size: 13.5px; color: var(--body-fg);">
+                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" name="disponible_docentes" checked>
+                    <span>Incluir en lista de modelos para los docentes</span>
+                </label>
+                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" name="usar_para_extraccion">
+                    <span>Usar para extraer texto en "Programas de asignatura 2026"</span>
+                </label>
+            </div>
+
+            <div>
+                <button type="submit" class="default" style="background: #2f855a; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 13.5px; cursor: pointer;">
+                    Guardar Proveedor y Modelo
+                </button>
+            </div>
+        </form>
+
+        <!-- Selector rápido de modelo para extracción en Programas de asignatura 2026 -->
+        <form method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_configurar_extraccion_2026' %}" style="background: var(--darkened-bg); padding: 16px 20px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 22px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+            {% csrf_token %}
+            <div style="flex: 1; min-width: 240px;">
+                <label for="id_modelo_extraccion_2026" style="display: block; font-weight: 600; margin-bottom: 6px; color: var(--body-fg); font-size: 13.5px;">
+                    Modelo predeterminado para extraer texto en "Programas de asignatura 2026"
+                </label>
+                <select id="id_modelo_extraccion_2026" name="modelo_extraccion_id" style="width: 100%; max-width: 460px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--body-bg); color: var(--body-fg); font-size: 13.5px;">
+                    <option value="env_default" {% if not modelo_extraccion %}selected{% endif %}>Predeterminado del sistema (.env - Google Gemini)</option>
+                    {% for m in modelos_ia %}
+                    <option value="{{ m.id }}" {% if modelo_extraccion and modelo_extraccion.id == m.id %}selected{% endif %}>
+                        {{ m.nombre_mostrar }} ({{ m.modelo_id }}){% if not m.activo %} [Inactivo]{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <button type="submit" style="background: #319795; color: white; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                    Guardar Extractor 2026
+                </button>
+            </div>
+        </form>
+
+        <!-- Lista de modelos configurados -->
+        <h4 style="margin: 0 0 12px 0; font-size: 15.5px; font-weight: 600; color: var(--body-fg);">Lista de Modelos Configurados (Docentes y Extracción)</h4>
+        <div class="results" style="overflow-x: auto; margin-bottom: 18px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; border: 1px solid var(--border-color);">
+                <thead>
+                    <tr style="background: var(--darkened-bg); color: var(--body-fg); font-size: 12px; font-weight: 700; text-transform: uppercase;">
+                        <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-color);">Proveedor</th>
+                        <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-color);">Nombre / Modelo</th>
+                        <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-color);">Key</th>
+                        <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-color); text-align: center;">Para Docentes</th>
+                        <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-color); text-align: center;">Extractor 2026</th>
+                        <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-color); text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 13.5px; color: var(--body-fg);">
+                    {% for m in modelos_ia %}
+                    <tr style="border-bottom: 1px solid var(--border-color); background: var(--body-bg);">
+                        <td style="padding: 12px; font-weight: 600;">{{ m.get_proveedor_display }}</td>
+                        <td style="padding: 12px;">
+                            <div style="font-weight: 600;">{{ m.nombre_mostrar }}</div>
+                            <div style="font-size: 12px; opacity: 0.75;"><code>{{ m.modelo_id }}</code></div>
+                        </td>
+                        <td style="padding: 12px;"><code>{{ m.api_key_enmascarada }}</code></td>
+                        <td style="padding: 12px; text-align: center;">
+                            <form method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_accion_modelo_ia' m.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion" value="toggle_docentes">
+                                <button type="submit" style="padding: 5px 10px; border-radius: 5px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; color: white; background: {% if m.disponible_docentes and m.activo %}#2f855a{% else %}#718096{% endif %};">
+                                    {% if m.disponible_docentes and m.activo %}Visible{% else %}Oculto{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            {% if m.usar_para_extraccion and m.activo %}
+                                <span style="display: inline-block; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; background: #2b6cb0; color: white;">Activo</span>
+                            {% else %}
+                                <form method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_accion_modelo_ia' m.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="accion" value="set_extraccion">
+                                    <button type="submit" style="padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border-color); cursor: pointer; font-size: 12px; background: var(--darkened-bg); color: var(--body-fg);">
+                                        Usar
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px; text-align: center; white-space: nowrap;">
+                            <form method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_accion_modelo_ia' m.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion" value="toggle_activo">
+                                <button type="submit" style="padding: 5px 10px; border-radius: 5px; border: 1px solid var(--border-color); cursor: pointer; font-size: 12px; background: var(--darkened-bg); color: var(--body-fg); margin-right: 4px;">
+                                    {% if m.activo %}Desactivar{% else %}Activar{% endif %}
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_accion_modelo_ia' m.id %}" style="display: inline;" onsubmit="return confirm('¿Eliminar este modelo de IA?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion" value="eliminar">
+                                <button type="submit" style="padding: 5px 10px; border-radius: 5px; border: none; cursor: pointer; font-size: 12px; font-weight: 600; background: #e53e3e; color: white;">
+                                    Eliminar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr style="background: var(--body-bg);">
+                        <td colspan="6" style="padding: 16px; text-align: center; opacity: 0.8;">
+                            No hay modelos configurados aún. Mientras tanto, los docentes y Programas 2026 usarán la configuración predeterminada de variables de entorno (.env).
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Resumen de lista visible para docentes -->
+        <div style="background: var(--darkened-bg); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13.5px; color: var(--body-fg);">
+            <strong>Lista actual visible para los docentes (Sílabo y Guía de Estudio):</strong>
+            {% if modelos_docentes %}
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                    {% for md in modelos_docentes %}
+                    <span style="padding: 4px 10px; border-radius: 999px; background: var(--primary); color: var(--primary-fg); font-size: 12.5px; font-weight: 600;">
+                        {{ md.nombre_mostrar }}
+                    </span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <span style="opacity: 0.85;"> Predeterminada del sistema (Google - Gemini-3-flash, OpenAI - o4Mini, DeepSeek - Chat).</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        const btnToggleKey = document.getElementById('btn-toggle-key');
+        const inputKey = document.getElementById('id_api_key_ia');
+        const selectProveedor = document.getElementById('id_proveedor_ia');
+        const btnConsultar = document.getElementById('btn-consultar-modelos');
+        const estadoConsulta = document.getElementById('estado-consulta-modelos');
+        const selectModelo = document.getElementById('id_modelo_ia');
+        const inputModeloCustom = document.getElementById('id_modelo_ia_custom');
+        const inputNombreMostrar = document.getElementById('id_nombre_mostrar_ia');
+
+        if (btnToggleKey && inputKey) {
+            btnToggleKey.addEventListener('click', function() {
+                if (inputKey.type === 'password') {
+                    inputKey.type = 'text';
+                    btnToggleKey.textContent = 'Ocultar';
+                } else {
+                    inputKey.type = 'password';
+                    btnToggleKey.textContent = 'Ver';
+                }
+            });
+        }
+
+        let ultimoAutoNombre = '';
+
+        if (selectProveedor) {
+            selectProveedor.addEventListener('change', function() {
+                selectModelo.innerHTML = '<option value="">-- Consulte modelos o seleccione personalizado --</option><option value="__custom__">Escribir ID de modelo manualmente...</option>';
+                inputModeloCustom.style.display = 'none';
+                inputModeloCustom.required = false;
+                if (inputNombreMostrar.value === ultimoAutoNombre) {
+                    inputNombreMostrar.value = '';
+                    ultimoAutoNombre = '';
+                }
+                estadoConsulta.textContent = '';
+            });
+        }
+
+        if (selectModelo) {
+            selectModelo.addEventListener('change', function() {
+                if (this.value === '__custom__') {
+                    inputModeloCustom.style.display = 'block';
+                    inputModeloCustom.required = true;
+                } else {
+                    inputModeloCustom.style.display = 'none';
+                    inputModeloCustom.required = false;
+                    if (this.value && (!inputNombreMostrar.value || inputNombreMostrar.value === ultimoAutoNombre)) {
+                        const provLabel = selectProveedor.options[selectProveedor.selectedIndex].text;
+                        ultimoAutoNombre = provLabel + ' - ' + this.value;
+                        inputNombreMostrar.value = ultimoAutoNombre;
+                    }
+                }
+            });
+        }
+
+        if (btnConsultar) {
+            btnConsultar.addEventListener('click', async function() {
+                const proveedor = selectProveedor.value;
+                const apiKey = inputKey.value.trim();
+                const csrfToken = document.querySelector('#form-agregar-ia [name=csrfmiddlewaretoken]').value;
+
+                if (!apiKey) {
+                    estadoConsulta.textContent = 'Ingrese una API Key primero.';
+                    estadoConsulta.style.color = '#e53e3e';
+                    return;
+                }
+
+                btnConsultar.disabled = true;
+                btnConsultar.textContent = 'Consultando...';
+                estadoConsulta.textContent = 'Conectando con el proveedor...';
+                estadoConsulta.style.color = 'var(--body-fg)';
+
+                try {
+                    const resp = await fetch("{% url 'admin:plan_de_estudio_copiaseguridad_consultar_modelos_ia' %}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({ proveedor: proveedor, api_key: apiKey })
+                    });
+                    const data = await resp.json();
+
+                    if (resp.ok && data.success) {
+                        selectModelo.innerHTML = '';
+                        if (data.modelos.length === 0) {
+                            const optEmpty = document.createElement('option');
+                            optEmpty.value = '';
+                            optEmpty.textContent = '-- No se encontraron modelos --';
+                            selectModelo.appendChild(optEmpty);
+                        } else {
+                            const optDefault = document.createElement('option');
+                            optDefault.value = '';
+                            optDefault.textContent = '-- Seleccione un modelo (' + data.modelos.length + ' disponibles) --';
+                            selectModelo.appendChild(optDefault);
+                            data.modelos.forEach(function(m) {
+                                const opt = document.createElement('option');
+                                opt.value = m.id;
+                                opt.textContent = m.name;
+                                selectModelo.appendChild(opt);
+                            });
+                        }
+                        const optCustom = document.createElement('option');
+                        optCustom.value = '__custom__';
+                        optCustom.textContent = 'Escribir ID de modelo manualmente...';
+                        selectModelo.appendChild(optCustom);
+
+                        estadoConsulta.textContent = 'Se cargaron ' + data.modelos.length + ' modelos disponibles.';
+                        estadoConsulta.style.color = '#38a169';
+                    } else {
+                        estadoConsulta.textContent = data.error || 'No se pudieron consultar los modelos.';
+                        estadoConsulta.style.color = '#e53e3e';
+                    }
+                } catch (err) {
+                    estadoConsulta.textContent = 'Error de red al consultar modelos.';
+                    estadoConsulta.style.color = '#e53e3e';
+                } finally {
+                    btnConsultar.disabled = false;
+                    btnConsultar.textContent = 'Consultar modelos disponibles';
+                }
+            });
+        }
+    })();
+    </script>
+
     <!-- Sección de Documentación -->
     <div class="module" style="padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">

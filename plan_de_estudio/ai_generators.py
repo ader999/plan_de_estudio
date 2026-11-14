@@ -18,6 +18,14 @@ from openai import OpenAI
 
 CANTIDAD_MAXIMA_TOKEN = 12000
 
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+
+OPENAI_EXCLUDED_FRAGMENTS = (
+    "embedding", "whisper", "tts", "dall-e", "moderation",
+    "sora", "transcribe", "image", "babbage", "davinci", "realtime", "audio"
+)
+
 
 # Añadir un encoder personalizado para manejar objetos de fecha
 class DateTimeEncoder(json.JSONEncoder):
@@ -27,23 +35,133 @@ class DateTimeEncoder(json.JSONEncoder):
         return super(DateTimeEncoder, self).default(obj)
 
 
-def usar_modelo_google(prompt_completo, generation_config):
+def listar_modelos_disponibles(proveedor, api_key):
+    """
+    Consulta la API del proveedor indicado usando la key proporcionada
+    y devuelve la lista de modelos disponibles para generación de contenido.
+    """
+    api_key = (api_key or "").strip()
+    if not api_key:
+        raise ValueError("Debe ingresar una API Key para consultar los modelos disponibles.")
+
+    if proveedor == "google":
+        client = genai.Client(api_key=api_key)
+        modelos = []
+        for m in client.models.list():
+            raw_name = getattr(m, "name", "") or ""
+            model_id = raw_name.replace("models/", "", 1)
+            actions = getattr(m, "supported_actions", None) or []
+            if actions and "generateContent" not in actions:
+                continue
+            lower_id = model_id.lower()
+            if any(bad in lower_id for bad in ("embedding", "imagen", "veo", "aqa", "tts")):
+                continue
+            display = getattr(m, "display_name", None) or model_id
+            modelos.append({"id": model_id, "name": f"{display} ({model_id})" if display != model_id else model_id})
+        modelos.sort(key=lambda x: x["id"])
+        return modelos
+
+    if proveedor == "openai":
+        client = OpenAI(api_key=api_key)
+        resp = client.models.list()
+        modelos = []
+        for m in getattr(resp, "data", resp):
+            mid = getattr(m, "id", "") or ""
+            lower_id = mid.lower()
+            if any(frag in lower_id for frag in OPENAI_EXCLUDED_FRAGMENTS):
+                continue
+            modelos.append({"id": mid, "name": mid})
+        modelos.sort(key=lambda x: x["id"])
+        return modelos
+
+    if proveedor == "deepseek":
+        resp = requests.get(
+            "https://api.deepseek.com/v1/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            raise RuntimeError(f"Error al consultar modelos de DeepSeek ({resp.status_code}): {resp.text}")
+        data = resp.json().get("data", [])
+        modelos = [{"id": m["id"], "name": m["id"]} for m in data if m.get("id")]
+        modelos.sort(key=lambda x: x["id"])
+        return modelos
+
+    if proveedor == "groq":
+        client = OpenAI(api_key=api_key, base_url=GROQ_BASE_URL)
+        resp = client.models.list()
+        modelos = []
+        for m in getattr(resp, "data", resp):
+            mid = getattr(m, "id", "") or ""
+            lower_id = mid.lower()
+            if any(frag in lower_id for frag in ("whisper", "tts", "playai", "guard")):
+                continue
+            modelos.append({"id": mid, "name": mid})
+        modelos.sort(key=lambda x: x["id"])
+        return modelos
+
+    if proveedor == "openrouter":
+        resp = requests.get(
+            f"{OPENROUTER_BASE_URL}/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=20,
+        )
+        if resp.status_code != 200:
+            raise RuntimeError(f"Error al consultar modelos de OpenRouter ({resp.status_code}): {resp.text}")
+        data = resp.json().get("data", [])
+        modelos = []
+        for m in data:
+            mid = m.get("id")
+            if not mid:
+                continue
+            name = m.get("name") or mid
+            modelos.append({"id": mid, "name": f"{name} ({mid})" if name != mid else mid})
+        modelos.sort(key=lambda x: x["id"])
+        return modelos
+
+    if proveedor == "anthropic":
+        resp = requests.get(
+            "https://api.anthropic.com/v1/models",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+            },
+            timeout=15,
+        )
+        if resp.status_code != 200:
+            raise RuntimeError(f"Error al consultar modelos de Anthropic ({resp.status_code}): {resp.text}")
+        data = resp.json().get("data", [])
+        modelos = []
+        for m in data:
+            mid = m.get("id")
+            if not mid:
+                continue
+            name = m.get("display_name") or mid
+            modelos.append({"id": mid, "name": f"{name} ({mid})" if name != mid else mid})
+        modelos.sort(key=lambda x: x["id"])
+        return modelos
+
+    raise ValueError(f"Proveedor de IA no soportado: {proveedor}")
+
+
+def usar_modelo_google(prompt_completo, generation_config, api_key=None, model="gemini-3-flash-preview"):
     """
     Usa el modelo de Google Gemini para generar una respuesta basada en el prompt dado.
     Incluye reintentos automáticos para mitigar saturación (HTTP 503) o problemas de red.
     """
     load_dotenv()
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = api_key or os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise ValueError("GEMINI_API_KEY no está configurada en el archivo .env")
+        raise ValueError("GEMINI_API_KEY no está configurada en el archivo .env ni en la configuración del sistema")
 
+    model = model or "gemini-3-flash-preview"
     client = genai.Client(api_key=api_key)
     max_retries = 3
     
     for attempt in range(1, max_retries + 1):
         try:
             response = client.models.generate_content(
-                model="gemini-3-flash-preview",
+                model=model,
                 contents=prompt_completo,
                 config=generation_config
             )
@@ -64,46 +182,35 @@ def usar_modelo_google(prompt_completo, generation_config):
                 raise RuntimeError(f"Error inesperado en Gemini: {e}")
 
 
-# CORRECCIÓN: Se cambió el nombre del parámetro 'CANTIDAD_MAXIMA_TOKEN' a 'max_tokens'
-# para que coincida con cómo se llama desde la función principal y evitar errores.
-def usar_modelo_deepseek(prompt_completo, max_tokens, temperature=0.7, timeout=180):
+def usar_modelo_deepseek(prompt_completo, max_tokens, temperature=0.7, timeout=180, api_key=None, model="deepseek-chat", system_prompt=None):
     """
     Usa el modelo de DeepSeek para generar una respuesta basada en el prompt dado.
-
-    Args:
-        prompt_completo (str): Prompt que contiene las instrucciones y datos.
-        max_tokens (int): Número máximo de tokens en la respuesta.
-        temperature (float): Controla la creatividad (0-1).
-        timeout (int): Tiempo máximo en segundos para esperar la respuesta.
-
-    Returns:
-        str: Respuesta generada por el modelo.
     """
-    # Cargar la clave API desde .env
     load_dotenv()
-    api_key = os.environ.get("deepseek_API_KEY")
+    api_key = api_key or os.environ.get("deepseek_API_KEY")
     if not api_key:
-        logging.error("deepseek_API_KEY no está configurada en el archivo .env")
-        raise ValueError("deepseek_API_KEY no está configurada en el archivo .env")
+        logging.error("deepseek_API_KEY no está configurada en el archivo .env ni en la configuración del sistema")
+        raise ValueError("deepseek_API_KEY no está configurada en el archivo .env ni en la configuración del sistema")
 
+    model = model or "deepseek-chat"
     api_url = "https://api.deepseek.com/v1/chat/completions"
 
-    # Headers de la solicitud
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
 
-    # Parámetros del cuerpo de la solicitud
+    max_limit = 8000 if model == "deepseek-chat" else 32000
+    effective_max_tokens = min(int(max_tokens or 8000), max_limit)
+
     data = {
-        "model": "deepseek-chat",
+        "model": model,
         "messages": [
-            {"role": "system", "content": "Asistente para crear sílabo y plan de clases. Genera siempre respuestas en formato JSON válido."},
+            {"role": "system", "content": system_prompt or "Asistente para crear sílabo y plan de clases. Genera siempre respuestas en formato JSON válido."},
             {"role": "user", "content": prompt_completo}
         ],
         "temperature": temperature,
-        # CORRECCIÓN: Ahora usa el parámetro 'max_tokens' correctamente.
-        "max_tokens": 8000
+        "max_tokens": effective_max_tokens
     }
 
     MAX_RETRIES = 3
@@ -111,7 +218,7 @@ def usar_modelo_deepseek(prompt_completo, max_tokens, temperature=0.7, timeout=1
 
     while retry_count < MAX_RETRIES:
         try:
-            logging.info(f"Intento {retry_count + 1} de {MAX_RETRIES} - Iniciando solicitud a DeepSeek con timeout={timeout} segundos")
+            logging.info(f"Intento {retry_count + 1} de {MAX_RETRIES} - Iniciando solicitud a DeepSeek ({model}) con timeout={timeout} segundos")
             response = requests.post(api_url, json=data, headers=headers, timeout=timeout)
 
             if response.status_code == 200:
@@ -133,7 +240,6 @@ def usar_modelo_deepseek(prompt_completo, max_tokens, temperature=0.7, timeout=1
             else:
                 error_msg = f"Timeout después de {MAX_RETRIES} intentos"
                 logging.error(error_msg)
-                # Devolver respuesta de fallback
                 return """
                 {
                   "codigo": "Fallback-Error",
@@ -182,50 +288,71 @@ def usar_modelo_deepseek(prompt_completo, max_tokens, temperature=0.7, timeout=1
             raise RuntimeError(error_msg)
 
 
-# Pega esta función completa en ai_generators.py
-
-def usar_modelo_openai(prompt_completo, max_tokens, model="o4-mini"):
+def usar_modelo_openai(prompt_completo, max_tokens, model="o4-mini", api_key=None, base_url=None, system_prompt=None):
     """
-    Función para interactuar con OpenAI usando el cliente de chat.
-
-    Args:
-        prompt_completo (str): Prompt que contiene las instrucciones y datos.
-        max_tokens (int): Número máximo de tokens para la respuesta.
-        model (str): Modelo de OpenAI a utilizar (default: o4-mini)
-
-    Returns:
-        str: Respuesta generada por el modelo.
+    Función para interactuar con OpenAI (o proveedores compatibles como Groq/OpenRouter) usando el cliente de chat.
     """
     try:
-        # Imprime para confirmar que se ejecuta la versión final
-        print(">>> Ejecutando la versión DEFINITIVA de usar_modelo_openai <<<")
-
-        # Cargar variables de entorno
         load_dotenv()
-        api_key = os.environ.get("OPENAI_API_KEY")
+        api_key = api_key or os.environ.get("OPENAI_API_KEY")
         if not api_key:
-            raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env")
+            raise ValueError("OPENAI_API_KEY no está configurada en el archivo .env ni en la configuración del sistema")
 
-        # Crear cliente (sin proxies, ya no se usa en v1.x)
-        # Esta es la línea clave, no acepta ningún otro argumento extra.
-        client = OpenAI(api_key=api_key)
+        model = model or "o4-mini"
+        client_kwargs = {"api_key": api_key}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+        client = OpenAI(**client_kwargs)
 
-        # Llamar al modelo usando los argumentos recibidos
-        completion = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "Asistente para crear sílabo y plan de clases."},
+        request_kwargs = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt or "Asistente para crear sílabo y plan de clases."},
                 {"role": "user", "content": prompt_completo}
             ],
-            max_completion_tokens=max_tokens
-        )
+        }
+        if base_url:
+            request_kwargs["max_tokens"] = min(int(max_tokens or 8000), 8192)
+        else:
+            request_kwargs["max_completion_tokens"] = max_tokens
 
+        completion = client.chat.completions.create(**request_kwargs)
         return completion.choices[0].message.content
 
     except Exception as e:
-        # Esto nos dará el error exacto si algo más falla
-        logging.error(f"Error detallado al usar OpenAI: {str(e)}")
-        raise RuntimeError(f"Error al generar respuesta con OpenAI: {str(e)}")
+        logging.error(f"Error detallado al usar OpenAI/Compatible: {str(e)}")
+        raise RuntimeError(f"Error al generar respuesta con {model}: {str(e)}")
+
+
+def usar_modelo_anthropic(prompt_completo, max_tokens, model="claude-3-5-sonnet-latest", api_key=None, system_prompt=None):
+    """
+    Función para interactuar con la API de Anthropic (Claude).
+    """
+    api_key = (api_key or "").strip()
+    if not api_key:
+        raise ValueError("La API Key de Anthropic no está configurada.")
+
+    response = requests.post(
+        "https://api.anthropic.com/v1/messages",
+        headers={
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        },
+        json={
+            "model": model,
+            "max_tokens": min(int(max_tokens or 8000), 8192),
+            "system": system_prompt or "Asistente para crear sílabo y plan de clases. Genera siempre respuestas en formato JSON válido.",
+            "messages": [{"role": "user", "content": prompt_completo}],
+        },
+        timeout=120,
+    )
+    if response.status_code != 200:
+        raise RuntimeError(f"Error en la API de Anthropic ({response.status_code}): {response.text}")
+    data = response.json()
+    blocks = data.get("content", [])
+    text_parts = [b.get("text", "") for b in blocks if b.get("type") == "text"]
+    return "\n".join(text_parts).strip()
 
 
 
@@ -325,19 +452,135 @@ def procesar_respuesta_ai(respuesta_ai):
         return data
 
 
+def resolver_config_modelo(modelo_seleccionado):
+    """
+    Resuelve un identificador de modelo (ID de ModeloIAConfig o nombre legado 'google'/'openai'/'deepseek')
+    y devuelve una tupla (proveedor, modelo_id, api_key, config_obj).
+    """
+    if not modelo_seleccionado:
+        return ("google", "gemini-3-flash-preview", None, None)
+
+    valor = str(modelo_seleccionado).strip()
+    if valor.isdigit():
+        from .models import ModeloIAConfig
+        config_obj = ModeloIAConfig.objects.filter(id=int(valor), activo=True).first()
+        if not config_obj:
+            raise ValueError("El modelo de IA seleccionado no está disponible o fue desactivado.")
+        return (config_obj.proveedor, config_obj.modelo_id, config_obj.api_key, config_obj)
+
+    proveedor = valor.lower()
+    env_keys = {
+        "google": os.environ.get("GEMINI_API_KEY"),
+        "openai": os.environ.get("OPENAI_API_KEY"),
+        "deepseek": os.environ.get("deepseek_API_KEY"),
+    }
+    default_models = {
+        "google": "gemini-3-flash-preview",
+        "openai": "o4-mini",
+        "deepseek": "deepseek-chat",
+    }
+
+    if proveedor in default_models:
+        api_key = env_keys.get(proveedor)
+        if not api_key:
+            try:
+                from .models import ModeloIAConfig
+                config_obj = ModeloIAConfig.objects.filter(proveedor=proveedor, activo=True).first()
+                if config_obj:
+                    return (config_obj.proveedor, config_obj.modelo_id, config_obj.api_key, config_obj)
+            except Exception:
+                pass
+        return (proveedor, default_models[proveedor], api_key, None)
+
+    return ("google", "gemini-3-flash-preview", None, None)
+
+
+def generar_texto_crudo_ai(prompt_completo, proveedor, modelo_id=None, api_key=None, system_prompt=None, **kwargs):
+    """
+    Genera texto sin post-procesamiento usando el proveedor, modelo y API key especificados.
+    Usado tanto por generar_respuesta_ai como por el extractor de Programas de asignatura 2026.
+    """
+    max_tokens = kwargs.get("max_tokens", CANTIDAD_MAXIMA_TOKEN)
+
+    if proveedor == "openai":
+        return usar_modelo_openai(
+            prompt_completo,
+            max_tokens=max_tokens,
+            model=modelo_id or "o4-mini",
+            api_key=api_key,
+            system_prompt=system_prompt,
+        )
+    if proveedor == "groq":
+        return usar_modelo_openai(
+            prompt_completo,
+            max_tokens=max_tokens,
+            model=modelo_id,
+            api_key=api_key,
+            base_url=GROQ_BASE_URL,
+            system_prompt=system_prompt,
+        )
+    if proveedor == "openrouter":
+        return usar_modelo_openai(
+            prompt_completo,
+            max_tokens=max_tokens,
+            model=modelo_id,
+            api_key=api_key,
+            base_url=OPENROUTER_BASE_URL,
+            system_prompt=system_prompt,
+        )
+    if proveedor == "deepseek":
+        temperature = kwargs.get("temperature", 0.7)
+        timeout = kwargs.get("timeout", 60)
+        return usar_modelo_deepseek(
+            prompt_completo,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            timeout=timeout,
+            api_key=api_key,
+            model=modelo_id or "deepseek-chat",
+            system_prompt=system_prompt,
+        )
+    if proveedor == "anthropic":
+        return usar_modelo_anthropic(
+            prompt_completo,
+            max_tokens=max_tokens,
+            model=modelo_id or "claude-3-5-sonnet-latest",
+            api_key=api_key,
+            system_prompt=system_prompt,
+        )
+
+    # Google Gemini por defecto
+    generation_config = kwargs.get("generation_config", {
+        "temperature": 0.7,
+        "top_p": 0.95,
+        "top_k": 40,
+        "max_output_tokens": CANTIDAD_MAXIMA_TOKEN,
+    })
+    return usar_modelo_google(
+        prompt_completo,
+        generation_config,
+        api_key=api_key,
+        model=modelo_id or "gemini-3-flash-preview",
+    )
+
+
 def get_default_config(modelo='google'):
     """
     Devuelve la configuración predeterminada para un modelo específico.
 
     Args:
-        modelo (str): Nombre del modelo ('google', 'openai', 'deepseek')
+        modelo (str): ID de ModeloIAConfig o nombre legado ('google', 'openai', 'deepseek')
 
     Returns:
         dict: Configuración predeterminada para el modelo
     """
-    # Si no se especifica un modelo, usar google por defecto
     if not modelo:
         modelo = 'deepseek'
+    elif str(modelo).strip().isdigit():
+        proveedor, modelo_id, _, _ = resolver_config_modelo(modelo)
+        modelo = proveedor
+    else:
+        modelo_id = None
 
     if modelo == 'google':
         return {
@@ -352,14 +595,12 @@ def get_default_config(modelo='google'):
             "temperature": 0.7,
             "timeout": 60
         }
-    elif modelo == 'openai':
-        # CORRECCIÓN: Se añade 'max_tokens' a la configuración por defecto de OpenAI.
+    elif modelo in ('openai', 'groq', 'openrouter', 'anthropic'):
         return {
-            "model": "o4-mini",
+            "model": modelo_id or "o4-mini",
             "max_tokens": CANTIDAD_MAXIMA_TOKEN
         }
     else:
-        # Si el modelo no es reconocido, usar configuración de google por defecto
         logging.warning(f"Modelo '{modelo}' no reconocido, usando configuración predeterminada de Google")
         return {
             "temperature": 0.7,
@@ -375,35 +616,21 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
 
     Args:
         prompt_completo (str): Prompt completo para el modelo
-        modelo_seleccionado (str): Nombre del modelo a usar ('google', 'openai', 'deepseek')
+        modelo_seleccionado (str): ID de ModeloIAConfig o nombre legado ('google', 'openai', 'deepseek')
         **kwargs: Parámetros adicionales específicos para cada modelo
 
     Returns:
         dict: Datos procesados de la respuesta en formato diccionario
-
-    Raises:
-        ValueError: Si no se puede configurar el modelo
-        RuntimeError: Si hay un error durante la generación
     """
     try:
-        # Si no se especifica un modelo, usar google por defecto
         if not modelo_seleccionado:
             modelo_seleccionado = 'google'
             logging.info(f"No se especificó modelo, usando {modelo_seleccionado} por defecto")
 
+        proveedor, modelo_id, api_key, _ = resolver_config_modelo(modelo_seleccionado)
         respuesta_ai = None
 
-        if modelo_seleccionado == 'openai':
-            model = kwargs.get('model', 'o4-mini')
-            # CORRECCIÓN: Se obtiene 'max_tokens' y se pasa a la función.
-            max_tokens = kwargs.get('max_tokens', CANTIDAD_MAXIMA_TOKEN)
-            respuesta_ai = usar_modelo_openai(
-                prompt_completo,
-                model=model,
-                max_tokens=max_tokens
-            )
-
-        elif modelo_seleccionado == 'deepseek':
+        if proveedor == 'deepseek':
             max_tokens = kwargs.get('max_tokens', CANTIDAD_MAXIMA_TOKEN)
             temperature = kwargs.get('temperature', 0.7)
             timeout = kwargs.get('timeout', 60)
@@ -411,39 +638,48 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
             try:
                 respuesta_ai = usar_modelo_deepseek(
                     prompt_completo,
-                    # CORRECCIÓN: Se pasa como argumento nombrado para mayor claridad y seguridad.
                     max_tokens=max_tokens,
                     temperature=temperature,
-                    timeout=timeout
+                    timeout=timeout,
+                    api_key=api_key,
+                    model=modelo_id or "deepseek-chat",
                 )
                 logging.info("Respuesta de DeepSeek obtenida o se generó fallback")
 
             except Exception as e:
                 if "timeout" in str(e).lower() or "timed out" in str(e).lower():
-                    # Crear contexto básico para respuesta de fallback
                     info_contexto = kwargs.get('info_contexto', {})
-                    info_asignatura = info_contexto.get('asignatura', 'la asignatura')
-                    info_carrera = info_contexto.get('carrera', 'la carrera')
-                    info_unidad = info_contexto.get('unidad', 'Unidad actual')
-                    info_contenido = info_contexto.get('contenido', 'el tema de estudio')
-                    numero_guia = info_contexto.get('numero_guia', '1')
-
-                    # Crear respuesta de fallback
                     respuesta_ai = generar_fallback_json(
-                        info_asignatura,
-                        info_carrera,
-                        info_unidad,
-                        info_contenido,
-                        numero_guia
+                        info_contexto.get('asignatura', 'la asignatura'),
+                        info_contexto.get('carrera', 'la carrera'),
+                        info_contexto.get('unidad', 'Unidad actual'),
+                        info_contexto.get('contenido', 'el tema de estudio'),
+                        info_contexto.get('numero_guia', '1'),
                     )
                 else:
                     raise e
+        elif proveedor == 'google':
+            generation_config = kwargs.get('generation_config')
+            if not generation_config:
+                generation_config = get_default_config('google')
+            respuesta_ai = usar_modelo_google(
+                prompt_completo,
+                generation_config,
+                api_key=api_key,
+                model=modelo_id or "gemini-3-flash-preview",
+            )
+        else:
+            call_kwargs = dict(kwargs)
+            if 'model' not in call_kwargs or modelo_id:
+                call_kwargs['model'] = modelo_id
+            respuesta_ai = generar_texto_crudo_ai(
+                prompt_completo,
+                proveedor=proveedor,
+                modelo_id=modelo_id,
+                api_key=api_key,
+                **call_kwargs,
+            )
 
-        else:  # google por defecto
-            generation_config = kwargs.get('generation_config', get_default_config('google'))
-            respuesta_ai = usar_modelo_google(prompt_completo, generation_config)
-
-        # Procesar la respuesta
         return procesar_respuesta_ai(respuesta_ai)
 
     except Exception as e:

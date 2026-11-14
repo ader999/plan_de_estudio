@@ -694,6 +694,75 @@ class ConfiguracionSistema(models.Model):
         return "Configuración del Sistema"
 
 
+class ModeloIAConfig(models.Model):
+    """
+    Configuración de proveedores, claves API y modelos de IA disponibles
+    para los docentes y para la extracción de Programas de asignatura 2026.
+    """
+    PROVEEDOR_CHOICES = [
+        ('google', 'Google Gemini'),
+        ('openai', 'OpenAI'),
+        ('deepseek', 'DeepSeek'),
+        ('groq', 'Groq'),
+        ('openrouter', 'OpenRouter'),
+        ('anthropic', 'Anthropic (Claude)'),
+    ]
+
+    proveedor = models.CharField(
+        max_length=50,
+        choices=PROVEEDOR_CHOICES,
+        verbose_name="Proveedor de IA"
+    )
+    nombre_mostrar = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name="Nombre para mostrar"
+    )
+    modelo_id = models.CharField(
+        max_length=150,
+        verbose_name="ID del Modelo"
+    )
+    api_key = models.TextField(verbose_name="Key de IA")
+    disponible_docentes = models.BooleanField(
+        default=True,
+        verbose_name="Disponible para docentes",
+        help_text="Si está activo, aparecerá en la lista de modelos disponibles para los docentes."
+    )
+    usar_para_extraccion = models.BooleanField(
+        default=False,
+        verbose_name="Usar para extraer texto (Programas 2026)",
+        help_text="Modelo predeterminado para extraer contenido desde .docx en Programas de asignatura 2026."
+    )
+    activo = models.BooleanField(default=True, verbose_name="Activo")
+    orden = models.PositiveIntegerField(default=0, verbose_name="Orden")
+    creado_el = models.DateTimeField(auto_now_add=True)
+    actualizado_el = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Modelo de IA"
+        verbose_name_plural = "Modelos de IA"
+        ordering = ['orden', 'id']
+
+    def save(self, *args, **kwargs):
+        if not self.nombre_mostrar:
+            self.nombre_mostrar = f"{self.get_proveedor_display()} - {self.modelo_id}"
+        if not self.activo and self.usar_para_extraccion:
+            self.usar_para_extraccion = False
+        super().save(*args, **kwargs)
+        if self.usar_para_extraccion:
+            ModeloIAConfig.objects.filter(usar_para_extraccion=True).exclude(pk=self.pk).update(usar_para_extraccion=False)
+
+    @property
+    def api_key_enmascarada(self):
+        key = (self.api_key or "").strip()
+        if len(key) <= 8:
+            return "••••••••"
+        return f"{key[:4]}{'•' * 8}{key[-4:]}"
+
+    def __str__(self):
+        return self.nombre_mostrar or f"{self.get_proveedor_display()} - {self.modelo_id}"
+
+
 def get_user_str(self):
     nombre_completo = f"{self.first_name} {self.last_name}".strip()
     if nombre_completo:

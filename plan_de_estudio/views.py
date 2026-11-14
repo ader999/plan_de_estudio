@@ -18,7 +18,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Silabo, Guia, AsignacionPlanEstudio, Asignatura, Plan_de_estudio
+from .models import Silabo, Guia, AsignacionPlanEstudio, Asignatura, Plan_de_estudio, ModeloIAConfig
 
 from .forms import SilaboForm
 from django.views.decorators.csrf import csrf_exempt
@@ -487,6 +487,7 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
         mostrar_ia = bool(plan_tematico) or bool(programa_2026)
 
         previous_scores = get_previous_scores(asignacion)
+        modelos_ia = ModeloIAConfig.objects.filter(activo=True, disponible_docentes=True).order_by('orden', 'id')
 
         return render(
             request,
@@ -499,6 +500,7 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
                 "encuentro": silabos_creados + 1,
                 "asignaturas": asignaturas,
                 "mostrar_ia": mostrar_ia,
+                "modelos_ia": modelos_ia,
                 "previous_scores": previous_scores,
                 "previous_scores_json": json.dumps(previous_scores),
             },
@@ -598,6 +600,7 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
             if existing_guia:
                 exclude_guia_id = existing_guia.id
         previous_scores = get_previous_scores(asignacion, exclude_guia_id=exclude_guia_id)
+        modelos_ia = ModeloIAConfig.objects.filter(activo=True, disponible_docentes=True).order_by('orden', 'id')
 
         return render(
             request,
@@ -617,6 +620,7 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
                 "periodo_tiempo_choices": periodo_tiempo_choices,
                 "tipo_objetivo_choices": tipo_objetivo_choices,
                 "mostrar_ia": mostrar_ia,
+                "modelos_ia": modelos_ia,
                 "previous_scores": previous_scores,
                 "previous_scores_json": json.dumps(previous_scores),
             },

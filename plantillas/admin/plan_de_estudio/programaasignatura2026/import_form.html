@@ -26,6 +26,20 @@
                     <label for="docx_file" class="required">Seleccione un archivo Word (.docx):</label>
                     <input type="file" name="docx_file" id="docx_file" accept=".docx" required>
                 </div>
+                <div class="form-row">
+                    <label for="modelo_ia_id">Modelo de IA para extraer texto:</label>
+                    <select name="modelo_ia_id" id="modelo_ia_id">
+                        {% for m in modelos_ia %}
+                        <option value="{{ m.id }}" {% if modelo_extraccion and modelo_extraccion.id == m.id %}selected{% endif %}>
+                            {{ m.nombre_mostrar }}{% if modelo_extraccion and modelo_extraccion.id == m.id %} (Configurado por defecto){% endif %}
+                        </option>
+                        {% endfor %}
+                        <option value="env_default" {% if not modelo_extraccion %}selected{% endif %}>
+                            Predeterminado del sistema (.env - Google Gemini)
+                        </option>
+                    </select>
+                    <p class="help">Puede configurar más proveedores y modelos en la sección "Copias de Seguridad / Configuración".</p>
+                </div>
             </fieldset>
             <div class="submit-row">
                 <input type="submit" value="Procesar con IA" class="default" name="_save">

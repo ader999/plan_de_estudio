@@ -8,7 +8,8 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from plan_de_estudio.models import (
-    Asignatura, Carrera, Plan_de_estudio, AsignacionPlanEstudio, Silabo, Guia
+    Asignatura, Carrera, Plan_de_estudio, AsignacionPlanEstudio, Silabo, Guia,
+    ModeloIAConfig, ProgramaAsignatura2026
 )
 from plan_de_estudio.forms import SilaboForm, ExportarAsignacionesForm
 
@@ -508,3 +509,220 @@ class ViewsValidationTest(TestCase):
         self.assertFalse(resp_json['success'])
         self.assertIn('errors', resp_json)
         self.assertIn('tiempo_minutos_1', resp_json['errors'])
+
+
+class ModeloIAConfigAndAdminTest(TestCase):
+    def setUp(self):
+        self.patcher_crear = patch('plan_de_estudio.signals.crear_clase_e_invitar_maestro')
+        self.patcher_crear.start()
+
+        self.admin_user = User.objects.create_superuser(
+            username="admin_ia", email="admin@example.com", password="adminpassword"
+        )
+        self.docente_user = User.objects.create_user(
+            username="docente_ia", password="docentepassword"
+        )
+        self.carrera = Carrera.objects.create(
+            nombre="Sistemas", codigo="SIS01", cine_2011=1, cine_2013=2,
+            area_formacion="Tecnologías de la información", area_disiplinaria=1
+        )
+        self.asignatura = Asignatura.objects.create(nombre="Inteligencia Artificial")
+        self.plan = Plan_de_estudio.objects.create(
+            carrera=self.carrera, año="I", trimestre="I", pensol="2026",
+            codigo="PLAN_IA", asignatura=self.asignatura,
+            horas_presenciales=45, horas_estudio_independiente=45
+        )
+        self.asignacion = AsignacionPlanEstudio.objects.create(
+            usuario=self.docente_user, plan_de_estudio=self.plan
+        )
+        self.programa_2026 = ProgramaAsignatura2026.objects.create(
+            plan_estudio=self.plan,
+            fundamentacion="Fund",
+            relacion_unidades="Rel",
+            aportes_perfil="Aportes",
+            valores="Valores",
+            ejes_transversales="Ejes",
+            objetivo_conceptual="Obj C",
+            objetivo_procedimental="Obj P",
+            objetivo_actitudinal="Obj A",
+        )
+
+    def tearDown(self):
+        self.patcher_crear.stop()
+
+    def test_modelo_ia_config_unicidad_extraccion_y_mascara(self):
+        m1 = ModeloIAConfig.objects.create(
+            proveedor="google",
+            modelo_id="gemini-2.5-flash",
+            api_key="AIzaSySecretKey1234567890",
+            usar_para_extraccion=True,
+        )
+        self.assertEqual(m1.nombre_mostrar, "Google Gemini - gemini-2.5-flash")
+        self.assertEqual(m1.api_key_enmascarada, "AIza••••••••7890")
+        self.assertTrue(m1.usar_para_extraccion)
+
+        m2 = ModeloIAConfig.objects.create(
+            proveedor="openai",
+            modelo_id="gpt-4o-mini",
+            api_key="sk-proj-abc123456789xyz",
+            usar_para_extraccion=True,
+        )
+        m1.refresh_from_db()
+        self.assertFalse(m1.usar_para_extraccion)
+        self.assertTrue(m2.usar_para_extraccion)
+
+    def test_admin_copia_seguridad_endpoints_y_ocultamiento_key(self):
+        client = Client()
+        client.login(username="admin_ia", password="adminpassword")
+
+        # Guardar nuevo modelo desde el formulario de Copias de Seguridad / Configuración
+        guardar_url = reverse('admin:plan_de_estudio_copiaseguridad_guardar_modelo_ia')
+        resp = client.post(guardar_url, {
+            'proveedor': 'deepseek',
+            'api_key': 'sk-deepseek-super-secret-9999',
+            'modelo_id': 'deepseek-chat',
+            'nombre_mostrar': 'DeepSeek Chat Institucional',
+            'disponible_docentes': 'on',
+            'usar_para_extraccion': 'on',
+        })
+        self.assertEqual(resp.status_code, 302)
+        modelo = ModeloIAConfig.objects.get(modelo_id='deepseek-chat')
+        self.assertTrue(modelo.disponible_docentes)
+        self.assertTrue(modelo.usar_para_extraccion)
+
+        # Verificar que el changelist muestra el modelo pero NO expone la API key completa
+        changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
+        page = client.get(changelist_url)
+        self.assertEqual(page.status_code, 200)
+        html = page.content.decode('utf-8')
+        self.assertIn('DeepSeek Chat Institucional', html)
+        self.assertNotIn('sk-deepseek-super-secret-9999', html)
+
+        # Toggle docentes
+        accion_url = reverse('admin:plan_de_estudio_copiaseguridad_accion_modelo_ia', args=[modelo.id])
+        client.post(accion_url, {'accion': 'toggle_docentes'})
+        modelo.refresh_from_db()
+        self.assertFalse(modelo.disponible_docentes)
+
+        # Configurar extracción 2026 a env_default
+        extr_url = reverse('admin:plan_de_estudio_copiaseguridad_configurar_extraccion_2026')
+        client.post(extr_url, {'modelo_extraccion_id': 'env_default'})
+        modelo.refresh_from_db()
+        self.assertFalse(modelo.usar_para_extraccion)
+
+        # Consultar modelos disponibles (mockeado)
+        consultar_url = reverse('admin:plan_de_estudio_copiaseguridad_consultar_modelos_ia')
+        with patch('plan_de_estudio.admin.listar_modelos_disponibles', return_value=[
+            {'id': 'gemini-2.5-flash', 'name': 'Gemini 2.5 Flash'}
+        ]):
+            resp_json = client.post(
+                consultar_url,
+                data=json.dumps({'proveedor': 'google', 'api_key': 'AIzaTest'}),
+                content_type='application/json'
+            )
+            self.assertEqual(resp_json.status_code, 200)
+            payload = resp_json.json()
+            self.assertTrue(payload['success'])
+            self.assertEqual(payload['modelos'][0]['id'], 'gemini-2.5-flash')
+
+    def test_docente_ve_modelos_configurados_y_no_inactivos(self):
+        m_visible = ModeloIAConfig.objects.create(
+            proveedor="openai",
+            modelo_id="gpt-4o-mini",
+            nombre_mostrar="OpenAI GPT-4o Mini Institucional",
+            api_key="sk-test-visible-1234",
+            disponible_docentes=True,
+            activo=True,
+        )
+        m_oculto = ModeloIAConfig.objects.create(
+            proveedor="google",
+            modelo_id="gemini-pro-oculto",
+            nombre_mostrar="Modelo Solo Extracción",
+            api_key="AIzaTestOculto1234",
+            disponible_docentes=False,
+            activo=True,
+        )
+
+        client = Client()
+        client.login(username="docente_ia", password="docentepassword")
+
+        resp_silabo = client.get(reverse('ver_formulario_silabo', args=[self.asignacion.id]))
+        self.assertEqual(resp_silabo.status_code, 200)
+        html_silabo = resp_silabo.content.decode('utf-8')
+        self.assertIn(f'value="{m_visible.id}"', html_silabo)
+        self.assertIn("OpenAI GPT-4o Mini Institucional", html_silabo)
+        self.assertNotIn("Modelo Solo Extracción", html_silabo)
+        self.assertNotIn("sk-test-visible-1234", html_silabo)
+
+        resp_guia = client.get(reverse('ver_formulario_guia', args=[self.asignacion.id]))
+        self.assertEqual(resp_guia.status_code, 200)
+        html_guia = resp_guia.content.decode('utf-8')
+        self.assertIn(f'value="{m_visible.id}"', html_guia)
+        self.assertIn("OpenAI GPT-4o Mini Institucional", html_guia)
+        self.assertNotIn("Modelo Solo Extracción", html_guia)
+
+    def test_generar_respuesta_ai_con_modelo_db_y_legado(self):
+        from plan_de_estudio.ai_generators import generar_respuesta_ai, get_default_config
+
+        m_cfg = ModeloIAConfig.objects.create(
+            proveedor="openai",
+            modelo_id="gpt-4.1-mini",
+            api_key="sk-custom-key-9876",
+            disponible_docentes=True,
+            activo=True,
+        )
+        default_cfg = get_default_config(str(m_cfg.id))
+        self.assertEqual(default_cfg["model"], "gpt-4.1-mini")
+
+        fake_json = json.dumps({"descripcion": "Prueba OK", "actividades": ["A1"], "recursos": ["R1"]})
+        with patch('plan_de_estudio.ai_generators.usar_modelo_openai', return_value=fake_json) as mock_openai:
+            result = generar_respuesta_ai("Hola", modelo_seleccionado=str(m_cfg.id), **default_cfg)
+            self.assertEqual(result["descripcion"], "Prueba OK")
+            mock_openai.assert_called_once()
+            _, kwargs = mock_openai.call_args
+            self.assertEqual(kwargs["model"], "gpt-4.1-mini")
+            self.assertEqual(kwargs["api_key"], "sk-custom-key-9876")
+
+        # Compatibilidad con identificador legado 'google'
+        with patch('plan_de_estudio.ai_generators.usar_modelo_google', return_value=fake_json) as mock_google:
+            result_legacy = generar_respuesta_ai("Hola", modelo_seleccionado="google")
+            self.assertEqual(result_legacy["descripcion"], "Prueba OK")
+            mock_google.assert_called_once()
+
+    def test_programa_2026_import_selecciona_y_usa_modelo_extraccion(self):
+        import io
+        import docx
+        from plan_de_estudio.utils.gemini_parser import parse_curriculum_with_ai
+
+        m_extr = ModeloIAConfig.objects.create(
+            proveedor="deepseek",
+            modelo_id="deepseek-chat",
+            nombre_mostrar="DeepSeek Extractor 2026",
+            api_key="sk-ds-extractor-4321",
+            disponible_docentes=False,
+            usar_para_extraccion=True,
+            activo=True,
+        )
+
+        client = Client()
+        client.login(username="admin_ia", password="adminpassword")
+        import_url = reverse('admin:plan_de_estudio_programaasignatura2026_import_docx')
+        resp_get = client.get(import_url)
+        self.assertEqual(resp_get.status_code, 200)
+        self.assertIn("DeepSeek Extractor 2026", resp_get.content.decode('utf-8'))
+
+        # Crear archivo .docx mínimo en memoria
+        doc_io = io.BytesIO()
+        doc = docx.Document()
+        doc.add_paragraph("FUNDAMENTACIÓN: Curso de prueba.")
+        doc.save(doc_io)
+        doc_io.seek(0)
+
+        with patch('plan_de_estudio.ai_generators.generar_texto_crudo_ai', return_value='{"fundamentacion": "Curso de prueba."}') as mock_raw:
+            parsed = parse_curriculum_with_ai(doc_io)
+            self.assertEqual(parsed.get("fundamentacion"), "Curso de prueba.")
+            mock_raw.assert_called_once()
+            _, kwargs = mock_raw.call_args
+            self.assertEqual(kwargs["proveedor"], "deepseek")
+            self.assertEqual(kwargs["modelo_id"], "deepseek-chat")
+            self.assertEqual(kwargs["api_key"], "sk-ds-extractor-4321")

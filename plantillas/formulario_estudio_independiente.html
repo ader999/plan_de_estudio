@@ -108,17 +108,25 @@
                                             id="modelo_select_estudio"
                                             name="modelo_select"
                                             class="form-select"
-                                            style="width: 200px"
+                                            style="width: 240px"
                                         >
-                                            <option value="google">
-                                                Google - Gemini-3-flash
-                                            </option>
-                                            <option value="openai">
-                                                OpenAI - o4Mini
-                                            </option>
-                                            <option value="deepseek">
-                                                DeepSeek - Chat
-                                            </option>
+                                            {% if modelos_ia %}
+                                                {% for modelo in modelos_ia %}
+                                                <option value="{{ modelo.id }}">
+                                                    {{ modelo.nombre_mostrar }}
+                                                </option>
+                                                {% endfor %}
+                                            {% else %}
+                                                <option value="google">
+                                                    Google - Gemini-3-flash
+                                                </option>
+                                                <option value="openai">
+                                                    OpenAI - o4Mini
+                                                </option>
+                                                <option value="deepseek">
+                                                    DeepSeek - Chat
+                                                </option>
+                                            {% endif %}
                                         </select>
                                     </div>
 

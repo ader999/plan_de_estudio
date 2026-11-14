@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Plan_de_estudio, Asignatura, Carrera, Silabo, Guia, AsignacionPlanEstudio, PlanTematico, ProgramaAsignatura2026, CopiaSeguridad
+from .models import (
+    Plan_de_estudio, Asignatura, Carrera, Silabo, Guia,
+    AsignacionPlanEstudio, PlanTematico, ProgramaAsignatura2026,
+    CopiaSeguridad, ModeloIAConfig
+)
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django import forms
@@ -15,10 +19,12 @@ from django.urls import path, reverse
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from .email_utils import enviar_correos_plan_incompleto
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .utils.gemini_parser import parse_curriculum_with_ai
+from .ai_generators import listar_modelos_disponibles
+import json
 import logging
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.db.models import Q
 
 logger = logging.getLogger(__name__)
@@ -482,9 +488,10 @@ class ProgramaAsignatura2026Admin(admin.ModelAdmin):
     def import_docx_view(self, request):
         if request.method == 'POST':
             docx_file = request.FILES.get('docx_file')
+            modelo_ia_id = request.POST.get('modelo_ia_id')
             if docx_file:
                 try:
-                    data = parse_curriculum_with_ai(docx_file)
+                    data = parse_curriculum_with_ai(docx_file, modelo_config_id=modelo_ia_id)
                     request.session['imported_programa_data'] = data
                     messages.success(request, 'Documento procesado exitosamente por la IA. Verifique los datos.')
                 except Exception as e:
@@ -498,6 +505,8 @@ class ProgramaAsignatura2026Admin(admin.ModelAdmin):
             **self.admin_site.each_context(request),
             'title': 'Importar Programa desde Word',
             'opts': self.model._meta,
+            'modelos_ia': ModeloIAConfig.objects.filter(activo=True).order_by('orden', 'id'),
+            'modelo_extraccion': ModeloIAConfig.objects.filter(activo=True, usar_para_extraccion=True).first(),
         }
         return render(request, 'admin/plan_de_estudio/programaasignatura2026/import_form.html', context)
 
@@ -539,14 +548,149 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context.update({
+            'modelos_ia': ModeloIAConfig.objects.all().order_by('orden', 'id'),
+            'modelos_docentes': ModeloIAConfig.objects.filter(activo=True, disponible_docentes=True).order_by('orden', 'id'),
+            'modelo_extraccion': ModeloIAConfig.objects.filter(activo=True, usar_para_extraccion=True).first(),
+            'proveedores_ia': ModeloIAConfig.PROVEEDOR_CHOICES,
+        })
+        return super().changelist_view(request, extra_context=extra_context)
+
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
             path('backup-db/', self.admin_site.admin_view(self.backup_db_view), name='plan_de_estudio_copiaseguridad_backup_db'),
             path('descargar-backup/', self.admin_site.admin_view(self.descargar_backup_view), name='plan_de_estudio_copiaseguridad_descargar_backup'),
             path('ver-guia/', self.admin_site.admin_view(self.ver_guia_view), name='plan_de_estudio_copiaseguridad_ver_guia'),
+            path('consultar-modelos-ia/', self.admin_site.admin_view(self.consultar_modelos_ia_view), name='plan_de_estudio_copiaseguridad_consultar_modelos_ia'),
+            path('guardar-modelo-ia/', self.admin_site.admin_view(self.guardar_modelo_ia_view), name='plan_de_estudio_copiaseguridad_guardar_modelo_ia'),
+            path('accion-modelo-ia/<int:modelo_id>/', self.admin_site.admin_view(self.accion_modelo_ia_view), name='plan_de_estudio_copiaseguridad_accion_modelo_ia'),
+            path('configurar-extraccion-2026/', self.admin_site.admin_view(self.configurar_extraccion_2026_view), name='plan_de_estudio_copiaseguridad_configurar_extraccion_2026'),
         ]
         return custom_urls + urls
+
+    def consultar_modelos_ia_view(self, request):
+        if request.method != 'POST':
+            return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+        if not self.has_view_permission(request):
+            return JsonResponse({'success': False, 'error': 'Sin permisos suficientes'}, status=403)
+        try:
+            if request.content_type and 'application/json' in request.content_type:
+                payload = json.loads(request.body or '{}')
+            else:
+                payload = request.POST
+            proveedor = (payload.get('proveedor') or '').strip()
+            api_key = (payload.get('api_key') or '').strip()
+            if not proveedor:
+                return JsonResponse({'success': False, 'error': 'Seleccione un proveedor de IA.'}, status=400)
+            modelos = listar_modelos_disponibles(proveedor, api_key)
+            return JsonResponse({'success': True, 'modelos': modelos})
+        except ValueError as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+        except Exception as e:
+            logger.error(f"Error consultando modelos de IA: {e}")
+            return JsonResponse({'success': False, 'error': f'No se pudieron obtener los modelos: {str(e)}'}, status=400)
+
+    def guardar_modelo_ia_view(self, request):
+        changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
+        if request.method != 'POST':
+            return HttpResponseRedirect(changelist_url)
+        if not self.has_view_permission(request):
+            return HttpResponseForbidden()
+
+        proveedor = (request.POST.get('proveedor') or '').strip()
+        api_key = (request.POST.get('api_key') or '').strip()
+        modelo_id = (request.POST.get('modelo_id') or '').strip()
+        modelo_id_custom = (request.POST.get('modelo_id_custom') or '').strip()
+        nombre_mostrar = (request.POST.get('nombre_mostrar') or '').strip()
+        disponible_docentes = request.POST.get('disponible_docentes') == 'on'
+        usar_para_extraccion = request.POST.get('usar_para_extraccion') == 'on'
+
+        if modelo_id == '__custom__':
+            modelo_id = modelo_id_custom
+
+        valid_proveedores = {code for code, _ in ModeloIAConfig.PROVEEDOR_CHOICES}
+        if proveedor not in valid_proveedores:
+            self.message_user(request, "Seleccione un proveedor de IA válido.", level=messages.ERROR)
+            return HttpResponseRedirect(changelist_url)
+
+        if not api_key:
+            self.message_user(request, "Debe ingresar la Key de IA.", level=messages.ERROR)
+            return HttpResponseRedirect(changelist_url)
+
+        if not modelo_id:
+            self.message_user(request, "Debe seleccionar o escribir un modelo de IA.", level=messages.ERROR)
+            return HttpResponseRedirect(changelist_url)
+
+        modelo_obj = ModeloIAConfig.objects.create(
+            proveedor=proveedor,
+            api_key=api_key,
+            modelo_id=modelo_id,
+            nombre_mostrar=nombre_mostrar,
+            disponible_docentes=disponible_docentes,
+            usar_para_extraccion=usar_para_extraccion,
+            activo=True,
+        )
+        self.message_user(
+            request,
+            f"Modelo '{modelo_obj.nombre_mostrar}' guardado correctamente.",
+            level=messages.SUCCESS
+        )
+        return HttpResponseRedirect(changelist_url)
+
+    def accion_modelo_ia_view(self, request, modelo_id):
+        changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
+        if request.method != 'POST':
+            return HttpResponseRedirect(changelist_url)
+        if not self.has_view_permission(request):
+            return HttpResponseForbidden()
+
+        modelo = get_object_or_404(ModeloIAConfig, pk=modelo_id)
+        accion = request.POST.get('accion')
+
+        if accion == 'toggle_docentes':
+            modelo.disponible_docentes = not modelo.disponible_docentes
+            modelo.save()
+            estado = "visible" if modelo.disponible_docentes else "oculto"
+            self.message_user(request, f"El modelo '{modelo.nombre_mostrar}' ahora está {estado} para docentes.", level=messages.SUCCESS)
+        elif accion == 'set_extraccion':
+            modelo.activo = True
+            modelo.usar_para_extraccion = True
+            modelo.save()
+            self.message_user(request, f"'{modelo.nombre_mostrar}' establecido para extraer texto en Programas de asignatura 2026.", level=messages.SUCCESS)
+        elif accion == 'toggle_activo':
+            modelo.activo = not modelo.activo
+            modelo.save()
+            estado = "activado" if modelo.activo else "desactivado"
+            self.message_user(request, f"Modelo '{modelo.nombre_mostrar}' {estado}.", level=messages.SUCCESS)
+        elif accion == 'eliminar':
+            nombre = modelo.nombre_mostrar
+            modelo.delete()
+            self.message_user(request, f"Modelo '{nombre}' eliminado.", level=messages.SUCCESS)
+
+        return HttpResponseRedirect(changelist_url)
+
+    def configurar_extraccion_2026_view(self, request):
+        changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
+        if request.method != 'POST':
+            return HttpResponseRedirect(changelist_url)
+        if not self.has_view_permission(request):
+            return HttpResponseForbidden()
+
+        modelo_extraccion_id = (request.POST.get('modelo_extraccion_id') or '').strip()
+        if modelo_extraccion_id == 'env_default' or not modelo_extraccion_id:
+            ModeloIAConfig.objects.filter(usar_para_extraccion=True).update(usar_para_extraccion=False)
+            self.message_user(request, "Programas de asignatura 2026 usará el modelo predeterminado del entorno (.env - Gemini).", level=messages.SUCCESS)
+        else:
+            modelo = get_object_or_404(ModeloIAConfig, pk=modelo_extraccion_id)
+            modelo.activo = True
+            modelo.usar_para_extraccion = True
+            modelo.save()
+            self.message_user(request, f"Modelo de extracción para Programas 2026 actualizado a '{modelo.nombre_mostrar}'.", level=messages.SUCCESS)
+
+        return HttpResponseRedirect(changelist_url)
 
     def backup_db_view(self, request):
         from .utils.db_backup import run_backup
