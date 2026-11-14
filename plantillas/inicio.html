@@ -139,7 +139,7 @@
                                     {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < 11 %}
                                         <div class="d-flex flex-column align-items-center mb-3">
                                             <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente o si ya se completaron los 11 -->
-                                            <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"
+                                            <a {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
                                                class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
                                                {% if asignacion.silabos_creados >= 11 %}
                                                disabled title="Ya se han completado los 11 sílabos"
@@ -267,7 +267,7 @@
                                     {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < 11 %}
                                         <div class="d-flex flex-column align-items-center mb-3">
                                             <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente o si ya se completaron los 11 -->
-                                            <a href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"
+                                            <a {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
                                                class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
                                                {% if asignacion.silabos_creados >= 11 %}
                                                disabled title="Ya se han completado los 11 sílabos"

@@ -932,3 +932,100 @@ class PwaAndTwaEndpointsTest(TestCase):
         self.assertEqual(legacy['Location'], reverse('tutoriales'))
 
 
+class SilaboFormularioYGeneracionTest(TestCase):
+    def setUp(self):
+        self.usuario = User.objects.create_user(username="docente_silabo", password="testpassword")
+        self.carrera = Carrera.objects.create(
+            nombre="Ingeniería de Sistemas", codigo="IS01", cine_2011=111, cine_2013=222,
+            area_formacion="Tecnología", area_disiplinaria=1
+        )
+        self.asignatura = Asignatura.objects.create(nombre="Implementación de Bases de Datos II")
+        self.plan = Plan_de_estudio.objects.create(
+            carrera=self.carrera, año="III", trimestre="I", pensol="2018", codigo="BD201",
+            asignatura=self.asignatura, horas_presenciales=45, horas_estudio_independiente=45
+        )
+        self.asignacion = AsignacionPlanEstudio.objects.create(usuario=self.usuario, plan_de_estudio=self.plan)
+        self.client = Client()
+        self.client.login(username="docente_silabo", password="testpassword")
+
+    def _crear_silabo(self, encuentro):
+        return Silabo.objects.create(
+            codigo="BD201",
+            encuentros=encuentro,
+            fecha=datetime.date(2026, 6, 20),
+            unidad="Unidad I",
+            nombre_de_la_unidad="Unidad de prueba",
+            contenido_tematico="Contenido de prueba",
+            objetivo_conceptual="Conceptual",
+            objetivo_procedimental="Procedimental",
+            objetivo_actitudinal="Actitudinal",
+            tipo_primer_momento="Evaluación diagnóstica",
+            detalle_primer_momento="Detalle",
+            tiempo_primer_momento=10,
+            recursos_primer_momento="Libro",
+            tipo_segundo_momento_claseteoria="Conferencia",
+            clase_teorica="Clase teorica",
+            tipo_segundo_momento_practica="Taller",
+            clase_practica="Clase practica",
+            tiempo_segundo_momento_teorica=30,
+            tiempo_segundo_momento_practica=30,
+            recursos_segundo_momento="Pizarra",
+            tipo_tercer_momento=["Orientación del estudio independiente"],
+            detalle_tercer_momento="Detalle",
+            tiempo_tercer_momento=10,
+            recursos_tercer_momento="Web",
+            eje_transversal=["Cultura de paz"],
+            detalle_eje_transversal="Detalle eje",
+            actividad_aprendizaje="Actividad",
+            tecnica_evaluacion=["Ensayo"],
+            tipo_evaluacion=["Formativa"],
+            periodo_tiempo_programado="I Corte Evaluativo",
+            tiempo_minutos=30,
+            agente_evaluador=["Heteroevaluación"],
+            instrumento_evaluacion="Rúbrica",
+            criterios_evaluacion="Criterios",
+            puntaje=10,
+            asignacion_plan=self.asignacion,
+        )
+
+    def test_formulario_incluye_contenedores_alerta_y_calcula_encuentro_faltante(self):
+        self._crear_silabo(1)
+        self._crear_silabo(3)
+
+        resp = self.client.get(reverse('ver_formulario_silabo', args=[self.asignacion.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'id="silabo-alert-container"')
+        self.assertContains(resp, 'id="guardar-alert-container"')
+        self.assertContains(resp, 'Encuentro (2)')
+
+    def test_ver_formulario_silabo_redirige_si_ya_hay_11_encuentros(self):
+        for enc in range(1, 12):
+            self._crear_silabo(enc)
+        # Simular contador desincronizado en BD
+        self.asignacion.silabos_creados = 10
+        self.asignacion.save()
+
+        resp = self.client.get(reverse('ver_formulario_silabo', args=[self.asignacion.id]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp['Location'], reverse('inicio'))
+        self.asignacion.refresh_from_db()
+        self.assertEqual(self.asignacion.silabos_creados, 11)
+
+    def test_generar_silabo_valida_rango_y_tipo_encuentro(self):
+        resp_12 = self.client.post(reverse('generar_silabo'), {
+            'encuentro': '12',
+            'plan': str(self.asignacion.id),
+            'modelo_select': 'google',
+        })
+        self.assertEqual(resp_12.status_code, 400)
+        self.assertIn('entre 1 y 11', resp_12.json()['error'])
+
+        resp_none = self.client.post(reverse('generar_silabo'), {
+            'plan': str(self.asignacion.id),
+            'modelo_select': 'google',
+        })
+        self.assertEqual(resp_none.status_code, 400)
+        self.assertIn('número válido', resp_none.json()['error'])
+
+
+

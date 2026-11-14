@@ -110,34 +110,63 @@ function guardarSilabo() {
 }
 
 /**
- * Función para mostrar mensaje de éxito
- * @param {string} mensaje - Mensaje a mostrar en la alerta
+ * Resuelve el contenedor donde mostrar alertas dinámicas del formulario de sílabo.
+ * @param {string} [targetSelector] - Selector opcional preferido.
+ * @returns {jQuery}
  */
-function mostrarMensajeExito(mensaje) {
-  $(".alert-success, .alert-danger").remove();
-  const alertHTML = `
-        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-            <strong>¡Éxito!</strong> ${mensaje}
+function obtenerContenedorAlertaSilabo(targetSelector) {
+  if (targetSelector) {
+    const $target = $(targetSelector);
+    if ($target.length > 0) return $target;
+  }
+  const candidatos = [
+    "#guardar-alert-container",
+    "#form-guardar-silabo .card-footer",
+    "#silabo-alert-container",
+    "#form-guardar-silabo",
+  ];
+  for (const sel of candidatos) {
+    const $el = $(sel);
+    if ($el.length > 0) return $el;
+  }
+  return $("body");
+}
+
+function crearAlertaSilabo(tipo, titulo, mensaje) {
+  const $alert = $(`
+        <div class="alert alert-${tipo} alert-dismissible fade show mt-3 silabo-dynamic-alert" role="alert">
+            <strong></strong> <span class="silabo-alert-body"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    `;
-  $("#form-guardar-silabo .card-footer").prepend(alertHTML);
-  setTimeout(() => $(".alert-success").alert("close"), 5000);
+    `);
+  $alert.find("strong").text(titulo);
+  $alert.find(".silabo-alert-body").text(mensaje);
+  return $alert;
+}
+
+/**
+ * Función para mostrar mensaje de éxito
+ * @param {string} mensaje - Mensaje a mostrar en la alerta
+ * @param {string} [targetSelector] - Selector opcional del contenedor
+ */
+function mostrarMensajeExito(mensaje, targetSelector) {
+  $(".silabo-dynamic-alert").remove();
+  const $container = obtenerContenedorAlertaSilabo(targetSelector);
+  const $alert = crearAlertaSilabo("success", "¡Éxito!", mensaje);
+  $container.prepend($alert);
+  setTimeout(() => $alert.alert("close"), 5000);
 }
 
 /**
  * Función para mostrar mensaje de error general
  * @param {string} mensaje - Mensaje a mostrar en la alerta
+ * @param {string} [targetSelector] - Selector opcional del contenedor
  */
-function mostrarMensajeError(mensaje) {
-  $(".alert-success, .alert-danger").remove();
-  const alertHTML = `
-        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
-            <strong>¡Error!</strong> ${mensaje}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    `;
-  $("#form-guardar-silabo .card-footer").prepend(alertHTML);
+function mostrarMensajeError(mensaje, targetSelector) {
+  $(".silabo-dynamic-alert").remove();
+  const $container = obtenerContenedorAlertaSilabo(targetSelector);
+  const $alert = crearAlertaSilabo("danger", "¡Error!", mensaje);
+  $container.prepend($alert);
   // No se cierra automáticamente
 }
 

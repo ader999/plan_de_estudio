@@ -469,6 +469,23 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
             asignacion = get_object_or_404(AsignacionPlanEstudio, id=id)
         nombre_de_usuario = request.user.username
         silabos_creados = asignacion.silabo_set.count()
+        if asignacion.silabos_creados != silabos_creados:
+            asignacion.silabos_creados = silabos_creados
+            asignacion.save(update_fields=["silabos_creados"])
+
+        encuentros_existentes = set(
+            asignacion.silabo_set.values_list("encuentros", flat=True)
+        )
+        proximo_encuentro = next(
+            (n for n in range(1, 12) if n not in encuentros_existentes),
+            None,
+        )
+        if proximo_encuentro is None:
+            messages.warning(
+                request,
+                f"Ya se han completado los 11 sílabos para {asignacion.plan_de_estudio}.",
+            )
+            return redirect("inicio")
 
         form = SilaboForm(
             initial={
@@ -476,7 +493,7 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
                 "carrera": asignacion.plan_de_estudio.carrera,
                 "asignatura": asignacion.plan_de_estudio,  # Asignar el plan de estudio como asignatura
                 "maestro": request.user,
-                "encuentros": silabos_creados + 1,
+                "encuentros": proximo_encuentro,
             }
         )
 
@@ -498,7 +515,7 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
                 "asignacion": asignacion,
                 "usuario": nombre_de_usuario,
                 "silabos_creados": silabos_creados,
-                "encuentro": silabos_creados + 1,
+                "encuentro": proximo_encuentro,
                 "asignaturas": asignaturas,
                 "mostrar_ia": mostrar_ia,
                 "modelos_ia": modelos_ia,
@@ -652,9 +669,9 @@ def guardar_silabo(request, asignacion_id=None, id=None):
             )
             silabo.save()
 
-            # Incrementar contador de sílabos creados
-            asignacion.silabos_creados += 1
-            asignacion.save()
+            # Sincronizar contador de sílabos creados
+            asignacion.silabos_creados = asignacion.silabo_set.count()
+            asignacion.save(update_fields=["silabos_creados"])
 
             messages.success(request, "Sílabo guardado correctamente.")
             return JsonResponse(
@@ -957,7 +974,7 @@ def generar_silabo(request):
                     {"error": "El número de encuentro debe estar entre 1 y 11"},
                     status=400,
                 )
-        except ValueError:
+        except (ValueError, TypeError):
             return JsonResponse(
                 {"error": "El número de encuentro debe ser un número válido"},
                 status=400,

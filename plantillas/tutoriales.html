@@ -15,14 +15,14 @@
                 <div class="row">
                     <div class="col-md-10 mx-auto">
                         <!-- Descarga APK Android -->
-                        <div class="mb-5 p-4 rounded card border-primary border-opacity-25" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(15, 23, 42, 0.65)) !important;">
+                        <div class="mb-5 p-4 rounded card" style="background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%) !important; border: 1px solid rgba(37, 99, 235, 0.25) !important; border-left: 5px solid var(--corp-primary) !important;">
                             <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="{% static 'img/pwa-icon-192.png' %}" alt="Icono PLANEAUML Android" style="width: 64px; height: 64px; border-radius: 14px; flex-shrink: 0; box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);">
+                                    <img src="{% static 'img/pwa-icon-192.png' %}" alt="Icono PLANEAUML Android" style="width: 64px; height: 64px; border-radius: 14px; flex-shrink: 0; background: #ffffff; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.22);">
                                     <div>
                                         <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                                            <h4 class="text-white mb-0" style="font-size: 1.25rem; font-weight: 700;">
-                                                <i class="fab fa-android text-success me-2"></i>App Android PLANEAUML (APK)
+                                            <h4 class="mb-0" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">
+                                                <i class="fab fa-android me-2" style="color: var(--corp-success);"></i>App Android PLANEAUML (APK)
                                             </h4>
                                             {% if apk_info.available %}
                                             <span class="badge bg-primary">v{{ apk_info.latest_version_name }} (Build #{{ apk_info.latest_version_code }})</span>
@@ -30,11 +30,11 @@
                                             <span class="badge bg-secondary">Versión oficial</span>
                                             {% endif %}
                                         </div>
-                                        <p class="text-secondary small mb-1">
+                                        <p class="small mb-1" style="color: var(--text-secondary);">
                                             Instala la app nativa en tu teléfono Android para acceder más rápido y con mejor respuesta ante conexiones lentas.
                                         </p>
-                                        <p class="text-muted mb-0" style="font-size: 0.8rem;">
-                                            Paquete: <code>{{ apk_info.package_id }}</code>{% if apk_info.apk_size_mb %} · Tamaño: {{ apk_info.apk_size_mb }} MB{% endif %}{% if apk_info.commit_sha %} · Revisión: <code>{{ apk_info.commit_sha }}</code>{% endif %}
+                                        <p class="mb-0" style="font-size: 0.8rem; color: var(--text-muted);">
+                                            Paquete: <code style="background-color: rgba(37, 99, 235, 0.1); color: #1d4ed8; padding: 0.12rem 0.4rem; border-radius: 5px; font-weight: 600;">{{ apk_info.package_id }}</code>{% if apk_info.apk_size_mb %} · Tamaño: {{ apk_info.apk_size_mb }} MB{% endif %}{% if apk_info.commit_sha %} · Revisión: <code style="background-color: rgba(37, 99, 235, 0.1); color: #1d4ed8; padding: 0.12rem 0.4rem; border-radius: 5px; font-weight: 600;">{{ apk_info.commit_sha }}</code>{% endif %}
                                         </p>
                                     </div>
                                 </div>
@@ -44,8 +44,8 @@
                                     </a>
                                 </div>
                             </div>
-                            <div class="mt-3 pt-3 border-top border-secondary border-opacity-25 text-muted small">
-                                <i class="fas fa-shield-alt text-info me-1"></i>
+                            <div class="mt-3 pt-3 border-top small" style="border-color: rgba(37, 99, 235, 0.16) !important; color: var(--text-secondary);">
+                                <i class="fas fa-shield-alt me-1" style="color: var(--corp-info);"></i>
                                 Si ya tienes instalada una versión anterior de la APK, descarga e instala la nueva encima sin desinstalar para conservar tus datos y sesión.
                             </div>
                         </div>

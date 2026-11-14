@@ -8,12 +8,59 @@
 
 
 
+function notificarErrorGeneracion(mensaje) {
+  if (typeof mostrarMensajeError === "function") {
+    mostrarMensajeError(mensaje, "#silabo-alert-container");
+    return;
+  }
+  const $container = $("#silabo-alert-container");
+  if ($container.length > 0) {
+    $container.empty();
+    const $alert = $(
+      '<div class="alert alert-danger alert-dismissible fade show mt-3 silabo-dynamic-alert" role="alert"><strong>¡Error!</strong> <span class="silabo-alert-body"></span><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>',
+    );
+    $alert.find(".silabo-alert-body").text(mensaje);
+    $container.append($alert);
+  } else {
+    alert(mensaje);
+  }
+}
+
+function extraerMensajeErrorAjax(xhr, status) {
+  const defaultMsg =
+    "Hubo un error al generar el sílabo. Por favor, revise la consola e intente nuevamente.";
+  if (status === "timeout") {
+    return "La solicitud tomó demasiado tiempo. Por favor, intente nuevamente.";
+  }
+  if (xhr && xhr.responseJSON && xhr.responseJSON.error) {
+    return xhr.responseJSON.error;
+  }
+  if (xhr && xhr.responseText) {
+    try {
+      const parsed = JSON.parse(xhr.responseText);
+      if (parsed && parsed.error) {
+        return parsed.error;
+      }
+    } catch (_) {
+      // No es JSON válido
+    }
+  }
+  if (xhr && xhr.status === 403) {
+    return "Error de permisos o sesión (CSRF). Recargue la página e intente nuevamente.";
+  }
+  if (xhr && xhr.status === 0) {
+    return "No se pudo conectar con el servidor. Verifique su conexión e intente nuevamente.";
+  }
+  return defaultMsg;
+}
+
 $(document).ready(function () {
   // --- Manejador de eventos para el formulario de GENERACIÓN ---
 
   $("#silabo-form").on("submit", function (e) {
     e.preventDefault();
 
+    $(".silabo-dynamic-alert").remove();
     mostrarSpinner(); // Mostrar spinner y ocultar texto/icono del botón generar
     $("#boton-generar").prop("disabled", true);
 
@@ -28,10 +75,9 @@ $(document).ready(function () {
       success: function (response) {
         console.log("Respuesta de generación recibida:", response);
 
-        if (response.silabo_data) {
+        if (response && typeof response === "object" && response.silabo_data) {
           const silaboData = response.silabo_data;
           console.log("--- Iniciando Autocompletado ---");
-          // console.log("Datos Completos (silaboData):", JSON.stringify(silaboData, null, 2));
 
           // Rellenar los campos del formulario de GUARDAR (#form-guardar-silabo)
           autocompletarFormularioGuardar(silaboData);
@@ -42,7 +88,6 @@ $(document).ready(function () {
           ).trigger("change");
 
           // Resaltar campos llenados (función definida en silabo_guardar.js)
-          // Asegúrate que silabo_guardar.js se carga ANTES que silabo_ia.js
           if (typeof highlightFilledFields === "function") {
             highlightFilledFields();
           } else {
@@ -51,38 +96,32 @@ $(document).ready(function () {
             );
           }
 
-          console.log("--- Autocompletado Finalizado ---");
-        } else {
-          console.error("No se encontró silabo_data en la respuesta");
-          // Usar la función de mensaje de error si está disponible
-          if (typeof mostrarMensajeError === "function") {
-            mostrarMensajeError(
-              "La respuesta del servidor no contiene los datos esperados para el sílabo.",
-            );
-          } else {
-            alert(
-              "La respuesta del servidor no contiene los datos esperados para el sílabo.",
+          if (typeof mostrarMensajeExito === "function") {
+            mostrarMensajeExito(
+              "Contenido generado con éxito. Revise los campos antes de guardar.",
+              "#silabo-alert-container",
             );
           }
+
+          console.log("--- Autocompletado Finalizado ---");
+        } else {
+          console.error("No se encontró silabo_data en la respuesta:", response);
+          const errorMsg =
+            response && typeof response === "object" && response.error
+              ? response.error
+              : "La respuesta del servidor no contiene los datos esperados para el sílabo. Si su sesión expiró, recargue la página.";
+          notificarErrorGeneracion(errorMsg);
         }
       },
-      error: function (xhr) {
-        console.error("Error en la solicitud de generación:", xhr.responseText);
-        // Usar la función de mensaje de error si está disponible
-        if (typeof mostrarMensajeError === "function") {
-          mostrarMensajeError(
-            "Hubo un error al generar el sílabo. Por favor, revise la consola e intente nuevamente.",
-          );
-        } else {
-          alert(
-            "Hubo un error al generar el sílabo. Por favor, revise la consola e intente nuevamente.",
-          );
-        }
+      error: function (xhr, status) {
+        console.error("Error en la solicitud de generación:", xhr.status, xhr.responseText);
+        const errorMsg = extraerMensajeErrorAjax(xhr, status);
+        notificarErrorGeneracion(errorMsg);
       },
       complete: function () {
         // Restaurar el botón de generar y ocultar spinners
         $("#boton-generar").prop("disabled", false);
-        $(".spinner").addClass("d-none"); // Ocultar todos los spinners asociados
+        $("#boton-generar .spinner").addClass("d-none"); // Ocultar todos los spinners asociados
         $("#boton-generar .text, #boton-generar .sparkle").removeClass(
           "d-none",
         ); // Mostrar texto/icono
@@ -252,7 +291,11 @@ function autocompletarFormularioGuardar(silaboData) {
   );
 
   // Sección 4: Evaluación dinámica
-  if (silaboData.actividad_aprendizaje && !silaboData.actividad_aprendizaje.toLowerCase().includes("no se realizará")) {
+  if (
+    typeof silaboData.actividad_aprendizaje === "string" &&
+    silaboData.actividad_aprendizaje &&
+    !silaboData.actividad_aprendizaje.toLowerCase().includes("no se realizará")
+  ) {
     $("#sin_evaluacion_dinamica").prop("checked", false);
     if (typeof toggleEvaluacionDinamica === "function") {
       toggleEvaluacionDinamica();

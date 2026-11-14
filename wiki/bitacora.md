@@ -1,5 +1,21 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-14] Corrección de Alertas Silenciosas al Generar Sílabo y Control de Encuentro 1–11
+- **Diagnóstico**: Al presionar el botón **Generar** en `plantillas/formulario_silabo.html` cuando ocurría un error (por ejemplo, al quedar el formulario en `Encuentro (12)` y ser rechazado con HTTP 400 por `generar_silabo`, o ante cualquier error de IA/red), `mostrarMensajeError` en `static/js/silabo_guardar.js` intentaba insertar la alerta en `$("#form-guardar-silabo .card-footer")`, un selector inexistente en `formulario_silabo.html`, ocultando completamente el error y dando la apariencia de que el botón no hacía nada.
+- **Alertas y Manejo de Errores (`plantillas/formulario_silabo.html`, `static/js/silabo_guardar.js`, `static/js/silabo_ia.js`)**:
+  - Se agregaron `#silabo-alert-container` (junto al botón **Generar**) y `#guardar-alert-container` (junto al botón **Guardar Formularios**).
+  - Se actualizó `obtenerContenedorAlertaSilabo`, `mostrarMensajeExito` y `mostrarMensajeError` para resolver contenedores válidos sin fallar silenciosamente y sanitizar el texto mediante `.text(...)`.
+  - En `silabo_ia.js` se extrae el mensaje real del servidor (`xhr.responseJSON.error` / `xhr.responseText`), se maneja sesión/CSRF (`403`), fallos de red (`status 0`) y respuestas sin `silabo_data`, y se muestra confirmación al autocompletar.
+- **Control de Encuentros 1–11 y Sincronización (`plan_de_estudio/views.py`, `plantillas/inicio.html`, `plantillas/pwa/sw.js`)**:
+  - `ver_formulario_silabo` sincroniza `asignacion.silabos_creados` con `asignacion.silabo_set.count()`, determina el próximo encuentro faltante en el rango `1..11` y redirige a `inicio` con mensaje de advertencia si los 11 sílabos ya existen (evitando llegar a `Encuentro (12)`).
+  - `guardar_silabo` recalcula `asignacion.silabos_creados = asignacion.silabo_set.count()` y `generar_silabo` captura `(ValueError, TypeError)` al validar `encuentro`.
+  - Se endurecieron los enlaces deshabilitados de `plantillas/inicio.html` (`aria-disabled="true"`, `href="#"`) y se actualizó `SW_VERSION` a `planeauml-v3` en `plantillas/pwa/sw.js`.
+- **Pruebas (`plan_de_estudio/tests.py`)**: Se agregó `SilaboFormularioYGeneracionTest` (36 pruebas pasando).
+
+## [2026-11-14] Corrección de Contraste en Card de Descarga APK (`plantillas/tutoriales.html`)
+- Se reemplazó el gradiente oscuro heredado (`rgba(15, 23, 42, 0.65)`) de la tarjeta de descarga APK en el **Centro de Recursos** por una superficie clara (`#ffffff` a `#eff6ff`) con borde y acento lateral corporativo (`var(--corp-primary)`), alineada con el tema claro activo en `static/css/base.css`.
+- Se ajustaron los colores de título (`var(--text-primary)`), texto descriptivo (`var(--text-secondary)`), metadatos (`var(--text-muted)`), etiquetas `<code>` e íconos para garantizar alto contraste y legibilidad.
+
 ## [2026-11-14] Compilación Automática de APK en Cada Push, Actualización Obligatoria en TWA y Centro de Recursos
 - **CI/CD Android TWA (`.github/workflows/build-apk.yml`, `twa/`)**:
   - Se añadió la configuración base `twa/twa-manifest.json` y `twa/package.json` (`@bubblewrap/cli`) junto con el workflow `Build and Release Android APK` disparado en cada `push` a `main`.
