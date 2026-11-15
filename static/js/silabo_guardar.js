@@ -65,6 +65,14 @@ function guardarSilabo() {
     success: function (response) {
       console.log("Sílabo guardado:", response);
 
+      // Eliminar borrador del navegador únicamente tras confirmación exitosa del backend
+      if (
+        window.SilaboWizard &&
+        typeof window.SilaboWizard.clearDraft === "function"
+      ) {
+        window.SilaboWizard.clearDraft();
+      }
+
       if (response.silabo_id) {
         $("#form-guardar-silabo").data("silabo_id", response.silabo_id); // Opcional
       }

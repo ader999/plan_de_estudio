@@ -1,54 +1,50 @@
 // --- START OF FILE silabo_validar.js ---
 
 /**
- * Función para validar campos obligatorios antes de enviar el formulario de GUARDAR
- * @returns {boolean} true si todos los campos obligatorios están completados, false en caso contrario
+ * Función para validar campos obligatorios antes de avanzar de paso o enviar el formulario de GUARDAR.
+ * @param {number|null} [stepNumber] - Si se indica (1..5), valida únicamente los campos de ese paso.
+ * @returns {boolean} true si los campos requeridos están completados, false en caso contrario
  */
-function validarCamposObligatorios() {
+function validarCamposObligatorios(stepNumber = null) {
   const sinEvaluacion = $("#sin_evaluacion_dinamica").is(":checked");
+  const isStepValidation =
+    typeof stepNumber === "number" &&
+    stepNumber >= 1 &&
+    window.SilaboWizard &&
+    typeof window.SilaboWizard.getStepRequirements === "function";
 
-  let camposObligatorios = [
-    "id_encuentros",
-    "id_fecha",
-    "id_unidad",
-    "id_nombre_de_la_unidad",
-    "id_contenido_tematico",
-    "id_objetivo_conceptual",
-    "id_objetivo_procedimental",
-    "id_objetivo_actitudinal",
-    "id_tipo_primer_momento",
-    "id_detalle_primer_momento",
-    "id_tiempo_primer_momento",
-    "id_recursos_primer_momento",
-    "id_tipo_segundo_momento_claseteoria",
-    "id_clase_teorica",
-    "id_tipo_segundo_momento_practica",
-    "id_clase_practica",
-    "id_tiempo_segundo_momento_teorica",
-    "id_tiempo_segundo_momento_practica",
-    "id_recursos_segundo_momento",
-    "id_detalle_tercer_momento",
-    "id_tiempo_tercer_momento",
-    "id_recursos_tercer_momento",
-    "id_detalle_eje_transversal",
-    "id_actividad_aprendizaje",
-    "id_periodo_tiempo_programado",
-    "id_tiempo_minutos",
-    "id_instrumento_evaluacion",
-    "id_criterios_evaluacion",
-    "id_puntaje",
-  ];
-  // IDs de grupos de Checkboxes obligatorios (usar el 'name' del input)
-  let checkboxGroupsObligatorios = [
-    "tipo_tercer_momento",
-    "eje_transversal",
-    "tipo_evaluacion",
-    "tecnica_evaluacion",
-    "agente_evaluador",
-  ];
+  let camposObligatorios = [];
+  let checkboxGroupsObligatorios = [];
 
-  if (sinEvaluacion) {
-    const camposSeccion4 = [
+  if (isStepValidation) {
+    const req = window.SilaboWizard.getStepRequirements(stepNumber);
+    camposObligatorios = req.fields;
+    checkboxGroupsObligatorios = req.checkboxGroups;
+  } else {
+    camposObligatorios = [
+      "id_encuentros",
+      "id_fecha",
+      "id_unidad",
+      "id_nombre_de_la_unidad",
+      "id_contenido_tematico",
+      "id_objetivo_conceptual",
+      "id_objetivo_procedimental",
+      "id_objetivo_actitudinal",
+      "id_tipo_primer_momento",
+      "id_detalle_primer_momento",
+      "id_tiempo_primer_momento",
+      "id_recursos_primer_momento",
+      "id_tipo_segundo_momento_claseteoria",
+      "id_clase_teorica",
+      "id_tipo_segundo_momento_practica",
+      "id_clase_practica",
+      "id_tiempo_segundo_momento_teorica",
+      "id_tiempo_segundo_momento_practica",
+      "id_recursos_segundo_momento",
+      "id_detalle_tercer_momento",
+      "id_tiempo_tercer_momento",
+      "id_recursos_tercer_momento",
+      "id_detalle_eje_transversal",
       "id_actividad_aprendizaje",
       "id_periodo_tiempo_programado",
       "id_tiempo_minutos",
@@ -56,45 +52,56 @@ function validarCamposObligatorios() {
       "id_criterios_evaluacion",
       "id_puntaje",
     ];
-    const groupsSeccion4 = [
+    checkboxGroupsObligatorios = [
+      "tipo_tercer_momento",
+      "eje_transversal",
       "tipo_evaluacion",
       "tecnica_evaluacion",
       "agente_evaluador",
     ];
-    camposObligatorios = camposObligatorios.filter(
-      (id) => !camposSeccion4.includes(id),
-    );
-    checkboxGroupsObligatorios = checkboxGroupsObligatorios.filter(
-      (g) => !groupsSeccion4.includes(g),
-    );
+
+    if (sinEvaluacion) {
+      const camposSeccion4 = [
+        "id_actividad_aprendizaje",
+        "id_periodo_tiempo_programado",
+        "id_tiempo_minutos",
+        "id_instrumento_evaluacion",
+        "id_criterios_evaluacion",
+        "id_puntaje",
+      ];
+      const groupsSeccion4 = [
+        "tipo_evaluacion",
+        "tecnica_evaluacion",
+        "agente_evaluador",
+      ];
+      camposObligatorios = camposObligatorios.filter(
+        (id) => !camposSeccion4.includes(id),
+      );
+      checkboxGroupsObligatorios = checkboxGroupsObligatorios.filter(
+        (g) => !groupsSeccion4.includes(g),
+      );
+    }
   }
 
   let formValido = true;
   let primerElementoConError = null;
 
-  // Resetear errores visuales
-  $("#form-guardar-silabo .error-message").remove();
-  $("#form-guardar-silabo .border-danger").removeClass("border-danger");
-  $("#form-guardar-silabo .border-success").removeClass("border-success");
-  $("#form-guardar-silabo .border-danger-group").removeClass(
-    "border-danger-group",
-  );
-  $("#form-guardar-silabo .border-success-group").removeClass(
-    "border-success-group",
-  );
-  // Añadir area general de errores si no existe
-  if (
-    $("#general-error-area").length === 0 &&
-    $("#form-guardar-silabo .card-footer").length > 0
-  ) {
-    $("#form-guardar-silabo .card-footer").prepend(
-      '<div id="general-error-area"></div>',
-    );
-  } else if ($("#general-error-area").length === 0) {
-    // Fallback si no hay card-footer
+  const $scope = isStepValidation
+    ? $(`.wizard-step[data-step="${stepNumber}"]`)
+    : $("#form-guardar-silabo");
+
+  // Resetear errores visuales dentro del alcance actual
+  $scope.find(".error-message").remove();
+  $scope.find(".border-danger").removeClass("border-danger");
+  $scope.find(".border-success").removeClass("border-success");
+  $scope.find(".border-danger-group").removeClass("border-danger-group");
+  $scope.find(".border-success-group").removeClass("border-success-group");
+
+  if ($("#general-error-area").length === 0) {
     $("#form-guardar-silabo").prepend('<div id="general-error-area"></div>');
   }
-  $("#general-error-area").empty(); // Limpiar errores generales previos
+  $("#general-error-area").empty();
+  $(".silabo-dynamic-alert").remove();
 
   // Validar campos input/select/textarea
   camposObligatorios.forEach(function (campoId) {
@@ -126,9 +133,9 @@ function validarCamposObligatorios() {
     const $checkboxes = $(`input[name="${groupName}"]`);
     if ($checkboxes.length === 0) {
       console.warn("Grupo de checkboxes obligatorio no encontrado:", groupName);
-      return; // Saltar si no se encuentran checkboxes con ese nombre
+      return;
     }
-    const $container = $checkboxes.closest(".form-check-group-container"); // Necesitas este contenedor
+    const $container = $checkboxes.closest(".form-check-group-container");
     const isAnyChecked = $checkboxes.is(":checked");
 
     if (!isAnyChecked) {
@@ -136,15 +143,13 @@ function validarCamposObligatorios() {
       $container
         .addClass("border-danger-group")
         .removeClass("border-success-group");
-      // Añadir mensaje de error después del contenedor o dentro de él
       const errorMsg = $(
         '<div class="error-message text-danger small mt-1">Debe seleccionar al menos una opción.</div>',
       );
-      // Poner el mensaje después del contenedor para no interferir con el layout interno
       if ($container.next(".error-message").length === 0)
         $container.after(errorMsg);
 
-      if (!primerElementoConError) primerElementoConError = $container; // Apuntar al contenedor para scroll
+      if (!primerElementoConError) primerElementoConError = $container;
     } else {
       $container
         .addClass("border-success-group")
@@ -152,19 +157,40 @@ function validarCamposObligatorios() {
     }
   });
 
-  // Scroll y mensaje general si hay errores
+  // Cambiar de paso si hace falta, hacer scroll y mostrar mensaje
   if (!formValido) {
-    if (primerElementoConError && primerElementoConError.length > 0 && typeof primerElementoConError.offset === 'function') {
+    if (
+      !isStepValidation &&
+      primerElementoConError &&
+      window.SilaboWizard &&
+      typeof window.SilaboWizard.goToStepForElement === "function"
+    ) {
+      window.SilaboWizard.goToStepForElement(primerElementoConError);
+    }
+
+    if (
+      primerElementoConError &&
+      primerElementoConError.length > 0 &&
+      typeof primerElementoConError.offset === "function"
+    ) {
       $("html, body").animate(
         {
-          scrollTop: primerElementoConError.offset().top - 100,
+          scrollTop: Math.max(0, primerElementoConError.offset().top - 140),
         },
-        500,
+        350,
       );
     }
-    mostrarMensajeError(
-      "Por favor, complete todos los campos obligatorios marcados en rojo.",
-    );
+
+    if (isStepValidation) {
+      mostrarMensajeError(
+        `Completa los campos marcados en rojo de este paso (${stepNumber}) para continuar.`,
+        "#wizard-step-alert-container",
+      );
+    } else {
+      mostrarMensajeError(
+        "Por favor, complete todos los campos obligatorios marcados en rojo.",
+      );
+    }
   }
 
   return formValido;
@@ -316,11 +342,17 @@ function resaltarCamposConError(errores) {
     }
   }
 
-  // Scroll al primer error detectado
+  // Cambiar al paso del primer error detectado y hacer scroll
   if (primerElementoConError) {
+    if (
+      window.SilaboWizard &&
+      typeof window.SilaboWizard.goToStepForElement === "function"
+    ) {
+      window.SilaboWizard.goToStepForElement(primerElementoConError);
+    }
     $("html, body").animate(
       {
-        scrollTop: primerElementoConError.offset().top - 100,
+        scrollTop: Math.max(0, primerElementoConError.offset().top - 140),
       },
       500,
     );

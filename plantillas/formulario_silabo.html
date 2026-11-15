@@ -10,7 +10,6 @@
         display: none !important;
     }
 
-    /* Estilo personalizado para las líneas divisorias */
     .hr-blue {
         height: 3px;
         background-color: var(--corp-primary);
@@ -19,558 +18,335 @@
         border-radius: 2px;
     }
 
-    /* Espaciado consistente para los campos */
     .mb-3 {
-        margin-bottom: 1.25rem !important;
+        margin-bottom: 1.15rem !important;
     }
 
     h6 {
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
+        margin-top: 1.25rem;
+        margin-bottom: 0.85rem;
         font-weight: 700;
         color: var(--text-primary);
     }
-</style>
 
-<div class="container-fluid mt-3 form-page-container">
-    <div class="text-center">
-        <h1 class="mb-4 text-center">Llenar formularios</h1>
-        <h3>{{ asignacion.plan_de_estudio }}</h3>
-        <h3>Encuentro ({{ encuentro }})</h3>
-    </div>
+    /* Cabecera sticky del Wizard */
+    .wizard-sticky-header {
+        position: sticky;
+        top: 66px;
+        z-index: 1015;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
 
-    <!-- Contenedor principal que contiene ambas secciones -->
-    <div class="container">
+    .wizard-step-counter {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--corp-primary);
+    }
 
+    .wizard-step-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
 
-        <!-- Sección 1: Formulario Principal (Sílabo) -->
-        <div id="seccionFormularioPrincipal" style="display: block;">
-            <div class="row justify-content-center">
-                <div class="col-lg-8 col-md-10 col-sm-12">
-                    <div class="card shadow-lg">
-                        <div class="card-body">
+    .wizard-autosave-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
 
+    .wizard-time-badge {
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background-color: rgba(37, 99, 235, 0.12);
+        color: var(--corp-primary);
+        white-space: nowrap;
+    }
 
-                            <h2 class="text-center mb-4">Silabo</h2>
-                            <form id="silabo-form" method="POST" action="{% url 'generar_silabo' %}"
-                                data-url-generar-silabo="{% url 'generar_silabo' %}"
-                                data-url-guardar-silabo="{% url 'guardar_silabo' asignacion.id %}"
-                                data-url-guardar-estudio-independiente="{% url 'generar_estudio_independiente' %}">
-                                {% csrf_token %}
+    /* Barra de pestañas horizontales desplazable en móvil */
+    .wizard-tabs-scroll {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        margin-top: 10px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
 
-                                <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">
-                                <input type="hidden" id="plan" name="plan" value="{{ asignacion.id }}">
+    .wizard-tabs-scroll::-webkit-scrollbar {
+        display: none;
+    }
 
-                                {% if mostrar_ia %}
-                                <div class="d-flex justify-content-center align-items-center gap-3 flex-wrap">
-                                    <div class="d-flex align-items-center">
-                                        <!-- Etiqueta para el select -->
-                                        <label for="modelo_select" class="form-label mb-0 me-2">Modelo:</label>
+    .wizard-step-tab {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 11px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-primary);
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        white-space: nowrap;
+    }
 
-                                        <!-- Combobox con ancho personalizado -->
-                                        <select id="modelo_select" name="modelo_select" class="form-select"
-                                            style="width: 240px;">
-                                            {% if modelos_ia %}
-                                                {% for modelo in modelos_ia %}
-                                                <option value="{{ modelo.id }}">{{ modelo.nombre_mostrar }}</option>
-                                                {% endfor %}
-                                            {% else %}
-                                                <option value="google">Google - Gemini-3-flash</option>
-                                                <option value="openai">OpenAI - o4Mini</option>
-                                                <option value="deepseek">DeepSeek - Chat</option>
-                                            {% endif %}
-                                        </select>
-                                    </div>
+    .wizard-step-tab .wizard-tab-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
 
-                                    {% include 'generar_plan_estudio/boton_generar.html' %}
-                                </div>
-                                {% endif %}
-                            </form>
-                            <div id="silabo-alert-container" class="mt-3"></div>
+    .wizard-step-tab.is-complete .wizard-tab-status {
+        background-color: var(--corp-success);
+        color: #fff;
+    }
 
-                            <form method="post" id="form-guardar-silabo">
-                                {% csrf_token %}
+    .wizard-step-tab.is-partial .wizard-tab-status {
+        background-color: var(--corp-warning);
+        color: #fff;
+    }
 
-                                <!-- Mostrando errores de formulario -->
-                                {% if form.errors %}
-                                <div class="alert alert-danger">
-                                    <ul>
-                                        {% for field in form %}
-                                        {% if field.errors %}
-                                        <li>{{ field.label }}: {{ field.errors }}</li>
-                                        {% endif %}
-                                        {% endfor %}
-                                        {% for error in form.non_field_errors %}
-                                        <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                                {% endif %}
+    .wizard-step-tab.active {
+        background-color: var(--corp-primary);
+        border-color: var(--corp-primary);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
+    }
 
-                                <!-- Campo Código -->
-                                <div class="mb-3 oculto">
-                                    <label for="codigo" class="form-label">Código</label>
-                                    {{ form.codigo|add_class:"form-control" }}
-                                </div>
+    .wizard-step-tab.active .wizard-tab-status {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #fff;
+    }
 
-                                <!-- Sección 1: Información general del plan de estudio -->
-                                <div class="card mb-4 mt-3">
-                                    <div class="card-header">
-                                        <h5 class="mb-0">Información General</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <!-- Campo Encuentros -->
-                                        <div class="mb-3 oculto">
-                                            <label for="encuentros" class="form-label">Encuentros</label>
-                                            {{ form.encuentros|add_class:"form-control" }}
-                                        </div>
+    /* Panel de IA en Paso 1 */
+    .wizard-ai-box {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(124, 77, 255, 0.08) 100%);
+        border: 1px solid rgba(37, 99, 235, 0.25);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 1rem;
+    }
 
-                                        <!-- Campo Fecha -->
-                                        <div class="mb-3">
-                                            <label for="fecha" class="form-label">Fecha</label>
-                                            {{ form.fecha|add_class:"form-control" }}
-                                        </div>
+    /* Banner de borrador restaurado */
+    .draft-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        background-color: rgba(5, 150, 105, 0.1);
+        border: 1px solid rgba(5, 150, 105, 0.35);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 1rem;
+        font-size: 0.88rem;
+        color: var(--text-primary);
+    }
 
-                                        <!-- Campo Unidad -->
-                                        <div class="mb-3">
-                                            <label for="unidad" class="form-label">Unidad</label>
-                                            {{ form.unidad|add_class:"form-select" }}
-                                        </div>
+    .draft-discard-btn {
+        width: auto !important;
+        padding: 5px 12px !important;
+        font-size: 0.8rem !important;
+        border-radius: 999px !important;
+    }
 
-                                        <!-- Campo Nombre de la Unidad -->
-                                        <div class="mb-3">
-                                            <label for="nombre_de_la_unidad" class="form-label">Nombre de la
-                                                Unidad</label>
-                                            {{ form.nombre_de_la_unidad|add_class:"form-control" }}
-                                        </div>
+    /* Chips táctiles para Checkboxes Múltiples */
+    .chip-checkbox-group .multiselectfield {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 
-                                        <!-- Campo Contenido Temático -->
-                                        <div class="mb-3">
-                                            <label for="contenido_tematico" class="form-label">Contenido
-                                                Temático</label>
-                                            {{ form.contenido_tematico|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                </div>
+    .chip-checkbox-group .multiselectfield > div {
+        margin: 0;
+    }
 
-                                <!-- Sección 2: Objetivos de la unidad -->
-                                <div class="card mb-4">
-                                    <div class="card-header">
-                                        <h5 class="mb-0">Objetivos</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <!-- Campo Objetivo Conceptual -->
-                                        <div class="mb-3">
-                                            <label for="objetivo_conceptual" class="form-label">Objetivo
-                                                Conceptual</label>
-                                            {{ form.objetivo_conceptual|add_class:"form-control" }}
-                                        </div>
+    .chip-checkbox-group .multiselectfield label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 40px;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1.5px solid var(--border-color);
+        background-color: var(--bg-primary);
+        color: var(--text-secondary);
+        font-size: 0.88rem;
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.15s ease;
+        margin-bottom: 0;
+    }
 
-                                        <!-- Campo Objetivo Procedimental -->
-                                        <div class="mb-3">
-                                            <label for="objetivo_procedimental" class="form-label">Objetivo
-                                                Procedimental</label>
-                                            {{ form.objetivo_procedimental|add_class:"form-control" }}
-                                        </div>
+    .chip-checkbox-group .multiselectfield label input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+    }
 
-                                        <!-- Campo Objetivo Actitudinal -->
-                                        <div class="mb-3">
-                                            <label for="objetivo_actitudinal" class="form-label">Objetivo
-                                                Actitudinal</label>
-                                            {{ form.objetivo_actitudinal|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                </div>
+    .chip-checkbox-group .multiselectfield label.is-checked,
+    .chip-checkbox-group .multiselectfield label:has(input:checked) {
+        background-color: var(--corp-primary);
+        border-color: var(--corp-primary);
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
 
-                                <!-- Sección 3: Descripción de las fases del acto mental -->
-                                <div class="card mb-4">
-                                    <div class="card-header">
-                                        <h5 class="mb-0">Descripción de las fases del acto mental</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <!-- Primer momento didáctico (fase entrada) -->
-                                        <h6>Primer Momento Didáctico (Fase Entrada)</h6>
-                                        <div class="mb-3">
-                                            <label for="tipo_primer_momento" class="form-label">Tipo de
-                                                Enseñanza</label>
-                                            {{ form.tipo_primer_momento|add_class:"form-select" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="detalle_primer_momento" class="form-label">Detalle</label>
-                                            {{ form.detalle_primer_momento|add_class:"form-control" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="tiempo_primer_momento" class="form-label">Tiempo
-                                                (minutos)</label>
-                                            {{ form.tiempo_primer_momento|add_class:"form-control tiempo_minutos" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="recursos_primer_momento" class="form-label">Recursos
-                                                Didácticos</label>
-                                            {{ form.recursos_primer_momento|add_class:"form-control" }}
-                                        </div>
+    .chip-checkbox-group .multiselectfield label.is-checked::before,
+    .chip-checkbox-group .multiselectfield label:has(input:checked)::before {
+        content: "✓";
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
 
-                                        <!-- Segundo momento didáctico (fase elaboración) -->
-                                        <h6 class="mt-4">Segundo Momento Didáctico (Fase Elaboración)</h6>
-                                        <div class="mb-3">
-                                            <label for="tipo_segundo_momento_claseteoria" class="form-label">Tipo de
-                                                Enseñanza - Clase Teórica</label>
-                                            {{ form.tipo_segundo_momento_claseteoria|add_class:"form-select" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="clase_teorica" class="form-label">Clase Teórica</label>
-                                            {{ form.clase_teorica|add_class:"form-control" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="tipo_segundo_momento_practica" class="form-label">Tipo de
-                                                Enseñanza - Clase Práctica</label>
-                                            {{ form.tipo_segundo_momento_practica|add_class:"form-select" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="clase_practica" class="form-label">Clase Práctica</label>
-                                            {{ form.clase_practica|add_class:"form-control" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="tiempo_segundo_momento_teorica" class="form-label">Tiempo clase teorica (minutos)</label>
-                                            {{ form.tiempo_segundo_momento_teorica|add_class:"form-control tiempo_minutos" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="tiempo_segundo_momento_practica" class="form-label">Tiempo clase practica (minutos)</label>
-                                            {{ form.tiempo_segundo_momento_practica|add_class:"form-control tiempo_minutos" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="recursos_segundo_momento" class="form-label">Recursos
-                                                Didácticos</label>
-                                            {{ form.recursos_segundo_momento|add_class:"form-control" }}
-                                        </div>
+    .chip-checkbox-group .multiselectfield label.is-disabled {
+        opacity: 0.48;
+        cursor: not-allowed;
+    }
 
-                                        <!-- Tercer momento didáctico (fase salida) -->
-                                        <h6 class="mt-4">Tercer Momento Didáctico (Fase Salida)</h6>
-                                        <div class="mb-3 form-check-group-container">
-                                            <label for="tipo_tercer_momento" class="form-label">Tipo de
-                                                Enseñanza</label>
-                                            {{ form.tipo_tercer_momento }}
+    /* Presets de minutos */
+    .time-preset-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
 
+    .time-preset-btn {
+        width: auto !important;
+        padding: 4px 11px !important;
+        font-size: 0.78rem !important;
+        font-weight: 600;
+        border-radius: 999px !important;
+        line-height: 1.3;
+    }
 
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="detalle_tercer_momento" class="form-label">Detalle</label>
-                                            {{ form.detalle_tercer_momento|add_class:"form-control" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="tiempo_tercer_momento" class="form-label">Tiempo
-                                                (minutos)</label>
-                                            {{ form.tiempo_tercer_momento|add_class:"form-control tiempo_minutos" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="recursos_tercer_momento" class="form-label">Recursos
-                                                Didácticos</label>
-                                            {{ form.recursos_tercer_momento|add_class:"form-control" }}
-                                        </div>
+    /* Barra de navegación inferior del Wizard */
+    .wizard-bottom-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 1.25rem;
+        padding: 12px 14px;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
 
-                                        <!-- Ejes transversales -->
-                                        <h6>Ejes Transversal</h6>
-                                        <div class="mb-3 form-check-group-container">
-                                            <label for="eje_transversal" class="form-label"></label>
-                                            {{ form.eje_transversal }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="detalle_eje_transversal" class="form-label">Detalle Eje
-                                                Transversal</label>
-                                            {{ form.detalle_eje_transversal|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                    <!-- Sección 4: Evaluación dinámica -->
-                                <div class="card mb-4">
-                                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                        <h5 class="mb-0">Evaluación Dinámica</h5>
-                                        <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input" type="checkbox" id="sin_evaluacion_dinamica" name="sin_evaluacion_dinamica">
-                                            <label class="form-check-label fw-bold text-secondary" for="sin_evaluacion_dinamica">
-                                                No se realizará una evaluación dinámica en esta clase
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="card-body" id="container_evaluacion_dinamica">
-                                        <div class="mb-3">
-                                            <label for="actividad_aprendizaje" class="form-label">Actividad de
-                                                Aprendizaje</label>
-                                            {{ form.actividad_aprendizaje|add_class:"form-control" }}
-                                        </div>
-                                        <div class="mb-3 form-check-group-container">
-                                            <label for="tecnica_evaluacion" class="form-label">Técnica de
-                                                Evaluación</label>
-                                            {{ form.tecnica_evaluacion }}
-                                        </div>
-                                        <div class="mb-3 form-check-group-container">
-                                            <label for="tipo_evaluacion" class="form-label">Tipo de Evaluación</label>
-                                            {{ form.tipo_evaluacion }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="periodo_tiempo_programado" class="form-label">Periodo de Tiempo
-                                                Programado</label>
-                                            {{ form.periodo_tiempo_programado|add_class:"form-select" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="tiempo_minutos" class="form-label">Tiempo en Minutos</label>
-                                            {{ form.tiempo_minutos|add_class:"form-control tiempo_minutos" }}
-                                        </div>
-                                        <div class="mb-3 form-check-group-container">
-                                            <label for="agente_evaluador" class="form-label">Agente Evaluador</label>
-                                            {{ form.agente_evaluador }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="instrumento_evaluacion" class="form-label">Instrumento de
-                                                Evaluación</label>
-                                            {{ form.instrumento_evaluacion|add_class:"form-select" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="criterios_evaluacion" class="form-label">Criterios de
-                                                Evaluación</label>
-                                            {{ form.criterios_evaluacion|add_class:"form-control" }}
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="puntaje" class="form-label">Puntaje</label>
-                                            {{ form.puntaje|add_class:"form-control" }}
-                                        </div>
-                                </div>
+    .wizard-bottom-bar .wizard-nav-btn {
+        width: auto !important;
+        min-width: 120px;
+        padding: 10px 18px !important;
+        border-radius: 999px !important;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
 
+    .wizard-bottom-bar .save-btn {
+        flex: 1 1 auto;
+        max-width: 280px;
+        border-radius: 999px !important;
+    }
 
-                                        <div class="mb-3">
-                                            <label for="tiempo_total" class="form-label">Tiempo Total (minutos)</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text">Tiempo Total</span>
-                                                <input type="text" class="form-control" id="tiempo_total" readonly>
-                                            </div>
-                                        </div>
-                                        <script>
-                                            // Función para calcular la suma de todos los tiempos
-                                            function calcularTiempoTotal() {
-                                                console.log('calcularTiempoTotal_01: Función llamada.');
-                                                let tiempo_total = 0;
-                                                let count = 0;
-                                                let sinEvaluacion = $("#sin_evaluacion_dinamica").is(":checked");
-                                                $(".tiempo_minutos").each(function (index) {
-                                                    let elementId = $(this).attr('id') || 'no-id';
-                                                    if (sinEvaluacion && elementId === 'id_tiempo_minutos') {
-                                                        return; // Omitir el tiempo de evaluación dinámica si no se realiza
-                                                    }
-                                                    count++;
-                                                    let rawValue = $(this).val();
-                                                    let valor = parseInt(rawValue);
-                                                    if (!isNaN(valor)) {
-                                                        tiempo_total += valor;
-                                                    }
-                                                });
-                                                $("#tiempo_total").val(tiempo_total);
-                                            }
+    /* Lista de revisión en Paso 6 */
+    .wizard-review-item {
+        background-color: var(--bg-primary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+        padding: 12px 14px;
+    }
 
-                                            function toggleEvaluacionDinamica() {
-                                                const isChecked = $("#sin_evaluacion_dinamica").is(":checked");
-                                                if (isChecked) {
-                                                    $("#container_evaluacion_dinamica").hide();
-                                                } else {
-                                                    $("#container_evaluacion_dinamica").show();
-                                                }
-                                                if (typeof calcularTiempoTotal === 'function') {
-                                                    calcularTiempoTotal();
-                                                }
-                                            }
+    .wizard-review-item:hover {
+        background-color: var(--bg-tertiary) !important;
+    }
 
-                                            $(document).ready(function () {
-                                                $(document).on('input', '.tiempo_minutos', calcularTiempoTotal);
-                                                $(document).on('change', '#sin_evaluacion_dinamica', function () {
-                                                    toggleEvaluacionDinamica();
-                                                });
-                                                toggleEvaluacionDinamica();
-                                            });
-                                        </script>
+    /* Ajustes específicos para móvil */
+    @media (max-width: 767.98px) {
+        .form-page-container {
+            padding-bottom: 92px !important;
+        }
 
-                                        <!-- Card de Puntaje Acumulado -->
-                                        <div class="mb-3 mt-4 p-3 border rounded shadow-sm"
-                                            style="background: linear-gradient(135deg, rgba(37,99,235,0.05) 0%, rgba(29,78,216,0.05) 100%); border-left: 5px solid var(--corp-primary) !important;">
-                                            <h6 class="fw-bold text-primary mb-2 mt-0">
-                                                <i class="fas fa-calculator me-2"></i>Puntaje Acumulado del Curso
-                                            </h6>
-                                            <div class="row text-center g-2">
-                                                <div class="col-4">
-                                                    <div class="p-1 border rounded bg-white shadow-sm">
-                                                        <small class="text-muted d-block" style="font-size: 0.75rem;">I
-                                                            Corte</small>
-                                                        <span id="acumulado_corte_1" class="fw-bold text-dark"
-                                                            style="font-size: 0.9rem;">0</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-4">
-                                                    <div class="p-1 border rounded bg-white shadow-sm">
-                                                        <small class="text-muted d-block" style="font-size: 0.75rem;">II
-                                                            Corte</small>
-                                                        <span id="acumulado_corte_2" class="fw-bold text-dark"
-                                                            style="font-size: 0.9rem;">0</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-4">
-                                                    <div class="p-1 border rounded bg-white shadow-sm">
-                                                        <small class="text-muted d-block"
-                                                            style="font-size: 0.75rem;">III Corte</small>
-                                                        <span id="acumulado_corte_3" class="fw-bold text-dark"
-                                                            style="font-size: 0.9rem;">0</span>
-                                                    </div>
-                                                </div>
-                                                <div class="col-12 mt-2">
-                                                    <div class="p-2 border rounded bg-primary text-white shadow-sm">
-                                                        <small class="d-block text-white-50"
-                                                            style="font-size: 0.75rem;">Total Acumulado</small>
-                                                        <span id="acumulado_total" class="fw-bold fs-5">0</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <!-- Contenedor para la advertencia de corte superado -->
-                                            <div id="corte_warning_msg" class="d-none"></div>
-                                        </div>
-                                        <script>
-                                            $(document).ready(function () {
-                                                const previousScores = JSON.parse('{{ previous_scores_json|safe }}');
+        .wizard-sticky-header {
+            top: 58px;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 0.75rem;
+        }
 
-                                                function updateAccumulatedScores() {
-                                                    const currentPuntaje = parseFloat($('#id_puntaje').val()) || 0;
-                                                    const currentCorte = $('#id_periodo_tiempo_programado').val();
+        .wizard-bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            margin-top: 0;
+            border-radius: 14px 14px 0 0;
+            border-left: none;
+            border-right: none;
+            border-bottom: none;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.16);
+            padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        }
 
-                                                    const currentScores = {
-                                                        'I Corte Evaluativo': 0,
-                                                        'II Corte Evaluativo': 0,
-                                                        'III Corte Evaluativo': 0
-                                                    };
+        .wizard-bottom-bar .wizard-nav-btn,
+        .wizard-bottom-bar .save-btn {
+            flex: 1 1 0;
+            max-width: none;
+            min-width: 0;
+            padding: 11px 12px !important;
+            font-size: 0.95rem !important;
+        }
 
-                                                    if (currentCorte && currentScores.hasOwnProperty(currentCorte)) {
-                                                        currentScores[currentCorte] = currentPuntaje;
-                                                    }
+        .wizard-ai-box {
+            padding: 12px 10px;
+        }
 
-                                                    const corte1 = (previousScores['I Corte Evaluativo'] || 0) + currentScores['I Corte Evaluativo'];
-                                                    const corte2 = (previousScores['II Corte Evaluativo'] || 0) + currentScores['II Corte Evaluativo'];
-                                                    const corte3 = (previousScores['III Corte Evaluativo'] || 0) + currentScores['III Corte Evaluativo'];
-                                                    const total = corte1 + corte2 + corte3;
+        .wizard-ai-box #modelo_select {
+            width: 100% !important;
+        }
+    }
 
-                                                    $('#acumulado_corte_1').text(corte1);
-                                                    $('#acumulado_corte_2').text(corte2);
-                                                    $('#acumulado_corte_3').text(corte3);
-                                                    $('#acumulado_total').text(total);
-
-                                                    // Validación de límites por corte (100 puntos)
-                                                    const limit = 100;
-                                                    let warnings = [];
-
-                                                    // Resetear clases de advertencia
-                                                    $('#acumulado_corte_1').closest('.border').removeClass('bg-warning text-dark border-warning').addClass('bg-white text-dark');
-                                                    $('#acumulado_corte_2').closest('.border').removeClass('bg-warning text-dark border-warning').addClass('bg-white text-dark');
-                                                    $('#acumulado_corte_3').closest('.border').removeClass('bg-warning text-dark border-warning').addClass('bg-white text-dark');
-                                                    $('#corte_warning_msg').addClass('d-none').html('');
-
-                                                    if (corte1 > limit) {
-                                                        $('#acumulado_corte_1').closest('.border').removeClass('bg-white text-dark').addClass('bg-warning text-dark border-warning');
-                                                        warnings.push('I Corte Evaluativo');
-                                                    }
-                                                    if (corte2 > limit) {
-                                                        $('#acumulado_corte_2').closest('.border').removeClass('bg-white text-dark').addClass('bg-warning text-dark border-warning');
-                                                        warnings.push('II Corte Evaluativo');
-                                                    }
-                                                    if (corte3 > limit) {
-                                                        $('#acumulado_corte_3').closest('.border').removeClass('bg-white text-dark').addClass('bg-warning text-dark border-warning');
-                                                        warnings.push('III Corte Evaluativo');
-                                                    }
-
-                                                    if (warnings.length > 0) {
-                                                        const msg = `<div class="alert alert-warning py-2 px-3 mt-3 mb-0" style="font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--corp-warning);">
-                                                             <i class="fas fa-exclamation-triangle me-2"></i><strong>¡Atención!</strong> El puntaje acumulado en <strong>${warnings.join(' y ')}</strong> supera los 100 puntos.
-                                                         </div>`;
-                                                        $('#corte_warning_msg').html(msg).removeClass('d-none');
-                                                    }
-                                                }
-
-                                                // Escuchar eventos en input y select
-                                                $(document).on('input change', '#id_puntaje, #id_periodo_tiempo_programado', updateAccumulatedScores);
-
-                                                // Inicialización
-                                                updateAccumulatedScores();
-                                            });
-                                        </script>
-                                    </div>
-                                </div>
-                        </div>
-                    </div>
-                    </form>
-
-
-
-
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<div class="row justify-content-center mt-4">
-    <div class="col-lg-8 col-md-10 col-sm-12">
-        <div class="custom-alert">
-            <div class="custom-alert-icon">
-                <i class="fas fa-exclamation-triangle fa-2x"></i>
-            </div>
-            <div class="custom-alert-content">
-                <h4 class="mb-2">¡Atención!</h4>
-                <p class="mb-0">Esta IA puede cometer errores. Por favor, revise la información cuidadosamente
-                    antes de guardarla.</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row justify-content-center mt-4 mb-5">
-    <div class="col-lg-4 col-md-8 col-sm-12 text-center">
-        <div id="guardar-alert-container" class="mb-3 text-start"></div>
-        <button type="button" class="btn btn-success w-100 save-btn transition-btn" id="guardarFormularioBtn">
-            <i class="fas fa-save fa-lg me-2"></i> Guardar Formularios
-            <div id="spinnerGuardar" class="spinner-border spinner-border-sm d-none ms-2" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </button>
-    </div>
-</div>
-
-
-
-</div>
-</div>
-
-
-
-
-<script src="{% static 'js/silabo_validar.js' %}"></script>
-<script src="{% static 'js/silabo_guardar.js' %}"></script>
-<script src="{% static 'js/silabo_ia.js' %}"></script>
-
-
-<style>
+    /* Estilos heredados de alertas y validación */
     .transition-btn {
         transition: all 0.2s ease;
         border-radius: 20px;
         padding: 10px 25px;
     }
 
-    .transition-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .transition-btn:active {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    }
-
     .save-btn {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
-        padding: 12px 25px;
+        padding: 11px 22px;
         background: var(--corp-success);
         border: none;
         color: white;
@@ -578,6 +354,7 @@
 
     .save-btn:hover {
         background: var(--corp-success-hover);
+        color: white;
     }
 
     .custom-alert {
@@ -586,11 +363,10 @@
         background-color: rgba(217, 119, 6, 0.12);
         border: 1px solid var(--corp-warning);
         border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        padding: 14px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
         position: relative;
         overflow: hidden;
-        animation: pulse 2s infinite;
     }
 
     .custom-alert::before {
@@ -607,12 +383,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         background-color: var(--corp-warning);
         color: #fff;
-        margin-right: 15px;
+        margin-right: 12px;
         flex-shrink: 0;
     }
 
@@ -623,188 +399,699 @@
     .custom-alert-content h4 {
         color: var(--text-primary);
         font-weight: bold;
+        font-size: 1rem;
         margin-top: 0;
+        margin-bottom: 4px;
     }
 
     .custom-alert-content p {
         color: var(--text-secondary);
         font-weight: 500;
+        font-size: 0.9rem;
     }
 
-    @keyframes pulse {
-        0% {
-            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4);
-        }
-
-        70% {
-            box-shadow: 0 0 0 8px rgba(217, 119, 6, 0);
-        }
-
-        100% {
-            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
-        }
-    }
-
-    .mensaje-error-flotante {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--corp-danger);
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        animation: aparecer 0.3s ease-out;
-        min-width: 300px;
-        max-width: 80%;
-    }
-
-    @keyframes aparecer {
-        from {
-            opacity: 0;
-            transform: translate(-50%, -60%);
-        }
-
-        to {
-            opacity: 1;
-            transform: translate(-50%, -50%);
-        }
-    }
-
-    .mensaje-error-contenido {
-        display: flex;
-        align-items: flex-start;
-    }
-
-    .mensaje-error-icono {
-        color: var(--corp-danger);
-        margin-right: 15px;
-        flex-shrink: 0;
-    }
-
-    .mensaje-error-texto {
-        flex-grow: 1;
-    }
-
-    .mensaje-error-texto h4 {
-        margin-top: 0;
-        color: var(--text-primary);
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-
-    .mensaje-error-texto p {
-        color: var(--text-secondary);
-        margin-bottom: 0;
-    }
-
-    .mensaje-error-cerrar {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 1.5rem;
-        background-color: transparent;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        color: var(--text-muted);
-        transition: color 0.2s;
-    }
-
-    .mensaje-error-cerrar:hover {
-        color: var(--text-primary);
-    }
-
-    .campo-invalido {
-        border: 1.5px solid var(--corp-warning) !important;
-        background-color: rgba(217, 119, 6, 0.1) !important;
-        box-shadow: 0 0 5px rgba(217, 119, 6, 0.4) !important;
-        animation: pulso-naranja 1.5s infinite;
-    }
-
-    @keyframes pulso-naranja {
-        0% {
-            box-shadow: 0 0 5px rgba(217, 119, 6, 0.3);
-        }
-
-        50% {
-            box-shadow: 0 0 10px rgba(217, 119, 6, 0.6);
-        }
-
-        100% {
-            box-shadow: 0 0 5px rgba(217, 119, 6, 0.3);
-        }
-    }
-
-    /* Añadir un icono de advertencia a los campos inválidos */
-    .campo-invalido:focus {
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23d97706" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        background-size: 20px;
-        padding-right: 40px;
-    }
-
-    /* Estilos para validación de grupos de checkboxes */
     .border-danger-group {
-        border: 1px solid var(--corp-danger);
+        border: 1.5px solid var(--corp-danger) !important;
         padding: 10px;
-        border-radius: 5px;
+        border-radius: 10px;
     }
 
     .border-success-group {
-        border: 1px solid var(--corp-success);
+        border: 1.5px solid var(--corp-success) !important;
         padding: 10px;
-        border-radius: 5px;
+        border-radius: 10px;
     }
 </style>
 
+<div class="container-fluid mt-2 form-page-container"
+     id="silabo-wizard-root"
+     data-usuario="{{ usuario|escapejs }}"
+     data-asignacion-id="{{ asignacion.id }}"
+     data-encuentro="{{ encuentro }}">
 
+    <div class="text-center mb-3">
+        <h2 class="mb-1 fw-bold">Planificación de Sílabo</h2>
+        <div class="fw-semibold text-secondary">{{ asignacion.plan_de_estudio }}</div>
+        <span class="badge bg-primary rounded-pill mt-1 px-3 py-2">Encuentro ({{ encuentro }})</span>
+    </div>
 
-<!-- ======================================================= -->
-<!-- NUEVO SCRIPT PARA LIMITAR SELECCIÓN DE CHECKBOXES -->
-<!-- ======================================================= -->
+    <div class="container">
+        <div id="seccionFormularioPrincipal">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10 col-sm-12">
+                    <div class="card shadow-lg">
+                        <div class="card-body">
+
+                            <!-- Banner de borrador local restaurado -->
+                            <div id="draft-restored-banner" class="draft-banner d-none" role="status">
+                                <div>
+                                    <i class="fas fa-history me-1 text-success"></i>
+                                    <strong>Avance recuperado</strong> de este dispositivo (<span id="draft-restored-time"></span>).
+                                </div>
+                                <button type="button" id="btn-descartar-borrador" class="btn btn-outline-danger btn-sm draft-discard-btn">
+                                    <i class="fas fa-trash-alt me-1"></i>Empezar de cero
+                                </button>
+                            </div>
+
+                            <!-- Cabecera sticky de progreso (6 pasos) -->
+                            <div id="wizard-sticky-header" class="wizard-sticky-header">
+                                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                    <div>
+                                        <div id="wizard-step-counter" class="wizard-step-counter">Paso 1 de 6</div>
+                                        <h3 id="wizard-step-title" class="wizard-step-title">Base, IA y Objetivos</h3>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span id="wizard-header-total-time" class="wizard-time-badge">
+                                            <i class="fas fa-clock me-1"></i>0 min
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="progress mt-2" style="height: 6px;">
+                                    <div id="wizard-progress-bar"
+                                         class="progress-bar bg-primary"
+                                         role="progressbar"
+                                         style="width: 17%;"
+                                         aria-valuenow="17"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"></div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <small id="wizard-autosave-status" class="wizard-autosave-badge text-muted">
+                                        <i class="fas fa-mobile-alt me-1"></i>Progreso guardado en este dispositivo
+                                    </small>
+                                </div>
+
+                                <div class="wizard-tabs-scroll" role="tablist" aria-label="Pasos del sílabo">
+                                    <button type="button" class="wizard-step-tab active" data-step="1">
+                                        <span class="wizard-tab-status">1</span>
+                                        <span>Base e IA</span>
+                                    </button>
+                                    <button type="button" class="wizard-step-tab" data-step="2">
+                                        <span class="wizard-tab-status">2</span>
+                                        <span>Entrada</span>
+                                    </button>
+                                    <button type="button" class="wizard-step-tab" data-step="3">
+                                        <span class="wizard-tab-status">3</span>
+                                        <span>Desarrollo</span>
+                                    </button>
+                                    <button type="button" class="wizard-step-tab" data-step="4">
+                                        <span class="wizard-tab-status">4</span>
+                                        <span>Cierre y Ejes</span>
+                                    </button>
+                                    <button type="button" class="wizard-step-tab" data-step="5">
+                                        <span class="wizard-tab-status">5</span>
+                                        <span>Evaluación</span>
+                                    </button>
+                                    <button type="button" class="wizard-step-tab" data-step="6">
+                                        <span class="wizard-tab-status">6</span>
+                                        <span>Guardar</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Panel de generación con IA (visible únicamente en el Paso 1, formulario independiente) -->
+                            <div id="wizard-ai-panel">
+                                {% if mostrar_ia %}
+                                <div class="wizard-ai-box">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="fw-bold text-primary">
+                                            <i class="fas fa-magic me-1"></i>Asistente IA para este encuentro
+                                        </span>
+                                        <small class="text-muted">Opcional</small>
+                                    </div>
+                                    <form id="silabo-form" method="POST" action="{% url 'generar_silabo' %}"
+                                        data-url-generar-silabo="{% url 'generar_silabo' %}"
+                                        data-url-guardar-silabo="{% url 'guardar_silabo' asignacion.id %}"
+                                        data-url-guardar-estudio-independiente="{% url 'generar_estudio_independiente' %}">
+                                        {% csrf_token %}
+
+                                        <input type="hidden" id="encuentro" name="encuentro" value="{{ encuentro }}">
+                                        <input type="hidden" id="plan" name="plan" value="{{ asignacion.id }}">
+
+                                        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                            <div class="d-flex align-items-center flex-grow-1 gap-2 flex-wrap">
+                                                <label for="modelo_select" class="form-label mb-0">Modelo:</label>
+                                                <select id="modelo_select" name="modelo_select" class="form-select" style="width: 240px;">
+                                                    {% if modelos_ia %}
+                                                        {% for modelo in modelos_ia %}
+                                                        <option value="{{ modelo.id }}">{{ modelo.nombre_mostrar }}</option>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <option value="google">Google - Gemini-3-flash</option>
+                                                        <option value="openai">OpenAI - o4Mini</option>
+                                                        <option value="deepseek">DeepSeek - Chat</option>
+                                                    {% endif %}
+                                                </select>
+                                            </div>
+
+                                            {% include 'generar_plan_estudio/boton_generar.html' %}
+                                        </div>
+                                    </form>
+                                    <div id="silabo-alert-container" class="mt-2"></div>
+                                </div>
+                                {% else %}
+                                <div id="silabo-alert-container"></div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Formulario Principal de Guardado -->
+                            <form method="post" id="form-guardar-silabo">
+                                {% csrf_token %}
+
+                                {% if form.errors %}
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0">
+                                        {% for field in form %}
+                                        {% if field.errors %}
+                                        <li>{{ field.label }}: {{ field.errors }}</li>
+                                        {% endif %}
+                                        {% endfor %}
+                                        {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+
+                                <div id="general-error-area"></div>
+
+                                <!-- Campos ocultos heredados del servidor -->
+                                <div class="oculto">
+                                    {{ form.codigo|add_class:"form-control" }}
+                                    {{ form.encuentros|add_class:"form-control" }}
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 1: BASE DEL ENCUENTRO + OBJETIVOS (FUSIÓN 1 + 2) -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step is-active" data-step="1">
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i>Información General</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="id_fecha" class="form-label">Fecha</label>
+                                                {{ form.fecha|add_class:"form-control" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_unidad" class="form-label">Unidad</label>
+                                                {{ form.unidad|add_class:"form-select" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_nombre_de_la_unidad" class="form-label">Nombre de la Unidad</label>
+                                                {{ form.nombre_de_la_unidad|add_class:"form-control" }}
+                                            </div>
+                                            <div class="mb-0">
+                                                <label for="id_contenido_tematico" class="form-label">Contenido Temático</label>
+                                                {{ form.contenido_tematico|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="fas fa-bullseye me-2 text-primary"></i>Objetivos de la Unidad</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="id_objetivo_conceptual" class="form-label">Objetivo Conceptual</label>
+                                                {{ form.objetivo_conceptual|add_class:"form-control" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_objetivo_procedimental" class="form-label">Objetivo Procedimental</label>
+                                                {{ form.objetivo_procedimental|add_class:"form-control" }}
+                                            </div>
+                                            <div class="mb-0">
+                                                <label for="id_objetivo_actitudinal" class="form-label">Objetivo Actitudinal</label>
+                                                {{ form.objetivo_actitudinal|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 2: PRIMER MOMENTO DIDÁCTICO (FASE ENTRADA)       -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step d-none" data-step="2">
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="fas fa-door-open me-2 text-primary"></i>Primer Momento Didáctico (Fase Entrada)</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="id_tipo_primer_momento" class="form-label">Tipo de Enseñanza</label>
+                                                {{ form.tipo_primer_momento|add_class:"form-select" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_detalle_primer_momento" class="form-label">Detalle</label>
+                                                {{ form.detalle_primer_momento|add_class:"form-control" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_tiempo_primer_momento" class="form-label">Tiempo (minutos)</label>
+                                                {{ form.tiempo_primer_momento|add_class:"form-control tiempo_minutos" }}
+                                                <div class="time-preset-row" data-target="#id_tiempo_primer_momento">
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="10">10m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="15">15m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="20">20m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="30">30m</button>
+                                                </div>
+                                            </div>
+                                            <div class="mb-0">
+                                                <label for="id_recursos_primer_momento" class="form-label">Recursos Didácticos</label>
+                                                {{ form.recursos_primer_momento|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 3: SEGUNDO MOMENTO DIDÁCTICO (FASE ELABORACIÓN)  -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step d-none" data-step="3">
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="fas fa-chalkboard-teacher me-2 text-primary"></i>Segundo Momento (Fase Elaboración)</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <h6 class="mt-0">Clase Teórica</h6>
+                                            <div class="mb-3">
+                                                <label for="id_tipo_segundo_momento_claseteoria" class="form-label">Tipo de Enseñanza - Clase Teórica</label>
+                                                {{ form.tipo_segundo_momento_claseteoria|add_class:"form-select" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_clase_teorica" class="form-label">Detalle Clase Teórica</label>
+                                                {{ form.clase_teorica|add_class:"form-control" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_tiempo_segundo_momento_teorica" class="form-label">Tiempo Clase Teórica (minutos)</label>
+                                                {{ form.tiempo_segundo_momento_teorica|add_class:"form-control tiempo_minutos" }}
+                                                <div class="time-preset-row" data-target="#id_tiempo_segundo_momento_teorica">
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="15">15m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="30">30m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="45">45m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="60">60m</button>
+                                                </div>
+                                            </div>
+
+                                            <hr class="hr-blue my-3">
+
+                                            <h6 class="mt-0">Clase Práctica</h6>
+                                            <div class="mb-3">
+                                                <label for="id_tipo_segundo_momento_practica" class="form-label">Tipo de Enseñanza - Clase Práctica</label>
+                                                {{ form.tipo_segundo_momento_practica|add_class:"form-select" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_clase_practica" class="form-label">Detalle Clase Práctica</label>
+                                                {{ form.clase_practica|add_class:"form-control" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_tiempo_segundo_momento_practica" class="form-label">Tiempo Clase Práctica (minutos)</label>
+                                                {{ form.tiempo_segundo_momento_practica|add_class:"form-control tiempo_minutos" }}
+                                                <div class="time-preset-row" data-target="#id_tiempo_segundo_momento_practica">
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="15">15m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="30">30m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="45">45m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="60">60m</button>
+                                                </div>
+                                            </div>
+                                            <div class="mb-0">
+                                                <label for="id_recursos_segundo_momento" class="form-label">Recursos Didácticos</label>
+                                                {{ form.recursos_segundo_momento|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 4: TERCER MOMENTO (SALIDA) Y EJES TRANSVERSALES  -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step d-none" data-step="4">
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="fas fa-flag-checkered me-2 text-primary"></i>Tercer Momento Didáctico (Fase Salida)</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3 form-check-group-container chip-checkbox-group">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <label class="form-label mb-0">Tipo de Enseñanza</label>
+                                                    <span class="badge bg-secondary rounded-pill chip-counter" data-group="tipo_tercer_momento">0 / 2</span>
+                                                </div>
+                                                {{ form.tipo_tercer_momento }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_detalle_tercer_momento" class="form-label">Detalle</label>
+                                                {{ form.detalle_tercer_momento|add_class:"form-control" }}
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="id_tiempo_tercer_momento" class="form-label">Tiempo (minutos)</label>
+                                                {{ form.tiempo_tercer_momento|add_class:"form-control tiempo_minutos" }}
+                                                <div class="time-preset-row" data-target="#id_tiempo_tercer_momento">
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="10">10m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="15">15m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="20">20m</button>
+                                                    <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="30">30m</button>
+                                                </div>
+                                            </div>
+                                            <div class="mb-0">
+                                                <label for="id_recursos_tercer_momento" class="form-label">Recursos Didácticos</label>
+                                                {{ form.recursos_tercer_momento|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="fas fa-project-diagram me-2 text-primary"></i>Ejes Transversales</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3 form-check-group-container chip-checkbox-group">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <label class="form-label mb-0">Selecciona hasta 2 ejes</label>
+                                                    <span class="badge bg-secondary rounded-pill chip-counter" data-group="eje_transversal">0 / 2</span>
+                                                </div>
+                                                {{ form.eje_transversal }}
+                                            </div>
+                                            <div class="mb-0">
+                                                <label for="id_detalle_eje_transversal" class="form-label">Detalle Eje Transversal</label>
+                                                {{ form.detalle_eje_transversal|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 5: EVALUACIÓN DINÁMICA                           -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step d-none" data-step="5">
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                            <h5 class="mb-0"><i class="fas fa-clipboard-check me-2 text-primary"></i>Evaluación Dinámica</h5>
+                                            <div class="form-check form-switch mb-0">
+                                                <input class="form-check-input" type="checkbox" id="sin_evaluacion_dinamica" name="sin_evaluacion_dinamica">
+                                                <label class="form-check-label fw-bold text-secondary" for="sin_evaluacion_dinamica">
+                                                    No se realizará una evaluación dinámica en esta clase
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="container_evaluacion_dinamica">
+                                                <div class="mb-3">
+                                                    <label for="id_actividad_aprendizaje" class="form-label">Actividad de Aprendizaje</label>
+                                                    {{ form.actividad_aprendizaje|add_class:"form-control" }}
+                                                </div>
+                                                <div class="mb-3 form-check-group-container chip-checkbox-group">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <label class="form-label mb-0">Técnica de Evaluación</label>
+                                                        <span class="badge bg-secondary rounded-pill chip-counter" data-group="tecnica_evaluacion">0 / 2</span>
+                                                    </div>
+                                                    {{ form.tecnica_evaluacion }}
+                                                </div>
+                                                <div class="mb-3 form-check-group-container chip-checkbox-group">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <label class="form-label mb-0">Tipo de Evaluación</label>
+                                                        <span class="badge bg-secondary rounded-pill chip-counter" data-group="tipo_evaluacion">0 / 2</span>
+                                                    </div>
+                                                    {{ form.tipo_evaluacion }}
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="id_periodo_tiempo_programado" class="form-label">Periodo de Tiempo Programado</label>
+                                                    {{ form.periodo_tiempo_programado|add_class:"form-select" }}
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="id_tiempo_minutos" class="form-label">Tiempo en Minutos</label>
+                                                    {{ form.tiempo_minutos|add_class:"form-control tiempo_minutos" }}
+                                                    <div class="time-preset-row" data-target="#id_tiempo_minutos">
+                                                        <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="10">10m</button>
+                                                        <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="15">15m</button>
+                                                        <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="20">20m</button>
+                                                        <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="30">30m</button>
+                                                        <button type="button" class="btn btn-outline-secondary time-preset-btn" data-minutes="45">45m</button>
+                                                    </div>
+                                                </div>
+                                                <div class="mb-3 form-check-group-container chip-checkbox-group">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <label class="form-label mb-0">Agente Evaluador</label>
+                                                        <span class="badge bg-secondary rounded-pill chip-counter" data-group="agente_evaluador">0 / 2</span>
+                                                    </div>
+                                                    {{ form.agente_evaluador }}
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="id_instrumento_evaluacion" class="form-label">Instrumento de Evaluación</label>
+                                                    {{ form.instrumento_evaluacion|add_class:"form-select" }}
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="id_criterios_evaluacion" class="form-label">Criterios de Evaluación</label>
+                                                    {{ form.criterios_evaluacion|add_class:"form-control" }}
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="id_puntaje" class="form-label">Puntaje</label>
+                                                    {{ form.puntaje|add_class:"form-control" }}
+                                                </div>
+                                            </div>
+
+                                            <!-- Card de Puntaje Acumulado -->
+                                            <div class="mt-2 p-3 border rounded shadow-sm"
+                                                style="background: linear-gradient(135deg, rgba(37,99,235,0.05) 0%, rgba(29,78,216,0.05) 100%); border-left: 5px solid var(--corp-primary) !important;">
+                                                <h6 class="fw-bold text-primary mb-2 mt-0">
+                                                    <i class="fas fa-calculator me-2"></i>Puntaje Acumulado del Curso
+                                                </h6>
+                                                <div class="row text-center g-2">
+                                                    <div class="col-4">
+                                                        <div class="p-1 border rounded bg-white shadow-sm">
+                                                            <small class="text-muted d-block" style="font-size: 0.75rem;">I Corte</small>
+                                                            <span id="acumulado_corte_1" class="fw-bold text-dark" style="font-size: 0.9rem;">0</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <div class="p-1 border rounded bg-white shadow-sm">
+                                                            <small class="text-muted d-block" style="font-size: 0.75rem;">II Corte</small>
+                                                            <span id="acumulado_corte_2" class="fw-bold text-dark" style="font-size: 0.9rem;">0</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <div class="p-1 border rounded bg-white shadow-sm">
+                                                            <small class="text-muted d-block" style="font-size: 0.75rem;">III Corte</small>
+                                                            <span id="acumulado_corte_3" class="fw-bold text-dark" style="font-size: 0.9rem;">0</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12 mt-2">
+                                                        <div class="p-2 border rounded bg-primary text-white shadow-sm">
+                                                            <small class="d-block text-white-50" style="font-size: 0.75rem;">Total Acumulado</small>
+                                                            <span id="acumulado_total" class="fw-bold fs-5">0</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="corte_warning_msg" class="d-none"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 6: REVISIÓN Y GUARDADO FINAL                     -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step d-none" data-step="6">
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="fas fa-check-double me-2 text-success"></i>Resumen del Sílabo</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="wizard-review-status-alert" class="alert alert-warning mb-3" role="status"></div>
+
+                                            <div class="mb-3">
+                                                <label for="tiempo_total" class="form-label">Tiempo Total Calculado (minutos)</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-clock me-1"></i> Total</span>
+                                                    <input type="text" class="form-control fw-bold" id="tiempo_total" readonly>
+                                                    <span class="input-group-text" id="wizard-review-total-time">0 min</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="row text-center g-2 mb-3">
+                                                <div class="col-3">
+                                                    <div class="p-2 border rounded bg-white">
+                                                        <small class="text-muted d-block">I Corte</small>
+                                                        <strong id="wizard-review-corte-1" class="text-dark">0</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="col-3">
+                                                    <div class="p-2 border rounded bg-white">
+                                                        <small class="text-muted d-block">II Corte</small>
+                                                        <strong id="wizard-review-corte-2" class="text-dark">0</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="col-3">
+                                                    <div class="p-2 border rounded bg-white">
+                                                        <small class="text-muted d-block">III Corte</small>
+                                                        <strong id="wizard-review-corte-3" class="text-dark">0</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="col-3">
+                                                    <div class="p-2 border rounded bg-primary text-white">
+                                                        <small class="d-block text-white-50">Total</small>
+                                                        <strong id="wizard-review-corte-total">0</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <h6 class="mt-2 mb-2">Estado por sección</h6>
+                                            <div id="wizard-review-list" class="list-group"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-alert mb-3">
+                                        <div class="custom-alert-icon">
+                                            <i class="fas fa-exclamation-triangle fa-lg"></i>
+                                        </div>
+                                        <div class="custom-alert-content">
+                                            <h4>¡Atención!</h4>
+                                            <p class="mb-0">Si utilizaste IA, revisa la información cuidadosamente antes de guardar. El borrador local se limpiará automáticamente al confirmar el guardado.</p>
+                                        </div>
+                                    </div>
+
+                                    <div id="guardar-alert-container" class="mb-3"></div>
+                                </div>
+
+                            </form>
+
+                            <!-- Alertas de validación por paso -->
+                            <div id="wizard-step-alert-container"></div>
+
+                            <!-- Barra de navegación del Wizard (fija abajo en móviles) -->
+                            <div class="wizard-bottom-bar" id="wizard-bottom-bar">
+                                <button type="button" class="btn btn-outline-secondary wizard-nav-btn" id="wizardPrevBtn" disabled>
+                                    <i class="fas fa-arrow-left"></i>
+                                    <span>Anterior</span>
+                                </button>
+
+                                <button type="button" class="btn btn-primary wizard-nav-btn" id="wizardNextBtn">
+                                    <span>Siguiente</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+
+                                <button type="button" class="btn btn-success save-btn transition-btn d-none" id="guardarFormularioBtn">
+                                    <i class="fas fa-save me-2"></i>Guardar Formularios
+                                    <div id="spinnerGuardar" class="spinner-border spinner-border-sm d-none ms-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    function calcularTiempoTotal() {
+        let tiempo_total = 0;
+        const sinEvaluacion = $("#sin_evaluacion_dinamica").is(":checked");
+        $(".tiempo_minutos").each(function () {
+            const elementId = $(this).attr("id") || "no-id";
+            if (sinEvaluacion && elementId === "id_tiempo_minutos") {
+                return;
+            }
+            const valor = parseInt($(this).val(), 10);
+            if (!isNaN(valor)) {
+                tiempo_total += valor;
+            }
+        });
+        $("#tiempo_total").val(tiempo_total);
+        if (window.SilaboWizard && typeof window.SilaboWizard.syncReviewMetrics === "function") {
+            window.SilaboWizard.syncReviewMetrics();
+        }
+    }
+
+    function toggleEvaluacionDinamica() {
+        const isChecked = $("#sin_evaluacion_dinamica").is(":checked");
+        if (isChecked) {
+            $("#container_evaluacion_dinamica").hide();
+        } else {
+            $("#container_evaluacion_dinamica").show();
+        }
+        calcularTiempoTotal();
+    }
+
     $(document).ready(function () {
-        /**
-         * Función para limitar el número de checkboxes que se pueden seleccionar en un grupo.
-         * @param {string} checkboxName - El atributo 'name' del grupo de checkboxes.
-         * @param {number} limit - El número máximo de selecciones permitidas.
-         */
-        function limitCheckboxSelection(checkboxName, limit) {
-            // Adjuntar un evento 'change' a todos los checkboxes con el nombre especificado.
-            $('input[name="' + checkboxName + '"]').on('change', function () {
-                // Contar cuántos checkboxes de este grupo están actualmente seleccionados.
-                const checkedCount = $('input[name="' + checkboxName + '"]:checked').length;
+        $(document).on("input", ".tiempo_minutos", calcularTiempoTotal);
+        $(document).on("change", "#sin_evaluacion_dinamica", toggleEvaluacionDinamica);
+        toggleEvaluacionDinamica();
 
-                // Obtener todos los checkboxes del grupo.
-                const allCheckboxes = $('input[name="' + checkboxName + '"]');
+        const previousScores = JSON.parse("{{ previous_scores_json|escapejs }}");
 
-                if (checkedCount >= limit) {
-                    // Si el número de seleccionados alcanza o supera el límite,
-                    // deshabilitar todos los que NO están seleccionados.
-                    allCheckboxes.not(':checked').prop('disabled', true);
-                } else {
-                    // Si se deselecciona uno y el conteo es menor que el límite,
-                    // habilitar todos los checkboxes del grupo nuevamente.
-                    allCheckboxes.prop('disabled', false);
-                }
-            });
+        function updateAccumulatedScores() {
+            const currentPuntaje = parseFloat($("#id_puntaje").val()) || 0;
+            const currentCorte = $("#id_periodo_tiempo_programado").val();
+            const sinEvaluacion = $("#sin_evaluacion_dinamica").is(":checked");
 
-            // Opcional: Ejecutar la lógica al cargar la página por si el formulario
-            // viene con valores pre-seleccionados desde el servidor.
-            $('input[name="' + checkboxName + '"]').first().trigger('change');
+            const currentScores = {
+                "I Corte Evaluativo": 0,
+                "II Corte Evaluativo": 0,
+                "III Corte Evaluativo": 0,
+            };
+
+            if (!sinEvaluacion && currentCorte && Object.prototype.hasOwnProperty.call(currentScores, currentCorte)) {
+                currentScores[currentCorte] = currentPuntaje;
+            }
+
+            const corte1 = (previousScores["I Corte Evaluativo"] || 0) + currentScores["I Corte Evaluativo"];
+            const corte2 = (previousScores["II Corte Evaluativo"] || 0) + currentScores["II Corte Evaluativo"];
+            const corte3 = (previousScores["III Corte Evaluativo"] || 0) + currentScores["III Corte Evaluativo"];
+            const total = corte1 + corte2 + corte3;
+
+            $("#acumulado_corte_1").text(corte1);
+            $("#acumulado_corte_2").text(corte2);
+            $("#acumulado_corte_3").text(corte3);
+            $("#acumulado_total").text(total);
+
+            const limit = 100;
+            const warnings = [];
+
+            $("#acumulado_corte_1, #acumulado_corte_2, #acumulado_corte_3")
+                .closest(".border")
+                .removeClass("bg-warning text-dark border-warning")
+                .addClass("bg-white text-dark");
+            $("#corte_warning_msg").addClass("d-none").html("");
+
+            if (corte1 > limit) {
+                $("#acumulado_corte_1").closest(".border").removeClass("bg-white text-dark").addClass("bg-warning text-dark border-warning");
+                warnings.push("I Corte Evaluativo");
+            }
+            if (corte2 > limit) {
+                $("#acumulado_corte_2").closest(".border").removeClass("bg-white text-dark").addClass("bg-warning text-dark border-warning");
+                warnings.push("II Corte Evaluativo");
+            }
+            if (corte3 > limit) {
+                $("#acumulado_corte_3").closest(".border").removeClass("bg-white text-dark").addClass("bg-warning text-dark border-warning");
+                warnings.push("III Corte Evaluativo");
+            }
+
+            if (warnings.length > 0) {
+                const msg = `<div class="alert alert-warning py-2 px-3 mt-3 mb-0" style="font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--corp-warning);">
+                    <i class="fas fa-exclamation-triangle me-2"></i><strong>¡Atención!</strong> El puntaje acumulado en <strong>${warnings.join(" y ")}</strong> supera los 100 puntos.
+                </div>`;
+                $("#corte_warning_msg").html(msg).removeClass("d-none");
+            }
+
+            if (window.SilaboWizard && typeof window.SilaboWizard.syncReviewMetrics === "function") {
+                window.SilaboWizard.syncReviewMetrics();
+            }
         }
 
-        // Aplicar la función a los grupos de checkboxes deseados con un límite de 2.
-        limitCheckboxSelection('eje_transversal', 2);
-        limitCheckboxSelection('tecnica_evaluacion', 2);
-        limitCheckboxSelection('agente_evaluador', 2);
-        limitCheckboxSelection('tipo_evaluacion', 2);
+        $(document).on("input change", "#id_puntaje, #id_periodo_tiempo_programado, #sin_evaluacion_dinamica", updateAccumulatedScores);
+        updateAccumulatedScores();
     });
 </script>
 
+<script src="{% static 'js/silabo_validar.js' %}"></script>
+<script src="{% static 'js/silabo_guardar.js' %}"></script>
+<script src="{% static 'js/silabo_wizard.js' %}"></script>
+<script src="{% static 'js/silabo_ia.js' %}"></script>
 
 {% endblock %}

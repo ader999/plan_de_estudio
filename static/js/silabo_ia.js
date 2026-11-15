@@ -96,9 +96,16 @@ $(document).ready(function () {
             );
           }
 
+          if (
+            window.SilaboWizard &&
+            typeof window.SilaboWizard.onAfterAiAutofill === "function"
+          ) {
+            window.SilaboWizard.onAfterAiAutofill();
+          }
+
           if (typeof mostrarMensajeExito === "function") {
             mostrarMensajeExito(
-              "Contenido generado con éxito. Revise los campos antes de guardar.",
+              "Contenido generado con éxito. Revisa cada paso antes de guardar.",
               "#silabo-alert-container",
             );
           }

@@ -1030,6 +1030,21 @@ class SilaboFormularioYGeneracionTest(TestCase):
         self.assertEqual(resp_none.status_code, 400)
         self.assertIn('número válido', resp_none.json()['error'])
 
+    def test_formulario_silabo_renderiza_wizard_6_pasos_y_borrador_local(self):
+        resp = self.client.get(reverse('ver_formulario_silabo', args=[self.asignacion.id]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'id="silabo-wizard-root"')
+        self.assertContains(resp, f'data-asignacion-id="{self.asignacion.id}"')
+        self.assertContains(resp, 'data-encuentro="1"')
+        for step in range(1, 7):
+            self.assertContains(resp, f'class="wizard-step')
+            self.assertContains(resp, f'data-step="{step}"')
+        self.assertContains(resp, 'silabo_wizard.js')
+        self.assertContains(resp, 'id="wizardPrevBtn"')
+        self.assertContains(resp, 'id="wizardNextBtn"')
+        self.assertContains(resp, 'id="guardarFormularioBtn"')
+        self.assertContains(resp, 'id="btn-descartar-borrador"')
+
 
 class ConfiguracionPlanTematicoDescargaTest(TestCase):
     def setUp(self):

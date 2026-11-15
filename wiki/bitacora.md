@@ -1,5 +1,20 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-15] Wizard Mobile-First de 6 Pasos y Borrador Local en Generación de Sílabos
+- **Plantilla (`plantillas/formulario_silabo.html`)**:
+  - Se dividió el formulario extenso de generación de sílabos en un **wizard interactivo de 6 pasos**: `1. Base, IA y Objetivos` (fusión de datos generales, asistente IA y objetivos), `2. 1er Momento (Entrada)`, `3. 2do Momento (Desarrollo)`, `4. 3er Momento (Salida) y Ejes Transversales`, `5. Evaluación Dinámica` y `6. Revisión y Guardado`.
+  - Se añadió cabecera sticky con barra de progreso, contador de pasos, tiempo total en vivo y pestañas horizontales desplazables, además de una barra inferior fija en dispositivos móviles (`@media (max-width: 767.98px)`) para navegación cómoda con una sola mano.
+  - Se convirtieron los grupos de checkboxes múltiples (`tipo_tercer_momento`, `eje_transversal`, `tecnica_evaluacion`, `tipo_evaluacion`, `agente_evaluador`) en **chips táctiles** con contador (`X / 2`), se agregaron botones rápidos de minutos (`10m`–`60m`), `inputmode="numeric"` y un resumen interactivo en el Paso 6.
+- **Lógica de Wizard y Persistencia en Navegador (`static/js/silabo_wizard.js`)**:
+  - Implementada la navegación por pasos, estado de completitud por sección, auto-ajuste de `textarea` y guardado automático del progreso en `localStorage` bajo clave única por usuario, asignación y encuentro (`planeauml_silabo_draft_v1_<usuario>_<asignacion>_<encuentro>`), sin tocar el backend ni la base de datos.
+  - Agregada restauración automática del borrador al reabrir el formulario y botón **Empezar de cero** (`#btn-descartar-borrador`) para descartarlo manualmente.
+- **Validación, Guardado e IA (`static/js/silabo_validar.js`, `static/js/silabo_guardar.js`, `static/js/silabo_ia.js`)**:
+  - `validarCamposObligatorios(stepNumber)` valida solo el paso actual al avanzar con **Siguiente** y todo el formulario al intentar guardar; tanto la validación frontal como `resaltarCamposConError` redirigen automáticamente al paso donde exista un error.
+  - `guardarSilabo` elimina el borrador de `localStorage` únicamente tras confirmación exitosa del backend.
+  - `silabo_ia.js` invoca `SilaboWizard.onAfterAiAutofill()` tras autocompletar para actualizar chips, alturas, estado de pasos y guardar el avance local.
+- **PWA (`plantillas/pwa/sw.js`)**: Actualizado `SW_VERSION` a `planeauml-v4`.
+- **Pruebas (`plan_de_estudio/tests.py`)**: Agregado `test_formulario_silabo_renderiza_wizard_6_pasos_y_borrador_local` en `SilaboFormularioYGeneracionTest`. Suite completa: 65 pruebas pasando (**OK**) y `manage.py check` sin incidencias.
+
 ## [2026-11-14] Opción en Configuración para Activar/Desactivar Descarga de Planes Temáticos para Docentes
 - **Panel Admin (`plan_de_estudio/admin.py`, `plantillas/admin/plan_de_estudio/copiaseguridad/change_list.html`)**:
   - Se integró `ConfiguracionSistema.get_solo()` en `CopiaSeguridadAdmin.changelist_view` y se añadió la ruta `toggle-descarga-plan-tematico/` (`toggle_descarga_plan_tematico_view`).
