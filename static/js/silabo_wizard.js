@@ -286,15 +286,22 @@
     const $activeTab = $(`.wizard-step-tab[data-step="${targetStep}"]`).addClass(
       "active",
     );
-    if ($activeTab.length && typeof $activeTab[0].scrollIntoView === "function") {
+    const $tabsContainer = $activeTab.closest(".wizard-tabs-scroll");
+    if ($activeTab.length && $tabsContainer.length) {
+      const container = $tabsContainer[0];
+      const tab = $activeTab[0];
+      const targetLeft = Math.max(
+        0,
+        tab.offsetLeft - container.clientWidth / 2 + tab.offsetWidth / 2,
+      );
       try {
-        $activeTab[0].scrollIntoView({
-          behavior: "smooth",
-          inline: "center",
-          block: "nearest",
-        });
+        if (typeof container.scrollTo === "function") {
+          container.scrollTo({ left: targetLeft, behavior: "smooth" });
+        } else {
+          container.scrollLeft = targetLeft;
+        }
       } catch (_) {
-        // Fallback silencioso en navegadores antiguos
+        container.scrollLeft = targetLeft;
       }
     }
 
@@ -325,9 +332,11 @@
     }
 
     if (opts.scroll) {
+      $("#silabo-wizard-root .card.shadow-lg").scrollTop(0);
       const $header = $("#wizard-sticky-header");
+      const navbarHeight = $("#main-navbar").outerHeight() || 72;
       const targetTop = $header.length
-        ? Math.max(0, $header.offset().top - 72)
+        ? Math.max(0, $header.offset().top - navbarHeight - 12)
         : 0;
       $("html, body").animate({ scrollTop: targetTop }, 220);
     }

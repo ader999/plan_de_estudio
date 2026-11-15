@@ -1,4 +1,4 @@
-{% load static %}const SW_VERSION = 'planeauml-v4';
+{% load static %}const SW_VERSION = 'planeauml-v5';
 const STATIC_CACHE = `static-${SW_VERSION}`;
 const PAGES_CACHE = `pages-${SW_VERSION}`;
 const OFFLINE_URL = "{% url 'pwa_offline' %}";

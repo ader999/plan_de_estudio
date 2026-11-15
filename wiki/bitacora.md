@@ -1,5 +1,15 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-15] Corrección de Solapamiento de Cabecera sobre Títulos de Paso en Wizard de Sílabos
+- **Diagnóstico**: La regla global `.card { overflow: hidden; }` en `static/css/base.css` convertía a `.card.shadow-lg` en contenedor con scroll interno oculto; combinada con `position: sticky` en `.wizard-sticky-header` y `scrollIntoView` en pestañas, desplazaba el contenido verticalmente ocultando parcialmente el encabezado del paso actual (`card-header`, p. ej. *Primer Momento Didáctico*).
+- **Plantilla y CSS (`plantillas/formulario_silabo.html`)**:
+  - Se fijó `#silabo-wizard-root .card.shadow-lg { overflow: visible !important; }` para eliminar el scroll interno oculto.
+  - Se pasó `.wizard-sticky-header` a flujo normal (`position: relative; z-index: 1;`) para evitar que flote sobre títulos o campos al desplazarse.
+- **Lógica de Scroll (`static/js/silabo_wizard.js`)**:
+  - Se reemplazó `scrollIntoView` de las pestañas por desplazamiento horizontal exclusivo (`scrollTo`/`scrollLeft`) dentro de `.wizard-tabs-scroll`.
+  - `goToStep` calcula la altura dinámica de `#main-navbar` al desplazar hacia la cabecera del paso.
+- **PWA (`plantillas/pwa/sw.js`)**: Actualizado `SW_VERSION` a `planeauml-v5`.
+
 ## [2026-11-15] Wizard Mobile-First de 6 Pasos y Borrador Local en Generación de Sílabos
 - **Plantilla (`plantillas/formulario_silabo.html`)**:
   - Se dividió el formulario extenso de generación de sílabos en un **wizard interactivo de 6 pasos**: `1. Base, IA y Objetivos` (fusión de datos generales, asistente IA y objetivos), `2. 1er Momento (Entrada)`, `3. 2do Momento (Desarrollo)`, `4. 3er Momento (Salida) y Ejes Transversales`, `5. Evaluación Dinámica` y `6. Revisión y Guardado`.

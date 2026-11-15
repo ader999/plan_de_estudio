@@ -29,17 +29,21 @@
         color: var(--text-primary);
     }
 
-    /* Cabecera sticky del Wizard */
+    /* Evitar que base.css (.card { overflow: hidden }) convierta la tarjeta raíz en contenedor con scroll oculto */
+    #silabo-wizard-root .card.shadow-lg {
+        overflow: visible !important;
+    }
+
+    /* Cabecera del Wizard en flujo normal (sin sticky para evitar tapar títulos o campos al desplazarse) */
     .wizard-sticky-header {
-        position: sticky;
-        top: 66px;
-        z-index: 1015;
+        position: relative;
+        z-index: 1;
         background-color: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: 12px;
         padding: 12px 14px;
         margin-bottom: 1rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .wizard-step-counter {
@@ -297,7 +301,6 @@
         }
 
         .wizard-sticky-header {
-            top: 58px;
             border-radius: 10px;
             padding: 10px;
             margin-bottom: 0.75rem;
@@ -896,7 +899,7 @@
                                 <div class="wizard-step d-none" data-step="6">
                                     <div class="card mb-3">
                                         <div class="card-header">
-                                            <h5 class="mb-0"><i class="fas fa-check-double me-2 text-success"></i>Resumen del Sílabo</h5>
+                                            <h5 class="mb-0"><i class="fas fa-check-circle me-2 text-success"></i>Resumen del Sílabo</h5>
                                         </div>
                                         <div class="card-body">
                                             <div id="wizard-review-status-alert" class="alert alert-warning mb-3" role="status"></div>
