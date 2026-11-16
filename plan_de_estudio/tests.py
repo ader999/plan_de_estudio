@@ -1045,6 +1045,55 @@ class SilaboFormularioYGeneracionTest(TestCase):
         self.assertContains(resp, 'id="guardarFormularioBtn"')
         self.assertContains(resp, 'id="btn-descartar-borrador"')
 
+    def test_formulario_guia_renderiza_wizard_5_pasos_y_borrador_local(self):
+        self._crear_silabo(1)
+        resp = self.client.get(reverse('ver_formulario_guia', args=[self.asignacion.id]))
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode('utf-8')
+
+        self.assertContains(resp, 'id="guia-wizard-root"')
+        self.assertContains(resp, 'data-usuario="docente_silabo"')
+        self.assertContains(resp, f'data-asignacion-id="{self.asignacion.id}"')
+        self.assertContains(resp, 'data-encuentro="1"')
+
+        for step in range(1, 6):
+            self.assertIn(f'data-step="{step}"', html)
+        self.assertNotIn('<div class="wizard-step d-none" data-step="6">', html)
+
+        # Paso 3 contiene únicamente la 2da actividad; Paso 4 agrupa 3ra y 4ta juntas
+        step3_marker = '<div class="wizard-step d-none" data-step="3">'
+        step4_marker = '<div class="wizard-step d-none" data-step="4">'
+        step5_marker = '<div class="wizard-step d-none" data-step="5">'
+        idx3 = html.index(step3_marker)
+        idx4 = html.index(step4_marker)
+        idx5 = html.index(step5_marker)
+
+        step3_html = html[idx3:idx4]
+        step4_html = html[idx4:idx5]
+        step5_html = html[idx5:]
+
+        self.assertIn('id="activity-card-2"', step3_html)
+        self.assertNotIn('id="activity-card-3"', step3_html)
+        self.assertIn('id="activity-card-3"', step4_html)
+        self.assertIn('id="activity-card-4"', step4_html)
+        self.assertIn('fa-check-circle', step5_html)
+        self.assertNotIn('fa-check-double', step5_html)
+
+        # Verificar campos renderizados de actividades 1..4 y controles del wizard
+        for n in range(1, 5):
+            self.assertIn(f'id="tipo_objetivo_{n}"', html)
+            self.assertIn(f'id="fecha_entrega_{n}"', html)
+            self.assertIn(f'name="agente_evaluador_{n}[]"', html)
+        self.assertIn('guia_wizard.js', html)
+        self.assertIn('guia_guardar.js', html)
+        self.assertIn('guia_ia.js', html)
+        self.assertIn('id="wizardPrevBtn"', html)
+        self.assertIn('id="wizardNextBtn"', html)
+        self.assertIn('id="guardarFormularioBtn"', html)
+        self.assertIn('id="btn-descartar-borrador"', html)
+        self.assertIn('data-clear-activity="3"', html)
+        self.assertIn('data-toggle-activity="4"', html)
+
 
 class ConfiguracionPlanTematicoDescargaTest(TestCase):
     def setUp(self):

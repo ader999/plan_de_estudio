@@ -1,14 +1,11 @@
 /**
  * guia_ia.js
- * Script para manejar la funcionalidad de consultar e insertar información de IA en el formulario de estudio independiente
+ * Script para consultar e insertar información generada por IA en el formulario de estudio independiente,
+ * sincronizado con GuiaWizard y borrador local.
  */
 
-// Variables globales
-let guiasEstudio = [];
+var guiasEstudio = [];
 
-/**
- * Funciones para controlar los spinners
- */
 function mostrarSpinnerEstudio() {
   $("#boton-generar-estudio .spinner").removeClass("d-none");
   $("#boton-generar-estudio").prop("disabled", true);
@@ -19,340 +16,201 @@ function ocultarSpinnerEstudio() {
   $("#boton-generar-estudio").prop("disabled", false);
 }
 
-/**
- * Función auxiliar para obtener el token CSRF
- */
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== "") {
-    const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === name + "=") {
-        cookieValue = decodeURIComponent(
-          cookie.substring(name.length + 1),
-        );
-        break;
-      }
-    }
+function notificarIA(tipo, titulo, mensaje) {
+  if (typeof mostrarAlertaGuia === "function") {
+    mostrarAlertaGuia(tipo, titulo, mensaje, "#guia-ia-alert-container");
+    return;
   }
-  return cookieValue;
+  var $container = $("#guia-ia-alert-container");
+  if ($container.length) {
+    $container.empty();
+    var $alert = $(
+      '<div class="alert alert-' + tipo + ' alert-dismissible fade show mt-2 guia-dynamic-alert" role="alert">' +
+        '<strong></strong> <span class="guia-ia-msg"></span>' +
+        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+      '</div>'
+    );
+    $alert.find("strong").text(titulo);
+    $alert.find(".guia-ia-msg").text(mensaje);
+    $container.append($alert);
+    return;
+  }
+  alert(titulo + " " + mensaje);
 }
 
-/**
- * Función para generar el estudio independiente
- */
-function generarEstudioIndependiente(asignacionId, silaboId) {
-  console.log("Botón generar estudio clickeado");
+function marcarAgentesEvaluadores(num, valorAgente) {
+  var selector = 'input[name="agente_evaluador_' + num + '[]"]';
+  $(selector).prop("checked", false);
 
-  // Obtener el modelo seleccionado
+  if (Array.isArray(valorAgente)) {
+    valorAgente.forEach(function (agente) {
+      $(selector + '[value="' + agente + '"]').prop("checked", true);
+    });
+  } else if (valorAgente) {
+    String(valorAgente)
+      .split(",")
+      .forEach(function (agente) {
+        $(selector + '[value="' + agente.trim() + '"]').prop("checked", true);
+      });
+  }
+}
+
+function limpiarCamposActividad(num) {
+  var ids = [
+    "#tipo_objetivo_" + num,
+    "#objetivo_aprendizaje_" + num,
+    "#contenido_tematico_" + num,
+    "#actividad_aprendizaje_" + num,
+    "#tecnica_evaluacion_" + num,
+    "#tipo_evaluacion_" + num,
+    "#instrumento_evaluacion_" + num,
+    "#criterios_evaluacion_" + num,
+    "#tiempo_minutos_" + num,
+    "#recursos_didacticos_" + num,
+    "#periodo_tiempo_programado_" + num,
+    "#puntaje_" + num,
+    "#fecha_entrega_" + num,
+  ];
+  $(ids.join(", ")).val("");
+  $('input[name="agente_evaluador_' + num + '[]"]').prop("checked", false);
+}
+
+function aplicarDatosActividad(num, datos, numActividades) {
+  if (num > numActividades) {
+    limpiarCamposActividad(num);
+    return;
+  }
+
+  $("#tipo_objetivo_" + num).val(datos["tipo_objetivo_" + num] || "");
+  $("#objetivo_aprendizaje_" + num).val(datos["objetivo_aprendizaje_" + num] || "");
+  $("#contenido_tematico_" + num).val(datos["contenido_tematico_" + num] || "");
+  $("#actividad_aprendizaje_" + num).val(datos["actividad_aprendizaje_" + num] || "");
+  $("#tecnica_evaluacion_" + num).val(datos["tecnica_evaluacion_" + num] || "");
+  $("#tipo_evaluacion_" + num).val(datos["tipo_evaluacion_" + num] || "");
+  $("#instrumento_evaluacion_" + num).val(datos["instrumento_evaluacion_" + num] || "");
+  $("#criterios_evaluacion_" + num).val(datos["criterios_evaluacion_" + num] || "");
+  marcarAgentesEvaluadores(num, datos["agente_evaluador_" + num]);
+  $("#tiempo_minutos_" + num).val(datos["tiempo_minutos_" + num] || "");
+  $("#recursos_didacticos_" + num).val(datos["recursos_didacticos_" + num] || "");
+  $("#periodo_tiempo_programado_" + num).val(datos["periodo_tiempo_programado_" + num] || "");
+  $("#puntaje_" + num).val(datos["puntaje_" + num] || "");
+  $("#fecha_entrega_" + num).val(datos["fecha_entrega_" + num] || "");
+}
+
+function generarEstudioIndependiente(asignacionId, silaboId) {
   var modeloSeleccionado = $("#modelo_select_estudio").val();
   var numActividades = $("#numero_actividades").val();
   var encuentro = $("#numero_encuentro").val() || 1;
-  
-  console.log("Modelo seleccionado:", modeloSeleccionado);
-  console.log("Número de actividades:", numActividades);
 
-  // Mostrar spinner
   mostrarSpinnerEstudio();
+  $(".guia-dynamic-alert").remove();
 
-  // Intentar obtener el silabo_id del campo oculto en el formulario
   var formSilaboId = $("#silabo_id").val();
   if (formSilaboId && formSilaboId.trim() !== "") {
-    silaboId = formSilaboId;
-    console.log("Usando silabo_id del formulario:", silaboId);
+    silaboId = formSilaboId.trim();
   }
 
-  // Usar FormData para asegurar el envío correcto de los datos
+  var csrfToken = typeof getCookie === "function" ? getCookie("csrftoken") : "";
   var formData = new FormData();
   formData.append("modelo", modeloSeleccionado);
-  formData.append("csrfmiddlewaretoken", getCookie('csrftoken'));
+  formData.append("csrfmiddlewaretoken", csrfToken);
   formData.append("encuentro", encuentro);
   formData.append("numero_actividades", numActividades);
 
-  // Priorizar silabo_id sobre asignacion_id
   if (silaboId && silaboId !== "null" && silaboId.trim() !== "") {
     formData.append("silabo_id", silaboId);
-    console.log("Usando silabo_id:", silaboId);
-  } else if (
-    asignacionId &&
-    asignacionId !== "null" &&
-    asignacionId.trim() !== ""
-  ) {
+  } else if (asignacionId && asignacionId !== "null" && asignacionId.trim() !== "") {
     formData.append("asignacion_id", asignacionId);
-    console.log("Usando asignacion_id:", asignacionId);
   } else {
-    console.error("No se proporcionó ni silabo_id ni asignacion_id");
     ocultarSpinnerEstudio();
-    alert(
-      "Error: No se pudo identificar el sílabo para generar el estudio independiente",
+    notificarIA(
+      "danger",
+      "¡Error!",
+      "No se pudo identificar el sílabo o asignación para generar el estudio independiente."
     );
     return;
   }
 
-  // Realizar la solicitud AJAX
   $.ajax({
     url: "/generar-estudio-independiente/",
     type: "POST",
     data: formData,
-    processData: false, // Necesario para FormData
-    contentType: false, // Necesario para FormData
-    timeout: 120000, // 2 minutos
-    beforeSend: function(xhr) {
-      xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+    processData: false,
+    contentType: false,
+    timeout: 120000,
+    beforeSend: function (xhr) {
+      xhr.setRequestHeader("X-CSRFToken", csrfToken);
     },
     success: function (response) {
       ocultarSpinnerEstudio();
 
-      if (response.success) {
-        // Guardar los datos generados
+      if (response && response.success && response.datos) {
         guiasEstudio = response.estudios || [];
+        var cantidad = parseInt($("#numero_actividades").val(), 10) || 4;
+        var datos = response.datos;
 
-        // Actualizar el formulario con los datos generados
-        var numActividades = parseInt($("#numero_actividades").val(), 10);
-
-        // Completar ID de la guía si existe
-        if (response.datos.guia_id) {
-          $("#guia_id").val(response.datos.guia_id);
+        if (datos.guia_id) {
+          $("#guia_id").val(datos.guia_id);
         }
 
-        // Tarea 1
-        $("#tipo_objetivo_1").val(response.datos.tipo_objetivo_1);
-        $("#objetivo_aprendizaje_1").val(response.datos.objetivo_aprendizaje_1);
-        $("#contenido_tematico_1").val(response.datos.contenido_tematico_1);
-        $("#actividad_aprendizaje_1").val(
-          response.datos.actividad_aprendizaje_1,
-        );
-        $("#tecnica_evaluacion_1").val(response.datos.tecnica_evaluacion_1);
-        $("#tipo_evaluacion_1").val(response.datos.tipo_evaluacion_1);
-        $("#instrumento_evaluacion_1").val(
-          response.datos.instrumento_evaluacion_1,
-        );
-        $("#criterios_evaluacion_1").val(response.datos.criterios_evaluacion_1);
-        
-        // Limpiar checkboxes existentes
-        $('input[name="agente_evaluador_1[]"]').prop('checked', false);
-        
-        // Marcar los checkboxes correspondientes
-        if (Array.isArray(response.datos.agente_evaluador_1)) {
-          response.datos.agente_evaluador_1.forEach(function(agente) {
-            $('input[name="agente_evaluador_1[]"][value="' + agente + '"]').prop('checked', true);
-          });
-        } else if (response.datos.agente_evaluador_1) {
-          // Si no es un array, convertir a string y dividir por comas
-          var agentes = String(response.datos.agente_evaluador_1).split(',');
-          agentes.forEach(function(agente) {
-            $('input[name="agente_evaluador_1[]"][value="' + agente.trim() + '"]').prop('checked', true);
-          });
-        }
-        
-        $("#tiempo_minutos_1").val(response.datos.tiempo_minutos_1);
-        $("#recursos_didacticos_1").val(response.datos.recursos_didacticos_1);
-        $("#periodo_tiempo_programado_1").val(
-          response.datos.periodo_tiempo_programado_1,
-        );
-        $("#puntaje_1").val(response.datos.puntaje_1);
-        $("#fecha_entrega_1").val(response.datos.fecha_entrega_1);
+        if (datos.unidad) $("#unidad").val(datos.unidad);
+        if (datos.nombre_de_la_unidad) $("#nombre_de_la_unidad").val(datos.nombre_de_la_unidad);
+        if (datos.fecha) $("#fecha").val(datos.fecha);
 
-        // Tarea 2
-        if (numActividades >= 2) {
-          $("#tipo_objetivo_2").val(response.datos.tipo_objetivo_2);
-          $("#objetivo_aprendizaje_2").val(response.datos.objetivo_aprendizaje_2);
-        } else {
-          $("#tipo_objetivo_2, #objetivo_aprendizaje_2, #contenido_tematico_2, #actividad_aprendizaje_2, #tecnica_evaluacion_2, #tipo_evaluacion_2, #instrumento_evaluacion_2, #criterios_evaluacion_2, #tiempo_minutos_2, #recursos_didacticos_2, #periodo_tiempo_programado_2, #puntaje_2, #fecha_entrega_2").val("");
-          $('input[name="agente_evaluador_2[]"]').prop('checked', false);
-        }
-        if (numActividades >= 2) {
-          $("#contenido_tematico_2").val(response.datos.contenido_tematico_2);
-          $("#actividad_aprendizaje_2").val(
-            response.datos.actividad_aprendizaje_2,
-          );
-          $("#tecnica_evaluacion_2").val(response.datos.tecnica_evaluacion_2);
-          $("#tipo_evaluacion_2").val(response.datos.tipo_evaluacion_2);
-          $("#instrumento_evaluacion_2").val(
-            response.datos.instrumento_evaluacion_2,
-          );
-          $("#criterios_evaluacion_2").val(response.datos.criterios_evaluacion_2);
-          
-          // Limpiar checkboxes existentes
-          $('input[name="agente_evaluador_2[]"]').prop('checked', false);
-          
-          // Marcar los checkboxes correspondientes
-          if (Array.isArray(response.datos.agente_evaluador_2)) {
-            response.datos.agente_evaluador_2.forEach(function(agente) {
-              $('input[name="agente_evaluador_2[]"][value="' + agente + '"]').prop('checked', true);
-            });
-          } else if (response.datos.agente_evaluador_2) {
-            // Si no es un array, convertir a string y dividir por comas
-            var agentes = String(response.datos.agente_evaluador_2).split(',');
-            agentes.forEach(function(agente) {
-              $('input[name="agente_evaluador_2[]"][value="' + agente.trim() + '"]').prop('checked', true);
-            });
-          }
-          
-          $("#tiempo_minutos_2").val(response.datos.tiempo_minutos_2);
-          $("#recursos_didacticos_2").val(response.datos.recursos_didacticos_2);
-          $("#periodo_tiempo_programado_2").val(
-            response.datos.periodo_tiempo_programado_2,
-          );
-          $("#puntaje_2").val(response.datos.puntaje_2);
-          $("#fecha_entrega_2").val(response.datos.fecha_entrega_2);
+        for (var n = 1; n <= 4; n++) {
+          aplicarDatosActividad(n, datos, cantidad);
         }
 
-        // Tarea 3
-        if (numActividades >= 3) {
-          $("#tipo_objetivo_3").val(response.datos.tipo_objetivo_3);
-        } else {
-           $("#tipo_objetivo_3, #objetivo_aprendizaje_3, #contenido_tematico_3, #actividad_aprendizaje_3, #tecnica_evaluacion_3, #tipo_evaluacion_3, #instrumento_evaluacion_3, #criterios_evaluacion_3, #tiempo_minutos_3, #recursos_didacticos_3, #periodo_tiempo_programado_3, #puntaje_3, #fecha_entrega_3").val("");
-           $('input[name="agente_evaluador_3[]"]').prop('checked', false);
-        }
-        if (numActividades >= 3) {
-          $("#objetivo_aprendizaje_3").val(response.datos.objetivo_aprendizaje_3);
-          $("#contenido_tematico_3").val(response.datos.contenido_tematico_3);
-        }
-        if (numActividades >= 3) {
-          $("#actividad_aprendizaje_3").val(
-            response.datos.actividad_aprendizaje_3,
-          );
-          $("#tecnica_evaluacion_3").val(response.datos.tecnica_evaluacion_3);
-          $("#tipo_evaluacion_3").val(response.datos.tipo_evaluacion_3);
-          $("#instrumento_evaluacion_3").val(
-            response.datos.instrumento_evaluacion_3,
-          );
-          $("#criterios_evaluacion_3").val(response.datos.criterios_evaluacion_3);
-          
-          // Limpiar checkboxes existentes
-          $('input[name="agente_evaluador_3[]"]').prop('checked', false);
-          
-          // Marcar los checkboxes correspondientes
-          if (Array.isArray(response.datos.agente_evaluador_3)) {
-            response.datos.agente_evaluador_3.forEach(function(agente) {
-              $('input[name="agente_evaluador_3[]"][value="' + agente + '"]').prop('checked', true);
-            });
-          } else if (response.datos.agente_evaluador_3) {
-            // Si no es un array, convertir a string y dividir por comas
-            var agentes = String(response.datos.agente_evaluador_3).split(',');
-            agentes.forEach(function(agente) {
-              $('input[name="agente_evaluador_3[]"][value="' + agente.trim() + '"]').prop('checked', true);
-            });
-          }
-          
-          $("#tiempo_minutos_3").val(response.datos.tiempo_minutos_3);
-          $("#recursos_didacticos_3").val(response.datos.recursos_didacticos_3);
-          $("#periodo_tiempo_programado_3").val(
-            response.datos.periodo_tiempo_programado_3,
-          );
-          $("#puntaje_3").val(response.datos.puntaje_3);
-          $("#fecha_entrega_3").val(response.datos.fecha_entrega_3);
-        }
+        $("#formEstudioIndependiente .is-invalid").removeClass("is-invalid");
 
-        // Tarea 4
-        if (numActividades >= 4) {
-          $("#tipo_objetivo_4").val(response.datos.tipo_objetivo_4);
-        } else {
-           $("#tipo_objetivo_4, #objetivo_aprendizaje_4, #contenido_tematico_4, #actividad_aprendizaje_4, #tecnica_evaluacion_4, #tipo_evaluacion_4, #instrumento_evaluacion_4, #criterios_evaluacion_4, #tiempo_minutos_4, #recursos_didacticos_4, #periodo_tiempo_programado_4, #puntaje_4, #fecha_entrega_4").val("");
-           $('input[name="agente_evaluador_4[]"]').prop('checked', false);
-        }
-        if (numActividades >= 4) {
-          $("#objetivo_aprendizaje_4").val(response.datos.objetivo_aprendizaje_4);
-          $("#contenido_tematico_4").val(response.datos.contenido_tematico_4);
-        }
-        if (numActividades >= 4) {
-          $("#actividad_aprendizaje_4").val(
-            response.datos.actividad_aprendizaje_4,
-          );
-          $("#tecnica_evaluacion_4").val(response.datos.tecnica_evaluacion_4);
-          $("#tipo_evaluacion_4").val(response.datos.tipo_evaluacion_4);
-          $("#instrumento_evaluacion_4").val(
-            response.datos.instrumento_evaluacion_4,
-          );
-          $("#criterios_evaluacion_4").val(response.datos.criterios_evaluacion_4);
-          
-          // Limpiar checkboxes existentes
-          $('input[name="agente_evaluador_4[]"]').prop('checked', false);
-          
-          // Marcar los checkboxes correspondientes
-          if (Array.isArray(response.datos.agente_evaluador_4)) {
-            response.datos.agente_evaluador_4.forEach(function(agente) {
-              $('input[name="agente_evaluador_4[]"][value="' + agente + '"]').prop('checked', true);
-            });
-          } else if (response.datos.agente_evaluador_4) {
-            // Si no es un array, convertir a string y dividir por comas
-            var agentes = String(response.datos.agente_evaluador_4).split(',');
-            agentes.forEach(function(agente) {
-              $('input[name="agente_evaluador_4[]"][value="' + agente.trim() + '"]').prop('checked', true);
-            });
-          }
-          
-          $("#tiempo_minutos_4").val(response.datos.tiempo_minutos_4);
-          $("#recursos_didacticos_4").val(response.datos.recursos_didacticos_4);
-          $("#periodo_tiempo_programado_4").val(
-            response.datos.periodo_tiempo_programado_4,
-          );
-          $("#puntaje_4").val(response.datos.puntaje_4);
-          $("#fecha_entrega_4").val(response.datos.fecha_entrega_4);
-        }
-
-        // Información general
-        if (response.datos.unidad) {
-          $("#unidad").val(response.datos.unidad);
-        }
-        if (response.datos.nombre_de_la_unidad) {
-          $("#nombre_de_la_unidad").val(response.datos.nombre_de_la_unidad);
-        }
-        if (response.datos.fecha) {
-          $("#fecha").val(response.datos.fecha);
-        }
-
-        // Actualizar la suma de puntajes
-        if (typeof actualizarSumaPuntajes === 'function') {
+        if (typeof actualizarSumaPuntajes === "function") {
           actualizarSumaPuntajes();
         }
+        $("#puntaje_1").trigger("change");
 
-        // Mostrar mensaje de éxito
-        alert("Estudio independiente generado con éxito");
+        if (window.GuiaWizard && typeof window.GuiaWizard.onAfterAiAutofill === "function") {
+          window.GuiaWizard.onAfterAiAutofill();
+        }
+
+        notificarIA(
+          "success",
+          "¡Contenido generado!",
+          "Se completaron " + cantidad + " actividades. Revisa cada paso antes de guardar."
+        );
       } else {
-        // Mostrar mensaje de error
-        alert("Error al generar el estudio independiente: " + response.error);
+        notificarIA(
+          "danger",
+          "Error al generar:",
+          (response && response.error) || "Respuesta inesperada del servidor."
+        );
       }
     },
-    error: function (xhr, status, error) {
-      console.error("Error en la solicitud AJAX:", error);
+    error: function (xhr, status) {
+      console.error("Error en la solicitud AJAX:", xhr.status, status);
       ocultarSpinnerEstudio();
-      
+      var errorMsg = "Error al comunicarse con el servidor.";
       if (status === "timeout") {
-        alert("La solicitud tomó demasiado tiempo. Por favor, intenta nuevamente.");
-      } else {
-        alert("Error al comunicarse con el servidor");
+        errorMsg = "La solicitud tomó demasiado tiempo. Por favor, intenta nuevamente.";
+      } else if (xhr && xhr.responseText) {
+        try {
+          var parsed = JSON.parse(xhr.responseText);
+          if (parsed && parsed.error) errorMsg = parsed.error;
+        } catch (_) {
+          // Mantener mensaje por defecto
+        }
       }
-    }
+      notificarIA("danger", "Error al generar:", errorMsg);
+    },
   });
 }
 
-/**
- * Inicialización cuando el documento está listo
- */
 $(document).ready(function () {
-  console.log("Documento listo - guia_ia.js");
-
-  // ID de asignación desde Django
-  var asignacionId =
-    typeof ASIGNACION_ID !== "undefined" ? ASIGNACION_ID : null;
-  console.log("ID de asignación:", asignacionId);
-
-  // ID de sílabo desde Django (si existe)
+  var asignacionId = typeof ASIGNACION_ID !== "undefined" ? ASIGNACION_ID : null;
   var silaboId = typeof SILABO_ID !== "undefined" ? SILABO_ID : null;
-  console.log("ID de sílabo:", silaboId);
 
-  // ID de guía desde Django (si existe)
-  var guiaId = typeof GUIA_ID !== "undefined" ? GUIA_ID : null;
-  console.log("ID de guía:", guiaId);
-
-  // Mostrar la sección de estudio independiente por defecto
   $("#seccionEstudioIndependiente").show();
 
-  // Manejar el clic en el botón de generar estudio
-  $("#boton-generar-estudio").click(function () {
+  $("#boton-generar-estudio").on("click", function () {
     generarEstudioIndependiente(asignacionId, silaboId);
   });
 });

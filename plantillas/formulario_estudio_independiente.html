@@ -4,12 +4,10 @@
 
 {% block content %}
 <style>
-    /* Ocultar elementos con la clase "oculto" */
     .oculto {
         display: none !important;
     }
 
-    /* Estilo personalizado para las líneas divisorias */
     .hr-blue {
         height: 3px;
         background-color: var(--corp-primary);
@@ -18,1395 +16,313 @@
         border-radius: 2px;
     }
 
-    /* Espaciado consistente para los campos */
     .mb-3 {
-        margin-bottom: 1.25rem !important;
+        margin-bottom: 1.15rem !important;
     }
 
     h6 {
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
+        margin-top: 1.25rem;
+        margin-bottom: 0.85rem;
         font-weight: 700;
         color: var(--text-primary);
     }
-</style>
 
-<div class="text-center form-page-container">
-    <div class="text-center">
-        <h1 class="mb-4 text-center">Llenar formularios</h1>
-        <h3>{{ asignacion.plan_de_estudio }}</h3>
-        <h3>Encuentro ({{ encuentro }})</h3>
-    </div>
-
-    <!-- Contenedor principal que contiene ambas secciones -->
-    <div class="row justify-content-center">
-        <!-- Sección 2: Formulario de Estudio Independiente -->
-        <div id="seccionEstudioIndependiente" style="display: block">
-            <div class="row justify-content-center">
-                <div class="col-lg-8 col-md-10">
-                    <div class="card shadow-lg">
-                        <div class="card-body">
-                            <!-- Contenido del Estudio Independiente -->
-                            <h2 class="text-center mb-4">
-                                Guía de Estudio Independiente
-                            </h2>
-
-                            <!-- Datos de Django para JavaScript -->
-                            <script type="text/javascript">
-                                // Definir variables globales con los datos de Django
-                                var ASIGNACION_ID =
-                                    "{% if asignacion %}{{ asignacion.id|safe }}{% else %}null{% endif %}";
-                                var GUIA_ID =
-                                    "{% if guia %}{{ guia.id|safe }}{% else %}null{% endif %}";
-                                var SILABO_ID =
-                                    "{% if silabo %}{{ silabo.id|safe }}{% else %}null{% endif %}";
-
-                                // Log para depuración
-                                console.log(
-                                    "Plantilla formulario_estudio_independiente.html cargada",
-                                );
-                                console.log(
-                                    "ID de asignación recibido:",
-                                    ASIGNACION_ID,
-                                );
-                                console.log("ID de guía recibido:", GUIA_ID);
-                                console.log(
-                                    "ID de sílabo recibido:",
-                                    SILABO_ID,
-                                );
-                            </script>
-
-                            <form id="formEstudioIndependiente">
-                                {% csrf_token %}
-                                <!-- Campos ocultos para IDs -->
-                                <input
-                                    type="hidden"
-                                    id="asignacion_id"
-                                    name="asignacion_id"
-                                    value="{{ asignacion.id }}"
-                                />
-                                <input
-                                    type="hidden"
-                                    id="silabo_id"
-                                    name="silabo_id"
-                                    value="{% if silabo %}{{ silabo.id }}{% endif %}"
-                                />
-                                {% if guia %}<input
-                                    type="hidden"
-                                    id="guia_id"
-                                    name="guia_id"
-                                    value="{{ guia.id }}"
-                                />{% endif %}
-
-                                {% if mostrar_ia %}
-                                <div
-                                    class="d-flex justify-content-center align-items-center gap-3 flex-wrap mb-3"
-                                >
-                                    <div class="d-flex align-items-center">
-                                        <label class="form-label mb-0 me-2" for="modelo_select_estudio">Modelo:</label>
-                                        <select
-                                            id="modelo_select_estudio"
-                                            name="modelo_select"
-                                            class="form-select"
-                                            style="width: 240px"
-                                        >
-                                            {% if modelos_ia %}
-                                                {% for modelo in modelos_ia %}
-                                                <option value="{{ modelo.id }}">
-                                                    {{ modelo.nombre_mostrar }}
-                                                </option>
-                                                {% endfor %}
-                                            {% else %}
-                                                <option value="google">
-                                                    Google - Gemini-3-flash
-                                                </option>
-                                                <option value="openai">
-                                                    OpenAI - o4Mini
-                                                </option>
-                                                <option value="deepseek">
-                                                    DeepSeek - Chat
-                                                </option>
-                                            {% endif %}
-                                        </select>
-                                    </div>
-
-                                    <div class="d-flex align-items-center">
-                                        <label class="form-label mb-0 me-2" for="numero_actividades">Actividades:</label>
-                                        <select id="numero_actividades" name="numero_actividades" class="form-select" style="width: 100px;">
-                                            <option value="2">2</option>
-                                            <option value="3">3</option>
-                                            <option value="4" selected>4</option>
-                                        </select>
-                                    </div>
-
-                                    {% include 'generar_plan_estudio/boton_generar_estudio.html' %}
-                                </div>
-                                {% endif %}
-
-                                <!-- Información General -->
-                                <div class="card mb-4 mt-3">
-                                    <div
-                                        class="card-header"
-                                    >
-                                        <h5 class="mb-0">
-                                            Información General
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <!-- Campo para Número de Encuentro (oculto) -->
-                                        <div class="mb-3 d-none">
-                                            <label
-                                                for="numero_encuentro"
-                                                class="form-label"
-                                                >Número de Encuentro</label
-                                            >
-                                            <input
-                                                type="number"
-                                                class="form-control"
-                                                id="numero_encuentro"
-                                                name="numero_encuentro"
-                                                value="{% if guia %}{{ guia.numero_encuentro }}{% else %}{{ encuentro }}{% endif %}"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label
-                                                for="fecha"
-                                                class="form-label"
-                                                >Fecha de la Guía</label
-                                            >
-                                            <input
-                                                type="date"
-                                                class="form-control"
-                                                id="fecha"
-                                                name="fecha"
-                                                value="{% if guia %}{{ guia.fecha|date:'Y-m-d' }}{% endif %}"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label
-                                                for="unidad"
-                                                class="form-label"
-                                                >Unidad</label
-                                            >
-                                            <select
-                                                class="form-select"
-                                                id="unidad"
-                                                name="unidad"
-                                                required
-                                            >
-                                                {% for unidad_choice in unidad_choices %}
-                                                <option
-                                                    value="{{ unidad_choice.0 }}"
-                                                    {% if guia and guia.unidad == unidad_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ unidad_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label
-                                                for="nombre_de_la_unidad"
-                                                class="form-label"
-                                                >Nombre de la Unidad</label
-                                            >
-                                            <input
-                                                type="text"
-                                                class="form-control"
-                                                id="nombre_de_la_unidad"
-                                                name="nombre_de_la_unidad"
-                                                value="{% if guia %}{{ guia.nombre_de_la_unidad }}{% endif %}"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Tarea 1 -->
-                                <div class="card mb-4">
-                                    <div
-                                        class="card-header"
-                                    >
-                                        <h5 class="mb-0">
-                                            Primera actividad
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="mb-3">
-                                            <label
-                                                for="tipo_objetivo_1"
-                                                class="form-label"
-                                                >Tipo de Objetivo</label
-                                            >
-                                            <select
-                                                class="form-select"
-                                                id="tipo_objetivo_1"
-                                                name="tipo_objetivo_1"
-                                                required
-                                            >
-                                                {% for tipo_choice in tipo_objetivo_choices %}
-                                                <option
-                                                    value="{{ tipo_choice.0 }}"
-                                                    {% if guia and guia.tipo_objetivo_1 == tipo_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tipo_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label
-                                                for="objetivo_aprendizaje_1"
-                                                class="form-label"
-                                                >Objetivo de Aprendizaje</label
-                                            >
-                                            <textarea
-                                                class="form-control"
-                                                id="objetivo_aprendizaje_1"
-                                                name="objetivo_aprendizaje_1"
-                                                rows="4"
-                                                required
-                                            >
-                                                {% if guia %}{{ guia.objetivo_aprendizaje_1 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label
-                                                for="contenido_tematico_1"
-                                                class="form-label"
-                                                >Contenido Temático</label
-                                            >
-                                            <textarea
-                                                class="form-control"
-                                                id="contenido_tematico_1"
-                                                name="contenido_tematico_1"
-                                                rows="4"
-                                                required
-                                            >
-                                                {% if guia %}{{ guia.contenido_tematico_1 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="actividad_aprendizaje_1">Actividad de Aprendizaje</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="actividad_aprendizaje_1"
-                                                name="actividad_aprendizaje_1"
-                                                rows="4"
-                                                required
-                                            >
-                                                {% if guia %}{{ guia.actividad_aprendizaje_1 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tecnica_evaluacion_1">Técnica de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="tecnica_evaluacion_1"
-                                                name="tecnica_evaluacion_1"
-                                                required
-                                            >
-                                                {% for tecnica_choice in tecnica_evaluacion_choices %}
-                                                <option
-                                                    value="{{ tecnica_choice.0 }}"
-                                                    {% if guia and guia.tecnica_evaluacion_1 == tecnica_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tecnica_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tipo_evaluacion_1">Tipo de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="tipo_evaluacion_1"
-                                                name="tipo_evaluacion_1"
-                                                required
-                                            >
-                                                {% for tipo_eval_choice in tipo_evaluacion_choices %}
-                                                <option
-                                                    value="{{ tipo_eval_choice.0 }}"
-                                                    {% if guia and guia.tipo_evaluacion_1 == tipo_eval_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tipo_eval_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="instrumento_evaluacion_1">Instrumento de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="instrumento_evaluacion_1"
-                                                name="instrumento_evaluacion_1"
-                                                required
-                                            >
-                                                {% for instrumento_choice in instrumento_evaluacion_choices %}
-                                                <option
-                                                    value="{{ instrumento_choice.0 }}"
-                                                    {% if guia and guia.instrumento_evaluacion_1 == instrumento_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ instrumento_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="criterios_evaluacion_1">Criterios de Evaluación</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="criterios_evaluacion_1"
-                                                name="criterios_evaluacion_1"
-                                                rows="4"
-                                                required
-                                            >
-                                                {% if guia %}{{ guia.criterios_evaluacion_1 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="agente_evaluador_1">Agente Evaluador 1</label>
-                                            <div class="form-check">
-                                                {% for agente_choice in agente_evaluador_choices %}
-                                                <div class="form-check">
-                                                    <input
-                                                        type="checkbox"
-                                                        name="agente_evaluador_1[]"
-                                                        value="{{ agente_choice.0 }}"
-                                                        id="agente_1_{{ forloop.counter }}"
-                                                    />
-                                                    <label
-                                                        class="form-check-label"
-                                                        for="agente_1_{{ forloop.counter }}"
-                                                    >
-                                                        {{ agente_choice.1 }}
-                                                    </label>
-                                                </div>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tiempo_minutos_1">Tiempo (minutos)</label>
-                                            <input
-                                                type="number"
-                                                class="form-control"
-                                                id="tiempo_minutos_1"
-                                                name="tiempo_minutos_1"
-                                                value="{% if guia %}{{ guia.tiempo_minutos_1 }}{% endif %}"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="recursos_didacticos_1">Recursos Didácticos</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="recursos_didacticos_1"
-                                                name="recursos_didacticos_1"
-                                                rows="4"
-                                                required
-                                            >
-                                                {% if guia %}{{ guia.recursos_didacticos_1 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="periodo_tiempo_programado_1">Periodo de Tiempo Programado</label>
-                                            <select
-                                                class="form-select"
-                                                id="periodo_tiempo_programado_1"
-                                                name="periodo_tiempo_programado_1"
-                                                required
-                                            >
-                                                {% for periodo_choice in periodo_tiempo_choices %}
-                                                <option
-                                                    value="{{ periodo_choice.0 }}"
-                                                    {% if guia and guia.periodo_tiempo_programado_1 == periodo_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ periodo_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="puntaje_1">Puntaje</label>
-                                            <input
-                                                type="number"
-                                                class="form-control puntaje"
-                                                id="puntaje_1"
-                                                name="puntaje_1"
-                                                value="{% if guia %}{{ guia.puntaje_1 }}{% endif %}"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="fecha_entrega_1">Fecha de Entrega</label>
-                                            <input
-                                                type="date"
-                                                class="form-control"
-                                                id="fecha_entrega_1"
-                                                name="fecha_entrega_1"
-                                                value="{% if guia %}{{ guia.fecha_entrega_1|date:'Y-m-d' }}{% endif %}"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group mb-3 mt-4">
-                                    <hr class="section-divider">
-                                </div>
-
-                                <!-- Segunda actividad (opcional) -->
-                                <div class="card mb-4">
-                                    <div
-                                        class="card-header"
-                                    >
-                                        <h5 class="mb-0">
-                                            Segunda actividad (opcional)
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tipo_objetivo_2">Tipo de Objetivo</label>
-                                            <select
-                                                class="form-select"
-                                                id="tipo_objetivo_2"
-                                                name="tipo_objetivo_2"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for tipo_choice in tipo_objetivo_choices %}
-                                                <option
-                                                    value="{{ tipo_choice.0 }}"
-                                                    {% if guia and guia.tipo_objetivo_2 == tipo_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tipo_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="objetivo_aprendizaje_2">Objetivo de Aprendizaje</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="objetivo_aprendizaje_2"
-                                                name="objetivo_aprendizaje_2"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.objetivo_aprendizaje_2 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="contenido_tematico_2">Contenido Temático</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="contenido_tematico_2"
-                                                name="contenido_tematico_2"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.contenido_tematico_2 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="actividad_aprendizaje_2">Actividad de Aprendizaje</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="actividad_aprendizaje_2"
-                                                name="actividad_aprendizaje_2"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.actividad_aprendizaje_2 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tecnica_evaluacion_2">Técnica de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="tecnica_evaluacion_2"
-                                                name="tecnica_evaluacion_2"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for tecnica_choice in tecnica_evaluacion_choices %}
-                                                <option
-                                                    value="{{ tecnica_choice.0 }}"
-                                                    {% if guia and guia.tecnica_evaluacion_2 == tecnica_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tecnica_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tipo_evaluacion_2">Tipo de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="tipo_evaluacion_2"
-                                                name="tipo_evaluacion_2"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for tipo_eval_choice in tipo_evaluacion_choices %}
-                                                <option
-                                                    value="{{ tipo_eval_choice.0 }}"
-                                                    {% if guia and guia.tipo_evaluacion_2 == tipo_eval_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tipo_eval_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="instrumento_evaluacion_2">Instrumento de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="instrumento_evaluacion_2"
-                                                name="instrumento_evaluacion_2"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for instrumento_choice in instrumento_evaluacion_choices %}
-                                                <option
-                                                    value="{{ instrumento_choice.0 }}"
-                                                    {% if guia and guia.instrumento_evaluacion_2 == instrumento_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ instrumento_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="criterios_evaluacion_2">Criterios de Evaluación</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="criterios_evaluacion_2"
-                                                name="criterios_evaluacion_2"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.criterios_evaluacion_2 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Agente Evaluador 2</label>
-                                            <div class="form-check">
-                                                {% for agente_choice in agente_evaluador_choices %}
-                                                <div class="form-check">
-                                                    <input
-                                                        type="checkbox"
-                                                        name="agente_evaluador_2[]"
-                                                        value="{{ agente_choice.0 }}"
-                                                        id="agente_2_{{ forloop.counter }}"
-                                                    />
-                                                    <label
-                                                        class="form-check-label"
-                                                        for="agente_2_{{ forloop.counter }}"
-                                                    >
-                                                        {{ agente_choice.1 }}
-                                                    </label>
-                                                </div>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tiempo_minutos_2">Tiempo (minutos)</label>
-                                            <input
-                                                type="number"
-                                                class="form-control"
-                                                id="tiempo_minutos_2"
-                                                name="tiempo_minutos_2"
-                                                value="{% if guia %}{{ guia.tiempo_minutos_2 }}{% endif %}"
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="recursos_didacticos_2">Recursos Didácticos</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="recursos_didacticos_2"
-                                                name="recursos_didacticos_2"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.recursos_didacticos_2 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="periodo_tiempo_programado_2">Periodo de Tiempo Programado</label>
-                                            <select
-                                                class="form-select"
-                                                id="periodo_tiempo_programado_2"
-                                                name="periodo_tiempo_programado_2"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for periodo_choice in periodo_tiempo_choices %}
-                                                <option
-                                                    value="{{ periodo_choice.0 }}"
-                                                    {% if guia and guia.periodo_tiempo_programado_2 == periodo_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ periodo_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="puntaje_2">Puntaje</label>
-                                            <input
-                                                type="number"
-                                                class="form-control puntaje"
-                                                id="puntaje_2"
-                                                name="puntaje_2"
-                                                value="{% if guia %}{{ guia.puntaje_2 }}{% endif %}"
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="fecha_entrega_2">Fecha de Entrega</label>
-                                            <input
-                                                type="date"
-                                                class="form-control"
-                                                id="fecha_entrega_2"
-                                                name="fecha_entrega_2"
-                                                value="{% if guia %}{{ guia.fecha_entrega_2|date:'Y-m-d' }}{% endif %}"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group mb-3 mt-4">
-                                    <hr class="section-divider">
-                                </div>
-
-                                <!-- Tercera actividad (opcional) -->
-                                <div class="card mb-4">
-                                    <div
-                                        class="card-header"
-                                    >
-                                        <h5 class="mb-0">
-                                            Tercera actividad (opcional)
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="mb-3">
-                                            <label
-                                                for="tipo_objetivo_3"
-                                                class="form-label"
-                                                >Tipo de Objetivo</label
-                                            >
-                                            <select
-                                                class="form-select"
-                                                id="tipo_objetivo_3"
-                                                name="tipo_objetivo_3"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for tipo_choice in tipo_objetivo_choices %}
-                                                <option
-                                                    value="{{ tipo_choice.0 }}"
-                                                    {% if guia and guia.tipo_objetivo_3 == tipo_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tipo_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label
-                                                for="objetivo_aprendizaje_3"
-                                                class="form-label"
-                                                >Objetivo de Aprendizaje</label
-                                            >
-                                            <textarea
-                                                class="form-control"
-                                                id="objetivo_aprendizaje_3"
-                                                name="objetivo_aprendizaje_3"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.objetivo_aprendizaje_3 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label
-                                                for="contenido_tematico_3"
-                                                class="form-label"
-                                                >Contenido Temático</label
-                                            >
-                                            <textarea
-                                                class="form-control"
-                                                id="contenido_tematico_3"
-                                                name="contenido_tematico_3"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.contenido_tematico_3 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="actividad_aprendizaje_3">Actividad de Aprendizaje</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="actividad_aprendizaje_3"
-                                                name="actividad_aprendizaje_3"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.actividad_aprendizaje_3 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tecnica_evaluacion_3">Técnica de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="tecnica_evaluacion_3"
-                                                name="tecnica_evaluacion_3"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for tecnica_choice in tecnica_evaluacion_choices %}
-                                                <option
-                                                    value="{{ tecnica_choice.0 }}"
-                                                    {% if guia and guia.tecnica_evaluacion_3 == tecnica_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tecnica_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tipo_evaluacion_3">Tipo de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="tipo_evaluacion_3"
-                                                name="tipo_evaluacion_3"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for tipo_eval_choice in tipo_evaluacion_choices %}
-                                                <option
-                                                    value="{{ tipo_eval_choice.0 }}"
-                                                    {% if guia and guia.tipo_evaluacion_3 == tipo_eval_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tipo_eval_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="instrumento_evaluacion_3">Instrumento de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="instrumento_evaluacion_3"
-                                                name="instrumento_evaluacion_3"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for instrumento_choice in instrumento_evaluacion_choices %}
-                                                <option
-                                                    value="{{ instrumento_choice.0 }}"
-                                                    {% if guia and guia.instrumento_evaluacion_3 == instrumento_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ instrumento_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="criterios_evaluacion_3">Criterios de Evaluación</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="criterios_evaluacion_3"
-                                                name="criterios_evaluacion_3"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.criterios_evaluacion_3 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Agente Evaluador 3</label>
-                                            <div class="form-check">
-                                                {% for agente_choice in agente_evaluador_choices %}
-                                                <div class="form-check">
-                                                    <input
-                                                        type="checkbox"
-                                                        name="agente_evaluador_3[]"
-                                                        value="{{ agente_choice.0 }}"
-                                                        id="agente_3_{{ forloop.counter }}"
-                                                    />
-                                                    <label
-                                                        class="form-check-label"
-                                                        for="agente_3_{{ forloop.counter }}"
-                                                    >
-                                                        {{ agente_choice.1 }}
-                                                    </label>
-                                                </div>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tiempo_minutos_3">Tiempo (minutos)</label>
-                                            <input
-                                                type="number"
-                                                class="form-control"
-                                                id="tiempo_minutos_3"
-                                                name="tiempo_minutos_3"
-                                                value="{% if guia %}{{ guia.tiempo_minutos_3 }}{% endif %}"
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="recursos_didacticos_3">Recursos Didácticos 3</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="recursos_didacticos_3"
-                                                name="recursos_didacticos_3"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.recursos_didacticos_3 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="periodo_tiempo_programado_3">Periodo de Tiempo Programado 3</label>
-                                            <select
-                                                class="form-select"
-                                                id="periodo_tiempo_programado_3"
-                                                name="periodo_tiempo_programado_3"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for periodo_choice in periodo_tiempo_choices %}
-                                                <option
-                                                    value="{{ periodo_choice.0 }}"
-                                                    {% if guia and guia.periodo_tiempo_programado_3 == periodo_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ periodo_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="puntaje_3">Puntaje 3</label>
-                                            <input
-                                                type="number"
-                                                class="form-control puntaje"
-                                                id="puntaje_3"
-                                                name="puntaje_3"
-                                                value="{% if guia %}{{ guia.puntaje_3 }}{% endif %}"
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="fecha_entrega_3">Fecha de Entrega 3</label>
-                                            <input
-                                                type="date"
-                                                class="form-control"
-                                                id="fecha_entrega_3"
-                                                name="fecha_entrega_3"
-                                                value="{% if guia %}{{ guia.fecha_entrega_3|date:'Y-m-d' }}{% endif %}"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group mb-3 mt-4">
-                                    <hr class="section-divider">
-                                </div>
-
-                                <!-- Cuarta actividad (opcional) -->
-                                <div class="card mb-4">
-                                    <div class="card-header">
-                                        <h5 class="mb-0">Cuarta actividad (opcional)</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tipo_objetivo_4">Tipo de Objetivo</label>
-                                            <select
-                                                class="form-select"
-                                                id="tipo_objetivo_4"
-                                                name="tipo_objetivo_4"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for tipo_choice in tipo_objetivo_choices %}
-                                                <option
-                                                    value="{{ tipo_choice.0 }}"
-                                                    {% if guia and guia.tipo_objetivo_4 == tipo_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tipo_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="objetivo_aprendizaje_4">Objetivo de Aprendizaje</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="objetivo_aprendizaje_4"
-                                                name="objetivo_aprendizaje_4"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.objetivo_aprendizaje_4 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="contenido_tematico_4">Contenido Temático</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="contenido_tematico_4"
-                                                name="contenido_tematico_4"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.contenido_tematico_4 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="actividad_aprendizaje_4">Actividad de Aprendizaje</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="actividad_aprendizaje_4"
-                                                name="actividad_aprendizaje_4"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.actividad_aprendizaje_4 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tecnica_evaluacion_4">Técnica de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="tecnica_evaluacion_4"
-                                                name="tecnica_evaluacion_4"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for tecnica_choice in tecnica_evaluacion_choices %}
-                                                <option
-                                                    value="{{ tecnica_choice.0 }}"
-                                                    {% if guia and guia.tecnica_evaluacion_4 == tecnica_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tecnica_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tipo_evaluacion_4">Tipo de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="tipo_evaluacion_4"
-                                                name="tipo_evaluacion_4"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for tipo_eval_choice in tipo_evaluacion_choices %}
-                                                <option
-                                                    value="{{ tipo_eval_choice.0 }}"
-                                                    {% if guia and guia.tipo_evaluacion_4 == tipo_eval_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ tipo_eval_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="instrumento_evaluacion_4">Instrumento de Evaluación</label>
-                                            <select
-                                                class="form-select"
-                                                id="instrumento_evaluacion_4"
-                                                name="instrumento_evaluacion_4"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for instrumento_choice in instrumento_evaluacion_choices %}
-                                                <option
-                                                    value="{{ instrumento_choice.0 }}"
-                                                    {% if guia and guia.instrumento_evaluacion_4 == instrumento_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ instrumento_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="criterios_evaluacion_4">Criterios de Evaluación</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="criterios_evaluacion_4"
-                                                name="criterios_evaluacion_4"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.criterios_evaluacion_4 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label">Agente Evaluador 4</label>
-                                            <div class="form-check">
-                                                {% for agente_choice in agente_evaluador_choices %}
-                                                <div class="form-check">
-                                                    <input
-                                                        type="checkbox"
-                                                        name="agente_evaluador_4[]"
-                                                        value="{{ agente_choice.0 }}"
-                                                        id="agente_4_{{ forloop.counter }}"
-                                                    />
-                                                    <label class="form-check-label" for="agente_4_{{ forloop.counter }}">
-                                                        {{ agente_choice.1 }}
-                                                    </label>
-                                                </div>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="tiempo_minutos_4">Tiempo (minutos)</label>
-                                            <input
-                                                type="number"
-                                                class="form-control"
-                                                id="tiempo_minutos_4"
-                                                name="tiempo_minutos_4"
-                                                value="{% if guia %}{{ guia.tiempo_minutos_4 }}{% endif %}"
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="recursos_didacticos_4">Recursos Didácticos</label>
-                                            <textarea
-                                                class="form-control"
-                                                id="recursos_didacticos_4"
-                                                name="recursos_didacticos_4"
-                                                rows="4"
-                                            >
-                                                {% if guia %}{{ guia.recursos_didacticos_4 }}{% endif %}
-                                            </textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label
-                                                for="periodo_tiempo_programado_4"
-                                                class="form-label"
-                                                >Periodo de Tiempo
-                                                Programado</label
-                                            >
-                                            <select
-                                                class="form-select"
-                                                id="periodo_tiempo_programado_4"
-                                                name="periodo_tiempo_programado_4"
-                                            >
-                                                <option value="" selected>-- Seleccione una opción --</option>
-                                                {% for periodo_choice in periodo_tiempo_choices %}
-                                                <option
-                                                    value="{{ periodo_choice.0 }}"
-                                                    {% if guia and guia.periodo_tiempo_programado_4 == periodo_choice.0 %}
-                                                    selected
-                                                    {% endif %}
-                                                >
-                                                    {{ periodo_choice.1 }}
-                                                </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="puntaje_4">Puntaje 4</label>
-                                            <input
-                                                type="number"
-                                                class="form-control puntaje"
-                                                id="puntaje_4"
-                                                name="puntaje_4"
-                                                value="{% if guia %}{{ guia.puntaje_4 }}{% endif %}"
-                                            />
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label class="form-label" for="fecha_entrega_4">Fecha de Entrega 4</label>
-                                            <input
-                                                type="date"
-                                                class="form-control"
-                                                id="fecha_entrega_4"
-                                                name="fecha_entrega_4"
-                                                value="{% if guia %}{{ guia.fecha_entrega_4|date:'Y-m-d' }}{% endif %}"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Validación de puntajes -->
-                                <div class="card mb-4">
-                                    <div
-                                        class="card-header bg-primary text-white"
-                                    >
-                                        <h5 class="mb-0">
-                                            Validación de Puntajes
-                                        </h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="alert alert-info">
-                                            <p class="mb-0">
-                                                La suma de los puntajes de las 4
-                                                actividades de aprendizaje no debe ser mayor a 100
-                                                puntos.
-                                            </p>
-                                            <p
-                                                class="fw-bold mt-2 mb-0"
-                                                id="sumaPuntajes"
-                                            >
-                                                Suma actual: 0 puntos
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Card de Puntaje Acumulado -->
-                                <div class="card mb-4 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(37,99,235,0.05) 0%, rgba(29,78,216,0.05) 100%); border-left: 5px solid var(--corp-primary) !important;">
-                                    <div class="card-body">
-                                        <h5 class="card-title fw-bold text-primary mb-3">
-                                            <i class="fas fa-calculator me-2"></i>Puntaje Acumulado del Curso
-                                        </h5>
-                                        <div class="row text-center g-2">
-                                            <div class="col-4">
-                                                <div class="p-2 border rounded bg-white shadow-sm">
-                                                    <small class="text-muted d-block" style="font-size: 0.75rem;">I Corte</small>
-                                                    <span id="acumulado_corte_1" class="fw-bold text-dark" style="font-size: 1rem;">0</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-4">
-                                                <div class="p-2 border rounded bg-white shadow-sm">
-                                                    <small class="text-muted d-block" style="font-size: 0.75rem;">II Corte</small>
-                                                    <span id="acumulado_corte_2" class="fw-bold text-dark" style="font-size: 1rem;">0</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-4">
-                                                <div class="p-2 border rounded bg-white shadow-sm">
-                                                    <small class="text-muted d-block" style="font-size: 0.75rem;">III Corte</small>
-                                                    <span id="acumulado_corte_3" class="fw-bold text-dark" style="font-size: 1rem;">0</span>
-                                                </div>
-                                            </div>
-                                            <div class="col-12 mt-2">
-                                                <div class="p-2 border rounded bg-primary text-white shadow-sm">
-                                                    <small class="d-block text-white-50" style="font-size: 0.75rem;">Total Acumulado</small>
-                                                    <span id="acumulado_total" class="fw-bold fs-5">0</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <!-- Contenedor para la advertencia de corte superado -->
-                                        <div id="corte_warning_msg" class="d-none"></div>
-                                    </div>
-                                </div>
-                                <script>
-                                    $(document).ready(function() {
-                                        const previousScores = JSON.parse('{{ previous_scores_json|safe }}');
-                                        
-                                        function updateAccumulatedScores() {
-                                            const currentScores = {
-                                                'I Corte Evaluativo': 0,
-                                                'II Corte Evaluativo': 0,
-                                                'III Corte Evaluativo': 0
-                                            };
-                                            
-                                            // Sumar los campos del formulario actual (tareas 1 a 4)
-                                            for (let i = 1; i <= 4; i++) {
-                                                const puntajeVal = parseFloat($(`#puntaje_${i}`).val()) || 0;
-                                                const corteVal = $(`#periodo_tiempo_programado_${i}`).val();
-                                                
-                                                if (corteVal && currentScores.hasOwnProperty(corteVal)) {
-                                                    currentScores[corteVal] += puntajeVal;
-                                                }
-                                            }
-                                            
-                                            const corte1 = (previousScores['I Corte Evaluativo'] || 0) + currentScores['I Corte Evaluativo'];
-                                            const corte2 = (previousScores['II Corte Evaluativo'] || 0) + currentScores['II Corte Evaluativo'];
-                                            const corte3 = (previousScores['III Corte Evaluativo'] || 0) + currentScores['III Corte Evaluativo'];
-                                            const total = corte1 + corte2 + corte3;
-                                            
-                                            $('#acumulado_corte_1').text(corte1);
-                                            $('#acumulado_corte_2').text(corte2);
-                                            $('#acumulado_corte_3').text(corte3);
-                                            $('#acumulado_total').text(total);
-
-                                            // Validación de límites por corte (100 puntos)
-                                            const limit = 100;
-                                            let warnings = [];
-                                            
-                                            // Resetear clases de advertencia
-                                            $('#acumulado_corte_1').closest('.border').removeClass('bg-warning text-dark border-warning').addClass('bg-white text-dark');
-                                            $('#acumulado_corte_2').closest('.border').removeClass('bg-warning text-dark border-warning').addClass('bg-white text-dark');
-                                            $('#acumulado_corte_3').closest('.border').removeClass('bg-warning text-dark border-warning').addClass('bg-white text-dark');
-                                            $('#corte_warning_msg').addClass('d-none').html('');
-                                            
-                                            if (corte1 > limit) {
-                                                $('#acumulado_corte_1').closest('.border').removeClass('bg-white text-dark').addClass('bg-warning text-dark border-warning');
-                                                warnings.push('I Corte Evaluativo');
-                                            }
-                                            if (corte2 > limit) {
-                                                $('#acumulado_corte_2').closest('.border').removeClass('bg-white text-dark').addClass('bg-warning text-dark border-warning');
-                                                warnings.push('II Corte Evaluativo');
-                                            }
-                                            if (corte3 > limit) {
-                                                $('#acumulado_corte_3').closest('.border').removeClass('bg-white text-dark').addClass('bg-warning text-dark border-warning');
-                                                warnings.push('III Corte Evaluativo');
-                                            }
-                                            
-                                            if (warnings.length > 0) {
-                                                const msg = `<div class="alert alert-warning py-2 px-3 mt-3 mb-0" style="font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--corp-warning);">
-                                                    <i class="fas fa-exclamation-triangle me-2"></i><strong>¡Atención!</strong> El puntaje acumulado en <strong>${warnings.join(' y ')}</strong> supera los 100 puntos.
-                                                </div>`;
-                                                $('#corte_warning_msg').html(msg).removeClass('d-none');
-                                            }
-                                        }
-                                        
-                                        // Escuchar cambios en todos los inputs de puntaje y selects de periodo
-                                        $(document).on('input change', '[id^="puntaje_"], [id^="periodo_tiempo_programado_"]', updateAccumulatedScores);
-                                        
-                                        // Inicialización
-                                        updateAccumulatedScores();
-                                    });
-                                </script>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row justify-content-center mt-4">
-        <div class="col-lg-8 col-md-10 col-sm-12">
-            <div class="custom-alert">
-                <div class="custom-alert-icon">
-                    <i class="fas fa-exclamation-triangle fa-2x"></i>
-                </div>
-                <div class="custom-alert-content">
-                    <h4 class="mb-2">¡Atención!</h4>
-                    <p class="mb-0">
-                        Esta IA puede cometer errores. Por favor, revise la
-                        información cuidadosamente antes de guardarla.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Botón único para guardar ambos formularios -->
-    <div class="row justify-content-center mt-4 mb-5">
-        <div class="col-lg-4 col-md-8 col-sm-12 text-center">
-            <button
-                type="button"
-                class="btn btn-success w-100 save-btn transition-btn"
-                id="guardarFormularioBtn"
-            >
-                <i class="fas fa-save fa-lg me-2"></i> Guardar Formularios
-                <div
-                    id="spinnerGuardar"
-                    class="spinner-border spinner-border-sm d-none ms-2"
-                    role="status"
-                >
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </button>
-        </div>
-    </div>
-</div>
-
-<script src="{% static 'js/guia_guardar.js' %}"></script>
-<script src="{% static 'js/guia_ia.js' %}"></script>
-
-<style>
-@media (max-width: 767.98px) {
-
-    /*
-       Seleccionamos el contenedor principal por su ID #page-content.
-       Este ID ya lo tienes en tu base.html, lo que lo hace perfecto para esto.
-    */
-<style>
-    .transition-btn {
-        transition: all 0.2s ease;
-        border-radius: 20px;
-        padding: 10px 25px;
+    /* Evitar que base.css (.card { overflow: hidden }) convierta la tarjeta raíz en contenedor con scroll oculto */
+    #guia-wizard-root .card.shadow-lg {
+        overflow: visible !important;
     }
 
-    .transition-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    /* Cabecera del Wizard en flujo normal (sin sticky para evitar tapar títulos o campos al desplazarse) */
+    .wizard-sticky-header {
+        position: relative;
+        z-index: 1;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px 14px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
-    .transition-btn:active {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    .wizard-step-counter {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--corp-primary);
+    }
+
+    .wizard-step-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .wizard-autosave-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .wizard-metric-badge {
+        font-size: 0.76rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background-color: rgba(37, 99, 235, 0.12);
+        color: var(--corp-primary);
+        white-space: nowrap;
+    }
+
+    .wizard-metric-badge.is-danger {
+        background-color: rgba(220, 53, 69, 0.15);
+        color: var(--corp-danger);
+    }
+
+    /* Barra de pestañas horizontales desplazable en móvil */
+    .wizard-tabs-scroll {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        margin-top: 10px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .wizard-tabs-scroll::-webkit-scrollbar {
+        display: none;
+    }
+
+    .wizard-step-tab {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 11px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-primary);
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        white-space: nowrap;
+    }
+
+    .wizard-step-tab .wizard-tab-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        background-color: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .wizard-step-tab.is-complete .wizard-tab-status {
+        background-color: var(--corp-success);
+        color: #fff;
+    }
+
+    .wizard-step-tab.is-partial .wizard-tab-status {
+        background-color: var(--corp-warning);
+        color: #fff;
+    }
+
+    .wizard-step-tab.is-optional .wizard-tab-status {
+        background-color: rgba(100, 116, 139, 0.18);
+        color: var(--text-secondary);
+    }
+
+    .wizard-step-tab.active {
+        background-color: var(--corp-primary);
+        border-color: var(--corp-primary);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
+    }
+
+    .wizard-step-tab.active .wizard-tab-status {
+        background-color: rgba(255, 255, 255, 0.25);
+        color: #fff;
+    }
+
+    /* Panel de IA en Paso 1 */
+    .wizard-ai-box {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(124, 77, 255, 0.08) 100%);
+        border: 1px solid rgba(37, 99, 235, 0.25);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 1rem;
+    }
+
+    /* Banner de borrador restaurado */
+    .draft-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        background-color: rgba(5, 150, 105, 0.1);
+        border: 1px solid rgba(5, 150, 105, 0.35);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 1rem;
+        font-size: 0.88rem;
+        color: var(--text-primary);
+    }
+
+    .draft-discard-btn,
+    .activity-clear-btn,
+    .activity-collapse-toggle,
+    .time-preset-btn {
+        width: auto !important;
+        border-radius: 999px !important;
+        font-weight: 600;
+    }
+
+    .draft-discard-btn,
+    .activity-clear-btn,
+    .activity-collapse-toggle {
+        padding: 4px 11px !important;
+        font-size: 0.78rem !important;
+    }
+
+    /* Sub-bloques internos por actividad */
+    .wizard-subblock-title {
+        font-size: 0.84rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-secondary);
+        padding-bottom: 6px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Chips táctiles para Agente Evaluador */
+    .agent-chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .agent-chip-list.is-invalid {
+        border: 1.5px solid var(--corp-danger);
+        border-radius: 10px;
+        padding: 8px;
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+
+    .agent-chip-option {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 40px;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: 1.5px solid var(--border-color);
+        background-color: var(--bg-primary);
+        color: var(--text-secondary);
+        font-size: 0.88rem;
+        font-weight: 500;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.15s ease;
+        margin-bottom: 0;
+    }
+
+    .agent-chip-option input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
+    }
+
+    .agent-chip-option.is-checked,
+    .agent-chip-option:has(input:checked) {
+        background-color: var(--corp-primary);
+        border-color: var(--corp-primary);
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
+
+    .agent-chip-option.is-checked::before,
+    .agent-chip-option:has(input:checked)::before {
+        content: "✓";
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    /* Presets de minutos */
+    .time-preset-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .time-preset-btn {
+        padding: 4px 11px !important;
+        font-size: 0.78rem !important;
+        line-height: 1.3;
+    }
+
+    /* Barra de navegación inferior del Wizard */
+    .wizard-bottom-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 1.25rem;
+        padding: 12px 14px;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
+
+    .wizard-bottom-bar .wizard-nav-btn {
+        width: auto !important;
+        min-width: 120px;
+        padding: 10px 18px !important;
+        border-radius: 999px !important;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .wizard-bottom-bar .save-btn {
+        flex: 1 1 auto;
+        max-width: 280px;
+        width: auto !important;
+        border-radius: 999px !important;
+    }
+
+    .wizard-review-item {
+        background-color: var(--bg-primary) !important;
+        color: var(--text-primary) !important;
+        border-color: var(--border-color) !important;
+        padding: 12px 14px;
+    }
+
+    .wizard-review-item:hover {
+        background-color: var(--bg-tertiary) !important;
     }
 
     .save-btn {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
-        padding: 12px 25px;
+        padding: 11px 22px;
         background: var(--corp-success);
         border: none;
         color: white;
@@ -1414,6 +330,7 @@
 
     .save-btn:hover {
         background: var(--corp-success-hover);
+        color: white;
     }
 
     .custom-alert {
@@ -1422,11 +339,10 @@
         background-color: rgba(217, 119, 6, 0.12);
         border: 1px solid var(--corp-warning);
         border-radius: 12px;
-        padding: 15px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        padding: 14px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
         position: relative;
         overflow: hidden;
-        animation: pulse 2s infinite;
     }
 
     .custom-alert::before {
@@ -1443,12 +359,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 48px;
-        height: 48px;
+        width: 44px;
+        height: 44px;
         border-radius: 50%;
         background-color: var(--corp-warning);
         color: #fff;
-        margin-right: 15px;
+        margin-right: 12px;
         flex-shrink: 0;
     }
 
@@ -1459,124 +375,558 @@
     .custom-alert-content h4 {
         color: var(--text-primary);
         font-weight: bold;
+        font-size: 1rem;
         margin-top: 0;
+        margin-bottom: 4px;
     }
 
     .custom-alert-content p {
         color: var(--text-secondary);
         font-weight: 500;
+        font-size: 0.9rem;
     }
 
-    @keyframes pulse {
-        0% {
-            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4);
+    @media (max-width: 767.98px) {
+        .form-page-container {
+            padding-bottom: 92px !important;
         }
-        70% {
-            box-shadow: 0 0 0 8px rgba(217, 119, 6, 0);
+
+        .wizard-sticky-header {
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 0.75rem;
         }
-        100% {
-            box-shadow: 0 0 0 0 rgba(217, 119, 6, 0);
+
+        .wizard-bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            margin-top: 0;
+            border-radius: 14px 14px 0 0;
+            border-left: none;
+            border-right: none;
+            border-bottom: none;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.16);
+            padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
         }
-    }
 
-    .mensaje-error-flotante {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--corp-danger);
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        animation: aparecer 0.3s ease-out;
-        min-width: 300px;
-        max-width: 80%;
-    }
-
-    @keyframes aparecer {
-        from {
-            opacity: 0;
-            transform: translate(-50%, -60%);
+        .wizard-bottom-bar .wizard-nav-btn,
+        .wizard-bottom-bar .save-btn {
+            flex: 1 1 0;
+            max-width: none;
+            min-width: 0;
+            padding: 11px 12px !important;
+            font-size: 0.95rem !important;
         }
-        to {
-            opacity: 1;
-            transform: translate(-50%, -50%);
+
+        .wizard-ai-box {
+            padding: 12px 10px;
         }
-    }
 
-    .mensaje-error-contenido {
-        display: flex;
-        align-items: flex-start;
-    }
-
-    .mensaje-error-icono {
-        color: var(--corp-danger);
-        margin-right: 15px;
-        flex-shrink: 0;
-    }
-
-    .mensaje-error-texto {
-        flex-grow: 1;
-    }
-
-    .mensaje-error-texto h4 {
-        margin-top: 0;
-        color: var(--text-primary);
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-
-    .mensaje-error-texto p {
-        color: var(--text-secondary);
-        margin-bottom: 0;
-    }
-
-    .mensaje-error-cerrar {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 1.5rem;
-        background-color: transparent;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        color: var(--text-muted);
-        transition: color 0.2s;
-    }
-
-    .mensaje-error-cerrar:hover {
-        color: var(--text-primary);
-    }
-
-    .campo-invalido {
-        border: 1.5px solid var(--corp-warning) !important;
-        background-color: rgba(217, 119, 6, 0.1) !important;
-        box-shadow: 0 0 5px rgba(217, 119, 6, 0.4) !important;
-        animation: pulso-naranja 1.5s infinite;
-    }
-
-    @keyframes pulso-naranja {
-        0% {
-            box-shadow: 0 0 5px rgba(217, 119, 6, 0.3);
+        .wizard-ai-box #modelo_select_estudio,
+        .wizard-ai-box #numero_actividades {
+            width: 100% !important;
         }
-        50% {
-            box-shadow: 0 0 10px rgba(217, 119, 6, 0.6);
-        }
-        100% {
-            box-shadow: 0 0 5px rgba(217, 119, 6, 0.3);
-        }
-    }
-
-    /* Añadir un icono de advertencia a los campos inválidos */
-    .campo-invalido:focus {
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23d97706" width="24px" height="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>');
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        background-size: 20px;
-        padding-right: 40px;
     }
 </style>
+
+<div class="container-fluid mt-2 form-page-container"
+     id="guia-wizard-root"
+     data-usuario="{{ usuario|escapejs }}"
+     data-asignacion-id="{{ asignacion.id }}"
+     data-encuentro="{{ encuentro }}"
+     data-silabo-id="{% if silabo %}{{ silabo.id }}{% endif %}"
+     data-guia-id="{% if guia %}{{ guia.id }}{% endif %}">
+
+    <div class="text-center mb-3">
+        <h2 class="mb-1 fw-bold">Guía de Estudio Independiente</h2>
+        <div class="fw-semibold text-secondary">{{ asignacion.plan_de_estudio }}</div>
+        <span class="badge bg-primary rounded-pill mt-1 px-3 py-2">Encuentro ({{ encuentro }})</span>
+    </div>
+
+    <!-- Variables globales de Django para JavaScript -->
+    <script type="text/javascript">
+        var ASIGNACION_ID = "{% if asignacion %}{{ asignacion.id|safe }}{% else %}null{% endif %}";
+        var GUIA_ID = "{% if guia %}{{ guia.id|safe }}{% else %}null{% endif %}";
+        var SILABO_ID = "{% if silabo %}{{ silabo.id|safe }}{% else %}null{% endif %}";
+    </script>
+
+    <div class="container">
+        <div id="seccionEstudioIndependiente" style="display: block">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-md-10 col-sm-12">
+                    <div class="card shadow-lg">
+                        <div class="card-body">
+
+                            <!-- Banner de borrador local restaurado -->
+                            <div id="draft-restored-banner" class="draft-banner d-none" role="status">
+                                <div>
+                                    <i class="fas fa-history me-1 text-success"></i>
+                                    <strong>Avance recuperado</strong> de este dispositivo (<span id="draft-restored-time"></span>).
+                                </div>
+                                <button type="button" id="btn-descartar-borrador" class="btn btn-outline-danger btn-sm draft-discard-btn">
+                                    <i class="fas fa-trash-alt me-1"></i>Empezar de cero
+                                </button>
+                            </div>
+
+                            <!-- Cabecera de progreso (5 pasos) -->
+                            <div id="wizard-sticky-header" class="wizard-sticky-header">
+                                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                    <div>
+                                        <div id="wizard-step-counter" class="wizard-step-counter">Paso 1 de 5</div>
+                                        <h3 id="wizard-step-title" class="wizard-step-title">Base, IA y Configuración</h3>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span id="wizard-header-score" class="wizard-metric-badge">
+                                            <i class="fas fa-star me-1"></i>0/100 pts
+                                        </span>
+                                        <span id="wizard-header-total-time" class="wizard-metric-badge">
+                                            <i class="fas fa-clock me-1"></i>0 min
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="progress mt-2" style="height: 6px;">
+                                    <div id="wizard-progress-bar"
+                                         class="progress-bar bg-primary"
+                                         role="progressbar"
+                                         style="width: 20%;"
+                                         aria-valuenow="20"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"></div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <small id="wizard-autosave-status" class="wizard-autosave-badge text-muted">
+                                        <i class="fas fa-mobile-alt me-1"></i>Progreso guardado en este dispositivo
+                                    </small>
+                                </div>
+
+                                <div class="wizard-tabs-scroll" role="tablist" aria-label="Pasos de la guía">
+                                    <button type="button" class="wizard-step-tab active" data-step="1">
+                                        <span class="wizard-tab-status">1</span>
+                                        <span>Base e IA</span>
+                                    </button>
+                                    <button type="button" class="wizard-step-tab" data-step="2">
+                                        <span class="wizard-tab-status">2</span>
+                                        <span>Act. 1</span>
+                                    </button>
+                                    <button type="button" class="wizard-step-tab" data-step="3">
+                                        <span class="wizard-tab-status">Opc</span>
+                                        <span>Act. 2</span>
+                                    </button>
+                                    <button type="button" class="wizard-step-tab" data-step="4">
+                                        <span class="wizard-tab-status">Opc</span>
+                                        <span>Act. 3 y 4</span>
+                                    </button>
+                                    <button type="button" class="wizard-step-tab" data-step="5">
+                                        <span class="wizard-tab-status">5</span>
+                                        <span>Guardar</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Panel de generación con IA (visible únicamente en Paso 1, fuera del form de guardado) -->
+                            <div id="wizard-ai-panel">
+                                {% if mostrar_ia %}
+                                <div class="wizard-ai-box">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="fw-bold text-primary">
+                                            <i class="fas fa-magic me-1"></i>Asistente IA para esta guía
+                                        </span>
+                                        <small class="text-muted">Opcional</small>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-end gap-2 flex-wrap">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+                                            <div>
+                                                <label class="form-label mb-1 small fw-semibold" for="modelo_select_estudio">Modelo</label>
+                                                <select id="modelo_select_estudio" name="modelo_select" class="form-select" style="width: 220px;">
+                                                    {% if modelos_ia %}
+                                                        {% for modelo in modelos_ia %}
+                                                        <option value="{{ modelo.id }}">{{ modelo.nombre_mostrar }}</option>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <option value="google">Google - Gemini-3-flash</option>
+                                                        <option value="openai">OpenAI - o4Mini</option>
+                                                        <option value="deepseek">DeepSeek - Chat</option>
+                                                    {% endif %}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="form-label mb-1 small fw-semibold" for="numero_actividades">Actividades</label>
+                                                <select id="numero_actividades" name="numero_actividades" class="form-select" style="width: 96px;">
+                                                    <option value="2">2</option>
+                                                    <option value="3">3</option>
+                                                    <option value="4" selected>4</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            {% include 'generar_plan_estudio/boton_generar_estudio.html' %}
+                                        </div>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        Solo la Actividad 1 es obligatoria; las actividades 2, 3 y 4 son opcionales.
+                                    </small>
+                                    <div id="guia-ia-alert-container" class="mt-2"></div>
+                                </div>
+                                {% else %}
+                                <div id="guia-ia-alert-container"></div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Formulario principal de la Guía -->
+                            <form id="formEstudioIndependiente">
+                                {% csrf_token %}
+                                <input type="hidden" id="asignacion_id" name="asignacion_id" value="{{ asignacion.id }}" />
+                                <input type="hidden" id="silabo_id" name="silabo_id" value="{% if silabo %}{{ silabo.id }}{% endif %}" />
+                                {% if guia %}<input type="hidden" id="guia_id" name="guia_id" value="{{ guia.id }}" />{% endif %}
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 1: INFORMACIÓN GENERAL                           -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step is-active" data-step="1">
+                                    <div class="card mb-3">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i>Información General</h5>
+                                            <span class="badge bg-light text-dark border">Encuentro {{ encuentro }}</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3 d-none">
+                                                <label for="numero_encuentro" class="form-label">Número de Encuentro</label>
+                                                <input type="number" class="form-control" id="numero_encuentro" name="numero_encuentro" value="{% if guia %}{{ guia.numero_encuentro }}{% else %}{{ encuentro }}{% endif %}" required />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="fecha" class="form-label">Fecha de la Guía *</label>
+                                                <input type="date" class="form-control" id="fecha" name="fecha" value="{% if guia %}{{ guia.fecha|date:'Y-m-d' }}{% endif %}" required />
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="unidad" class="form-label">Unidad *</label>
+                                                <select class="form-select" id="unidad" name="unidad" required>
+                                                    {% for unidad_choice in unidad_choices %}
+                                                    <option value="{{ unidad_choice.0 }}" {% if guia and guia.unidad == unidad_choice.0 %}selected{% endif %}>{{ unidad_choice.1 }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+
+                                            <div class="mb-2">
+                                                <label for="nombre_de_la_unidad" class="form-label">Nombre de la Unidad *</label>
+                                                <input type="text" class="form-control" id="nombre_de_la_unidad" name="nombre_de_la_unidad" value="{% if guia %}{{ guia.nombre_de_la_unidad }}{% endif %}" required />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 2: PRIMERA ACTIVIDAD (OBLIGATORIA)               -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step d-none" data-step="2">
+                                    <div class="card mb-3" id="activity-card-1">
+                                        <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                            <h5 class="mb-0"><i class="fas fa-play-circle me-2 text-primary"></i>Primera actividad</h5>
+                                            <span id="activity-badge-1" class="badge bg-danger">Pendiente (0/14)</span>
+                                        </div>
+                                        <div class="card-body">
+                                            {% include 'partials/guia_actividad_campos.html' with num="1" is_required=True %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 3: SEGUNDA ACTIVIDAD (SOLA, OPCIONAL)            -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step d-none" data-step="3">
+                                    <div class="card mb-3" id="activity-card-2">
+                                        <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                            <h5 class="mb-0"><i class="fas fa-layer-group me-2 text-primary"></i>Segunda actividad (opcional)</h5>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span id="activity-badge-2" class="badge bg-secondary">Omitida (opcional)</span>
+                                                <button type="button" id="clear-activity-2" class="btn btn-outline-danger btn-sm activity-clear-btn d-none" data-clear-activity="2">
+                                                    <i class="fas fa-eraser me-1"></i>Limpiar
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="alert alert-light border small py-2 px-3 mb-3">
+                                                <i class="fas fa-info-circle me-1 text-primary"></i>
+                                                Si decides incluir esta actividad, completa sus 14 campos. Si no la usarás, déjala vacía o presiona <strong>Limpiar</strong>.
+                                            </div>
+                                            {% include 'partials/guia_actividad_campos.html' with num="2" is_required=False %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 4: TERCERA Y CUARTA ACTIVIDAD JUNTAS (OPCIONALES)-->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step d-none" data-step="4">
+                                    <div class="alert alert-info small py-2 px-3 mb-3">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Actividades <strong>3 y 4</strong> son opcionales. Abre solo las que necesites; si empiezas una, complétala o presiona <strong>Limpiar</strong> para omitirla.
+                                    </div>
+
+                                    <!-- Tercera actividad (opcional) -->
+                                    <div class="card mb-3" id="activity-card-3">
+                                        <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                            <h5 class="mb-0"><i class="fas fa-tasks me-2 text-primary"></i>Tercera actividad (opcional)</h5>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <span id="activity-badge-3" class="badge bg-secondary">Omitida (opcional)</span>
+                                                <button type="button" id="clear-activity-3" class="btn btn-outline-danger btn-sm activity-clear-btn d-none" data-clear-activity="3">
+                                                    <i class="fas fa-eraser me-1"></i>Limpiar
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm activity-collapse-toggle" data-toggle-activity="3" aria-expanded="true">
+                                                    <i class="fas fa-chevron-up me-1"></i><span class="toggle-label">Ocultar</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body" id="activity-body-3">
+                                            {% include 'partials/guia_actividad_campos.html' with num="3" is_required=False %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Cuarta actividad (opcional) -->
+                                    <div class="card mb-3" id="activity-card-4">
+                                        <div class="card-header d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                            <h5 class="mb-0"><i class="fas fa-tasks me-2 text-primary"></i>Cuarta actividad (opcional)</h5>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <span id="activity-badge-4" class="badge bg-secondary">Omitida (opcional)</span>
+                                                <button type="button" id="clear-activity-4" class="btn btn-outline-danger btn-sm activity-clear-btn d-none" data-clear-activity="4">
+                                                    <i class="fas fa-eraser me-1"></i>Limpiar
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm activity-collapse-toggle" data-toggle-activity="4" aria-expanded="false">
+                                                    <i class="fas fa-chevron-down me-1"></i><span class="toggle-label">Abrir</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body d-none" id="activity-body-4">
+                                            {% include 'partials/guia_actividad_campos.html' with num="4" is_required=False %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================================================== -->
+                                <!-- PASO 5: REVISIÓN, PUNTAJES Y GUARDADO FINAL           -->
+                                <!-- ===================================================== -->
+                                <div class="wizard-step d-none" data-step="5">
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <h5 class="mb-0"><i class="fas fa-check-circle me-2 text-success"></i>Resumen de la Guía</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="wizard-review-status-alert" class="alert alert-warning mb-3" role="status"></div>
+
+                                            <!-- Desglose rápido por actividad -->
+                                            <div class="row g-2 text-center mb-3">
+                                                <div class="col-6 col-md-3">
+                                                    <div class="p-2 border rounded bg-white">
+                                                        <small class="text-muted d-block">Actividad 1</small>
+                                                        <strong id="wizard-review-act-1-pts" class="text-dark d-block">0 pts</strong>
+                                                        <small id="wizard-review-act-1-min" class="text-muted">0 min</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-md-3">
+                                                    <div class="p-2 border rounded bg-white">
+                                                        <small class="text-muted d-block">Actividad 2</small>
+                                                        <strong id="wizard-review-act-2-pts" class="text-dark d-block">Omitida</strong>
+                                                        <small id="wizard-review-act-2-min" class="text-muted">0 min</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-md-3">
+                                                    <div class="p-2 border rounded bg-white">
+                                                        <small class="text-muted d-block">Actividad 3</small>
+                                                        <strong id="wizard-review-act-3-pts" class="text-dark d-block">Omitida</strong>
+                                                        <small id="wizard-review-act-3-min" class="text-muted">0 min</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6 col-md-3">
+                                                    <div class="p-2 border rounded bg-white">
+                                                        <small class="text-muted d-block">Actividad 4</small>
+                                                        <strong id="wizard-review-act-4-pts" class="text-dark d-block">Omitida</strong>
+                                                        <small id="wizard-review-act-4-min" class="text-muted">0 min</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Validación de Puntajes + Tiempo Total -->
+                                            <div class="alert alert-info mb-3">
+                                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                                    <div>
+                                                        <div>La suma de puntajes de la guía no debe superar <strong>100 puntos</strong>.</div>
+                                                        <div class="fw-bold mt-1">
+                                                            Suma actual: <span id="sumaPuntajes" class="text-success">0</span> / 100 puntos
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <small class="text-muted d-block">Tiempo total</small>
+                                                        <strong id="wizard-review-total-time">0 min</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <h6 class="mt-2 mb-2">Estado por sección</h6>
+                                            <div id="wizard-review-list" class="list-group"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Puntaje Acumulado del Curso -->
+                                    <div class="card mb-3 border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(37,99,235,0.05) 0%, rgba(29,78,216,0.05) 100%); border-left: 5px solid var(--corp-primary) !important;">
+                                        <div class="card-body">
+                                            <h5 class="card-title fw-bold text-primary mb-3">
+                                                <i class="fas fa-calculator me-2"></i>Puntaje Acumulado del Curso
+                                            </h5>
+                                            <div class="row text-center g-2">
+                                                <div class="col-4">
+                                                    <div class="p-2 border rounded bg-white shadow-sm">
+                                                        <small class="text-muted d-block" style="font-size: 0.75rem;">I Corte</small>
+                                                        <span id="acumulado_corte_1" class="fw-bold text-dark" style="font-size: 1rem;">0</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="p-2 border rounded bg-white shadow-sm">
+                                                        <small class="text-muted d-block" style="font-size: 0.75rem;">II Corte</small>
+                                                        <span id="acumulado_corte_2" class="fw-bold text-dark" style="font-size: 1rem;">0</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="p-2 border rounded bg-white shadow-sm">
+                                                        <small class="text-muted d-block" style="font-size: 0.75rem;">III Corte</small>
+                                                        <span id="acumulado_corte_3" class="fw-bold text-dark" style="font-size: 1rem;">0</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-12 mt-2">
+                                                    <div class="p-2 border rounded bg-primary text-white shadow-sm">
+                                                        <small class="d-block text-white-50" style="font-size: 0.75rem;">Total Acumulado</small>
+                                                        <span id="acumulado_total" class="fw-bold fs-5">0</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div id="corte_warning_msg" class="d-none"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="custom-alert mb-3">
+                                        <div class="custom-alert-icon">
+                                            <i class="fas fa-exclamation-triangle fa-lg"></i>
+                                        </div>
+                                        <div class="custom-alert-content">
+                                            <h4>¡Atención!</h4>
+                                            <p class="mb-0">
+                                                Si utilizaste IA, revisa la información cuidadosamente antes de guardarla. El borrador local se limpiará automáticamente al confirmar el guardado.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div id="guardar-alert-container" class="mb-3"></div>
+                                </div>
+                            </form>
+
+                            <!-- Alertas de validación por paso -->
+                            <div id="wizard-step-alert-container"></div>
+
+                            <!-- Barra de navegación inferior del Wizard -->
+                            <div class="wizard-bottom-bar" id="wizard-bottom-bar">
+                                <button type="button" class="btn btn-outline-secondary wizard-nav-btn" id="wizardPrevBtn" disabled>
+                                    <i class="fas fa-arrow-left"></i>
+                                    <span>Anterior</span>
+                                </button>
+
+                                <button type="button" class="btn btn-primary wizard-nav-btn" id="wizardNextBtn">
+                                    <span>Siguiente</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+
+                                <button type="button" class="btn btn-success save-btn transition-btn d-none" id="guardarFormularioBtn">
+                                    <i class="fas fa-save me-2"></i>Guardar Formularios
+                                    <div id="spinnerGuardar" class="spinner-border spinner-border-sm d-none ms-2" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        const previousScores = JSON.parse("{{ previous_scores_json|escapejs }}");
+
+        window.updateAccumulatedScores = function updateAccumulatedScores() {
+            const currentScores = {
+                "I Corte Evaluativo": 0,
+                "II Corte Evaluativo": 0,
+                "III Corte Evaluativo": 0,
+            };
+
+            for (let i = 1; i <= 4; i++) {
+                const puntajeVal = parseFloat($(`#puntaje_${i}`).val()) || 0;
+                const corteVal = $(`#periodo_tiempo_programado_${i}`).val();
+
+                if (corteVal && Object.prototype.hasOwnProperty.call(currentScores, corteVal)) {
+                    currentScores[corteVal] += puntajeVal;
+                }
+            }
+
+            const corte1 = (previousScores["I Corte Evaluativo"] || 0) + currentScores["I Corte Evaluativo"];
+            const corte2 = (previousScores["II Corte Evaluativo"] || 0) + currentScores["II Corte Evaluativo"];
+            const corte3 = (previousScores["III Corte Evaluativo"] || 0) + currentScores["III Corte Evaluativo"];
+            const total = corte1 + corte2 + corte3;
+
+            $("#acumulado_corte_1").text(corte1);
+            $("#acumulado_corte_2").text(corte2);
+            $("#acumulado_corte_3").text(corte3);
+            $("#acumulado_total").text(total);
+
+            const limit = 100;
+            const warnings = [];
+
+            $("#acumulado_corte_1, #acumulado_corte_2, #acumulado_corte_3")
+                .closest(".border")
+                .removeClass("bg-warning text-dark border-warning")
+                .addClass("bg-white text-dark");
+            $("#corte_warning_msg").addClass("d-none").html("");
+
+            if (corte1 > limit) {
+                $("#acumulado_corte_1").closest(".border").removeClass("bg-white text-dark").addClass("bg-warning text-dark border-warning");
+                warnings.push("I Corte Evaluativo");
+            }
+            if (corte2 > limit) {
+                $("#acumulado_corte_2").closest(".border").removeClass("bg-white text-dark").addClass("bg-warning text-dark border-warning");
+                warnings.push("II Corte Evaluativo");
+            }
+            if (corte3 > limit) {
+                $("#acumulado_corte_3").closest(".border").removeClass("bg-white text-dark").addClass("bg-warning text-dark border-warning");
+                warnings.push("III Corte Evaluativo");
+            }
+
+            if (warnings.length > 0) {
+                const msg = `<div class="alert alert-warning py-2 px-3 mt-3 mb-0" style="font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--corp-warning);">
+                    <i class="fas fa-exclamation-triangle me-2"></i><strong>¡Atención!</strong> El puntaje acumulado en <strong>${warnings.join(" y ")}</strong> supera los 100 puntos.
+                </div>`;
+                $("#corte_warning_msg").html(msg).removeClass("d-none");
+            }
+
+            if (window.GuiaWizard && typeof window.GuiaWizard.syncReviewMetrics === "function") {
+                window.GuiaWizard.syncReviewMetrics();
+            }
+        };
+
+        $(document).on("input change", '[id^="puntaje_"], [id^="periodo_tiempo_programado_"]', window.updateAccumulatedScores);
+        window.updateAccumulatedScores();
+    });
+</script>
+
+<script src="{% static 'js/guia_wizard.js' %}"></script>
+<script src="{% static 'js/guia_guardar.js' %}"></script>
+<script src="{% static 'js/guia_ia.js' %}"></script>
 
 {% endblock %}

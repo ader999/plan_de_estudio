@@ -1,0 +1,160 @@
+{% load custom_filters %}
+{% with f_tipo_objetivo="tipo_objetivo_"|add:num f_objetivo_aprendizaje="objetivo_aprendizaje_"|add:num f_contenido_tematico="contenido_tematico_"|add:num f_actividad_aprendizaje="actividad_aprendizaje_"|add:num f_tecnica_evaluacion="tecnica_evaluacion_"|add:num f_tipo_evaluacion="tipo_evaluacion_"|add:num f_instrumento_evaluacion="instrumento_evaluacion_"|add:num f_criterios_evaluacion="criterios_evaluacion_"|add:num f_tiempo_minutos="tiempo_minutos_"|add:num f_recursos_didacticos="recursos_didacticos_"|add:num f_periodo="periodo_tiempo_programado_"|add:num f_puntaje="puntaje_"|add:num f_fecha_entrega="fecha_entrega_"|add:num %}
+
+<div class="wizard-subblock-title">
+    <i class="fas fa-book-open me-1 text-primary"></i>A. Diseño de la actividad
+</div>
+
+<div class="mb-3">
+    <label for="tipo_objetivo_{{ num }}" class="form-label">Tipo de Objetivo{% if is_required %} *{% endif %}</label>
+    <select class="form-select" id="tipo_objetivo_{{ num }}" name="tipo_objetivo_{{ num }}" {% if is_required %}required{% endif %}>
+        {% if not is_required %}
+        <option value="" {% if not guia or not guia|get_attribute:f_tipo_objetivo %}selected{% endif %}>-- Seleccione una opción --</option>
+        {% endif %}
+        {% for tipo_choice in tipo_objetivo_choices %}
+        <option value="{{ tipo_choice.0 }}" {% if guia and guia|get_attribute:f_tipo_objetivo == tipo_choice.0 %}selected{% endif %}>{{ tipo_choice.1 }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="mb-3">
+    <label for="objetivo_aprendizaje_{{ num }}" class="form-label">Objetivo de Aprendizaje{% if is_required %} *{% endif %}</label>
+    <textarea class="form-control" id="objetivo_aprendizaje_{{ num }}" name="objetivo_aprendizaje_{{ num }}" rows="2" {% if is_required %}required{% endif %}>{% if guia %}{{ guia|get_attribute:f_objetivo_aprendizaje|default:"" }}{% endif %}</textarea>
+</div>
+
+<div class="mb-3">
+    <label for="contenido_tematico_{{ num }}" class="form-label">Contenido Temático{% if is_required %} *{% endif %}</label>
+    <textarea class="form-control" id="contenido_tematico_{{ num }}" name="contenido_tematico_{{ num }}" rows="2" {% if is_required %}required{% endif %}>{% if guia %}{{ guia|get_attribute:f_contenido_tematico|default:"" }}{% endif %}</textarea>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" for="actividad_aprendizaje_{{ num }}">Actividad de Aprendizaje{% if is_required %} *{% endif %}</label>
+    <textarea class="form-control" id="actividad_aprendizaje_{{ num }}" name="actividad_aprendizaje_{{ num }}" rows="2" {% if is_required %}required{% endif %}>{% if guia %}{{ guia|get_attribute:f_actividad_aprendizaje|default:"" }}{% endif %}</textarea>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" for="recursos_didacticos_{{ num }}">Recursos Didácticos{% if num != "1" %} {{ num }}{% endif %}{% if is_required %} *{% endif %}</label>
+    <textarea class="form-control" id="recursos_didacticos_{{ num }}" name="recursos_didacticos_{{ num }}" rows="2" {% if is_required %}required{% endif %}>{% if guia %}{{ guia|get_attribute:f_recursos_didacticos|default:"" }}{% endif %}</textarea>
+</div>
+
+<div class="wizard-subblock-title mt-3">
+    <i class="fas fa-tasks me-1 text-primary"></i>B. Evaluación, tiempo y fecha
+</div>
+
+<div class="mb-3">
+    <label class="form-label" for="tecnica_evaluacion_{{ num }}">Técnica de Evaluación{% if is_required %} *{% endif %}</label>
+    <select class="form-select" id="tecnica_evaluacion_{{ num }}" name="tecnica_evaluacion_{{ num }}" {% if is_required %}required{% endif %}>
+        {% if not is_required %}
+        <option value="" {% if not guia or not guia|get_attribute:f_tecnica_evaluacion %}selected{% endif %}>-- Seleccione una opción --</option>
+        {% endif %}
+        {% for tecnica_choice in tecnica_evaluacion_choices %}
+        <option value="{{ tecnica_choice.0 }}" {% if guia and guia|get_attribute:f_tecnica_evaluacion == tecnica_choice.0 %}selected{% endif %}>{{ tecnica_choice.1 }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" for="tipo_evaluacion_{{ num }}">Tipo de Evaluación{% if is_required %} *{% endif %}</label>
+    <select class="form-select" id="tipo_evaluacion_{{ num }}" name="tipo_evaluacion_{{ num }}" {% if is_required %}required{% endif %}>
+        {% if not is_required %}
+        <option value="" {% if not guia or not guia|get_attribute:f_tipo_evaluacion %}selected{% endif %}>-- Seleccione una opción --</option>
+        {% endif %}
+        {% for tipo_eval_choice in tipo_evaluacion_choices %}
+        <option value="{{ tipo_eval_choice.0 }}" {% if guia and guia|get_attribute:f_tipo_evaluacion == tipo_eval_choice.0 %}selected{% endif %}>{{ tipo_eval_choice.1 }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" for="instrumento_evaluacion_{{ num }}">Instrumento de Evaluación{% if is_required %} *{% endif %}</label>
+    <select class="form-select" id="instrumento_evaluacion_{{ num }}" name="instrumento_evaluacion_{{ num }}" {% if is_required %}required{% endif %}>
+        {% if not is_required %}
+        <option value="" {% if not guia or not guia|get_attribute:f_instrumento_evaluacion %}selected{% endif %}>-- Seleccione una opción --</option>
+        {% endif %}
+        {% for instrumento_choice in instrumento_evaluacion_choices %}
+        <option value="{{ instrumento_choice.0 }}" {% if guia and guia|get_attribute:f_instrumento_evaluacion == instrumento_choice.0 %}selected{% endif %}>{{ instrumento_choice.1 }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" for="criterios_evaluacion_{{ num }}">Criterios de Evaluación{% if is_required %} *{% endif %}</label>
+    <textarea class="form-control" id="criterios_evaluacion_{{ num }}" name="criterios_evaluacion_{{ num }}" rows="2" {% if is_required %}required{% endif %}>{% if guia %}{{ guia|get_attribute:f_criterios_evaluacion|default:"" }}{% endif %}</textarea>
+</div>
+
+<div class="mb-3 chip-checkbox-group">
+    <label class="form-label d-block">Agente Evaluador {{ num }}{% if is_required %} *{% endif %}</label>
+    <div class="agent-chip-list">
+        {% for agente_choice in agente_evaluador_choices %}
+        <label class="agent-chip-option" for="agente_{{ num }}_{{ forloop.counter }}">
+            <input type="checkbox"
+                   name="agente_evaluador_{{ num }}[]"
+                   value="{{ agente_choice.0 }}"
+                   id="agente_{{ num }}_{{ forloop.counter }}" />
+            <span>{{ agente_choice.1 }}</span>
+        </label>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <label class="form-label" for="tiempo_minutos_{{ num }}">Tiempo (minutos){% if is_required %} *{% endif %}</label>
+        <input type="number"
+               class="form-control"
+               id="tiempo_minutos_{{ num }}"
+               name="tiempo_minutos_{{ num }}"
+               inputmode="numeric"
+               pattern="[0-9]*"
+               min="0"
+               value="{% if guia %}{{ guia|get_attribute:f_tiempo_minutos|default_if_none:'' }}{% endif %}"
+               {% if is_required %}required{% endif %} />
+        <div class="time-preset-row" data-target="#tiempo_minutos_{{ num }}">
+            <button type="button" class="btn btn-outline-secondary btn-sm time-preset-btn" data-minutes="30">30m</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm time-preset-btn" data-minutes="45">45m</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm time-preset-btn" data-minutes="60">60m</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm time-preset-btn" data-minutes="90">90m</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm time-preset-btn" data-minutes="120">120m</button>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="puntaje_{{ num }}">Puntaje{% if num != "1" %} {{ num }}{% endif %}{% if is_required %} *{% endif %}</label>
+        <input type="number"
+               class="form-control puntaje"
+               id="puntaje_{{ num }}"
+               name="puntaje_{{ num }}"
+               inputmode="numeric"
+               pattern="[0-9]*"
+               min="0"
+               max="100"
+               value="{% if guia %}{{ guia|get_attribute:f_puntaje|default_if_none:'' }}{% endif %}"
+               {% if is_required %}required{% endif %} />
+    </div>
+</div>
+
+<div class="row g-3 mb-2">
+    <div class="col-md-6">
+        <label class="form-label" for="periodo_tiempo_programado_{{ num }}">Periodo de Tiempo Programado{% if num != "1" %} {{ num }}{% endif %}{% if is_required %} *{% endif %}</label>
+        <select class="form-select" id="periodo_tiempo_programado_{{ num }}" name="periodo_tiempo_programado_{{ num }}" {% if is_required %}required{% endif %}>
+            {% if not is_required %}
+            <option value="" {% if not guia or not guia|get_attribute:f_periodo %}selected{% endif %}>-- Seleccione una opción --</option>
+            {% endif %}
+            {% for periodo_choice in periodo_tiempo_choices %}
+            <option value="{{ periodo_choice.0 }}" {% if guia and guia|get_attribute:f_periodo == periodo_choice.0 %}selected{% endif %}>{{ periodo_choice.1 }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" for="fecha_entrega_{{ num }}">Fecha de Entrega{% if num != "1" %} {{ num }}{% endif %}{% if is_required %} *{% endif %}</label>
+        <input type="date"
+               class="form-control"
+               id="fecha_entrega_{{ num }}"
+               name="fecha_entrega_{{ num }}"
+               value="{% if guia %}{{ guia|get_attribute:f_fecha_entrega|date:'Y-m-d' }}{% endif %}"
+               {% if is_required %}required{% endif %} />
+    </div>
+</div>
+
+{% endwith %}

@@ -1,5 +1,19 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-16] Wizard Mobile-First de 5 Pasos y Borrador Local en Guía de Estudio Independiente
+- **Plantillas (`plantillas/formulario_estudio_independiente.html`, `plantillas/partials/guia_actividad_campos.html`)**:
+  - Se reorganizó el formulario extenso de creación de guías en un **wizard de 5 pasos** optimizado para móviles: `1. Base e IA` (asistente IA + información general), `2. Primera Actividad (Obligatoria)`, `3. Segunda Actividad (Opcional, sola)`, `4. Tercera y Cuarta Actividad (Opcionales, juntas en acordeones colapsables independientes)` y `5. Revisión, Puntajes y Guardado`.
+  - Se extrajo el bloque reutilizable de 14 campos por actividad a `plantillas/partials/guia_actividad_campos.html` (usando `custom_filters.get_attribute`), limpiando los espacios iniciales heredados en todos los `<textarea>` y el bloque `<style>`/`@media` mal cerrado al final de la plantilla.
+  - Se aplicaron las mejoras ya validadas en móvil: cabecera del wizard en flujo normal (`overflow: visible !important` en tarjeta raíz, sin `position: sticky`), barra inferior fija en móvil con `width: auto !important` en botones compactos, chips táctiles para `agente_evaluador_1..4[]`, presets rápidos de tiempo (`30m`–`120m`), `inputmode="numeric"`, desglose de puntajes/tiempos e icono simple (`fa-check-circle`) en el resumen del Paso 5.
+- **Lógica de Wizard y Persistencia en Navegador (`static/js/guia_wizard.js`)**:
+  - Implementado `window.GuiaWizard` con `localStorage` por usuario, asignación y encuentro (`planeauml_guia_draft_v1_<usuario>_<asignacion>_<encuentro>`), sin escritura al backend hasta el envío final.
+  - Añadidos acordeones colapsables en Paso 4, detección de actividades opcionales omitidas vs parciales, botón de limpieza rápida por actividad opcional (`Limpiar`), restauración automática de borrador con banner `#draft-restored-banner` y botón **Empezar de cero** (`#btn-descartar-borrador`).
+- **Validación, Guardado e IA (`static/js/guia_guardar.js`, `static/js/guia_ia.js`)**:
+  - Agregada validación por paso (`validarPasoFormulario`), alertas inline en Bootstrap sin `alert()` bloqueantes, salto automático al paso y acordeón del primer campo con error (`goToStepForElement`) y refactorización en bucle para tareas opcionales 2–4 en `recopilarDatosFormulario()` y `aplicarDatosActividad()`.
+  - `guardarFormulario()` elimina el borrador local (`window.GuiaWizard.clearDraft()`) únicamente tras confirmación exitosa del backend; `guia_ia.js` sincroniza métricas, acordiones y borrador mediante `window.GuiaWizard.onAfterAiAutofill()`.
+- **PWA (`plantillas/pwa/sw.js`)**: Actualizado `SW_VERSION` a `planeauml-v6`.
+- **Pruebas (`plan_de_estudio/tests.py`)**: Agregado `test_formulario_guia_renderiza_wizard_5_pasos_y_borrador_local` en `SilaboFormularioYGeneracionTest`. `node --check`, `manage.py check` y suite completa (66 pruebas) pasando (**OK**).
+
 ## [2026-11-15] Corrección de Solapamiento de Cabecera sobre Títulos de Paso en Wizard de Sílabos
 - **Diagnóstico**: La regla global `.card { overflow: hidden; }` en `static/css/base.css` convertía a `.card.shadow-lg` en contenedor con scroll interno oculto; combinada con `position: sticky` en `.wizard-sticky-header` y `scrollIntoView` en pestañas, desplazaba el contenido verticalmente ocultando parcialmente el encabezado del paso actual (`card-header`, p. ej. *Primer Momento Didáctico*).
 - **Plantilla y CSS (`plantillas/formulario_silabo.html`)**:
