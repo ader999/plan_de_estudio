@@ -1422,6 +1422,9 @@ class RankingDocentesTest(TestCase):
         self.assertIn("Carlos Ruiz", html)
         self.assertIn("Luis Mora", html)
         self.assertIn("Tú", html)
+        self.assertIn("Ver asignaturas", html)
+        self.assertNotIn("fa-file-signature text-primary", html)
+        self.assertNotIn("fa-book-reader text-info", html)
 
         # Filtro por estado=sin_avance -> solo Luis Mora con puesto #3
         resp_sin = client.get(url, {'estado': 'sin_avance'})

@@ -1,5 +1,13 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-17] Simplificación Visual de Tarjetas en Ranking Docente
+- **Plantilla (`plantillas/ranking_docentes.html`)**:
+  - Se eliminaron las barras secundarias de desglose de **Sílabos** y **Guías** dentro de cada tarjeta docente, conservando únicamente la barra de progreso general principal y manteniendo el botón **Ver asignaturas** alineado a la derecha para evitar sobrecarga visual (el detalle `Sílabos: X/11` y `Guías: Y/11` por asignatura continúa disponible al desplegar cada tarjeta).
+- **PWA (`plantillas/pwa/sw.js`)**:
+  - Se actualizó `SW_VERSION` a `planeauml-v10`.
+- **Pruebas (`plan_de_estudio/tests.py`)**:
+  - Se actualizó `RankingDocentesTest.test_filtros_vista_ranking_docentes` para validar que las tarjetas muestren el botón de asignaturas sin las barras secundarias eliminadas (`6` pruebas pasando, **OK**).
+
 ## [2026-11-17] Fase 3 - Flujos de Soporte, Visualización/Exportación DOCX Real y Endurecimiento para Producción
 - **Flujo Secuencial de Guías (`plan_de_estudio/views.py`)**:
   - Se agregó `_obtener_silabo_pendiente_guia(asignacion)` para seleccionar el primer sílabo sin guía asociado (`guias__isnull=True, guia__isnull=True`) ordenado por encuentro, reemplazando las selecciones previas `.order_by("-encuentros").first()` y `silabos_creados + 1` que causaban desfases al adelantar sílabos o editar guías existentes.

@@ -509,7 +509,7 @@
                         </div>
                     </div>
 
-                    <!-- Barra de progreso general + desglose Sílabos / Guías -->
+                    <!-- Barra de progreso general -->
                     <div class="progress progress-thin mb-3">
                         <div class="progress-bar {{ d.progress_class }}" role="progressbar"
                              style="width: {{ d.porcentaje_general|unlocalize }}%;"
@@ -517,35 +517,15 @@
                         </div>
                     </div>
 
-                    <div class="row g-2 align-items-center">
-                        <div class="col-12 col-sm-4">
-                            <div class="d-flex justify-content-between small mb-1">
-                                <span class="fw-semibold"><i class="fas fa-file-signature text-primary me-1"></i> Sílabos</span>
-                                <span class="fw-bold">{{ d.total_silabos }} / {{ d.esperado_silabos }} ({{ d.porcentaje_silabos }}%)</span>
-                            </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-primary" style="width: {{ d.porcentaje_silabos|unlocalize }}%;"></div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-4">
-                            <div class="d-flex justify-content-between small mb-1">
-                                <span class="fw-semibold"><i class="fas fa-book-reader text-info me-1"></i> Guías</span>
-                                <span class="fw-bold">{{ d.total_guias }} / {{ d.esperado_guias }} ({{ d.porcentaje_guias }}%)</span>
-                            </div>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar bg-info" style="width: {{ d.porcentaje_guias|unlocalize }}%;"></div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-4 text-sm-end mt-2 mt-sm-0">
-                            <button class="btn btn-outline-secondary btn-compact" type="button"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#docente-asig-{{ d.docente_id }}"
-                                    aria-expanded="false"
-                                    aria-controls="docente-asig-{{ d.docente_id }}">
-                                <i class="fas fa-list-ul me-1"></i>
-                                Ver asignaturas ({{ d.total_asignaciones }})
-                            </button>
-                        </div>
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-outline-secondary btn-compact" type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#docente-asig-{{ d.docente_id }}"
+                                aria-expanded="false"
+                                aria-controls="docente-asig-{{ d.docente_id }}">
+                            <i class="fas fa-list-ul me-1"></i>
+                            Ver asignaturas ({{ d.total_asignaciones }})
+                        </button>
                     </div>
 
                     <!-- Desglose colapsable por asignatura -->
