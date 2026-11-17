@@ -4,8 +4,9 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.templatetags.static import static
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_safe
@@ -146,9 +147,8 @@ def manifest_view(request):
 @require_GET
 def service_worker_view(request):
     """Serve the root-scoped Service Worker without aggressive HTTP caching."""
-    response = render(
-        request,
-        "pwa/sw.js",
+    response = HttpResponse(
+        render_to_string("pwa/sw.js"),
         content_type="application/javascript; charset=utf-8",
     )
     response["Service-Worker-Allowed"] = "/"
@@ -159,7 +159,10 @@ def service_worker_view(request):
 @require_GET
 def offline_view(request):
     """Render the standalone offline/slow-connection fallback page."""
-    return render(request, "pwa/offline.html")
+    return HttpResponse(
+        render_to_string("pwa/offline.html"),
+        content_type="text/html; charset=utf-8",
+    )
 
 
 @require_GET

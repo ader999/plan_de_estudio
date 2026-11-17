@@ -817,7 +817,8 @@ class PwaAndTwaEndpointsTest(TestCase):
         self.assertIn('512x512', sizes)
 
     def test_service_worker_cabeceras_y_contenido(self):
-        resp = self.client.get(reverse('pwa_sw'))
+        with self.assertNumQueries(0):
+            resp = self.client.get(reverse('pwa_sw'))
         self.assertEqual(resp.status_code, 200)
         self.assertIn('application/javascript', resp['Content-Type'])
         self.assertEqual(resp['Service-Worker-Allowed'], '/')
@@ -825,9 +826,11 @@ class PwaAndTwaEndpointsTest(TestCase):
         body = resp.content.decode('utf-8')
         self.assertIn("const OFFLINE_URL = \"/offline/\"", body)
         self.assertIn('fetchWithTimeout', body)
+        self.assertIn("fetchWithTimeout(request, 45000)", body)
 
     def test_offline_page_disponible(self):
-        resp = self.client.get(reverse('pwa_offline'))
+        with self.assertNumQueries(0):
+            resp = self.client.get(reverse('pwa_offline'))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Sin conexión')
 
@@ -2371,6 +2374,134 @@ class Fase3FlujosYDocumentoTest(TestCase):
         self.assertTrue(body["success"])
         self.assertEqual(body["datos"]["numero_encuentro"], 2)
         self.assertEqual(body["datos"]["unidad"], "Unidad I")
+
+
+class AdminChangelistPerformanceTest(TestCase):
+    def setUp(self):
+        self.patcher_crear = patch('plan_de_estudio.signals.crear_clase_e_invitar_maestro')
+        self.patcher_crear.start()
+        self.admin_user = User.objects.create_superuser(
+            username="admin_perf", email="admin_perf@example.com", password="adminpassword"
+        )
+        ConfiguracionSistema.get_solo()
+        self.carrera = Carrera.objects.create(
+            nombre="Ingeniería de Sistemas Perf", codigo="ISP01", cine_2011=1, cine_2013=2,
+            area_formacion="Tecnologías de la información", area_disiplinaria=1
+        )
+        for i in range(25):
+            asig = Asignatura.objects.create(nombre=f"Asignatura Perf {i}")
+            plan = Plan_de_estudio.objects.create(
+                carrera=self.carrera, año="I", trimestre="I", pensol="2026",
+                codigo=f"PERF-{i:02d}", asignatura=asig,
+                horas_presenciales=24, horas_estudio_independiente=48
+            )
+            ProgramaAsignatura2026.objects.create(
+                plan_estudio=plan,
+                fundamentacion="F" * 1000,
+                relacion_unidades="R" * 500,
+                aportes_perfil="A",
+                valores="V",
+                ejes_transversales="E",
+                objetivo_conceptual="OC",
+                objetivo_procedimental="OP",
+                objetivo_actitudinal="OA",
+            )
+            pt = PlanTematico.objects.create(
+                plan_estudio=plan,
+                unidades="Primera unidad",
+                nombre_de_la_unidad=f"Unidad Perf {i}",
+                objetivo_especificos="O" * 500,
+                plan_analitico="P" * 500,
+                recomendaciones_metodologicas="M" * 500,
+                forma_de_evaluacion="E" * 500,
+                relacion_eje_contenido_launidad="R" * 500,
+            )
+            plan.plan_tematico_ref = pt
+            plan.save()
+
+        self.programa_sin_plan = ProgramaAsignatura2026.objects.create(
+            plan_estudio=None,
+            fundamentacion="Sin plan",
+            relacion_unidades="R",
+            aportes_perfil="A",
+            valores="V",
+            ejes_transversales="E",
+            objetivo_conceptual="OC",
+            objetivo_procedimental="OP",
+            objetivo_actitudinal="OA",
+        )
+
+    def tearDown(self):
+        self.patcher_crear.stop()
+
+    def test_programa_2026_changelist_paginacion_sin_n_plus_1_y_acciones_crud(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        client = Client()
+        client.login(username="admin_perf", password="adminpassword")
+        changelist_url = reverse('admin:plan_de_estudio_programaasignatura2026_changelist')
+
+        with CaptureQueriesContext(connection) as ctx:
+            resp = client.get(changelist_url)
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertLessEqual(len(ctx), 10)
+        select_queries = [
+            q["sql"] for q in ctx
+            if "FROM \"plan_de_estudio_programaasignatura2026\"" in q["sql"] and "COUNT" not in q["sql"]
+        ]
+        self.assertEqual(len(select_queries), 1)
+        self.assertNotIn("fundamentacion", select_queries[0])
+        self.assertContains(resp, "Asignatura Perf 24".upper())
+        self.assertContains(resp, "None - Programa 2026")
+        self.assertContains(resp, "26 Programas de asignatura 2026")
+
+        resp_search = client.get(f"{changelist_url}?q=PERF-05")
+        self.assertEqual(resp_search.status_code, 200)
+        self.assertContains(resp_search, "Asignatura Perf 5".upper())
+
+        change_url = reverse('admin:plan_de_estudio_programaasignatura2026_change', args=[self.programa_sin_plan.pk])
+        resp_change = client.get(change_url)
+        self.assertEqual(resp_change.status_code, 200)
+        self.assertContains(resp_change, "Sin plan")
+
+        resp_del_confirm = client.post(changelist_url, {
+            'action': 'delete_selected',
+            '_selected_action': [str(self.programa_sin_plan.pk)],
+        })
+        self.assertEqual(resp_del_confirm.status_code, 200)
+        resp_del_exec = client.post(changelist_url, {
+            'action': 'delete_selected',
+            '_selected_action': [str(self.programa_sin_plan.pk)],
+            'post': 'yes',
+        })
+        self.assertEqual(resp_del_exec.status_code, 302)
+        self.assertFalse(ProgramaAsignatura2026.objects.filter(pk=self.programa_sin_plan.pk).exists())
+
+    def test_plantematico_y_autocomplete_sin_n_plus_1(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        client = Client()
+        client.login(username="admin_perf", password="adminpassword")
+
+        with CaptureQueriesContext(connection) as ctx_pt:
+            resp_pt = client.get(reverse('admin:plan_de_estudio_plantematico_changelist'))
+        self.assertEqual(resp_pt.status_code, 200)
+        self.assertLessEqual(len(ctx_pt), 10)
+        self.assertContains(resp_pt, "ASIGNATURA PERF 24")
+
+        autocomplete_url = reverse('admin:autocomplete')
+        with CaptureQueriesContext(connection) as ctx_ac:
+            resp_ac = client.get(autocomplete_url, {
+                'app_label': 'plan_de_estudio',
+                'model_name': 'programaasignatura2026',
+                'field_name': 'plan_estudio',
+            })
+        self.assertEqual(resp_ac.status_code, 200)
+        self.assertLessEqual(len(ctx_ac), 6)
+
 
 
 

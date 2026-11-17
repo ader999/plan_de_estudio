@@ -12,7 +12,7 @@ from django.forms import DateInput
 from import_export.admin import ExportMixin
 from import_export import resources
 from django.utils.html import format_html
-from django.db.models import Count
+from django.db.models import Count, Prefetch, Q, TextField
 from django.contrib.auth.models import User
 from .document_generators import generar_excel_admin
 from django.urls import path, reverse
@@ -25,9 +25,38 @@ from .ai_generators import listar_modelos_disponibles
 import json
 import logging
 from django.http import JsonResponse, HttpResponseForbidden
-from django.db.models import Q
 
 logger = logging.getLogger(__name__)
+
+
+def _text_field_names(model):
+    """Devuelve los nombres de campos TextField concretos de un modelo para diferirlos en changelists."""
+    return tuple(
+        field.name
+        for field in model._meta.concrete_fields
+        if isinstance(field, TextField)
+    )
+
+
+def _is_changelist_get(request, url_name):
+    """Indica si la petición actual corresponde a un GET del changelist indicado."""
+    resolved = getattr(request, 'resolver_match', None)
+    return (
+        request.method == 'GET'
+        and resolved is not None
+        and resolved.url_name == url_name
+    )
+
+
+class PlanEstudioRelatedFilter(RelatedFieldListFilter):
+    """Evita consultas N+1 al renderizar opciones de Plan_de_estudio en el filtro lateral del admin."""
+
+    def field_choices(self, field, request, model_admin):
+        ordering = self.field_admin_ordering(field, request, model_admin)
+        qs = field.related_model._default_manager.select_related('asignatura', 'carrera')
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return [(obj.pk, str(obj)) for obj in qs]
 
 admin.site.site_header = 'PLANEAUML'
 admin.site.index_title = 'Bienbenidos al Panel de control del sitio'
@@ -69,7 +98,10 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
     autocomplete_fields = ['asignatura', 'pr', 'pc', 'cr']
     search_fields = ('asignatura__nombre', 'codigo') # Para permitir búsqueda en autocomplete
     resource_class = PlanDeEstudioResource
-    
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('carrera', 'asignatura', 'pr')
+
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
         if not search_term:
@@ -130,11 +162,18 @@ class UsuarioConSilabosFilter(admin.SimpleListFilter):
 class FiltarSilabo(admin.ModelAdmin):
     list_display = ('encuentros',  'asignacion_plan', 'fecha')
     list_per_page = 20
+    list_select_related = (
+        'asignacion_plan',
+        'asignacion_plan__usuario',
+        'asignacion_plan__plan_de_estudio',
+        'asignacion_plan__plan_de_estudio__asignatura',
+        'asignacion_plan__plan_de_estudio__carrera',
+    )
     list_filter = (
         ('fecha', DateFieldListFilter),  # Utiliza el widget de fecha aquí
         ('asignacion_plan__plan_de_estudio__asignatura__nombre', admin.AllValuesFieldListFilter),  # Filtro por nombre de asignatura
         UsuarioConSilabosFilter,  # Filtro personalizado para usuarios con sílabos
-        ('asignacion_plan__plan_de_estudio', RelatedFieldListFilter),  # Filtro para la asignación
+        ('asignacion_plan__plan_de_estudio', PlanEstudioRelatedFilter),  # Filtro para la asignación
     )
     readonly_fields = ('codigo', 'encuentros', 'fecha', 'guia', 'asignacion_plan')  # Campos que solo serán de lectura
     exclude = ()  # No excluir campos innecesarios
@@ -155,7 +194,7 @@ class FiltarSilabo(admin.ModelAdmin):
         return super().formfield_for_dbfield(db_field, **kwargs)
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request)
+        qs = super().get_queryset(request).select_related(*self.list_select_related)
         # Filtra solo los usuarios que tienen sílabos creados
         return qs.filter(asignacion_plan__usuario__in=Silabo.objects.values('asignacion_plan__usuario').distinct())
 
@@ -163,6 +202,7 @@ class FiltarSilabo(admin.ModelAdmin):
 class FiltrarGuia(admin.ModelAdmin):
     list_filter = ('silabo__codigo',)
     list_per_page = 20
+    list_select_related = ('silabo',)
     readonly_fields = ('silabo', 'numero_encuentro', 'fecha')  # Campos que solo serán de lectura
 
     def has_add_permission(self, request):
@@ -176,11 +216,21 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     change_list_template = 'admin/plan_de_estudio/asignacionplanestudio/change_list.html'
     # Añade 'exportar_excel_boton' a list_display
     list_display = ('usuario', 'plan_de_estudio', 'bloque', 'fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
+    list_per_page = 20
+    list_select_related = (
+        'usuario',
+        'plan_de_estudio',
+        'plan_de_estudio__asignatura',
+        'plan_de_estudio__carrera',
+    )
     readonly_fields = ('silabos_creados', 'guias_creadas', 'curso_classroom_id', 'curso_classroom_url')
     autocomplete_fields = ['plan_de_estudio', 'usuario'] # Habilita buscador dinámico
     search_fields = ('usuario__username', 'usuario__first_name', 'usuario__last_name') # Habilita buscador por usuario
     search_help_text = "Busque por nombre de usuario, nombre o apellido"
     list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__pensol', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'bloque') # Añadir filtros útiles
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(*self.list_select_related)
 
     def completado_icono(self, obj):
         # Retorna True si silabos_creados es igual a 11
@@ -349,6 +399,8 @@ class PlanTematicoAdmin(admin.ModelAdmin):
     list_filter = (CompletadoFilter,)
     search_fields = ('plan_estudio__codigo', 'plan_estudio__asignatura__nombre')
     list_per_page = 20
+    list_select_related = ('plan_estudio', 'plan_estudio__asignatura', 'plan_estudio__carrera')
+    _CHANGELIST_DEFERRED_FIELDS = _text_field_names(PlanTematico)
 
     def has_add_permission(self, request):
         return False
@@ -359,6 +411,9 @@ class PlanTematicoAdmin(admin.ModelAdmin):
 
     def completado_icono(self, obj):
         # Verificamos si este PlanTematico está relacionado con algún Plan_de_estudio
+        planes = getattr(obj, '_prefetched_planes_de_estudio', None)
+        if planes is not None:
+            return bool(planes)
         return Plan_de_estudio.objects.filter(plan_tematico_ref=obj).exists()
 
     completado_icono.boolean = True  # Indica que este es un campo booleano
@@ -366,21 +421,47 @@ class PlanTematicoAdmin(admin.ModelAdmin):
 
     def planes_de_estudio_related(self, obj):
         # Obtener todos los planes de estudio que referencian a este PlanTematico
-        planes = Plan_de_estudio.objects.filter(plan_tematico_ref=obj)
-        if planes.exists():
+        planes = getattr(obj, '_prefetched_planes_de_estudio', None)
+        if planes is None:
+            planes = list(
+                Plan_de_estudio.objects.filter(plan_tematico_ref=obj).select_related('asignatura', 'carrera')
+            )
+        if planes:
             return ", ".join([str(plan) for plan in planes])
         return "No asignado"
 
     planes_de_estudio_related.short_description = "Plan de Estudio"
 
     def get_queryset(self, request):
-        # Ya no necesitamos anotar con conteos basados en la relación anterior
-        return super().get_queryset(request)
+        qs = super().get_queryset(request).select_related(*self.list_select_related)
+        if _is_changelist_get(request, 'plan_de_estudio_plantematico_changelist'):
+            qs = qs.defer(*self._CHANGELIST_DEFERRED_FIELDS).prefetch_related(
+                Prefetch(
+                    'planes_de_estudio',
+                    queryset=Plan_de_estudio.objects.select_related('asignatura', 'carrera'),
+                    to_attr='_prefetched_planes_de_estudio',
+                )
+            )
+        return qs
+
 
 class ProgramaAsignatura2026Admin(admin.ModelAdmin):
     list_display = ('plan_estudio',)
+    list_per_page = 20
+    list_select_related = ('plan_estudio', 'plan_estudio__asignatura', 'plan_estudio__carrera')
     search_fields = ('plan_estudio__codigo', 'plan_estudio__asignatura__nombre')
     autocomplete_fields = ['plan_estudio']
+    _CHANGELIST_DEFERRED_FIELDS = tuple(
+        field.name
+        for field in ProgramaAsignatura2026._meta.concrete_fields
+        if field.name not in ('id', 'plan_estudio')
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request).select_related(*self.list_select_related)
+        if _is_changelist_get(request, 'plan_de_estudio_programaasignatura2026_changelist'):
+            qs = qs.defer(*self._CHANGELIST_DEFERRED_FIELDS)
+        return qs
     
     fieldsets = (
         ('Información General', {

@@ -1,5 +1,22 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-17] Corrección de Timeout/Pantalla Sin Conexión en Admin (`ProgramaAsignatura2026`)
+- **Diagnóstico en Producción (Railway)**:
+  - Las trazas HTTP y de red mostraron que `GET /admin/plan_de_estudio/programaasignatura2026/` terminaba en `HTTP 499` exactamente a los `~12,000ms` porque: (1) `ProgramaAsignatura2026Admin` usaba el `list_per_page=100` por defecto; (2) al ser `plan_estudio` nullable (`null=True`), Django Admin omitía `select_related` automático causando ~3 consultas N+1 por fila (`Plan_de_estudio`, `Asignatura`, `Carrera`); (3) el `SELECT *` traía ~35 `TextField` extensos por fila (~893 KB desde PostgreSQL en `us-east4` vía proxy TCP hasta `us-west2`), elevando la respuesta a `~22s+`; y (4) `sw.js` abortaba rutas `BYPASS_PREFIXES` a los `12s` sirviendo `offline.html` ("Sin conexión o señal muy lenta"), mientras un único worker Gunicorn quedaba bloqueado.
+- **Optimización de Consultas en Admin (`plan_de_estudio/admin.py`)**:
+  - Se añadieron los helpers `_text_field_names()` e `_is_changelist_get()` y `PlanEstudioRelatedFilter`.
+  - En `ProgramaAsignatura2026Admin`: `list_per_page = 20`, `list_select_related = ('plan_estudio', 'plan_estudio__asignatura', 'plan_estudio__carrera')` y `defer()` de los campos pesados en `GET` del changelist (manteniendo carga completa en `change` y acciones `POST` como `delete_selected`).
+  - En `PlanTematicoAdmin`: `list_select_related`, `Prefetch('planes_de_estudio', ...)` hacia `_prefetched_planes_de_estudio` y `defer()` de `TextField` en changelist `GET`, eliminando la saturación N+1 (~167 consultas → ~8).
+  - En `PlanDeEstudioAdmin`: `select_related('carrera', 'asignatura', 'pr')` en `get_queryset()` para acelerar listado y `/admin/autocomplete/`.
+  - En `AsignacionPlanEstudioAdmin`, `FiltarSilabo` y `FiltrarGuia`: `list_per_page = 20` y `list_select_related` (más `PlanEstudioRelatedFilter` en `FiltarSilabo`).
+- **Resiliencia PWA, Conexiones BD y Concurrencia (`plantillas/pwa/sw.js`, `plan_de_estudio/pwa_views.py`, `plan_de_estudio/settings.py`, `Procfile`)**:
+  - `sw.js`: incremento a `SW_VERSION = 'planeauml-v11'`, retorno rápido a `/offline/` cuando `navigator.onLine === false` y timeout ampliado a `45000ms` en `isBypassPath()`.
+  - `pwa_views.py`: `service_worker_view` y `offline_view` usan `render_to_string()` + `HttpResponse` logrando `0` consultas SQL por petición (evitando las consultas de `google_classroom_context` en `/sw.js`).
+  - `settings.py` y `Procfile`: `CONN_MAX_AGE` (default `120`) + `CONN_HEALTH_CHECKS = True` para reducir handshakes TLS/TCP por petición, y `gunicorn --workers 3 --timeout 120`.
+- **Pruebas y Verificación (`plan_de_estudio/tests.py`)**:
+  - Se añadió `AdminChangelistPerformanceTest` (validando `<= 10` consultas en `programaasignatura2026` y `plantematico`, `defer()` de `fundamentacion`, soporte `plan_estudio=None`, búsqueda, edición, `delete_selected` y `autocomplete`) y verificación `assertNumQueries(0)` en `PwaAndTwaEndpointsTest`.
+  - `manage.py check`, `makemigrations --check --dry-run`, `node --check` sobre `sw.js` renderizado y suite completa (`plan_de_estudio` + `eventos`: `83` pruebas) pasando (**OK**).
+
 ## [2026-11-17] Simplificación Visual de Tarjetas en Ranking Docente
 - **Plantilla (`plantillas/ranking_docentes.html`)**:
   - Se eliminaron las barras secundarias de desglose de **Sílabos** y **Guías** dentro de cada tarjeta docente, conservando únicamente la barra de progreso general principal y manteniendo el botón **Ver asignaturas** alineado a la derecha para evitar sobrecarga visual (el detalle `Sílabos: X/11` y `Guías: Y/11` por asignatura continúa disponible al desplegar cada tarjeta).

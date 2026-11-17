@@ -1,4 +1,4 @@
-{% load static %}const SW_VERSION = 'planeauml-v10';
+{% load static %}const SW_VERSION = 'planeauml-v11';
 const STATIC_CACHE = `static-${SW_VERSION}`;
 const PAGES_CACHE = `pages-${SW_VERSION}`;
 const OFFLINE_URL = "{% url 'pwa_offline' %}";
@@ -128,8 +128,12 @@ async function handleNavigation(request, url) {
     }
 
     if (isBypassPath(url.pathname)) {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            const offline = await caches.match(OFFLINE_URL);
+            return offline || Response.error();
+        }
         try {
-            return await fetchWithTimeout(request, 12000);
+            return await fetchWithTimeout(request, 45000);
         } catch (err) {
             const offline = await caches.match(OFFLINE_URL);
             return offline || Response.error();
