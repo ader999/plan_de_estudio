@@ -72,7 +72,8 @@
     if ($field.is('input[type="number"]')) {
       const num = parseFloat(strVal);
       if (isNaN(num)) return false;
-      return isRequired ? num >= 0 : num > 0;
+      const isPuntaje = ($field.attr("id") || "").startsWith("puntaje_") || $field.hasClass("puntaje");
+      return isRequired || isPuntaje ? num >= 0 : num > 0;
     }
     return strVal !== "";
   }

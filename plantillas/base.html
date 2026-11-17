@@ -70,6 +70,15 @@
                                     <i class="fas fa-book-open fa-fw fa-lg"></i> <span>Ver datos </span>
                                 </a>
                             </li>
+                            {% if request.user.is_authenticated %}
+                                {% if not config_sistema or config_sistema.mostrar_ranking_docentes or request.user.is_staff or request.user.is_superuser %}
+                                <li class="nav-item">
+                                    <a class="nav-link active" href="{% url 'ranking_docentes' %}">
+                                        <i class="fas fa-chart-line fa-fw fa-lg"></i> <span>Ranking Docente </span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link active" href="{% url 'eventos:lista_eventos' %}">
                                     <i class="fas fa-trophy fa-fw fa-lg"></i> <span>UMLRanking </span>

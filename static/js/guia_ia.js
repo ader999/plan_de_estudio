@@ -38,21 +38,42 @@ function notificarIA(tipo, titulo, mensaje) {
   alert(titulo + " " + mensaje);
 }
 
+function normalizarTextoOpcionGuia(texto) {
+  return String(texto || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 function marcarAgentesEvaluadores(num, valorAgente) {
   var selector = 'input[name="agente_evaluador_' + num + '[]"]';
-  $(selector).prop("checked", false);
+  var $checks = $(selector);
+  $checks.prop("checked", false);
 
+  var lista = [];
   if (Array.isArray(valorAgente)) {
-    valorAgente.forEach(function (agente) {
-      $(selector + '[value="' + agente + '"]').prop("checked", true);
-    });
+    lista = valorAgente;
   } else if (valorAgente) {
-    String(valorAgente)
-      .split(",")
-      .forEach(function (agente) {
-        $(selector + '[value="' + agente.trim() + '"]').prop("checked", true);
-      });
+    lista = String(valorAgente).split(/\s*[,;/\n]\s*|\s+y\s+/i);
   }
+
+  var checkedCount = 0;
+  lista.forEach(function (agente) {
+    if (checkedCount >= 2) return;
+    var norm = normalizarTextoOpcionGuia(agente);
+    if (!norm) return;
+    $checks.each(function () {
+      if (normalizarTextoOpcionGuia($(this).val()) === norm) {
+        if (!$(this).prop("checked")) {
+          $(this).prop("checked", true);
+          checkedCount++;
+        }
+        return false;
+      }
+    });
+  });
 }
 
 function limpiarCamposActividad(num) {
@@ -75,10 +96,23 @@ function limpiarCamposActividad(num) {
   $('input[name="agente_evaluador_' + num + '[]"]').prop("checked", false);
 }
 
+function valorCampoNumericoGuia(val) {
+  return val !== undefined && val !== null && val !== "" ? val : "";
+}
+
 function aplicarDatosActividad(num, datos, numActividades) {
   if (num > numActividades) {
     limpiarCamposActividad(num);
     return;
+  }
+
+  var criterios = datos["criterios_evaluacion_" + num];
+  if (Array.isArray(criterios)) {
+    criterios = criterios.join("\n");
+  }
+  var recursos = datos["recursos_didacticos_" + num];
+  if (Array.isArray(recursos)) {
+    recursos = recursos.join(", ");
   }
 
   $("#tipo_objetivo_" + num).val(datos["tipo_objetivo_" + num] || "");
@@ -88,12 +122,12 @@ function aplicarDatosActividad(num, datos, numActividades) {
   $("#tecnica_evaluacion_" + num).val(datos["tecnica_evaluacion_" + num] || "");
   $("#tipo_evaluacion_" + num).val(datos["tipo_evaluacion_" + num] || "");
   $("#instrumento_evaluacion_" + num).val(datos["instrumento_evaluacion_" + num] || "");
-  $("#criterios_evaluacion_" + num).val(datos["criterios_evaluacion_" + num] || "");
+  $("#criterios_evaluacion_" + num).val(criterios || "");
   marcarAgentesEvaluadores(num, datos["agente_evaluador_" + num]);
-  $("#tiempo_minutos_" + num).val(datos["tiempo_minutos_" + num] || "");
-  $("#recursos_didacticos_" + num).val(datos["recursos_didacticos_" + num] || "");
+  $("#tiempo_minutos_" + num).val(valorCampoNumericoGuia(datos["tiempo_minutos_" + num]));
+  $("#recursos_didacticos_" + num).val(recursos || "");
   $("#periodo_tiempo_programado_" + num).val(datos["periodo_tiempo_programado_" + num] || "");
-  $("#puntaje_" + num).val(datos["puntaje_" + num] || "");
+  $("#puntaje_" + num).val(valorCampoNumericoGuia(datos["puntaje_" + num]));
   $("#fecha_entrega_" + num).val(datos["fecha_entrega_" + num] || "");
 }
 

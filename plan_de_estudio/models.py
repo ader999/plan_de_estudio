@@ -679,6 +679,11 @@ class ConfiguracionSistema(models.Model):
         verbose_name="Permitir a docentes descargar plan temático",
         help_text="Si está activo, los docentes podrán visualizar y descargar los planes temáticos en su panel de inicio."
     )
+    mostrar_ranking_docentes = models.BooleanField(
+        default=True,
+        verbose_name="Mostrar Ranking Docente a usuarios",
+        help_text="Si está activo, todos los docentes con sesión iniciada podrán consultar el ranking de cumplimiento. Si se desactiva, solo los administradores podrán verlo."
+    )
     actualizado_el = models.DateTimeField(auto_now=True)
 
     class Meta:

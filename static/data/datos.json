@@ -169,9 +169,13 @@
       "tipo": "text",
       "descripcion": "Descripción de la clase práctica"
     },
-    "tiempo_segundo_momento": {
+    "tiempo_segundo_momento_teorica": {
       "tipo": "integer",
-      "descripcion": "Tiempo del segundo momento en minutos"
+      "descripcion": "Tiempo de la clase teórica del segundo momento en minutos"
+    },
+    "tiempo_segundo_momento_practica": {
+      "tipo": "integer",
+      "descripcion": "Tiempo de la clase práctica del segundo momento en minutos"
     },
     "recursos_segundo_momento": {
       "tipo": "text",
@@ -263,7 +267,7 @@
         },
         "segundo_momento": {
           "titulo": "Segundo momento didáctico (fase elaboración)",
-          "campos": ["tipo_segundo_momento_claseteoria", "clase_teorica", "tipo_segundo_momento_practica", "clase_practica", "tiempo_segundo_momento", "recursos_segundo_momento"]
+          "campos": ["tipo_segundo_momento_claseteoria", "clase_teorica", "tiempo_segundo_momento_teorica", "tipo_segundo_momento_practica", "clase_practica", "tiempo_segundo_momento_practica", "recursos_segundo_momento"]
         },
         "tercer_momento": {
           "titulo": "Tercer momento didáctico (fase salida)",
@@ -296,22 +300,23 @@
     "recursos_primer_momento": "Cuestionario impreso, pizarra, marcadores",
     "tipo_segundo_momento_claseteoria": "Conferencia",
     "clase_teorica": "Exposición sobre conceptos básicos de programación, algoritmos y pseudocódigo",
+    "tiempo_segundo_momento_teorica": 40,
     "tipo_segundo_momento_practica": "Taller",
     "clase_practica": "Resolución de problemas sencillos utilizando pseudocódigo y diagramas de flujo",
-    "tiempo_segundo_momento": 60,
+    "tiempo_segundo_momento_practica": 45,
     "recursos_segundo_momento": "Computadora, proyector, ejemplos impresos, software de diagramación",
-    "tipo_tercer_momento": "Orientación del estudio independiente",
+    "tipo_tercer_momento": ["Orientación del estudio independiente"],
     "detalle_tercer_momento": "Asignación de ejercicios prácticos para resolver en casa y preparación para el próximo encuentro",
-    "tiempo_tercer_momento": 10,
+    "tiempo_tercer_momento": 15,
     "recursos_tercer_momento": "Guía de ejercicios, bibliografía recomendada",
-    "eje_transversal": "Tecnología de la información y comunicación",
+    "eje_transversal": ["Tecnología de la información y comunicación"],
     "detalle_eje_transversal": "Aplicación de herramientas tecnológicas para la resolución de problemas cotidianos",
     "actividad_aprendizaje": "Desarrollo de algoritmos para resolver problemas matemáticos sencillos",
-    "tecnica_evaluacion": "Trabajo en grupo",
-    "tipo_evaluacion": "Formativa",
+    "tecnica_evaluacion": ["Trabajo en grupo"],
+    "tipo_evaluacion": ["Formativa"],
     "periodo_tiempo_programado": "I Corte Evaluativo",
     "tiempo_minutos": 30,
-    "agente_evaluador": "Heteroevaluación",
+    "agente_evaluador": ["Heteroevaluación"],
     "instrumento_evaluacion": "Rúbrica",
     "criterios_evaluacion": "Correctitud del algoritmo, eficiencia, claridad en la documentación, trabajo colaborativo",
     "puntaje": 10

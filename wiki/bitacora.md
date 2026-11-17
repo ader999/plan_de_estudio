@@ -1,5 +1,70 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-17] Fase 3 - Flujos de Soporte, Visualización/Exportación DOCX Real y Endurecimiento para Producción
+- **Flujo Secuencial de Guías (`plan_de_estudio/views.py`)**:
+  - Se agregó `_obtener_silabo_pendiente_guia(asignacion)` para seleccionar el primer sílabo sin guía asociado (`guias__isnull=True, guia__isnull=True`) ordenado por encuentro, reemplazando las selecciones previas `.order_by("-encuentros").first()` y `silabos_creados + 1` que causaban desfases al adelantar sílabos o editar guías existentes.
+  - En `ver_formulario_guia` se sincronizan `silabos_creados` y `guias_creadas` desde base de datos (`update_fields`), se redirige a `inicio` al completar las 11 guías, se expone `guias_creadas` en contexto y se informa si todos los sílabos creados ya tienen guía antes de pasar al siguiente encuentro pendiente.
+  - En `guardar_guia` se reemplazó el incremento ciego `asignacion.guias_creadas += 1` por el recuento real `Guia.objects.filter(silabo__asignacion_plan=asignacion).count()` para evitar inflación al re-guardar actualizaciones.
+  - En `generar_estudio_independiente` se bloquea el `encuentro` al sílabo seleccionado cuando llega `silabo_id`, se usa `_obtener_silabo_pendiente_guia(asignacion)` como respaldo y se protegió el caso legado donde `silabo.asignacion_plan` es `None` (y acceso seguro con `.get(encuentro)` sobre el mapa maestro).
+- **Visualización Completa y Exportación DOCX (`plan_de_estudio/views.py`, `plan_de_estudio/documento_secuencia_didactica.py`)**:
+  - En `ver_planeacion` se amplió `extract_tareas()` de `for i in (1, 2, 3)` a `for i in (1, 2, 3, 4)` para mostrar las 4 tareas de cada guía en pantalla.
+  - En `documento_secuencia_didactica.py` se añadieron `_texto_campo()` y `_entero_texto()` (manejo seguro de `None`, `0` y `MultiSelectField`), se eliminaron todos los textos quemados del 2.º y 3.er momento didáctico reemplazándolos por los campos reales de `Silabo`, se unificaron las tareas `1..4` de `tabla_guia` en bucle y se corrigió la suma de tiempos/puntajes presenciales para evitar que un valor `None` ocultara silenciosamente la sección de guía autodidáctica.
+- **Compatibilidad Frontend para Presupuestos Agotados (`static/js/guia_ia.js`, `static/js/silabo_ia.js`, `static/js/guia_guardar.js`, `static/js/guia_wizard.js`, `plantillas/pwa/sw.js`)**:
+  - Se corrigió la coerción `0 || ""` al autocompletar campos numéricos (`puntaje`, `tiempo_minutos`, `puntaje_1..4`) para preservar `0` cuando un Corte Evaluativo alcanza `100/100` puntos.
+  - Se ajustó la validación de actividades opcionales (`2..4`) en `guia_guardar.js` y `guia_wizard.js` permitiendo `puntaje_k >= 0` (manteniendo `tiempo_minutos_k > 0`) cuando la actividad tiene todos sus campos llenos, evitando falsos bloqueos de guardado sin afectar actividades omitidas (`""`).
+  - Se actualizó `SW_VERSION` a `planeauml-v9`.
+- **Pruebas y Verificación E2E para Producción (`plan_de_estudio/tests.py`)**:
+  - Se añadió `Fase3FlujosYDocumentoTest` (4 pruebas: flujo con sílabos adelantados, re-guardado idempotente, `ver_planeacion` con Tarea #4, exportación DOCX sin placeholders y `silabo.asignacion_plan=None`).
+  - Verificación pre-despliegue: `makemigrations --check --dry-run` (sin migraciones pendientes), `collectstatic --dry-run` (`201` archivos), análisis AST Python 3.11 (`0` errores), `node --check` en los 4 JS modificados (`OK`), `manage.py check` (`0` problemas) y suite completa (`plan_de_estudio` + `eventos`: `81` pruebas pasando en `DJANGO_TESTING=1`, **OK**).
+  - Verificación E2E en vivo (`DJANGO_TESTING=1`, `gemini-4-hydrogen`, señales Classroom simuladas) completada para `ProgramaAsignatura2026` (`p2026_13`, E1–11 secuenciales) y `PlanTematico` legado (`pt_4`, 3 sílabos adelantados + resto E4–11): `44/44` guardados `HTTP 200`, Cortes `100/100/100` (`300` total) en ambos planes, `24.0h/24h` presenciales y `70.0h/70h` (`p2026_13`) / `48.0h/48h` (`pt_4`) independientes, `11/11` tarjetas con **Tarea #4** en `ver_planeacion` y DOCX global (`89,009` bytes, `176` tablas, `22` secciones de guía, `0` placeholders).
+
+## [2026-11-17] Fase 2 - Lógica Curricular, Presupuestos de Cortes Evaluativos, Soporte Multi-Unidad PlanTematico e Historial Compacto
+- **Motor Curricular Compartido (`plan_de_estudio/utils/curriculum_planner.py`)**:
+  - Se centralizó `extraer_contexto_asignatura()` para `ProgramaAsignatura2026` (con carga `HT/HP/HI` y bibliografía) y para `PlanTematico` legado usando `plan_de_estudio.get_plan_tematico_efectivo()` (soportando enlace directo `plan_tematico_ref` e inverso `plantematicos_asociados`) recorriendo todas las unidades `1..6` (`""`, `_2`..`_6`) en lugar de limitarse a Unidad I y `total_unidades = 4`.
+  - Se implementó `construir_mapa_maestro()` mediante reparto proporcional Hamilton (`reparto_hamilton`) ponderado por horas por unidad para distribuir los 11 encuentros sin omitir unidades, y `formatear_contexto_curricular()` para focalizar cada prompt en la unidad activa.
+  - Se implementó `calcular_puntajes_por_corte()` y `calcular_corte_y_presupuesto()` respetando el límite institucional de **100 puntos por Corte Evaluativo** combinado entre sílabos y guías (`I`: E1–E4, `II`: E5–E8, `III`: E9–E11; total 300 pts), delegando `views.get_previous_scores()` al helper único.
+  - Se implementó `calcular_tiempos_y_fechas()` para alinear las 11 fechas semanalmente dentro del ciclo calendario del trimestre (`obtener_rango_ciclo_actual`), repartir `horas_presenciales` y `horas_estudio_independiente` del `Plan_de_estudio` y limitar las entregas de la guía al intervalo entre encuentros (`<= fecha_encuentro` en E11).
+  - Se implementó `construir_historial_compacto()` incluyendo todas las 4 tareas de guías previas (en lugar de solo `*_1`) en formato resumido para evitar duplicación aula/hogar y reducir la longitud de los prompts.
+- **Normalización y Generación (`plan_de_estudio/utils/ai_normalizer.py`, `plan_de_estudio/views.py`)**:
+  - Se ampliaron `normalizar_respuesta_silabo()` y `normalizar_respuesta_guia()` para aplicar presupuestos de corte (`corte_forzado`, `forzar_corte`, `presupuesto_objetivo`, `presupuesto_max`, `forzar_exacto`), unidad oficial asignada, calibración horaria (`minutos_clase_objetivo`, `minutos_totales_objetivo`), ajuste de fechas semanales y ventana `fecha_entrega_min..max` en cierre E11.
+  - Se refactorizaron `generar_silabo` y `generar_estudio_independiente` eliminando el código duplicado y la instrucción errónea de 100 puntos por guía individual, incorporando diferenciación aula/hogar, variedad de técnicas y regla de cierre E11.
+- **Pruebas y Simulación en Vivo (`plan_de_estudio/tests.py`)**:
+  - Se actualizó `test_generar_y_guardar_silabo_y_guia_directo_sin_400` al presupuesto por corte y se añadió `CurriculumPlannerFase2Test`.
+  - `DJANGO_TESTING=1 manage.py check` (0 problemas) y `manage.py test plan_de_estudio eventos` (77 pruebas pasando, **OK**).
+  - En simulación en vivo aislada (`DJANGO_TESTING=1`) con `gemini-4-hydrogen`: `PlanTematico` avanzó `Unidad I -> Unidad II -> Unidad III` en E1/E5/E9; los 11 encuentros de `ProgramaAsignatura2026` cerraron `22/22` guardados (`HTTP 200`), cortes exactos `{'I': 100, 'II': 100, 'III': 100}` (`300` total), `24.00h / 24h` presenciales (`1,440` min), `70.00h / 70h` independientes (`4,200` min), entregas E11 `<= 2026-11-14` y prompt máximo en E11 reducido a `23,247` chars (sílabo) / `25,034` chars (guía) con todas las tareas T1..T4 previas.
+
+## [2026-11-17] Fase 1 - Corrección de Contrato JSON, Normalización de Opciones IA y Compatibilidad Frontend
+- **Estructura Base (`static/data/datos.json`)**:
+  - Se reemplazó `tiempo_segundo_momento` por `tiempo_segundo_momento_teorica` y `tiempo_segundo_momento_practica` en `campos_silabo`, `estructura_silabo` y `primer_encuentro`, alineando el ejemplo del prompt con `Silabo` y `SilaboForm`.
+  - Se estandarizaron los campos múltiples de `primer_encuentro` (`tipo_tercer_momento`, `eje_transversal`, `tecnica_evaluacion`, `tipo_evaluacion`, `agente_evaluador`) en formato de arreglo JSON.
+- **Normalización Estricta (`plan_de_estudio/utils/ai_normalizer.py`)**:
+  - Se creó el módulo `ai_normalizer.py` con `normalizar_respuesta_silabo()` y `normalizar_respuesta_guia()` para mapear variantes/tildes/plurales hacia los `choices` exactos de `Silabo` y `Guia` (ej. `"Lista de cotejo"` → `"Listas de cotejo"`, `"Diagnóstica y Formativa"` → `["Diagnóstica", "Formativa"]`), respetar `max_choices=2`, proteger `codigo` y `encuentros`/`numero_encuentro`, aplanar tareas anidadas (`tarea_1..4`), validar enteros/fechas ISO y acotar la suma de puntajes de cada guía a `<= 100`.
+- **Generación y Extracción JSON (`plan_de_estudio/ai_generators.py`, `plan_de_estudio/views.py`)**:
+  - En `ai_generators.py` se incorporó `_extraer_objeto_json` con decodificación balanceada y `ast.literal_eval`, modo `tipo_respuesta='silabo'|'guia'` en `procesar_respuesta_ai` y `generar_respuesta_ai` para activar `response_mime_type='application/json'` en Google Gemini y omitir la inyección de las 14 llaves heredadas obsoletas (manteniendo compatibilidad cuando `tipo_respuesta=None`), además de actualizar el fallback de DeepSeek.
+  - En `views.py` (`generar_silabo` y `generar_estudio_independiente`), se agregaron al prompt de sílabos las listas faltantes (`TECNICA_EVALUACION_LIST`, `TIPO_EVALUACION_LIST`, `INSTRUMENTO_EVALUACION_LIST`, `AGENTE_EVALUADOR_LIST`, `PERIODO_TIEMPO_LIST`), se validaron parámetros numéricos y se aplicó `normalizar_respuesta_silabo` / `normalizar_respuesta_guia`.
+- **Frontend y PWA (`static/js/silabo_ia.js`, `static/js/guia_ia.js`, `plantillas/pwa/sw.js`)**:
+  - En `silabo_ia.js` se protegió `#id_codigo` y `#id_encuentros` para no sobrescribir los valores del servidor, se añadió respaldo para `tiempo_segundo_momento` legado, `timeout: 120000` y soporte de coincidencia sin acentos ni mayúsculas y división de opciones combinadas en `setCheckboxMultiple`.
+  - En `guia_ia.js` se hizo `marcarAgentesEvaluadores` insensible a mayúsculas/acentos y se normalizaron arreglos en `criterios_evaluacion` y `recursos_didacticos`.
+  - Se incrementó `SW_VERSION` a `planeauml-v8`.
+- **Pruebas y Verificación (`plan_de_estudio/tests.py`)**:
+  - Se agregó `AINormalizerAndContratoFase1Test`. `node --check`, `manage.py check`, `manage.py test plan_de_estudio` (50 pruebas) y `manage.py test eventos` (25 pruebas) pasando (**OK**); prueba en vivo de Encuentro 1 con `gemini-4-hydrogen` completó `generar_silabo` → `guardar_silabo` (`HTTP 200`, 0 incidencias JS, 35 llaves) y `generar_estudio_independiente` → `guardar_guia` (`HTTP 200`, 0 incidencias JS, 60 llaves).
+
+## [2026-11-17] Sección de Ranking de Cumplimiento Docente
+- **Modelo y Migración (`plan_de_estudio/models.py`, `plan_de_estudio/migrations/0022_configuracionsistema_mostrar_ranking_docentes.py`)**:
+  - Se agregó `mostrar_ranking_docentes` (`default=True`) a `ConfiguracionSistema` para permitir desde el panel administrativo alternar la visibilidad del ranking para docentes vs solo administradores.
+- **Lógica de Cálculo y Agregación (`plan_de_estudio/ranking_utils.py`)**:
+  - Se implementó `obtener_rango_ciclo_actual` (alineado con los trimestres calendario Mar–May, Jun–Ago, Sep–Nov, Dic–Feb) y `construir_ranking_docentes`.
+  - Consolida en una sola consulta con `Count(..., distinct=True)` las entregas por docente (`11` sílabos + `11` guías = `22` entregables por asignación), calcula porcentaje global, porcentaje por tipo, asignaciones completas y pendientes, asigna el puesto canónico (`1..N`) y genera listas destacadas de **Mayor Cumplimiento** y **Prioridad de Seguimiento**.
+  - Soporta dos alcances temporales (`Ciclo Actual` y `Todas las Asignaciones`, con respaldo automático al histórico cuando el ciclo actual aún no tiene asignaciones y no se forzó el parámetro), ordenamiento (`Mayor Cumplimiento` y `Rezagados Primero`), búsqueda por docente/asignatura y filtros por carrera, trimestre del plan y estado.
+- **Vista, Ruta y Plantillas (`plan_de_estudio/views.py`, `plan_de_estudio/urls.py`, `plantillas/ranking_docentes.html`, `plantillas/base.html`, `plantillas/inicio.html`)**:
+  - Se creó la ruta `/ranking-docentes/` (`ranking_docentes`) protegida con `@login_required` y validada contra `ConfiguracionSistema.mostrar_ranking_docentes` (los administradores siempre conservan acceso).
+  - Se diseñó `plantillas/ranking_docentes.html` con tarjetas KPI, cuadro de honor, prioridad de seguimiento, filtros responsivos y desglose colapsable por asignatura con enlace directo a `ver_planeacion`.
+  - Se añadió el enlace **Ranking Docente** en el menú principal (`plantillas/base.html`) y acceso rápido en `plantillas/inicio.html`.
+- **Panel Admin (`plan_de_estudio/admin.py`, `plantillas/admin/plan_de_estudio/copiaseguridad/change_list.html`, `plantillas/admin/plan_de_estudio/asignacionplanestudio/change_list.html`)**:
+  - Se refactorizó el cambio de banderas de `ConfiguracionSistema` en `_toggle_config_boolean` y se añadió la ruta `toggle-ranking-docentes/` (`toggle_ranking_docentes_view`) junto con la fila **Ranking de Cumplimiento Docente** en **Copias de Seguridad / Configuración** y acceso directo desde **Asignaciones**.
+- **PWA (`plantillas/pwa/sw.js`)**: Se actualizó `SW_VERSION` a `planeauml-v7`.
+- **Pruebas (`plan_de_estudio/tests.py`)**: Se agregó `RankingDocentesTest` (6 pruebas). Suite completa pasando (**OK**).
+
 ## [2026-11-16] Wizard Mobile-First de 5 Pasos y Borrador Local en Guía de Estudio Independiente
 - **Plantillas (`plantillas/formulario_estudio_independiente.html`, `plantillas/partials/guia_actividad_campos.html`)**:
   - Se reorganizó el formulario extenso de creación de guías en un **wizard de 5 pasos** optimizado para móviles: `1. Base e IA` (asistente IA + información general), `2. Primera Actividad (Obligatoria)`, `3. Segunda Actividad (Opcional, sola)`, `4. Tercera y Cuarta Actividad (Opcionales, juntas en acordeones colapsables independientes)` y `5. Revisión, Puntajes y Guardado`.

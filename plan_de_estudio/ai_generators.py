@@ -4,6 +4,7 @@ Contiene funciones para generar respuestas de diferentes modelos de IA.
 """
 
 import os
+import ast
 import json
 import logging
 import re
@@ -305,9 +306,10 @@ def usar_modelo_deepseek(prompt_completo, max_tokens, temperature=0.7, timeout=1
                   "recursos_primer_momento": "Cuestionario, pizarra, marcadores",
                   "tipo_segundo_momento_claseteoria": "Conferencia",
                   "clase_teorica": "Exposición sobre conceptos fundamentales del tema",
+                  "tiempo_segundo_momento_teorica": 30,
                   "tipo_segundo_momento_practica": "Taller",
                   "clase_practica": "Resolución de ejercicios prácticos relacionados con el tema",
-                  "tiempo_segundo_momento": 60,
+                  "tiempo_segundo_momento_practica": 30,
                   "recursos_segundo_momento": "Computadora, proyector, ejemplos impresos",
                   "tipo_tercer_momento": "Orientación del estudio independiente",
                   "detalle_tercer_momento": "Asignación de tareas para resolver en casa",
@@ -404,19 +406,43 @@ def usar_modelo_anthropic(prompt_completo, max_tokens, model="claude-3-5-sonnet-
 
 
 
-def procesar_respuesta_ai(respuesta_ai):
+def _extraer_objeto_json(respuesta_ai):
+    """Extrae el primer objeto JSON válido desde una respuesta de texto o bloque markdown."""
+    texto = re.sub(r'```(?:json)?|```', '', respuesta_ai, flags=re.IGNORECASE).strip()
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r'\{', texto):
+        try:
+            obj, _ = decoder.raw_decode(texto[match.start():])
+            if isinstance(obj, dict):
+                return obj
+        except json.JSONDecodeError:
+            continue
+
+    json_match = re.search(r'\{.*\}', texto, re.DOTALL)
+    if not json_match:
+        return None
+    json_str = json_match.group(0).strip()
+    try:
+        parsed = ast.literal_eval(json_str)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+    json_repaired = json_str.replace("'", '"')
+    json_repaired = re.sub(r'(?<!")(".*?)(?<!")(")', r'\1\\"', json_repaired)
+    return json.loads(json_repaired)
+
+
+def procesar_respuesta_ai(respuesta_ai, tipo_respuesta=None):
     """
     Procesa la respuesta de la IA para extraer y validar el JSON.
 
     Args:
         respuesta_ai (str): Respuesta en texto del modelo de IA
+        tipo_respuesta (str|None): 'silabo', 'guia' o None para compatibilidad legada
 
     Returns:
         dict: Datos procesados en formato diccionario
-
-    Raises:
-        json.JSONDecodeError: Si hay un error al decodificar el JSON
-        Exception: Para otros errores durante el procesamiento
     """
     if not respuesta_ai:
         raise ValueError('No se recibió una respuesta del modelo')
@@ -424,80 +450,50 @@ def procesar_respuesta_ai(respuesta_ai):
     logging.info("Procesando respuesta de IA...")
     logging.debug(f"Respuesta AI (primeros 200 caracteres): {respuesta_ai[:200]}...")
 
-    # Buscar el JSON en la respuesta
-    json_match = re.search(r'\{.*\}', respuesta_ai, re.DOTALL)
+    data = _extraer_objeto_json(respuesta_ai)
+    if data is not None:
+        if tipo_respuesta in ("silabo", "guia"):
+            logging.info("Datos estructurados (%s) procesados correctamente", tipo_respuesta)
+            return data
 
-    if json_match:
-        # Extraer el JSON encontrado
-        json_str = json_match.group(0).strip()
-
-        # Limpiar el string JSON (eliminar bloques de código markdown)
-        json_str = re.sub(r'```json|```', '', json_str).strip()
-
-        logging.debug(f"JSON extraído (primeros 200 caracteres): {json_str[:200]}...")
-
-        # Intentar convertir el texto a un objeto JSON
-        try:
-            data = json.loads(json_str)
-        except json.JSONDecodeError as e:
-            logging.error(f"Error inicial al decodificar JSON: {str(e)}")
-            logging.debug(f"Intentando limpiar y reparar el JSON...")
-
-            # Intento adicional: reemplazar comillas simples por dobles
-            json_str = json_str.replace("'", '"')
-            # Intento adicional: escapar comillas internas
-            json_str = re.sub(r'(?<!")(".*?)(?<!")(")', r'\1\\"', json_str)
-
-            # Último intento con la corrección
-            data = json.loads(json_str)
-
-        # Asegurarse de que los campos esperados estén presentes
-        expected_fields = ['descripcion', 'actividades', 'recursos', 'tiempo_estimado', 'criterios_evaluacion',
-                          'puntaje', 'evaluacion_sumativa', 'objetivo_conceptual', 'objetivo_procedimental',
-                          'objetivo_actitudinal', 'instrumento_cuaderno', 'instrumento_organizador',
-                          'instrumento_diario', 'instrumento_prueba']
-
+        # Compatibilidad legada cuando no se especifica tipo_respuesta
+        expected_fields = [
+            'descripcion', 'actividades', 'recursos', 'tiempo_estimado', 'criterios_evaluacion',
+            'puntaje', 'evaluacion_sumativa', 'objetivo_conceptual', 'objetivo_procedimental',
+            'objetivo_actitudinal', 'instrumento_cuaderno', 'instrumento_organizador',
+            'instrumento_diario', 'instrumento_prueba'
+        ]
         for field in expected_fields:
             if field not in data:
                 data[field] = "" if field != 'tiempo_estimado' else "60"
-
-            # Asegurarse de que los campos de lista sean realmente listas
             if field in ['actividades', 'recursos', 'criterios_evaluacion']:
                 if not isinstance(data[field], list):
-                    if data[field]:  # Si no está vacío
-                        data[field] = [data[field]]
-                    else:
-                        data[field] = []
+                    data[field] = [data[field]] if data[field] else []
 
         logging.info("Datos procesados correctamente")
         return data
-    else:
-        # Si no hay formato JSON directo, intentar formatear la respuesta completa
-        logging.warning("No se encontró un formato JSON válido en la respuesta. Creando respuesta de emergencia.")
 
-        # Eliminar cualquier markdown que pueda haber
-        clean_response = re.sub(r'```.*?```', '', respuesta_ai, flags=re.DOTALL).strip()
+    if tipo_respuesta in ("silabo", "guia"):
+        raise ValueError(f"La respuesta de la IA para {tipo_respuesta} no contiene un objeto JSON válido.")
 
-        # Crear un diccionario básico usando el texto completo como descripción
-        data = {
-            'descripcion': clean_response[:500],  # Limitar a 500 caracteres
-            'actividades': ["Revisar el material proporcionado"],
-            'recursos': ["Material de estudio"],
-            'tiempo_estimado': "60",
-            'criterios_evaluacion': ["Comprensión del contenido"],
-            'puntaje': "10",
-            'evaluacion_sumativa': "Evaluación basada en la comprensión del contenido",
-            'objetivo_conceptual': "Comprender los conceptos fundamentales del tema",
-            'objetivo_procedimental': "Aplicar los conceptos aprendidos",
-            'objetivo_actitudinal': "Valorar la importancia del tema estudiado",
-            'instrumento_cuaderno': "Anotaciones en el cuaderno",
-            'instrumento_organizador': "Crear un organizador gráfico",
-            'instrumento_diario': "Registro diario de actividades",
-            'instrumento_prueba': "Evaluación escrita sobre el tema"
-        }
-
-        logging.info("Se generó una respuesta de emergencia al no encontrar JSON válido")
-        return data
+    logging.warning("No se encontró un formato JSON válido en la respuesta. Creando respuesta de emergencia.")
+    clean_response = re.sub(r'```.*?```', '', respuesta_ai, flags=re.DOTALL).strip()
+    return {
+        'descripcion': clean_response[:500],
+        'actividades': ["Revisar el material proporcionado"],
+        'recursos': ["Material de estudio"],
+        'tiempo_estimado': "60",
+        'criterios_evaluacion': ["Comprensión del contenido"],
+        'puntaje': "10",
+        'evaluacion_sumativa': "Evaluación basada en la comprensión del contenido",
+        'objetivo_conceptual': "Comprender los conceptos fundamentales del tema",
+        'objetivo_procedimental': "Aplicar los conceptos aprendidos",
+        'objetivo_actitudinal': "Valorar la importancia del tema estudiado",
+        'instrumento_cuaderno': "Anotaciones en el cuaderno",
+        'instrumento_organizador': "Crear un organizador gráfico",
+        'instrumento_diario': "Registro diario de actividades",
+        'instrumento_prueba': "Evaluación escrita sobre el tema"
+    }
 
 
 def resolver_config_modelo(modelo_seleccionado):
@@ -693,6 +689,7 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
         dict: Datos procesados de la respuesta en formato diccionario
     """
     try:
+        tipo_respuesta = kwargs.pop('tipo_respuesta', None)
         if not modelo_seleccionado:
             modelo_seleccionado = 'google'
             logging.info(f"No se especificó modelo, usando {modelo_seleccionado} por defecto")
@@ -734,9 +731,9 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
                 else:
                     raise e
         elif proveedor == 'google' or (proveedor == 'custom' and formato_api == 'google'):
-            generation_config = kwargs.get('generation_config')
-            if not generation_config:
-                generation_config = get_default_config('google')
+            generation_config = dict(kwargs.get('generation_config') or get_default_config('google'))
+            if tipo_respuesta in ('silabo', 'guia'):
+                generation_config.setdefault('response_mime_type', 'application/json')
             respuesta_ai = usar_modelo_google(
                 prompt_completo,
                 generation_config,
@@ -757,7 +754,7 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
                 **call_kwargs,
             )
 
-        return procesar_respuesta_ai(respuesta_ai)
+        return procesar_respuesta_ai(respuesta_ai, tipo_respuesta=tipo_respuesta)
 
     except Exception as e:
         error_msg = f'Error al generar respuesta con {modelo_seleccionado}: {str(e)}'

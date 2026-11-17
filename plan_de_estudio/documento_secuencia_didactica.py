@@ -10,6 +10,22 @@ from .models import Silabo, AsignacionPlanEstudio, Guia
 from django.utils import timezone
 import datetime
 
+def _texto_campo(valor, default="—"):
+    """Convierte valores simples o MultiSelectField a texto seguro para python-docx."""
+    if valor is None or valor == "":
+        return default
+    if isinstance(valor, (list, tuple)):
+        unido = ", ".join(str(v) for v in valor if v not in (None, ""))
+        return unido if unido else default
+    texto = str(valor)
+    return texto if texto else default
+
+
+def _entero_texto(valor, default="—"):
+    """Formatea un valor numérico entero evitando confusiones con 0."""
+    return str(valor) if valor is not None else default
+
+
 def generar_documento_secuencia_didactica(silabos_agrupados, usuario, año_actual=None):
     """
     Genera un documento Word con la secuencia didáctica para todos los encuentros.
@@ -139,10 +155,10 @@ def generar_documento_secuencia_didactica(silabos_agrupados, usuario, año_actua
                 set_cell_text_with_line_break(tabla_mediacion.cell(1, 1), "Primer momento", "(Entrada)")
                 set_cell_bold(tabla_mediacion.cell(1, 1))
                 
-                tabla_mediacion.cell(1, 2).text = silabo.tipo_primer_momento
-                tabla_mediacion.cell(1, 3).text = silabo.detalle_primer_momento
-                tabla_mediacion.cell(1, 4).text = silabo.recursos_primer_momento
-                tabla_mediacion.cell(1, 5).text = str(silabo.tiempo_primer_momento)
+                tabla_mediacion.cell(1, 2).text = _texto_campo(silabo.tipo_primer_momento)
+                tabla_mediacion.cell(1, 3).text = _texto_campo(silabo.detalle_primer_momento)
+                tabla_mediacion.cell(1, 4).text = _texto_campo(silabo.recursos_primer_momento)
+                tabla_mediacion.cell(1, 5).text = _entero_texto(silabo.tiempo_primer_momento)
                 
                 # Espacio en blanco para la segunda fila del primer momento
                 for i in range(2, 6):
@@ -153,15 +169,19 @@ def generar_documento_secuencia_didactica(silabos_agrupados, usuario, año_actua
                 set_cell_text_with_line_break(tabla_mediacion.cell(3, 1), "Segundo momento", "(Elaboración)")
                 set_cell_bold(tabla_mediacion.cell(3, 1))
                 
-                tabla_mediacion.cell(3, 2).text = f'Clases teóricas - {silabo.tipo_segundo_momento_claseteoria}'
-                tabla_mediacion.cell(3, 3).text = silabo.clase_teorica
+                tabla_mediacion.cell(3, 2).text = (
+                    f"Clases teóricas - {_texto_campo(silabo.tipo_segundo_momento_claseteoria)}"
+                )
+                tabla_mediacion.cell(3, 3).text = _texto_campo(silabo.clase_teorica)
                 tabla_mediacion.cell(3, 4).merge(tabla_mediacion.cell(4, 4))
-                tabla_mediacion.cell(3, 4).text = "Computadora, guía, video"
-                tabla_mediacion.cell(3, 5).text = "30"
+                tabla_mediacion.cell(3, 4).text = _texto_campo(silabo.recursos_segundo_momento)
+                tabla_mediacion.cell(3, 5).text = _entero_texto(silabo.tiempo_segundo_momento_teorica)
                 
-                tabla_mediacion.cell(4, 2).text = "Clases prácticas - Evaluación formativa"
-                tabla_mediacion.cell(4, 3).text = "Trabajo en grupos: ejercicios prácticos sobre arquitecturas."
-                tabla_mediacion.cell(4, 5).text = "20"
+                tabla_mediacion.cell(4, 2).text = (
+                    f"Clases prácticas - {_texto_campo(silabo.tipo_segundo_momento_practica)}"
+                )
+                tabla_mediacion.cell(4, 3).text = _texto_campo(silabo.clase_practica)
+                tabla_mediacion.cell(4, 5).text = _entero_texto(silabo.tiempo_segundo_momento_practica)
                 
                 # Espacio en blanco para la fila 5
                 for i in range(1, 6):
@@ -170,10 +190,10 @@ def generar_documento_secuencia_didactica(silabos_agrupados, usuario, año_actua
                 # Tercer momento
                 tabla_mediacion.cell(6, 1).text = "Tercer momento\n(Salida)"
                 set_cell_bold(tabla_mediacion.cell(6, 1))
-                tabla_mediacion.cell(6, 2).text = "Realimentación y orientación"
-                tabla_mediacion.cell(6, 3).text = "Resumen del tema, aclaración de dudas, tareas para autoestudio."
-                tabla_mediacion.cell(6, 4).text = "Pizarra, guía"
-                tabla_mediacion.cell(6, 5).text = "20"
+                tabla_mediacion.cell(6, 2).text = _texto_campo(silabo.tipo_tercer_momento)
+                tabla_mediacion.cell(6, 3).text = _texto_campo(silabo.detalle_tercer_momento)
+                tabla_mediacion.cell(6, 4).text = _texto_campo(silabo.recursos_tercer_momento)
+                tabla_mediacion.cell(6, 5).text = _entero_texto(silabo.tiempo_tercer_momento)
                 
                 # Ajustar anchos de columna
                 set_column_width(tabla_mediacion, 0, 2.0)  # Contenido temático
@@ -198,22 +218,28 @@ def generar_documento_secuencia_didactica(silabos_agrupados, usuario, año_actua
                     set_cell_bold(tabla_actividades.cell(0, i))
                 
                 # Datos de la actividad
-                actividad_aprendizaje = silabo.actividad_aprendizaje if silabo.actividad_aprendizaje else "Sin datos"
+                actividad_aprendizaje = _texto_campo(silabo.actividad_aprendizaje, default="Sin datos")
                 tabla_actividades.cell(1, 0).text = actividad_aprendizaje
                 
                 # Evaluación
-                texto_evaluacion = f"Tipo de Evaluación\n{silabo.tipo_evaluacion if silabo.tipo_evaluacion else 'Sin datos'}\n\n" \
-                                  f"Instrumento de evaluación\n{silabo.instrumento_evaluacion if silabo.instrumento_evaluacion else 'Sin datos'}"
+                texto_evaluacion = (
+                    f"Tipo de Evaluación\n{_texto_campo(silabo.tipo_evaluacion, default='Sin datos')}\n\n"
+                    f"Instrumento de evaluación\n{_texto_campo(silabo.instrumento_evaluacion, default='Sin datos')}"
+                )
                 tabla_actividades.cell(1, 1).text = texto_evaluacion
                 
                 # Período
-                texto_periodo = f"{silabo.periodo_tiempo_programado if silabo.periodo_tiempo_programado else 'Sin datos'}\n\n" \
-                                f"Técnica evaluación\n{silabo.tecnica_evaluacion if silabo.tecnica_evaluacion else 'Sin datos'}"
+                texto_periodo = (
+                    f"{_texto_campo(silabo.periodo_tiempo_programado, default='Sin datos')}\n\n"
+                    f"Técnica evaluación\n{_texto_campo(silabo.tecnica_evaluacion, default='Sin datos')}"
+                )
                 tabla_actividades.cell(1, 2).text = texto_periodo
                 
                 # Tiempo
-                texto_tiempo = f"{str(silabo.tiempo_minutos) if silabo.tiempo_minutos else 'Sin datos'}\n\n" \
-                              f"Puntaje\n{str(silabo.puntaje) if silabo.puntaje else 'Sin datos'}"
+                texto_tiempo = (
+                    f"{_entero_texto(silabo.tiempo_minutos, default='Sin datos')}\n\n"
+                    f"Puntaje\n{_entero_texto(silabo.puntaje, default='Sin datos')}"
+                )
                 tabla_actividades.cell(1, 3).text = texto_tiempo
                 
                 # Añadir sección de Eje transversal
@@ -229,8 +255,8 @@ def generar_documento_secuencia_didactica(silabos_agrupados, usuario, año_actua
                 set_cell_bold(tabla_eje.cell(0, 1))
                 
                 # Datos del eje transversal
-                tabla_eje.cell(1, 0).text = str(silabo.eje_transversal) if hasattr(silabo, 'eje_transversal') else "Sin datos"
-                tabla_eje.cell(1, 1).text = silabo.detalle_eje_transversal if hasattr(silabo, 'detalle_eje_transversal') else "Sin datos"
+                tabla_eje.cell(1, 0).text = _texto_campo(getattr(silabo, 'eje_transversal', None), default="Sin datos")
+                tabla_eje.cell(1, 1).text = _texto_campo(getattr(silabo, 'detalle_eje_transversal', None), default="Sin datos")
                 
                 # Añadir GUÍA AUTODIDÁCTICA DE APRENDIZAJE si existe una guía asociada
                 try:
@@ -254,92 +280,38 @@ def generar_documento_secuencia_didactica(silabos_agrupados, usuario, año_actua
                             tabla_guia.cell(0, i).text = encabezado
                             set_cell_bold(tabla_guia.cell(0, i))
                         
-                        # Actividad 1 (siempre presente)
-                        tabla_guia.cell(1, 0).text = "1"
-                        tabla_guia.cell(1, 1).text = guia.nombre_de_la_unidad
-                        tabla_guia.cell(1, 2).text = f"{guia.tipo_objetivo_1}: {guia.objetivo_aprendizaje_1}"
-                        tabla_guia.cell(1, 3).text = guia.contenido_tematico_1
-                        tabla_guia.cell(1, 4).text = guia.actividad_aprendizaje_1
-                        eval_text = f"Tipo: {guia.tipo_evaluacion_1}\nInstrumento: {guia.instrumento_evaluacion_1}\n"
-                        eval_text += f"Recursos: {guia.recursos_didacticos_1}"
-                        tabla_guia.cell(1, 5).text = eval_text
-                        tiempo_text = f"{str(guia.tiempo_minutos_1)}\nPuntaje: {str(guia.puntaje_1)}"
-                        tabla_guia.cell(1, 6).text = tiempo_text
-                        
-                        # Actividades opcionales (2-4)
-                        # Actividad 2
-                        if hasattr(guia, 'actividad_aprendizaje_2') and guia.actividad_aprendizaje_2:
-                            tabla_guia.cell(2, 0).text = "2"
-                            tabla_guia.cell(2, 1).text = guia.nombre_de_la_unidad
-                            tabla_guia.cell(2, 2).text = f"{guia.tipo_objetivo_2}: {guia.objetivo_aprendizaje_2}"
-                            tabla_guia.cell(2, 3).text = guia.contenido_tematico_2
-                            tabla_guia.cell(2, 4).text = guia.actividad_aprendizaje_2
-                            eval_text = f"Tipo: {guia.tipo_evaluacion_2}\nInstrumento: {guia.instrumento_evaluacion_2}\n"
-                            eval_text += f"Recursos: {guia.recursos_didacticos_2}"
-                            tabla_guia.cell(2, 5).text = eval_text
-                            tiempo_text = f"{str(guia.tiempo_minutos_2)}\nPuntaje: {str(guia.puntaje_2)}"
-                            tabla_guia.cell(2, 6).text = tiempo_text
-                        else:
-                            for i in range(7):
-                                tabla_guia.cell(2, i).text = "—"
-                        
-                        # Actividad 3
-                        if hasattr(guia, 'actividad_aprendizaje_3') and guia.actividad_aprendizaje_3:
-                            tabla_guia.cell(3, 0).text = "3"
-                            tabla_guia.cell(3, 1).text = guia.nombre_de_la_unidad
-                            tabla_guia.cell(3, 2).text = f"{guia.tipo_objetivo_3}: {guia.objetivo_aprendizaje_3}"
-                            tabla_guia.cell(3, 3).text = guia.contenido_tematico_3
-                            tabla_guia.cell(3, 4).text = guia.actividad_aprendizaje_3
-                            eval_text = f"Tipo: {guia.tipo_evaluacion_3}\nInstrumento: {guia.instrumento_evaluacion_3}\n"
-                            eval_text += f"Recursos: {guia.recursos_didacticos_3}"
-                            tabla_guia.cell(3, 5).text = eval_text
-                            tiempo_text = f"{str(guia.tiempo_minutos_3)}\nPuntaje: {str(guia.puntaje_3)}"
-                            tabla_guia.cell(3, 6).text = tiempo_text
-                        else:
-                            for i in range(7):
-                                tabla_guia.cell(3, i).text = "—"
-                        
-                        # Actividad 4
-                        if hasattr(guia, 'actividad_aprendizaje_4') and guia.actividad_aprendizaje_4:
-                            tabla_guia.cell(4, 0).text = "4"
-                            tabla_guia.cell(4, 1).text = guia.nombre_de_la_unidad
-                            tabla_guia.cell(4, 2).text = f"{guia.tipo_objetivo_4}: {guia.objetivo_aprendizaje_4}"
-                            tabla_guia.cell(4, 3).text = guia.contenido_tematico_4
-                            tabla_guia.cell(4, 4).text = guia.actividad_aprendizaje_4
-                            eval_text = f"Tipo: {guia.tipo_evaluacion_4}\nInstrumento: {guia.instrumento_evaluacion_4}\n"
-                            eval_text += f"Recursos: {guia.recursos_didacticos_4}"
-                            tabla_guia.cell(4, 5).text = eval_text
-                            tiempo_text = f"{str(guia.tiempo_minutos_4)}\nPuntaje: {str(guia.puntaje_4)}"
-                            tabla_guia.cell(4, 6).text = tiempo_text
-                        else:
-                            for i in range(7):
-                                tabla_guia.cell(4, i).text = "—"
-                        
-                        # Calcular totales para guardar los datos
+                        # Actividades 1-4 (1 obligatoria, 2-4 opcionales) y acumulación de totales
                         tiempo_total = 0
                         puntaje_total = 0
-                        
-                        # Sumar tiempo y puntaje de actividad 1 (obligatoria)
-                        tiempo_total += guia.tiempo_minutos_1 if hasattr(guia, 'tiempo_minutos_1') else 0
-                        puntaje_total += guia.puntaje_1 if hasattr(guia, 'puntaje_1') else 0
-                        
-                        # Sumar tiempo y puntaje de actividad 2 (opcional)
-                        if hasattr(guia, 'tiempo_minutos_2') and guia.tiempo_minutos_2:
-                            tiempo_total += guia.tiempo_minutos_2
-                        if hasattr(guia, 'puntaje_2') and guia.puntaje_2:
-                            puntaje_total += guia.puntaje_2
-                        
-                        # Sumar tiempo y puntaje de actividad 3 (opcional)
-                        if hasattr(guia, 'tiempo_minutos_3') and guia.tiempo_minutos_3:
-                            tiempo_total += guia.tiempo_minutos_3
-                        if hasattr(guia, 'puntaje_3') and guia.puntaje_3:
-                            puntaje_total += guia.puntaje_3
-                        
-                        # Sumar tiempo y puntaje de actividad 4 (opcional)
-                        if hasattr(guia, 'tiempo_minutos_4') and guia.tiempo_minutos_4:
-                            tiempo_total += guia.tiempo_minutos_4
-                        if hasattr(guia, 'puntaje_4') and guia.puntaje_4:
-                            puntaje_total += guia.puntaje_4
+                        unidad_guia_txt = _texto_campo(getattr(guia, 'nombre_de_la_unidad', None))
+
+                        for idx in range(1, 5):
+                            act = getattr(guia, f'actividad_aprendizaje_{idx}', None)
+                            if idx == 1 or act:
+                                tipo_obj = _texto_campo(getattr(guia, f'tipo_objetivo_{idx}', None), default="")
+                                obj = _texto_campo(getattr(guia, f'objetivo_aprendizaje_{idx}', None), default="")
+                                tabla_guia.cell(idx, 0).text = str(idx)
+                                tabla_guia.cell(idx, 1).text = unidad_guia_txt
+                                tabla_guia.cell(idx, 2).text = f"{tipo_obj}: {obj}".strip(": ") or "—"
+                                tabla_guia.cell(idx, 3).text = _texto_campo(getattr(guia, f'contenido_tematico_{idx}', None))
+                                tabla_guia.cell(idx, 4).text = _texto_campo(act)
+                                eval_text = (
+                                    f"Tipo: {_texto_campo(getattr(guia, f'tipo_evaluacion_{idx}', None))}\n"
+                                    f"Instrumento: {_texto_campo(getattr(guia, f'instrumento_evaluacion_{idx}', None))}\n"
+                                    f"Recursos: {_texto_campo(getattr(guia, f'recursos_didacticos_{idx}', None))}"
+                                )
+                                tabla_guia.cell(idx, 5).text = eval_text
+                                tiempo_val = getattr(guia, f'tiempo_minutos_{idx}', None)
+                                puntaje_val = getattr(guia, f'puntaje_{idx}', None)
+                                tabla_guia.cell(idx, 6).text = (
+                                    f"{_entero_texto(tiempo_val)}\nPuntaje: {_entero_texto(puntaje_val)}"
+                                )
+                            else:
+                                for col in range(7):
+                                    tabla_guia.cell(idx, col).text = "—"
+
+                            tiempo_total += getattr(guia, f'tiempo_minutos_{idx}', None) or 0
+                            puntaje_total += getattr(guia, f'puntaje_{idx}', None) or 0
                             
                         # Resumen de horas y puntajes
                         doc.add_heading('RESUMEN DE HORAS Y PUNTAJES', 3)
@@ -361,17 +333,13 @@ def generar_documento_secuencia_didactica(silabos_agrupados, usuario, año_actua
                         set_cell_bold(tabla_horas.cell(2, 0))
                         
                         # Calcular minutos presenciales
-                        minutos_presenciales = 0
-                        if hasattr(silabo, 'tiempo_primer_momento'):
-                            minutos_presenciales += silabo.tiempo_primer_momento
-                        if hasattr(silabo, 'tiempo_segundo_momento_teorica'):
-                            minutos_presenciales += silabo.tiempo_segundo_momento_teorica
-                        if hasattr(silabo, 'tiempo_segundo_momento_practica'):
-                            minutos_presenciales += silabo.tiempo_segundo_momento_practica
-                        if hasattr(silabo, 'tiempo_tercer_momento'):
-                            minutos_presenciales += silabo.tiempo_tercer_momento
-                        if hasattr(silabo, 'tiempo_minutos'):
-                            minutos_presenciales += silabo.tiempo_minutos
+                        minutos_presenciales = (
+                            (getattr(silabo, 'tiempo_primer_momento', None) or 0)
+                            + (getattr(silabo, 'tiempo_segundo_momento_teorica', None) or 0)
+                            + (getattr(silabo, 'tiempo_segundo_momento_practica', None) or 0)
+                            + (getattr(silabo, 'tiempo_tercer_momento', None) or 0)
+                            + (getattr(silabo, 'tiempo_minutos', None) or 0)
+                        )
                         
                         # Calcular horas presenciales
                         horas_presenciales = round(minutos_presenciales / 60, 2)
@@ -397,16 +365,17 @@ def generar_documento_secuencia_didactica(silabos_agrupados, usuario, año_actua
                         set_cell_bold(tabla_puntajes.cell(2, 0))
                         
                         # Puntaje presencial
-                        puntaje_presencial = silabo.puntaje if hasattr(silabo, 'puntaje') else 0
-                        tabla_puntajes.cell(0, 1).text = str(puntaje_presencial) if puntaje_presencial else "Sin datos"
+                        puntaje_presencial_raw = getattr(silabo, 'puntaje', None)
+                        puntaje_presencial = puntaje_presencial_raw or 0
+                        tabla_puntajes.cell(0, 1).text = _entero_texto(puntaje_presencial_raw, default="Sin datos")
                         
                         # Puntaje de estudio independiente
                         puntaje_independiente = puntaje_total
-                        tabla_puntajes.cell(1, 1).text = str(puntaje_independiente) if puntaje_independiente else "Sin datos"
+                        tabla_puntajes.cell(1, 1).text = str(puntaje_independiente) if puntaje_independiente is not None else "Sin datos"
                         
                         # Puntaje total
                         puntaje_total_completo = puntaje_presencial + puntaje_independiente
-                        tabla_puntajes.cell(2, 1).text = str(puntaje_total_completo) if puntaje_total_completo else "Sin datos"
+                        tabla_puntajes.cell(2, 1).text = str(puntaje_total_completo)
                 except Exception as e:
                     # Si hay un error al intentar agregar la guía, simplemente omitir esta sección
                     print(f"Error al intentar agregar la guía autodidáctica: {str(e)}")

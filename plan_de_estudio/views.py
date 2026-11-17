@@ -18,7 +18,8 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Silabo, Guia, AsignacionPlanEstudio, Asignatura, Plan_de_estudio, ModeloIAConfig
+from .models import Silabo, Guia, AsignacionPlanEstudio, Asignatura, Plan_de_estudio, ModeloIAConfig, ConfiguracionSistema, TRIMESTRES_ROMANOS
+from .ranking_utils import construir_ranking_docentes
 
 from .forms import SilaboForm
 from . import pwa_views
@@ -418,42 +419,13 @@ def obtener_estudios_independientes(asignacion_id):
 
 
 def get_previous_scores(asignacion, exclude_silabo_id=None, exclude_guia_id=None):
-    scores = {
-        'I Corte Evaluativo': 0,
-        'II Corte Evaluativo': 0,
-        'III Corte Evaluativo': 0
-    }
-    
-    # Sum syllabus scores
-    silabos = Silabo.objects.filter(asignacion_plan=asignacion)
-    if exclude_silabo_id:
-        silabos = silabos.exclude(id=exclude_silabo_id)
-        
-    for s in silabos:
-        corte = s.periodo_tiempo_programado
-        if corte:
-            corte = corte.strip()
-        if corte in scores and s.puntaje:
-            scores[corte] += s.puntaje
-            
-    # Sum guide scores
-    guias = Guia.objects.filter(silabo__asignacion_plan=asignacion)
-    if exclude_guia_id:
-        guias = guias.exclude(id=exclude_guia_id)
-        
-    for g in guias:
-        for p, c in [
-            (g.puntaje_1, g.periodo_tiempo_programado_1),
-            (g.puntaje_2, g.periodo_tiempo_programado_2),
-            (g.puntaje_3, g.periodo_tiempo_programado_3),
-            (g.puntaje_4, g.periodo_tiempo_programado_4),
-        ]:
-            if p and c:
-                c_clean = c.strip()
-                if c_clean in scores:
-                    scores[c_clean] += p
-                    
-    return scores
+    from plan_de_estudio.utils.curriculum_planner import calcular_puntajes_por_corte
+
+    return calcular_puntajes_por_corte(
+        asignacion,
+        exclude_silabo_id=exclude_silabo_id,
+        exclude_guia_id=exclude_guia_id,
+    )
 
 
 @login_required
@@ -528,6 +500,19 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
     return JsonResponse({"error": "Falta ID de asignación"}, status=400)
 
 
+def _obtener_silabo_pendiente_guia(asignacion):
+    """Retorna el primer sílabo de la asignación sin guía asociada, ordenado por encuentro."""
+    return (
+        Silabo.objects.filter(
+            asignacion_plan=asignacion,
+            guias__isnull=True,
+            guia__isnull=True,
+        )
+        .order_by("encuentros")
+        .first()
+    )
+
+
 @login_required
 def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
     """
@@ -545,55 +530,67 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
             asignacion = get_object_or_404(AsignacionPlanEstudio, id=id)
         nombre_de_usuario = request.user.username
         silabos_creados = asignacion.silabo_set.count()
+        guias_creadas = Guia.objects.filter(silabo__asignacion_plan=asignacion).count()
+        campos_sync = []
+        if asignacion.silabos_creados != silabos_creados:
+            asignacion.silabos_creados = silabos_creados
+            campos_sync.append("silabos_creados")
+        if asignacion.guias_creadas != guias_creadas:
+            asignacion.guias_creadas = guias_creadas
+            campos_sync.append("guias_creadas")
+        if campos_sync:
+            asignacion.save(update_fields=campos_sync)
 
         print(
-            f"Asignación encontrada: {asignacion}, Sílabos creados: {silabos_creados}"
+            f"Asignación encontrada: {asignacion}, Sílabos creados: {silabos_creados}, Guías creadas: {guias_creadas}"
         )
 
-        # Obtener el sílabo correspondiente al encuentro actual
-        # Primero intentamos encontrar si ya existe un sílabo para este encuentro
+        # Obtener el sílabo correspondiente al encuentro pendiente
         silabo = None
         if silabo_id:
             try:
                 silabo = Silabo.objects.get(id=silabo_id)
                 print(f"Sílabo encontrado por silabo_id {silabo_id}: {silabo}")
-                # No necesitamos acceder a asignacion para guardar la guía
-                # Lo que necesitamos es el sílabo, que ya tenemos
                 print(f"Sílabo ID: {silabo.id}")
             except Silabo.DoesNotExist:
                 print(f"No se encontró sílabo con ID {silabo_id}")
 
-        # Si no tenemos sílabo por ID, buscar por asignación y encuentro
+        encuentro_guia = None
         if not silabo:
-            silabo = Silabo.objects.filter(
-                asignacion_plan=asignacion, encuentros=silabos_creados + 1
-            ).first()
+            if guias_creadas >= 11:
+                messages.warning(
+                    request,
+                    f"Ya se han completado las 11 guías de estudio para {asignacion.plan_de_estudio}.",
+                )
+                return redirect("inicio")
+
+            # Buscar el primer sílabo (ordenado por encuentro) que aún no tiene guía
+            silabo = _obtener_silabo_pendiente_guia(asignacion)
             if silabo:
+                encuentro_guia = silabo.encuentros
                 print(
-                    f"Sílabo encontrado para el encuentro {silabos_creados + 1}: {silabo}"
+                    f"Sílabo pendiente encontrado para el encuentro {silabo.encuentros}: {silabo}"
                 )
             else:
-                print(f"No se encontró sílabo para el encuentro {silabos_creados + 1}")
-
-        # Si todavía no tenemos sílabo, intentar obtener el último
-        if not silabo and silabos_creados > 0:
-            silabo = (
-                Silabo.objects.filter(asignacion_plan=asignacion)
-                .order_by("-encuentros")
-                .first()
-            )
-            if silabo:
-                print(f"Último sílabo encontrado: {silabo}")
-            else:
-                print("No se encontró ningún sílabo para esta asignación")
-
-        # Si aún no hay sílabo, verificar si necesitamos crear uno
-        if not silabo:
-            print(
-                "No se encontró ningún sílabo. Se pasará 'silabo=None' a la plantilla."
-            )
-            # No creamos un sílabo aquí para evitar efectos secundarios,
-            # solo pasamos None a la plantilla
+                encuentros_con_guia = set(
+                    Guia.objects.filter(silabo__asignacion_plan=asignacion).values_list(
+                        "silabo__encuentros", flat=True
+                    )
+                )
+                encuentro_guia = next(
+                    (n for n in range(1, 12) if n not in encuentros_con_guia),
+                    min(guias_creadas + 1, 11),
+                )
+                if silabos_creados > 0:
+                    messages.info(
+                        request,
+                        f"Todos los sílabos creados ya tienen guía asociada. Cree primero el sílabo del encuentro {encuentro_guia}.",
+                    )
+                print(
+                    "No se encontró ningún sílabo pendiente de guía. Se pasará 'silabo=None' a la plantilla."
+                )
+        else:
+            encuentro_guia = silabo.encuentros
 
         # Obtener las guías existentes para esta asignación
         guias = obtener_estudios_independientes(asignacion.id)
@@ -628,7 +625,8 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
                 "silabo": silabo,  # Pasar el sílabo a la plantilla
                 "usuario": nombre_de_usuario,
                 "silabos_creados": silabos_creados,
-                "encuentro": silabo.encuentros if silabo else silabos_creados + 1,
+                "guias_creadas": guias_creadas,
+                "encuentro": encuentro_guia,
                 "guias": guias,
                 "unidad_choices": unidad_choices,
                 "tecnica_evaluacion_choices": tecnica_evaluacion_choices,
@@ -827,10 +825,13 @@ def guardar_guia(request, silabo_id=None, asignacion_id=None, id=None):
                 silabo.guia = guia
                 silabo.save()
 
-                # Incrementar contador de guías creadas en la asignación
+                # Sincronizar contador de guías creadas en la asignación desde BD
                 asignacion = silabo.asignacion_plan
-                asignacion.guias_creadas += 1
-                asignacion.save()
+                if asignacion:
+                    asignacion.guias_creadas = Guia.objects.filter(
+                        silabo__asignacion_plan=asignacion
+                    ).count()
+                    asignacion.save(update_fields=["guias_creadas"])
 
                 # Verificar que la relación con el sílabo se haya establecido correctamente
                 silabo_actualizado = Silabo.objects.get(id=silabo_id)
@@ -948,18 +949,25 @@ def get_matching_guia(silabo_id, encuentro_numero):
 @login_required
 def generar_silabo(request):
     """
-    Función para generar un sílabo usando modelos de IA.
+    Función para generar un sílabo usando modelos de IA con coherencia curricular,
+    presupuesto por Corte Evaluativo, carga horaria del plan y mapa maestro de 11 encuentros.
     """
     from plan_de_estudio.ai_generators import generar_respuesta_ai, get_default_config
+    from plan_de_estudio.utils.ai_normalizer import normalizar_respuesta_silabo
+    from plan_de_estudio.utils.curriculum_planner import (
+        calcular_corte_y_presupuesto,
+        calcular_tiempos_y_fechas,
+        construir_historial_compacto,
+        construir_mapa_maestro,
+        extraer_contexto_asignatura,
+        formatear_contexto_curricular,
+    )
     import json
-    from django.db.models import Q
-    from plan_de_estudio.models import AsignacionPlanEstudio, Silabo, PlanTematico, ProgramaAsignatura2026, Guia
+    from plan_de_estudio.models import AsignacionPlanEstudio, Silabo
 
     if request.method == "POST":
-        # Obtener los datos del formulario
         encuentro = request.POST.get("encuentro")
         plan_id = request.POST.get("plan")
-        # Obtener el modelo seleccionado del formulario
         modelo_seleccionado = request.POST.get("modelo_select", "google")
         print(
             "Imprimiendo el modelo selecionodao:::::::::::::::::: "
@@ -967,7 +975,6 @@ def generar_silabo(request):
         )
 
         try:
-            # Convertir a entero para asegurar que es un número válido
             encuentro = int(encuentro)
             if encuentro < 1 or encuentro > 11:
                 return JsonResponse(
@@ -981,92 +988,10 @@ def generar_silabo(request):
             )
 
         try:
-            # Obtener la asignación del plan de estudio
-            asignacion = AsignacionPlanEstudio.objects.get(id=plan_id)
+            asignacion = AsignacionPlanEstudio.objects.select_related(
+                "plan_de_estudio", "plan_de_estudio__asignatura"
+            ).get(id=plan_id)
 
-            # Obtener información de la asignatura (Prioridad: Programa 2026, Fallback: Plan Temático)
-            programa_2026 = ProgramaAsignatura2026.objects.filter(
-                plan_estudio=asignacion.plan_de_estudio
-            ).first()
-
-            contexto_asignatura = ""
-
-            if programa_2026:
-                contexto_asignatura += f"FUNDAMENTACIÓN: {programa_2026.fundamentacion}\n"
-                contexto_asignatura += f"OBJETIVOS GENERALES:\nConceptual: {programa_2026.objetivo_conceptual}\nProcedimental: {programa_2026.objetivo_procedimental}\nActitudinal: {programa_2026.objetivo_actitudinal}\n"
-                contexto_asignatura += f"EJES TRANSVERSALES PROGRAMA: {programa_2026.ejes_transversales}\n\n"
-                contexto_asignatura += "UNIDADES TEMÁTICAS:\n"
-
-                # Iterar sobre las 6 unidades posibles
-                for i in range(1, 7):
-                    nombre = getattr(programa_2026, f'unidad_{i}_nombre', '')
-                    if nombre:
-                        contexto_asignatura += f"\n--- UNIDAD {i}: {nombre} ---\n"
-                        contexto_asignatura += f"Objetivos Específicos: {getattr(programa_2026, f'unidad_{i}_objetivos_especificos', 'No especificado')}\n"
-                        contexto_asignatura += f"Contenido Temático: {getattr(programa_2026, f'unidad_{i}_contenido', 'No especificado')}\n"
-                        contexto_asignatura += f"Mediación Pedagógica: {getattr(programa_2026, f'unidad_{i}_mediacion', 'No especificado')}\n"
-                        contexto_asignatura += f"Evaluación: {getattr(programa_2026, f'unidad_{i}_evaluacion', 'No especificado')}\n"
-
-            else:
-                # Fallback a Plan Temático antiguo
-                plan_tematico = PlanTematico.objects.filter(
-                    plan_estudio=asignacion.plan_de_estudio
-                ).first()
-
-                if not plan_tematico:
-                    return JsonResponse(
-                        {"error": "No se encontró información del programa (ni Programa 2026 ni Plan Temático)"},
-                        status=400,
-                    )
-
-                contexto_asignatura = f"""
-                INFORMACIÓN DEL PLAN TEMÁTICO (LEGADO):
-                Unidad: {plan_tematico.unidades}
-                Nombre de la unidad: {plan_tematico.nombre_de_la_unidad}
-                Objetivos específicos: {plan_tematico.objetivo_especificos}
-                Plan analítico: {plan_tematico.plan_analitico}
-                Recomendaciones metodológicas: {plan_tematico.recomendaciones_metodologicas}
-
-                CONTENIDO TEMÁTICO COMPLETO:
-                {plan_tematico.plan_analitico}
-                """
-
-            # Obtener los sílabos ya generados para esta asignación
-            silabos_existentes = Silabo.objects.filter(
-                asignacion_plan=asignacion
-            ).order_by("encuentros")
-
-            # Convertir los sílabos existentes a un formato que podamos usar en el prompt
-            silabos_previos = []
-            guias_previas = []
-            for silabo in silabos_existentes:
-                if (
-                    silabo.encuentros < encuentro
-                ):  # Solo considerar los encuentros previos
-                    silabo_dict = {
-                        "encuentro": silabo.encuentros,
-                        "unidad": silabo.unidad,
-                        "nombre_de_la_unidad": silabo.nombre_de_la_unidad,
-                        "contenido_tematico": silabo.contenido_tematico,
-                        "objetivo_conceptual": silabo.objetivo_conceptual,
-                        "objetivo_procedimental": silabo.objetivo_procedimental,
-                        "objetivo_actitudinal": silabo.objetivo_actitudinal,
-                    }
-                    silabos_previos.append(silabo_dict)
-
-                    if silabo.guia:
-                        guia_dict = {
-                            "encuentro": silabo.encuentros,
-                            "actividades_guia": [
-                                silabo.guia.actividad_aprendizaje_1,
-                                silabo.guia.actividad_aprendizaje_2,
-                                silabo.guia.actividad_aprendizaje_3,
-                                silabo.guia.actividad_aprendizaje_4,
-                            ]
-                        }
-                        guias_previas.append(guia_dict)
-
-            # Verificar si ya existe un sílabo para este encuentro
             silabo_actual = Silabo.objects.filter(
                 asignacion_plan=asignacion, encuentros=encuentro
             ).first()
@@ -1075,6 +1000,22 @@ def generar_silabo(request):
                     {"error": f"Ya existe un sílabo para el encuentro {encuentro}"},
                     status=400,
                 )
+
+            try:
+                contexto_info = extraer_contexto_asignatura(asignacion.plan_de_estudio)
+            except ValueError as err:
+                return JsonResponse({"error": str(err)}, status=400)
+
+            mapa = construir_mapa_maestro(contexto_info["unidades"])
+            enc_plan = mapa["por_encuentro"][encuentro]
+            presupuesto = calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=False)
+            tiempos = calcular_tiempos_y_fechas(
+                asignacion, encuentro, unidad_info=enc_plan["unidad_dict"]
+            )
+            historial = construir_historial_compacto(asignacion, encuentro)
+            contexto_curricular = formatear_contexto_curricular(
+                contexto_info, mapa, encuentro
+            )
 
         except AsignacionPlanEstudio.DoesNotExist:
             return JsonResponse(
@@ -1085,48 +1026,25 @@ def generar_silabo(request):
                 {"error": f"Error al obtener datos del plan: {str(e)}"}, status=400
             )
 
-        # Ruta al archivo de datos JSON con la estructura
         json_filepath = os.path.join(settings.BASE_DIR, "static", "data", "datos.json")
 
         try:
             with open(json_filepath, "r", encoding="utf-8") as json_file:
                 datos_estructura = json.load(json_file)
 
-            # Obtener la estructura del primer encuentro como ejemplo
             primer_encuentro = datos_estructura.get("primer_encuentro", {})
-            
-            # Obtener las listas de opciones directamente de los Modelos para asegurar consistencia
+
             unidades = [u[0] for u in Silabo.UNIDAD_LIST]
             ejes_transversales = [e[0] for e in Silabo.EJE_TRANSVERSAL_LIST]
             tipos_primer_momento = [t[0] for t in Silabo.TIPO_PRIMER_MOMENTO_LIST]
             tipos_segundo_momento_teoria = [t[0] for t in Silabo.TIPO_SEGUNDO_MOMENTO_TEORIA_LIST]
             tipos_segundo_momento_practica = [t[0] for t in Silabo.TIPO_SEGUNDO_MOMENTO_PRACTICA_LIST]
             tipos_tercer_momento = [t[0] for t in Silabo.TIPO_TERCER_MOMENTO_LIST]
-
-            # --- Lógica de distribución de contenido ---
-            total_unidades = 0
-            if programa_2026:
-                for i in range(1, 7):
-                    if getattr(programa_2026, f'unidad_{i}_nombre', ''):
-                        total_unidades += 1
-            elif plan_tematico:
-                 # Estimación para plan temático legado (menos preciso)
-                 total_unidades = 4 
-
-            # Calcular unidad esperada (distribución lineal simple)
-            unidad_esperada = min(int((encuentro - 1) / (11 / max(total_unidades, 1))) + 1, total_unidades)
-            
-            # Identificar temas y unidades YA cubiertos
-            temas_cubiertos = [s['contenido_tematico'] for s in silabos_previos]
-            unidades_cubiertas = list(set([s['unidad'] for s in silabos_previos]))
-            
-            info_progreso = f"""
-            ESTADO DE PROGRESO DEL CURSO:
-            - Encuentro actual: {encuentro} de 11.
-            - Total Unidades de la asignatura: {total_unidades}.
-            - Unidades ya cubiertas anteriormente: {', '.join(unidades_cubiertas) if unidades_cubiertas else 'Ninguna'}.
-            - Según la distribución del tiempo, deberías estar abordando temas de la: UNIDAD {unidad_esperada} (aproximadamente).
-            """
+            tecnicas_evaluacion = [t[0] for t in Silabo.TECNICA_EVALUACION_LIST]
+            tipos_evaluacion = [t[0] for t in Silabo.TIPO_EVALUACION_LIST]
+            instrumentos_evaluacion = [t[0] for t in Silabo.INSTRUMENTO_EVALUACION_LIST]
+            agentes_evaluadores = [t[0] for t in Silabo.AGENTE_EVALUADOR_LIST]
+            periodos_tiempo = [t[0] for t in Silabo.PERIODO_TIEMPO_LIST]
 
         except Exception as e:
             return JsonResponse(
@@ -1134,27 +1052,37 @@ def generar_silabo(request):
                 status=400,
             )
 
-        # Crear el prompt completo
-        prompt_completo = f"""
-            Instrucciones: Crea un sílabo basado en la siguiente información y devuélvelo en formato JSON estructurado.
+        nota_cierre = ""
+        if encuentro == 11:
+            nota_cierre = (
+                f"\nREGLA ESPECIAL DE CIERRE (ENCUENTRO 11): Este es el ÚLTIMO encuentro del trimestre ({tiempos['fecha_encuentro']}). "
+                "Realiza síntesis e integración final en el aula y evaluación final dentro del mismo encuentro; NO dejes exposiciones ni defensas pendientes para semanas posteriores."
+            )
 
-            Estás creando el sílabo para el encuentro {encuentro} de 11 encuentros totales.
+        reglas_variedad = ""
+        if historial["tecnicas_clase_recientes"]:
+            reglas_variedad = (
+                "\nDIVERSIFICACIÓN DIDÁCTICA OBLIGATORIA (evita repetir exactamente las técnicas/instrumentos recientes): "
+                + "; ".join(historial["tecnicas_clase_recientes"])
+            )
+
+        prompt_completo = f"""
+            Instrucciones: Crea el sílabo para el Encuentro {encuentro} de 11 y devuélvelo únicamente como un objeto JSON válido.
+
             Plan de estudio: {str(asignacion.plan_de_estudio)}
             Asignatura: {asignacion.plan_de_estudio.asignatura.nombre}
+            Fecha del encuentro: {tiempos['fecha_encuentro']} ({tiempos['ciclo_nombre']})
 
-            {info_progreso}
+            PRESUPUESTO EVALUATIVO Y CARGA HORARIA (OBLIGATORIO):
+            - Corte Evaluativo obligatorio (`periodo_tiempo_programado`): "{presupuesto['corte']}"
+            - Acumulado previo en {presupuesto['corte']} (sílabos + guías): {presupuesto['usado_corte']}/100 pts (saldo disponible: {presupuesto['saldo_corte']}/100 pts).
+            - Puntaje asignado a este sílabo (`puntaje`): {presupuesto['presupuesto_objetivo']} puntos (máximo estricto permitido: {presupuesto['presupuesto_max']} puntos).
+            - Duración del encuentro presencial (`tiempo_primer_momento + tiempo_segundo_momento_teorica + tiempo_segundo_momento_practica + tiempo_tercer_momento`): DEBE sumar ~{tiempos['min_clase_objetivo']} minutos (plan total: {tiempos['horas_presenciales_plan']}h en 11 encuentros; desglose sugerido: 1er momento {tiempos['t1_sugerido']} min, 2do momento teoría {tiempos['t2_teorica_sugerido']} min, 2do momento práctica {tiempos['t2_practica_sugerido']} min, 3er momento {tiempos['t3_sugerido']} min).{nota_cierre}
 
-            INFORMACIÓN DETALLADA DE LA ASIGNATURA:
-            {contexto_asignatura}
+            {contexto_curricular}
 
-            TEMAS YA IMPARTIDOS EN ENCUENTROS ANTERIORES (¡NO REPETIR!):
-            {json.dumps(temas_cubiertos, indent=2, ensure_ascii=False) if temas_cubiertos else "Ninguno."}
-
-            {"SÍLABOS PREVIOS (Contexto completo):" if silabos_previos else ""}
-            {json.dumps(silabos_previos, indent=2, ensure_ascii=False) if silabos_previos else ""}
-
-            {"ACTIVIDADES DE GUÍAS PREVIAS (NO REPETIR EN CLASE):" if guias_previas else ""}
-            {json.dumps(guias_previas, indent=2, ensure_ascii=False) if guias_previas else ""}
+            HISTORIAL COMPACTO DE ENCUENTROS ANTERIORES (TEMAS EN CLASE Y TAREAS EN GUÍAS — PROHIBIDO REPETIR):
+            {historial['resumen_texto']}{reglas_variedad}
 
             Utiliza la siguiente estructura de datos y opciones disponibles:
 
@@ -1173,8 +1101,23 @@ def generar_silabo(request):
             TIPOS DE SEGUNDO MOMENTO DIDÁCTICO (PRÁCTICA):
             {', '.join(tipos_segundo_momento_practica)}
 
-            TIPOS DE TERCER MOMENTO DIDÁCTICO:
+            TIPOS DE TERCER MOMENTO DIDÁCTICO (máximo 2 opciones en arreglo JSON):
             {', '.join(tipos_tercer_momento)}
+
+            TÉCNICAS DE EVALUACIÓN DISPONIBLES (máximo 2 opciones exactas en arreglo JSON):
+            {', '.join(tecnicas_evaluacion)}
+
+            TIPOS DE EVALUACIÓN DISPONIBLES (máximo 2 opciones exactas en arreglo JSON):
+            {', '.join(tipos_evaluacion)}
+
+            INSTRUMENTOS DE EVALUACIÓN DISPONIBLES (1 opción exacta):
+            {', '.join(instrumentos_evaluacion)}
+
+            AGENTES EVALUADORES DISPONIBLES (máximo 2 opciones exactas en arreglo JSON):
+            {', '.join(agentes_evaluadores)}
+
+            PERIODOS DE TIEMPO DISPONIBLES (1 opción exacta):
+            {', '.join(periodos_tiempo)}
 
             EJEMPLO DE ESTRUCTURA (primer encuentro):
             ```
@@ -1182,31 +1125,38 @@ def generar_silabo(request):
             ```
 
             INSTRUCCIONES ESPECÍFICAS:
-            1. Divide el contenido temático completo en 11 encuentros de manera coherente y progresiva.
-            2. Para el encuentro {encuentro}, selecciona la parte correspondiente del contenido temático.
-            3. NO repitas contenido que ya se ha cubierto en encuentros anteriores.
-            4. IMPORTANTE: En la sección 'actividad_aprendizaje' (Actividad Dinámica / Trabajo en clase), NO repitas ejercicios o actividades que ya se hayan dejado en las Guías de Estudio Independiente (ver ACTIVIDADES DE GUÍAS PREVIAS). La actividad en clase debe ser diferente y complementaria.
-            5. Si es el primer encuentro, comienza con una introducción general.
-            6. Si hay encuentros previos, continúa desde donde se quedaron.
-            7. Asegúrate de que haya una progresión lógica entre los encuentros.
-            8. Adapta los objetivos y actividades al contenido específico de este encuentro.
-            9. Usa la misma estructura JSON que el ejemplo proporcionado.
-
-            Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior,
-            pero adaptado al encuentro {encuentro} y al plan de estudio proporcionado.
-
-            Asegúrate de que todos los campos tengan valores coherentes y apropiados para el encuentro {encuentro}.
-            Respeta las opciones disponibles para los campos que tienen listas predefinidas.
+            1. Respeta estrictamente la ASIGNACIÓN OBLIGATORIA: `"unidad": "{enc_plan['unidad_romano']}"`, `"nombre_de_la_unidad": "{enc_plan['unidad_nombre']}"`.
+            2. Desarrolla únicamente la fracción {enc_plan['sesion_en_unidad']}/{enc_plan['sesiones_unidad']} correspondiente del contenido temático de esa unidad, dando continuidad lógica sin repetir contenidos ya impartidos.
+            3. En `actividad_aprendizaje` (trabajo práctico presencial en aula), diseña una dinámica presencial DIFERENTE y complementaria a las tareas ya asignadas en las Guías de Estudio Independiente.
+            4. Varía las técnicas didácticas (`tipo_segundo_momento_*`, `tecnica_evaluacion`, `instrumento_evaluacion`) y los ejes transversales respecto a encuentros previos cuando sea pedagógicamente pertinente.
+            5. Usa exactamente `"codigo": "{asignacion.plan_de_estudio.codigo}"`, `"encuentros": {encuentro}`, `"fecha": "{tiempos['fecha_encuentro']}"`, `"periodo_tiempo_programado": "{presupuesto['corte']}"`, `"puntaje": {presupuesto['presupuesto_objetivo']}` (<= {presupuesto['presupuesto_max']}), y los dos campos enteros `"tiempo_segundo_momento_teorica"` y `"tiempo_segundo_momento_practica"`.
+            6. En campos de selección múltiple (`tipo_tercer_momento`, `eje_transversal`, `tecnica_evaluacion`, `tipo_evaluacion`, `agente_evaluador`) devuelve un arreglo JSON con 1 o máximo 2 valores EXACTOS de las listas anteriores.
+            7. Devuelve únicamente un objeto JSON válido con la misma estructura que el ejemplo proporcionado.
         """
 
         try:
-            # Configurar parámetros específicos para el modelo seleccionado
             config = get_default_config(modelo_seleccionado)
 
-            # Generar respuesta usando la función centralizada
-            data = generar_respuesta_ai(prompt_completo, modelo_seleccionado, **config)
+            data = generar_respuesta_ai(
+                prompt_completo,
+                modelo_seleccionado,
+                tipo_respuesta="silabo",
+                **config,
+            )
+            data = normalizar_respuesta_silabo(
+                data,
+                plan_codigo=asignacion.plan_de_estudio.codigo,
+                encuentro=encuentro,
+                unidad_default=enc_plan["unidad_romano"],
+                nombre_unidad_default=enc_plan["unidad_nombre"],
+                unidad_forzada=enc_plan["unidad_romano"],
+                corte_forzado=presupuesto["corte"],
+                puntaje_objetivo=presupuesto["presupuesto_objetivo"],
+                puntaje_max=presupuesto["presupuesto_max"],
+                minutos_clase_objetivo=tiempos["min_clase_objetivo"],
+                fecha_objetivo=tiempos["fecha_encuentro"],
+            )
 
-            # Devolver la respuesta
             return JsonResponse({"silabo_data": data})
 
         except Exception as e:
@@ -1227,11 +1177,19 @@ def generar_estudio_independiente(request):
     if request.method == "POST":
         silabo_id = request.POST.get("silabo_id")
         asignacion_id = request.POST.get("asignacion_id")
-        encuentro = int(
-            request.POST.get("encuentro", 1)
-        )  # Por defecto, primer encuentro
+        try:
+            encuentro = int(request.POST.get("encuentro", 1))
+            if encuentro < 1 or encuentro > 11:
+                return JsonResponse({"error": "El número de encuentro debe estar entre 1 y 11"}, status=400)
+        except (ValueError, TypeError):
+            return JsonResponse({"error": "El número de encuentro debe ser un número válido"}, status=400)
         modelo_seleccionado = request.POST.get("modelo")
-        numero_actividades = int(request.POST.get("numero_actividades", 4))
+        try:
+            numero_actividades = int(request.POST.get("numero_actividades", 4))
+            if numero_actividades < 1 or numero_actividades > 4:
+                return JsonResponse({"error": "El número de actividades debe estar entre 1 y 4"}, status=400)
+        except (ValueError, TypeError):
+            return JsonResponse({"error": "El número de actividades debe ser un número válido"}, status=400)
 
         print(
             f"Recibida solicitud para generar guía de estudio. Sílabo ID: {silabo_id}, Asignación ID: {asignacion_id}, Encuentro: {encuentro}, Modelo: {modelo_seleccionado}, Actividades: {numero_actividades}"
@@ -1248,6 +1206,8 @@ def generar_estudio_independiente(request):
                     silabo = Silabo.objects.get(id=silabo_id)
                     print(f"Sílabo encontrado por silabo_id {silabo_id}: {silabo}")
                     asignacion = silabo.asignacion_plan
+                    if silabo.encuentros:
+                        encuentro = silabo.encuentros
                 except Silabo.DoesNotExist:
                     print(f"No se encontró sílabo con ID {silabo_id}")
 
@@ -1274,22 +1234,19 @@ def generar_estudio_independiente(request):
                     else:
                         print(f"No se encontró sílabo para el encuentro {encuentro}")
 
-                        # 4. Si no se encuentra por encuentro específico, buscar el último
-                        silabo = (
-                            Silabo.objects.filter(asignacion_plan=asignacion)
-                            .order_by("-encuentros")
-                            .first()
-                        )
+                        # 4. Si no se encuentra por encuentro específico, buscar el primer sílabo pendiente de guía
+                        silabo = _obtener_silabo_pendiente_guia(asignacion)
 
                         if silabo:
-                            print(f"Se usará el último sílabo disponible: {silabo}")
+                            encuentro = silabo.encuentros
+                            print(f"Se usará el primer sílabo pendiente de guía: {silabo}")
                         else:
                             print(
-                                f"No se encontraron sílabos para la asignación {asignacion_id}"
+                                f"No hay sílabos pendientes de guía para la asignación {asignacion_id}"
                             )
                             return JsonResponse(
                                 {
-                                    "error": "No hay sílabo disponible para esta asignación. Por favor, cree un sílabo primero."
+                                    "error": f"No hay sílabo disponible sin guía para el encuentro {encuentro}. Por favor, cree un sílabo primero."
                                 },
                                 status=400,
                             )
@@ -1315,55 +1272,19 @@ def generar_estudio_independiente(request):
             if not asignacion:
                 asignacion = silabo.asignacion_plan
 
+            from plan_de_estudio.utils.ai_normalizer import normalizar_respuesta_guia
+            from plan_de_estudio.utils.curriculum_planner import (
+                calcular_corte_y_presupuesto,
+                calcular_tiempos_y_fechas,
+                construir_historial_compacto,
+                construir_mapa_maestro,
+                extraer_contexto_asignatura,
+                formatear_contexto_curricular,
+                obtener_corte_para_encuentro,
+            )
+
             print(f"Usando asignación: {asignacion}, Sílabo: {silabo}")
 
-            # Obtener información de la asignatura para dar contexto
-            from plan_de_estudio.models import ProgramaAsignatura2026, PlanTematico
-
-            programa_2026 = ProgramaAsignatura2026.objects.filter(
-                plan_estudio=asignacion.plan_de_estudio
-            ).first()
-
-            contexto_asignatura = ""
-
-            if programa_2026:
-                contexto_asignatura += f"FUNDAMENTACIÓN: {programa_2026.fundamentacion}\n"
-                contexto_asignatura += f"OBJETIVOS GENERALES:\nConceptual: {programa_2026.objetivo_conceptual}\nProcedimental: {programa_2026.objetivo_procedimental}\nActitudinal: {programa_2026.objetivo_actitudinal}\n"
-                contexto_asignatura += (
-                    f"EJES TRANSVERSALES PROGRAMA: {programa_2026.ejes_transversales}\n\n"
-                )
-                contexto_asignatura += "UNIDADES TEMÁTICAS:\n"
-
-                # Iterar sobre las 6 unidades posibles
-                for i in range(1, 7):
-                    nombre = getattr(programa_2026, f"unidad_{i}_nombre", "")
-                    if nombre:
-                        contexto_asignatura += f"\n--- UNIDAD {i}: {nombre} ---\n"
-                        contexto_asignatura += f"Objetivos Específicos: {getattr(programa_2026, f'unidad_{i}_objetivos_especificos', 'No especificado')}\n"
-                        contexto_asignatura += f"Contenido Temático: {getattr(programa_2026, f'unidad_{i}_contenido', 'No especificado')}\n"
-                        contexto_asignatura += f"Mediación Pedagógica: {getattr(programa_2026, f'unidad_{i}_mediacion', 'No especificado')}\n"
-                        contexto_asignatura += f"Evaluación: {getattr(programa_2026, f'unidad_{i}_evaluacion', 'No especificado')}\n"
-
-            else:
-                # Fallback a Plan Temático antiguo
-                plan_tematico = PlanTematico.objects.filter(
-                    plan_estudio=asignacion.plan_de_estudio
-                ).first()
-
-                if plan_tematico:
-                    contexto_asignatura = f"""
-                    INFORMACIÓN DEL PLAN TEMÁTICO (LEGADO):
-                    Unidad: {plan_tematico.unidades}
-                    Nombre de la unidad: {plan_tematico.nombre_de_la_unidad}
-                    Objetivos específicos: {plan_tematico.objetivo_especificos}
-                    Plan analítico: {plan_tematico.plan_analitico}
-                    Recomendaciones metodológicas: {plan_tematico.recomendaciones_metodologicas}
-
-                    CONTENIDO TEMÁTICO COMPLETO:
-                    {plan_tematico.plan_analitico}
-                    """
-
-            # Verificar si ya existe una guía para este sílabo
             guia_existente = Guia.objects.filter(silabo=silabo).first()
             if guia_existente:
                 print(
@@ -1376,26 +1297,88 @@ def generar_estudio_independiente(request):
                     status=400,
                 )
 
-            # Continuar con el resto del código...
+            import datetime as _dt
 
-            # Obtener guías anteriores para otros sílabos de la misma asignación
-            guias_anteriores = Guia.objects.filter(
-                silabo__asignacion_plan=asignacion,
-                silabo__encuentros__lt=silabo.encuentros,
-            ).order_by("silabo__encuentros")
+            contexto_curricular = None
+            enc_plan = None
+            if asignacion:
+                try:
+                    contexto_info = extraer_contexto_asignatura(asignacion.plan_de_estudio)
+                    mapa = construir_mapa_maestro(contexto_info["unidades"])
+                    enc_plan = mapa["por_encuentro"].get(encuentro)
+                    if enc_plan:
+                        contexto_curricular = formatear_contexto_curricular(
+                            contexto_info, mapa, encuentro
+                        )
+                except ValueError:
+                    enc_plan = None
 
-            # Ruta al archivo de datos JSON con la estructura de la guía
+            if not enc_plan:
+                enc_plan = {
+                    "encuentro": encuentro,
+                    "unidad_romano": silabo.unidad,
+                    "unidad_nombre": silabo.nombre_de_la_unidad,
+                    "sesion_en_unidad": 1,
+                    "sesiones_unidad": 1,
+                    "corte": obtener_corte_para_encuentro(encuentro),
+                    "unidad_dict": {
+                        "horas_teoricas": 0,
+                        "horas_practicas": 0,
+                        "horas_independientes": 0,
+                    },
+                }
+                contexto_curricular = (
+                    f"Unidad del Sílabo: {silabo.unidad} — {silabo.nombre_de_la_unidad}\n"
+                    f"Contenido Temático: {silabo.contenido_tematico}"
+                )
+
+            if asignacion:
+                presupuesto = calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=True)
+                tiempos = calcular_tiempos_y_fechas(
+                    asignacion,
+                    encuentro,
+                    unidad_info=enc_plan["unidad_dict"],
+                    silabo=silabo,
+                    numero_actividades=numero_actividades,
+                )
+                historial = construir_historial_compacto(asignacion, encuentro)
+                plan_str = str(asignacion.plan_de_estudio)
+                asig_nombre = asignacion.plan_de_estudio.asignatura.nombre
+            else:
+                fecha_base = silabo.fecha or _dt.date.today()
+                fecha_ent_min = fecha_base - _dt.timedelta(days=5) if encuentro == 11 else fecha_base + _dt.timedelta(days=1)
+                fecha_ent_max = fecha_base if encuentro == 11 else fecha_base + _dt.timedelta(days=6)
+                presupuesto = {
+                    "corte": obtener_corte_para_encuentro(encuentro),
+                    "usado_corte": 0,
+                    "saldo_corte": 100,
+                    "presupuesto_objetivo": 20,
+                    "presupuesto_max": 100,
+                    "es_ultimo_en_corte": False,
+                }
+                tiempos = {
+                    "ciclo_nombre": "Ciclo actual",
+                    "fecha_encuentro": fecha_base.isoformat(),
+                    "fecha_entrega_min": fecha_ent_min.isoformat(),
+                    "fecha_entrega_max": fecha_ent_max.isoformat(),
+                    "horas_independientes_plan": 70,
+                    "min_indep_objetivo": 360,
+                    "min_por_tarea_aprox": max(15, round(360 / max(1, numero_actividades))),
+                }
+                historial = {
+                    "resumen_texto": "Ningún encuentro previo registrado.",
+                    "tecnicas_guia_recientes": [],
+                }
+                plan_str = silabo.codigo or "Plan de estudio"
+                asig_nombre = silabo.nombre_de_la_unidad or "Asignatura"
+
             json_filepath = os.path.join(
                 settings.BASE_DIR, "static", "data", "guia_ejemplo.json"
             )
-
             with open(json_filepath, "r", encoding="utf-8") as json_file:
                 datos_estructura = json.load(json_file)
-
-            # Obtener la estructura de ejemplo y las listas de opciones
             ejemplo_guia = datos_estructura.get("ejemplo_guia", {})
-            
-            # Obtener las listas de opciones directamente de los Modelos
+
             tipos_objetivo = [t[0] for t in Guia.TIPO_OBJETIVO_LIST]
             tecnicas_evaluacion = [t[0] for t in Silabo.TECNICA_EVALUACION_LIST]
             tipos_evaluacion = [t[0] for t in Silabo.TIPO_EVALUACION_LIST]
@@ -1403,132 +1386,56 @@ def generar_estudio_independiente(request):
             agentes_evaluadores = [t[0] for t in Silabo.AGENTE_EVALUADOR_LIST]
             periodos_tiempo = [t[0] for t in Silabo.PERIODO_TIEMPO_LIST]
 
-            # Convertir las guías anteriores a un formato que podamos usar en el prompt
-            guias_previas = []
-            for guia in guias_anteriores:
-                guia_dict = {
-                    "numero_encuentro": guia.numero_encuentro,
-                    "fecha": guia.fecha.strftime("%Y-%m-%d") if guia.fecha else None,
-                    "unidad": guia.unidad,
-                    "nombre_de_la_unidad": guia.nombre_de_la_unidad,
-                    # Tarea 1
-                    "tipo_objetivo_1": guia.tipo_objetivo_1,
-                    "objetivo_aprendizaje_1": guia.objetivo_aprendizaje_1,
-                    "contenido_tematico_1": guia.contenido_tematico_1,
-                    "actividad_aprendizaje_1": guia.actividad_aprendizaje_1,
-                    "tecnica_evaluacion_1": guia.tecnica_evaluacion_1,
-                    "tipo_evaluacion_1": guia.tipo_evaluacion_1,
-                    "instrumento_evaluacion_1": guia.instrumento_evaluacion_1,
-                    "criterios_evaluacion_1": guia.criterios_evaluacion_1,
-                    "puntaje_1": guia.puntaje_1,
-                    "fecha_entrega_1": guia.fecha_entrega_1,
-                }
-                guias_previas.append(guia_dict)
-
-            # --- Lógica de distribución de contenido (Igual que en generar_silabo) ---
-            total_unidades = 0
-            if programa_2026:
-                for i in range(1, 7):
-                    if getattr(programa_2026, f'unidad_{i}_nombre', ''):
-                        total_unidades += 1
-            elif plan_tematico:
-                 total_unidades = 4 
-
-            # Calcular unidad esperada
-            unidad_esperada = min(int((encuentro - 1) / (11 / max(total_unidades, 1))) + 1, total_unidades)
-            
-            # Identificar temas YA cubiertos en guías anteriores
-            temas_cubiertos_guias = []
-            for g in guias_previas:
-                temas_cubiertos_guias.extend([
-                    g.get('contenido_tematico_1', ''),
-                    g.get('contenido_tematico_2', ''),
-                    g.get('contenido_tematico_3', ''),
-                    g.get('contenido_tematico_4', '')
-                ])
-            # Filtrar vacíos
-            temas_cubiertos_guias = [t for t in temas_cubiertos_guias if t]
-            
-            unidades_cubiertas_guias = list(set([str(g.get('unidad', '')) for g in guias_previas if g.get('unidad')]))
-            
-            info_progreso = f"""
-            ESTADO DE PROGRESO DEL CURSO:
-            - Encuentro actual: {encuentro} de 11.
-            - Total Unidades de la asignatura: {total_unidades}.
-            - Unidades ya cubiertas en guías anteriores: {', '.join(unidades_cubiertas_guias) if unidades_cubiertas_guias else 'Ninguna'}.
-            - Según la distribución del tiempo, deberías estar abordando temas de la: UNIDAD {unidad_esperada} (aproximadamente).
-            """
-            
-            # Preparar contexto virtual si hay desfase
-            contexto_virtual = ""
-            if silabo.encuentros != encuentro and programa_2026:
-                u_nombre = getattr(programa_2026, f"unidad_{unidad_esperada}_nombre", "No especificado")
-                u_contenido = getattr(programa_2026, f"unidad_{unidad_esperada}_contenido", "No especificado")
-                u_obj = getattr(programa_2026, f"unidad_{unidad_esperada}_objetivos_especificos", "No especificado")
-                
-                contexto_virtual = f"""
-                CONTEXTO PRIORITARIO (TEMAS A CUBRIR EN ESTE ENCUENTRO {encuentro}):
-                ------------------------------------------------------------
-                ESTA ES LA INFORMACIÓN MÁS IMPORTANTE. ÚSALA COMO BASE PRINCIPAL.
-                UNIDAD CORRESPONDIENTE: UNIDAD {unidad_esperada}: {u_nombre}
-                CONTENIDO TEMÁTICO DE LA UNIDAD: {u_contenido}
-                OBJETIVOS DE LA UNIDAD: {u_obj}
-                ------------------------------------------------------------
-                IMPORTANTE: Ignora cualquier información contradictoria de la sección "INFORMACIÓN DEL SÍLABO ACTUAL" si corresponde a un encuentro pasado.
-                """
-
-            # Determinar qué información del sílabo mostrar
             if silabo.encuentros == encuentro:
                 info_silabo_actual = f"""
-                INFORMACIÓN DEL SÍLABO ACTUAL (Encuentro {silabo.encuentros}):
-                - Código: {silabo.codigo}
-                - Unidad: {silabo.unidad}
-                - Nombre de la unidad: {silabo.nombre_de_la_unidad}
-                - Contenido temático: {silabo.contenido_tematico}
-                - Objetivo conceptual: {silabo.objetivo_conceptual}
-                - Objetivo procedimental: {silabo.objetivo_procedimental}
-                - Objetivo actitudinal: {silabo.objetivo_actitudinal}
-                - Eje transversal: {silabo.eje_transversal} - {silabo.detalle_eje_transversal}
-
-                MOMENTOS DIDÁCTICOS DEL SÍLABO:
-                - Primer momento: {silabo.tipo_primer_momento} - {silabo.detalle_primer_momento}
-                - Segundo momento (teoría): {silabo.tipo_segundo_momento_claseteoria} - {silabo.clase_teorica}
-                - Segundo momento (práctica): {silabo.tipo_segundo_momento_practica} - {silabo.clase_practica}
-                - Tercer momento: {silabo.tipo_tercer_momento} - {silabo.detalle_tercer_momento}
+                SÍLABO PRESENCIAL DE ESTE ENCUENTRO ({silabo.encuentros}) — COMPLEMENTAR SIN REPETIR EN CASA:
+                - Código: {silabo.codigo} | Fecha: {silabo.fecha}
+                - Unidad y Tema en clase: {silabo.unidad} ({silabo.nombre_de_la_unidad}) — {silabo.contenido_tematico}
+                - Objetivos en clase: C={silabo.objetivo_conceptual} | P={silabo.objetivo_procedimental} | A={silabo.objetivo_actitudinal}
+                - Desarrollo en aula (no duplicar): Teoría ({silabo.tipo_segundo_momento_claseteoria}): {silabo.clase_teorica} | Práctica ({silabo.tipo_segundo_momento_practica}): {silabo.clase_practica}
+                - Actividad realizada en aula (diferenciar): {silabo.actividad_aprendizaje} | Eval clase: {silabo.tecnica_evaluacion} / {silabo.instrumento_evaluacion} ({silabo.puntaje} pts)
                 """
             else:
-                 info_silabo_actual = f"""
-                 NOTA: No se incluye información detallada del sílabo base porque corresponde al Encuentro {silabo.encuentros}, 
-                 mientras que este documento es para el Encuentro {encuentro}.
-                 Utiliza EXCLUSIVAMENTE la información del "CONTEXTO PRIORITARIO" y la "INFORMACIÓN DETALLADA DE LA ASIGNATURA" arriba.
-                 """
+                info_silabo_actual = (
+                    f"NOTA: Este documento corresponde al Encuentro {encuentro} "
+                    f"(sílabo de referencia #{silabo.encuentros}); prioriza la ASIGNACIÓN OBLIGATORIA y el DETALLE DE LA UNIDAD ACTIVA."
+                )
 
-            # Crear el prompt completo
+            nota_cierre = ""
+            if encuentro == 11:
+                nota_cierre = (
+                    f"\nREGLA DE CIERRE DEL CURSO (ENCUENTRO 11 — {tiempos['fecha_encuentro']}): "
+                    f"TODAS las tareas (fecha_entrega_1..{numero_actividades}) DEBEN entregarse entre {tiempos['fecha_entrega_min']} y {tiempos['fecha_entrega_max']}. "
+                    "PROHIBIDO programar fechas de entrega, exposiciones o defensas posteriores al cierre del curso."
+                )
+
+            reglas_variedad = ""
+            if historial["tecnicas_guia_recientes"]:
+                reglas_variedad = (
+                    "\nVARIEDAD EVALUATIVA OBLIGATORIA (no repitas la misma técnica/instrumento en todas las tareas): "
+                    + "; ".join(historial["tecnicas_guia_recientes"])
+                )
+
             prompt_completo = f"""
-            Instrucciones: Crea una guía de estudio independiente basada en la siguiente información y devuélvela en formato JSON estructurado.
+            Instrucciones: Crea una guía de estudio independiente para el Encuentro {encuentro} de 11 y devuélvela únicamente como un objeto JSON válido.
 
-            {info_progreso}
-            
-            {contexto_virtual}
+            Plan de estudio: {plan_str}
+            Asignatura: {asig_nombre}
+            Fecha del encuentro y guía (`fecha`): {tiempos['fecha_encuentro']} ({tiempos['ciclo_nombre']})
 
-            TEMAS YA CUBIERTOS EN GUÍAS ANTERIORES (NO REPETIR):
-            {json.dumps(temas_cubiertos_guias, indent=2, ensure_ascii=False) if temas_cubiertos_guias else "Ninguno."}
+            PRESUPUESTO EVALUATIVO Y CARGA HORARIA (OBLIGATORIO):
+            - Corte Evaluativo obligatorio (`periodo_tiempo_programado_1..{numero_actividades}`): "{presupuesto['corte']}"
+            - Acumulado previo en {presupuesto['corte']} (sílabos + guías): {presupuesto['usado_corte']}/100 pts (saldo disponible: {presupuesto['saldo_corte']}/100 pts).
+            - PRESUPUESTO TOTAL DE ESTA GUÍA (`puntaje_1 + ... + puntaje_{numero_actividades}`): DEBE sumar {presupuesto['presupuesto_objetivo']} puntos (máximo estricto permitido: {presupuesto['presupuesto_max']} puntos). NO asignes 100 puntos a la guía completa.
+            - CARGA HORARIA INDEPENDIENTE (`tiempo_minutos_1 + ... + tiempo_minutos_{numero_actividades}`): DEBE sumar ~{tiempos['min_indep_objetivo']} minutos en total (~{tiempos['min_por_tarea_aprox']} min por tarea; plan total: {tiempos['horas_independientes_plan']}h en 11 encuentros).
+            - VENTANA DE ENTREGA (`fecha_entrega_1..{numero_actividades}`): entre {tiempos['fecha_entrega_min']} y {tiempos['fecha_entrega_max']}.{nota_cierre}
 
-            INFORMACIÓN DETALLADA DE LA ASIGNATURA:
-            {contexto_asignatura}
+            {contexto_curricular}
 
             {info_silabo_actual}
 
-            EVALUACIÓN DEL SÍLABO:
-            - Actividad de aprendizaje: {silabo.actividad_aprendizaje}
-            - Técnica de evaluación: {silabo.tecnica_evaluacion}
-            - Tipo de evaluación: {silabo.tipo_evaluacion}
-            - Instrumento de evaluación: {silabo.instrumento_evaluacion}
-            - Criterios de evaluación: {silabo.criterios_evaluacion}
-            - Puntaje: {silabo.puntaje}
-
-            {"GUÍAS DE ESTUDIO PREVIAS:" if guias_previas else "Esta es la primera guía para esta asignación."}
-            {json.dumps(guias_previas, indent=2, ensure_ascii=False, cls=DateTimeEncoder) if guias_previas else ""}
+            HISTORIAL COMPACTO DE ENCUENTROS Y GUÍAS PREVIAS (TODAS LAS TAREAS — PROHIBIDO REPETIR):
+            {historial['resumen_texto']}{reglas_variedad}
 
             TIPOS DE OBJETIVO DISPONIBLES:
             {', '.join(tipos_objetivo)}
@@ -1554,35 +1461,42 @@ def generar_estudio_independiente(request):
             ```
 
             INSTRUCCIONES ESPECÍFICAS:
-            1. Crea una guía de estudio independiente para el encuentro {encuentro} (de un total de 11 encuentros para esta asignatura).
-            2. REVISA CUIDADOSAMENTE la "INFORMACIÓN DETALLADA DE LA ASIGNATURA" y la "INFORMACIÓN DEL SÍLABO ACTUAL" antes de generar el contenido.
-            3. La guía debe tener EXACTAMENTE {numero_actividades} tareas diferentes que el estudiante debe realizar como trabajo independiente.
-            4. Las tareas deben estar estrictamente relacionadas con el contenido temático ({silabo.contenido_tematico}) y los objetivos del sílabo de ESTE encuentro.
-            5. PROHIBIDO REPETIR INFORMACIÓN: No incluyas explicaciones, tareas o temas que pertenezcan a las "GUÍAS DE ESTUDIO PREVIAS" listadas arriba. El contenido debe ser nuevo y progresivo.
-            6. Si es el último encuentro (Encuentro 11), asegúrate de que las actividades sirvan como cierre o integración final de la unidad/asignatura.
-            7. Asigna fechas de entrega realistas (considera que la fecha actual es {datetime.datetime.now().strftime('%Y-%m-%d')}).
-            8. Distribuye el puntaje total entre las {numero_actividades} tareas (el total debe sumar 100 puntos).
-            9. Utiliza diferentes tipos de objetivos, técnicas e instrumentos de evaluación para las tareas.
-            10. Sigue exactamente la misma estructura JSON que el ejemplo proporcionado, pero solo incluye los bloques de tarea hasta `tarea_{numero_actividades}`.
-
-            Devuelve los datos como un diccionario JSON con la misma estructura que el ejemplo anterior,
-            adaptado al sílabo actual (encuentro {encuentro}).
-
-            Asegúrate de que todos los campos tengan valores coherentes y apropiados.
-            Respeta las opciones disponibles para los campos que tienen listas predefinidas.
+            1. Genera EXACTAMENTE {numero_actividades} tareas de estudio independiente (del 1 al {numero_actividades}) en la unidad `"unidad": "{enc_plan['unidad_romano']}"`, `"nombre_de_la_unidad": "{enc_plan['unidad_nombre']}"`.
+            2. Las tareas deben profundizar o aplicar desde casa/laboratorio la sesión {enc_plan['sesion_en_unidad']}/{enc_plan['sesiones_unidad']} de esta unidad, siendo DIFERENTES a la dinámica presencial del sílabo y a las tareas de guías previas.
+            3. Asigna `"numero_encuentro": {encuentro}`, `"fecha": "{tiempos['fecha_encuentro']}"`, `"periodo_tiempo_programado_N": "{presupuesto['corte']}"`, fechas de entrega dentro de [{tiempos['fecha_entrega_min']} .. {tiempos['fecha_entrega_max']}], tiempos que sumen ~{tiempos['min_indep_objetivo']} minutos y puntajes que sumen {presupuesto['presupuesto_objetivo']} puntos (<= {presupuesto['presupuesto_max']}).
+            4. Utiliza tipos de objetivo (`Conceptual`, `Procedimental`, `Actitudinal`), técnicas e instrumentos variados entre las {numero_actividades} tareas.
+            5. Sigue exactamente la misma estructura JSON que el ejemplo proporcionado, incluyendo solo bloques/campos hasta `tarea_{numero_actividades}`.
             """
-
 
             print("Prompt generado, enviando a la API...")
             logging.info("Prompt generado, enviando a la API...")
 
-            # Configurar parámetros específicos para el modelo seleccionado
             config = get_default_config(modelo_seleccionado)
 
-            # Generar respuesta usando la función centralizada
-            data = generar_respuesta_ai(prompt_completo, modelo_seleccionado, **config)
+            data = generar_respuesta_ai(
+                prompt_completo,
+                modelo_seleccionado,
+                tipo_respuesta="guia",
+                **config,
+            )
+            data = normalizar_respuesta_guia(
+                data,
+                numero_actividades=numero_actividades,
+                encuentro=encuentro,
+                unidad_default=enc_plan["unidad_romano"],
+                nombre_unidad_default=enc_plan["unidad_nombre"],
+                unidad_forzada=enc_plan["unidad_romano"],
+                fecha_objetivo=tiempos["fecha_encuentro"],
+                corte_default=presupuesto["corte"],
+                forzar_corte=True,
+                presupuesto_objetivo=presupuesto["presupuesto_objetivo"],
+                presupuesto_max=presupuesto["presupuesto_max"],
+                forzar_exacto=presupuesto["es_ultimo_en_corte"],
+                minutos_totales_objetivo=tiempos["min_indep_objetivo"],
+                fecha_entrega_min=tiempos["fecha_entrega_min"],
+                fecha_entrega_max=tiempos["fecha_entrega_max"],
+            )
 
-            # Devolver la respuesta con la estructura que espera el frontend
             return JsonResponse({"success": True, "datos": data})
 
         except Silabo.DoesNotExist:
@@ -2051,7 +1965,7 @@ def ver_planeacion(request, asignacion_id):
         if not guia:
             return []
         tareas = []
-        for i in (1, 2, 3):
+        for i in (1, 2, 3, 4):
             obj = getattr(guia, f'objetivo_aprendizaje_{i}', None)
             act = getattr(guia, f'actividad_aprendizaje_{i}', None)
             cont = getattr(guia, f'contenido_tematico_{i}', None)
@@ -2113,4 +2027,63 @@ def ver_planeacion(request, asignacion_id):
         'total_encuentros': total_encuentros,
     }
     return render(request, 'ver_planeacion.html', context)
+
+
+@login_required
+def ranking_docentes(request):
+    """
+    Tablero de ranking y seguimiento de cumplimiento docente para sus asignaciones
+    (sílabos y guías didácticas por encuentro).
+    """
+    config_sistema = ConfiguracionSistema.get_solo()
+    ranking_visible_docentes = config_sistema.mostrar_ranking_docentes
+    es_admin = request.user.is_staff or request.user.is_superuser
+
+    if not ranking_visible_docentes and not es_admin:
+        messages.warning(
+            request,
+            "La sección de Ranking Docente está habilitada únicamente para administradores en este momento.",
+        )
+        return redirect("inicio")
+
+    alcance_param = request.GET.get("alcance", "").strip()
+    alcance_explicito = alcance_param in ("actual", "todas")
+    alcance = alcance_param if alcance_explicito else "actual"
+    orden = request.GET.get("orden", "mayor").strip()
+
+    carrera_raw = request.GET.get("carrera", "").strip()
+    carrera_id = int(carrera_raw) if carrera_raw.isdigit() else None
+
+    trimestre_raw = request.GET.get("trimestre", "").strip()
+    valid_trimestres = {code for code, _ in TRIMESTRES_ROMANOS}
+    trimestre = trimestre_raw if trimestre_raw in valid_trimestres else None
+
+    estado = request.GET.get("estado", "todos").strip()
+    valid_estados = {"todos", "cumplido", "en_progreso", "pendientes", "sin_avance"}
+    if estado not in valid_estados:
+        estado = "todos"
+
+    query = request.GET.get("q", "").strip()
+
+    ranking_data = construir_ranking_docentes(
+        alcance=alcance,
+        orden=orden,
+        carrera_id=carrera_id,
+        trimestre=trimestre,
+        estado=estado,
+        query=query,
+        alcance_explicito=alcance_explicito,
+    )
+
+    context = {
+        **ranking_data,
+        "usuario": request.user.get_full_name() or request.user.username,
+        "es_admin": es_admin,
+        "ranking_visible_docentes": ranking_visible_docentes,
+        "filtro_carrera": str(carrera_id) if carrera_id else "",
+        "filtro_trimestre": trimestre or "",
+        "filtro_estado": estado,
+        "filtro_q": query,
+    }
+    return render(request, "ranking_docentes.html", context)
 

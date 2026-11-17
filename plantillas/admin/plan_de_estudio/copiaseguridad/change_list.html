@@ -99,6 +99,43 @@
                             </form>
                         </td>
                     </tr>
+
+                    <!-- Fila 4: Control de visibilidad del Ranking Docente -->
+                    <tr style="border-bottom: 1px solid var(--border-color); background: var(--body-bg);">
+                        <td style="padding: 18px 15px; font-weight: 600; color: var(--body-fg);">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--link-color); flex-shrink: 0;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                                <span>Ranking de Cumplimiento Docente</span>
+                                {% if not config_sistema or config_sistema.mostrar_ranking_docentes %}
+                                    <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #2f855a; color: white;">Visible para docentes</span>
+                                {% else %}
+                                    <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #718096; color: white;">Solo administradores</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td style="padding: 18px 15px; line-height: 1.5; color: var(--body-fg); opacity: 0.95;">
+                            Permite o restringe que los docentes con sesión iniciada consulten la sección de <strong>Ranking Docente</strong> con el progreso de sílabos y guías por asignatura.
+                            <div style="margin-top: 6px;">
+                                <a href="{% url 'ranking_docentes' %}" style="font-size: 12.5px; font-weight: 600;">Abrir Ranking Docente &rarr;</a>
+                            </div>
+                        </td>
+                        <td style="padding: 18px 15px; text-align: center;">
+                            <form method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_toggle_ranking_docentes' %}" style="display: inline; margin: 0;">
+                                {% csrf_token %}
+                                {% if not config_sistema or config_sistema.mostrar_ranking_docentes %}
+                                    <input type="hidden" name="accion" value="desactivar">
+                                    <button type="submit" style="background: #e53e3e; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                                        Restringir
+                                    </button>
+                                {% else %}
+                                    <input type="hidden" name="accion" value="activar">
+                                    <button type="submit" style="background: #2f855a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                                        Habilitar
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
                     
                 </tbody>
             </table>

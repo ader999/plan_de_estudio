@@ -197,7 +197,8 @@ function validarActividadOpcional(numeroActividad, mensajesError) {
 
     if ($campo.is('input[type="number"]')) {
       var valorNumerico = parseFloat(valor);
-      tieneContenido = !isNaN(valorNumerico) && valorNumerico > 0;
+      var esPuntaje = ($campo.attr("id") || "").indexOf("puntaje_") === 0;
+      tieneContenido = !isNaN(valorNumerico) && (esPuntaje ? valorNumerico >= 0 : valorNumerico > 0);
     } else {
       tieneContenido = String(valor).trim() !== "";
     }

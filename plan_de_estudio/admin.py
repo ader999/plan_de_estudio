@@ -568,6 +568,7 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
             path('descargar-backup/', self.admin_site.admin_view(self.descargar_backup_view), name='plan_de_estudio_copiaseguridad_descargar_backup'),
             path('ver-guia/', self.admin_site.admin_view(self.ver_guia_view), name='plan_de_estudio_copiaseguridad_ver_guia'),
             path('toggle-descarga-plan-tematico/', self.admin_site.admin_view(self.toggle_descarga_plan_tematico_view), name='plan_de_estudio_copiaseguridad_toggle_descarga_plan_tematico'),
+            path('toggle-ranking-docentes/', self.admin_site.admin_view(self.toggle_ranking_docentes_view), name='plan_de_estudio_copiaseguridad_toggle_ranking_docentes'),
             path('guardar-proveedor-ia/', self.admin_site.admin_view(self.guardar_proveedor_ia_view), name='plan_de_estudio_copiaseguridad_guardar_proveedor_ia'),
             path('eliminar-proveedor-ia/<int:proveedor_id>/', self.admin_site.admin_view(self.eliminar_proveedor_ia_view), name='plan_de_estudio_copiaseguridad_eliminar_proveedor_ia'),
             path('consultar-modelos-ia/', self.admin_site.admin_view(self.consultar_modelos_ia_view), name='plan_de_estudio_copiaseguridad_consultar_modelos_ia'),
@@ -577,8 +578,7 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
 
-    def toggle_descarga_plan_tematico_view(self, request):
-        """Habilita o desactiva la visualización y descarga de planes temáticos para docentes."""
+    def _toggle_config_boolean(self, request, field_name, msg_habilitado, msg_deshabilitado):
         changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
         if request.method != 'POST':
             return HttpResponseRedirect(changelist_url)
@@ -588,20 +588,38 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
         config = ConfiguracionSistema.get_solo()
         accion = (request.POST.get('accion') or '').strip()
         if accion == 'activar':
-            config.permitir_descarga_plan_tematico = True
+            nuevo_valor = True
         elif accion == 'desactivar':
-            config.permitir_descarga_plan_tematico = False
+            nuevo_valor = False
         else:
-            config.permitir_descarga_plan_tematico = not config.permitir_descarga_plan_tematico
+            nuevo_valor = not getattr(config, field_name)
+        setattr(config, field_name, nuevo_valor)
         config.save()
 
-        estado = "habilitada" if config.permitir_descarga_plan_tematico else "desactivada"
         self.message_user(
             request,
-            f"La descarga de planes temáticos por parte de los docentes ha sido {estado}.",
+            msg_habilitado if nuevo_valor else msg_deshabilitado,
             level=messages.SUCCESS
         )
         return HttpResponseRedirect(changelist_url)
+
+    def toggle_descarga_plan_tematico_view(self, request):
+        """Habilita o desactiva la visualización y descarga de planes temáticos para docentes."""
+        return self._toggle_config_boolean(
+            request,
+            'permitir_descarga_plan_tematico',
+            "La descarga de planes temáticos por parte de los docentes ha sido habilitada.",
+            "La descarga de planes temáticos por parte de los docentes ha sido desactivada.",
+        )
+
+    def toggle_ranking_docentes_view(self, request):
+        """Habilita o restringe la visibilidad del Ranking Docente para usuarios no administradores."""
+        return self._toggle_config_boolean(
+            request,
+            'mostrar_ranking_docentes',
+            "El Ranking de Cumplimiento Docente ahora es visible para todos los usuarios con sesión iniciada.",
+            "El Ranking de Cumplimiento Docente ha sido restringido únicamente a administradores.",
+        )
 
     def guardar_proveedor_ia_view(self, request):
         changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')

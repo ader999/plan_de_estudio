@@ -72,6 +72,7 @@ $(document).ready(function () {
       data: formData,
       processData: false,
       contentType: false,
+      timeout: 120000,
       success: function (response) {
         console.log("Respuesta de generación recibida:", response);
 
@@ -149,6 +150,15 @@ function mostrarSpinner() {
   $("#boton-generar .text, #boton-generar .sparkle").addClass("d-none");
 }
 
+function normalizarTextoOpcion(texto) {
+  return String(texto || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 /**
  * Función auxiliar para marcar/desmarcar checkboxes de un grupo
  * @param {string} fieldName - El atributo 'name' de los checkboxes
@@ -156,85 +166,60 @@ function mostrarSpinner() {
  */
 function setCheckboxMultiple(fieldName, values) {
   // 1. Desmarcar todos los checkboxes de este grupo primero
-  $(`input[name="${fieldName}"]`).prop("checked", false);
+  const $allCheckboxes = $(`input[name="${fieldName}"]`);
+  $allCheckboxes.prop("checked", false);
 
-  // 2. Asegurarse de que 'values' sea un array
+  // 2. Asegurarse de que 'values' sea un array, verificando primero coincidencia exacta antes de dividir
   let valuesArray = [];
   if (values) {
     if (Array.isArray(values)) {
       valuesArray = values;
     } else if (typeof values === "string") {
-      // Intentar dividir si es un string separado por comas (o manejar como valor único)
-      // Normalizar: quitar espacios extra y convertir a string por si acaso
       const normalizedValue = String(values).trim();
       if (normalizedValue) {
-        // Solo si no es vacío
-        // Considerar si un string puede representar múltiples valores (e.g., "op1, op2")
-        // Esto depende de cómo la IA devuelva los datos. Asumamos que devuelve un array
-        // o un string que representa UN SOLO valor de checkbox.
-        // Si puede devolver "op1, op2", necesitarías .split(',') aquí.
-        // Por ahora, tratamos el string como un valor único.
-        valuesArray = [normalizedValue];
+        const targetNorm = normalizarTextoOpcion(normalizedValue);
+        let matchesSingleOption = false;
+        $allCheckboxes.each(function () {
+          if (normalizarTextoOpcion($(this).val()) === targetNorm) {
+            matchesSingleOption = true;
+            return false;
+          }
+        });
+        valuesArray = matchesSingleOption
+          ? [normalizedValue]
+          : normalizedValue
+              .split(/\s*[,;/\n]\s*|\s+y\s+/i)
+              .map((v) => v.trim())
+              .filter(Boolean);
       }
     } else {
-      // Si es otro tipo (ej. número), convertirlo a string
       valuesArray = [String(values)];
     }
   }
 
-  // 3. Marcar los checkboxes correspondientes si hay valores
+  // 3. Marcar hasta 2 checkboxes correspondientes si hay valores
   if (valuesArray.length > 0) {
-    console.log(
-      `Intentando marcar checkboxes para ${fieldName} con valores:`,
-      valuesArray,
-    );
+    let checkedCount = 0;
     valuesArray.forEach(function (valueToSelect) {
-      // Normalizar el valor a buscar (quitar espacios extra)
+      if (checkedCount >= 2) return;
       const normalizedValueToSelect = String(valueToSelect).trim();
-      if (!normalizedValueToSelect) return; // Saltar si el valor está vacío
+      if (!normalizedValueToSelect) return;
 
-      // Encontrar el checkbox por nombre y valor exacto (después de normalizar)
-      const checkbox = $(
-        `input[name="${fieldName}"][value="${normalizedValueToSelect}"]`,
-      );
-
-      if (checkbox.length > 0) {
-        checkbox.prop("checked", true);
-        console.log(
-          `Checkbox encontrado y marcado: name=${fieldName}, value=${normalizedValueToSelect}`,
-        );
-      } else {
-        // Intentar búsqueda insensible a mayúsculas/minúsculas como fallback? (Opcional)
-        let foundCaseInsensitive = false;
-        $(`input[name="${fieldName}"]`).each(function () {
-          if (
-            $(this).val().toLowerCase() ===
-            normalizedValueToSelect.toLowerCase()
-          ) {
+      const targetNorm = normalizarTextoOpcion(normalizedValueToSelect);
+      $allCheckboxes.each(function () {
+        if (normalizarTextoOpcion($(this).val()) === targetNorm) {
+          if (!$(this).prop("checked")) {
             $(this).prop("checked", true);
-            console.log(
-              `Checkbox encontrado (case-insensitive) y marcado: name=${fieldName}, value=${$(this).val()} (buscado: ${normalizedValueToSelect})`,
-            );
-            foundCaseInsensitive = true;
-            return false; // salir del each
+            checkedCount++;
           }
-        });
-
-        if (!foundCaseInsensitive) {
-          console.warn(
-            `No se encontró checkbox para: name=${fieldName}, value=${normalizedValueToSelect}`,
-          );
+          return false;
         }
-      }
+      });
     });
-  } else {
-    console.log(
-      `No hay valores válidos para marcar o el array está vacío para ${fieldName}`,
-    );
   }
 
   // Disparar 'change' en el primer checkbox del grupo para que los listeners reaccionen
-  $(`input[name="${fieldName}"]`).first().trigger("change");
+  $allCheckboxes.first().trigger("change");
 }
 
 /**
@@ -242,9 +227,13 @@ function setCheckboxMultiple(fieldName, values) {
  * @param {object} silaboData - Objeto con los datos generados por la IA
  */
 function autocompletarFormularioGuardar(silaboData) {
-  // Sección 1: Información general
-  $("#id_codigo").val(silaboData.codigo || ""); // El código usualmente no lo genera la IA, pero por si acaso
-  $("#id_encuentros").val(silaboData.encuentros || "");
+  // Sección 1: Información general (proteger codigo y encuentros asignados por el servidor)
+  if (!$("#id_codigo").val() && silaboData.codigo) {
+    $("#id_codigo").val(silaboData.codigo);
+  }
+  if (!$("#id_encuentros").val() && silaboData.encuentros) {
+    $("#id_encuentros").val(silaboData.encuentros);
+  }
   $("#id_fecha").val(silaboData.fecha || "");
   $("#id_unidad").val(silaboData.unidad || "");
   $("#id_nombre_de_la_unidad").val(silaboData.nombre_de_la_unidad || "");
@@ -273,12 +262,15 @@ function autocompletarFormularioGuardar(silaboData) {
     silaboData.tipo_segundo_momento_practica || "",
   );
   $("#id_clase_practica").val(silaboData.clase_practica || "");
-  $("#id_tiempo_segundo_momento_teorica").val(
-    silaboData.tiempo_segundo_momento_teorica || "",
-  );
-  $("#id_tiempo_segundo_momento_practica").val(
-    silaboData.tiempo_segundo_momento_practica || "",
-  );
+  let tiempoTeo = silaboData.tiempo_segundo_momento_teorica;
+  let tiempoPra = silaboData.tiempo_segundo_momento_practica;
+  if (!tiempoTeo && !tiempoPra && silaboData.tiempo_segundo_momento) {
+    const totalSeg = parseInt(silaboData.tiempo_segundo_momento, 10) || 60;
+    tiempoTeo = Math.max(1, Math.floor(totalSeg / 2));
+    tiempoPra = Math.max(1, totalSeg - tiempoTeo);
+  }
+  $("#id_tiempo_segundo_momento_teorica").val(tiempoTeo || "");
+  $("#id_tiempo_segundo_momento_practica").val(tiempoPra || "");
   $("#id_recursos_segundo_momento").val(
     silaboData.recursos_segundo_momento || "",
   );
@@ -316,7 +308,13 @@ function autocompletarFormularioGuardar(silaboData) {
   $("#id_periodo_tiempo_programado").val(
     silaboData.periodo_tiempo_programado || "",
   );
-  $("#id_tiempo_minutos").val(silaboData.tiempo_minutos || "");
+  const tiempoMinutosVal =
+    silaboData.tiempo_minutos !== undefined &&
+    silaboData.tiempo_minutos !== null &&
+    silaboData.tiempo_minutos !== ""
+      ? silaboData.tiempo_minutos
+      : "";
+  $("#id_tiempo_minutos").val(tiempoMinutosVal);
   setCheckboxMultiple("agente_evaluador", silaboData.agente_evaluador);
   $("#id_instrumento_evaluacion").val(silaboData.instrumento_evaluacion || ""); // Asume select normal
   // Criterios: si viene como array, unirlo; si no, usarlo tal cual
@@ -326,7 +324,13 @@ function autocompletarFormularioGuardar(silaboData) {
     criterios = criterios.join("\n"); // O ", "
   }
   $("#id_criterios_evaluacion").val(criterios);
-  $("#id_puntaje").val(silaboData.puntaje || "");
+  const puntajeVal =
+    silaboData.puntaje !== undefined &&
+    silaboData.puntaje !== null &&
+    silaboData.puntaje !== ""
+      ? silaboData.puntaje
+      : "";
+  $("#id_puntaje").val(puntajeVal);
 
   // =======================================================
   // === ¡AQUÍ ESTÁ LA LÍNEA AÑADIDA! ===

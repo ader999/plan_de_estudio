@@ -62,6 +62,9 @@ urlpatterns = [
     # Ruta para ver planeación completa (sílabos y guías)
     path('ver_planeacion/<int:asignacion_id>/', views.ver_planeacion, name='ver_planeacion'),
 
+    # Ranking de cumplimiento docente
+    path('ranking-docentes/', views.ranking_docentes, name='ranking_docentes'),
+
     # Rutas legales (Política de Privacidad y Términos de Servicio)
     path('privacidad/', views.politicas_privacidad, name='privacidad'),
     path('terminos/', views.terminos_servicio, name='terminos'),
