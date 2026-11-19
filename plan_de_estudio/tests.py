@@ -15,8 +15,11 @@ from plan_de_estudio.models import (
     Asignatura, Carrera, Plan_de_estudio, AsignacionPlanEstudio, Silabo, Guia,
     ModeloIAConfig, ProveedorIA, ProgramaAsignatura2026, PlanTematico, ConfiguracionSistema
 )
-from plan_de_estudio.forms import SilaboForm, ExportarAsignacionesForm
+from plan_de_estudio.forms import (
+    SilaboForm, ExportarAsignacionesForm, AsignacionPlanEstudioAdminForm
+)
 from plan_de_estudio.ranking_utils import construir_ranking_docentes, obtener_rango_ciclo_actual
+from plan_de_estudio.trimestre_utils import obtener_trimestre_lectivo_de_fecha
 
 
 class AsignaturaModelTest(TestCase):
@@ -189,41 +192,76 @@ class AsignacionPlanEstudioModelTest(TestCase):
         asignacion = AsignacionPlanEstudio(
             usuario=self.usuario,
             plan_de_estudio=self.plan,
+            trimestre_lectivo="2026-IV",
             bloque="Primer bloque - 8:00"
         )
-        asignacion.clean()
+        asignacion.full_clean()
         asignacion.save()
         self.assertEqual(str(asignacion), f"{self.usuario} - {self.plan}")
+        self.assertIsNotNone(asignacion.fecha_asignacion)
+        self.assertEqual(asignacion.trimestre_lectivo_display, "2026 - Trimestre IV")
 
     def test_asignacion_plan_de_estudio_obligatorio(self):
         asignacion = AsignacionPlanEstudio(
             usuario=self.usuario,
+            trimestre_lectivo="2026-IV",
             bloque="Primer bloque - 8:00"
         )
         with self.assertRaises(ValidationError) as ctx:
             asignacion.clean()
         self.assertIn('plan_de_estudio', ctx.exception.message_dict)
 
-    def test_asignacion_duplicada_en_trimestre_actual(self):
-        AsignacionPlanEstudio.objects.create(
+    def test_asignacion_trimestre_lectivo_obligatorio_y_formato(self):
+        sin_trimestre = AsignacionPlanEstudio(
             usuario=self.usuario,
             plan_de_estudio=self.plan,
             bloque="Primer bloque - 8:00"
         )
-        
-        segunda_asignacion = AsignacionPlanEstudio(
+        with self.assertRaises(ValidationError) as ctx:
+            sin_trimestre.clean()
+        self.assertIn('trimestre_lectivo', ctx.exception.message_dict)
+
+        formato_invalido = AsignacionPlanEstudio(
             usuario=self.usuario,
             plan_de_estudio=self.plan,
+            trimestre_lectivo="2026-V",
+        )
+        with self.assertRaises(ValidationError) as ctx_fmt:
+            formato_invalido.clean()
+        self.assertIn('trimestre_lectivo', ctx_fmt.exception.message_dict)
+
+    def test_asignacion_duplicada_en_mismo_trimestre_lectivo_y_permitida_en_otro(self):
+        AsignacionPlanEstudio.objects.create(
+            usuario=self.usuario,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo="2026-III",
+            bloque="Primer bloque - 8:00"
+        )
+
+        duplicada_mismo_trimestre = AsignacionPlanEstudio(
+            usuario=self.usuario,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo="2026-III",
             bloque="Segundo bloque - 10:20"
         )
-        
         with self.assertRaises(ValidationError) as ctx:
-            segunda_asignacion.clean()
-            
+            duplicada_mismo_trimestre.clean()
+
         self.assertIn(
-            "Asignacion plan estudio con este Usuario y Plan de estudio ya existe en el trimestre actual.",
+            "Asignacion plan estudio con este Usuario y Plan de estudio ya existe en el trimestre lectivo seleccionado.",
             ctx.exception.messages
         )
+
+        # Misma asignatura y docente en el siguiente trimestre lectivo (creado hoy mismo) debe permitirse
+        proximo_trimestre = AsignacionPlanEstudio(
+            usuario=self.usuario,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo="2026-IV",
+            bloque="Segundo bloque - 10:20"
+        )
+        proximo_trimestre.full_clean()
+        proximo_trimestre.save()
+        self.assertEqual(AsignacionPlanEstudio.objects.count(), 2)
 
 
 class SilaboFormTest(TestCase):
@@ -240,7 +278,11 @@ class SilaboFormTest(TestCase):
             horas_presenciales=45, horas_estudio_independiente=45
         )
         self.usuario = User.objects.create_user(username="maestro_derecho", password="pwd")
-        self.asignacion = AsignacionPlanEstudio.objects.create(usuario=self.usuario, plan_de_estudio=self.plan)
+        self.asignacion = AsignacionPlanEstudio.objects.create(
+            usuario=self.usuario,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(),
+        )
 
         self.form_data_valido = {
             'codigo': 'PLAN_DER',
@@ -345,7 +387,11 @@ class ViewsValidationTest(TestCase):
             carrera=self.carrera, año="I", trimestre="I", pensol="2018", codigo="PLAN_FIS", asignatura=self.asignatura,
             horas_presenciales=45, horas_estudio_independiente=45
         )
-        self.asignacion = AsignacionPlanEstudio.objects.create(usuario=self.usuario, plan_de_estudio=self.plan)
+        self.asignacion = AsignacionPlanEstudio.objects.create(
+            usuario=self.usuario,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(),
+        )
         
         self.silabo = Silabo.objects.create(
             codigo="PLAN_FIS",
@@ -538,7 +584,8 @@ class ModeloIAConfigAndAdminTest(TestCase):
             horas_presenciales=45, horas_estudio_independiente=45
         )
         self.asignacion = AsignacionPlanEstudio.objects.create(
-            usuario=self.docente_user, plan_de_estudio=self.plan
+            usuario=self.docente_user, plan_de_estudio=self.plan,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(),
         )
         self.programa_2026 = ProgramaAsignatura2026.objects.create(
             plan_estudio=self.plan,
@@ -952,7 +999,11 @@ class SilaboFormularioYGeneracionTest(TestCase):
             carrera=self.carrera, año="III", trimestre="I", pensol="2018", codigo="BD201",
             asignatura=self.asignatura, horas_presenciales=45, horas_estudio_independiente=45
         )
-        self.asignacion = AsignacionPlanEstudio.objects.create(usuario=self.usuario, plan_de_estudio=self.plan)
+        self.asignacion = AsignacionPlanEstudio.objects.create(
+            usuario=self.usuario,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(),
+        )
         self.client = Client()
         self.client.login(username="docente_silabo", password="testpassword")
 
@@ -1133,10 +1184,12 @@ class ConfiguracionPlanTematicoDescargaTest(TestCase):
         )
 
         self.asig_p = AsignacionPlanEstudio.objects.create(
-            usuario=self.docente_user, plan_de_estudio=self.plan_pendiente, silabos_creados=0
+            usuario=self.docente_user, plan_de_estudio=self.plan_pendiente,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(), silabos_creados=0
         )
         self.asig_c = AsignacionPlanEstudio.objects.create(
-            usuario=self.docente_user, plan_de_estudio=self.plan_completado, silabos_creados=11
+            usuario=self.docente_user, plan_de_estudio=self.plan_completado,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(), silabos_creados=11
         )
 
     def tearDown(self):
@@ -1265,14 +1318,17 @@ class RankingDocentesTest(TestCase):
         )
 
         # Ana: 100% completo (11 sílabos + 11 guías)
+        ciclo_actual = obtener_trimestre_lectivo_de_fecha()
         self.asig_ana = AsignacionPlanEstudio.objects.create(
             usuario=self.docente_top, plan_de_estudio=self.plan_1,
+            trimestre_lectivo=ciclo_actual,
             bloque="Primer bloque - 8:00", silabos_creados=11, guias_creadas=11
         )
 
         # Carlos: 2 asignaciones -> en plan_2 tiene 2 sílabos reales y 1 guía real en BD; en plan_4 tiene 0/0
         self.asig_carlos_1 = AsignacionPlanEstudio.objects.create(
             usuario=self.docente_medio, plan_de_estudio=self.plan_2,
+            trimestre_lectivo=ciclo_actual,
             bloque="Segundo bloque - 10:20", silabos_creados=2, guias_creadas=1
         )
         for enc in (1, 2):
@@ -1330,12 +1386,14 @@ class RankingDocentesTest(TestCase):
 
         self.asig_carlos_2 = AsignacionPlanEstudio.objects.create(
             usuario=self.docente_medio, plan_de_estudio=self.plan_4,
+            trimestre_lectivo=ciclo_actual,
             bloque="Tercer bloque - 12:20", silabos_creados=0, guias_creadas=0
         )
 
         # Luis: 0% sin avance
         self.asig_luis = AsignacionPlanEstudio.objects.create(
             usuario=self.docente_cero, plan_de_estudio=self.plan_3,
+            trimestre_lectivo=ciclo_actual,
             bloque="Cuarto bloque - 2:30", silabos_creados=0, guias_creadas=0
         )
 
@@ -1386,9 +1444,9 @@ class RankingDocentesTest(TestCase):
         self.assertEqual(data_mayor['resumen']['docentes_sin_avance'], 1)
 
     def test_alcance_ciclo_actual_y_todas_las_asignaciones(self):
-        # Mover la asignación de Luis a un año anterior fuera del ciclo actual
-        fecha_historica = timezone.now() - datetime.timedelta(days=400)
-        AsignacionPlanEstudio.objects.filter(pk=self.asig_luis.pk).update(fecha_asignacion=fecha_historica)
+        # Mover la asignación de Luis a otro trimestre lectivo manteniendo su fecha_asignacion actual
+        # para comprobar que el ciclo actual ya NO depende de rangos de fecha_asignacion
+        AsignacionPlanEstudio.objects.filter(pk=self.asig_luis.pk).update(trimestre_lectivo="2025-I")
 
         data_actual = construir_ranking_docentes(alcance='actual', alcance_explicito=True)
         self.assertEqual(data_actual['total_asignaciones_ciclo'], 3)
@@ -1398,8 +1456,12 @@ class RankingDocentesTest(TestCase):
         data_todas = construir_ranking_docentes(alcance='todas', alcance_explicito=True)
         self.assertEqual([d['username'] for d in data_todas['docentes']], ['ana_gomez', 'carlos_ruiz', 'luis_mora'])
 
-        # Si ninguna asignación está en el ciclo actual y no hay parámetro explícito, hace fallback a 'todas'
-        AsignacionPlanEstudio.objects.all().update(fecha_asignacion=fecha_historica)
+        # Filtro explícito por trimestre_lectivo encuentra a Luis en 2025-I
+        data_2025 = construir_ranking_docentes(trimestre_lectivo="2025-I")
+        self.assertEqual([d['username'] for d in data_2025['docentes']], ['luis_mora'])
+
+        # Si ninguna asignación pertenece al trimestre lectivo actual y no hay parámetro explícito, hace fallback a 'todas'
+        AsignacionPlanEstudio.objects.all().update(trimestre_lectivo="2025-I")
         data_auto = construir_ranking_docentes(alcance='actual', alcance_explicito=False)
         self.assertEqual(data_auto['alcance'], 'todas')
         self.assertTrue(data_auto['auto_fallback_todas'])
@@ -1543,7 +1605,9 @@ class AINormalizerAndContratoFase1Test(TestCase):
             horas_presenciales=24, horas_estudio_independiente=70
         )
         self.asignacion = AsignacionPlanEstudio.objects.create(
-            usuario=self.usuario, plan_de_estudio=self.plan
+            usuario=self.usuario,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(),
         )
         self.programa = ProgramaAsignatura2026.objects.create(
             plan_estudio=self.plan,
@@ -1789,7 +1853,9 @@ class CurriculumPlannerFase2Test(TestCase):
             horas_presenciales=24, horas_estudio_independiente=70
         )
         self.asignacion_prog = AsignacionPlanEstudio.objects.create(
-            usuario=self.usuario, plan_de_estudio=self.plan_prog
+            usuario=self.usuario,
+            plan_de_estudio=self.plan_prog,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(),
         )
         self.programa = ProgramaAsignatura2026.objects.create(
             plan_estudio=self.plan_prog,
@@ -2055,7 +2121,9 @@ class Fase3FlujosYDocumentoTest(TestCase):
             horas_presenciales=24, horas_estudio_independiente=70
         )
         self.asignacion = AsignacionPlanEstudio.objects.create(
-            usuario=self.usuario, plan_de_estudio=self.plan
+            usuario=self.usuario,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(),
         )
         self.client = Client()
         self.client.login(username="docente_f3", password="pwd")
@@ -2501,6 +2569,126 @@ class AdminChangelistPerformanceTest(TestCase):
             })
         self.assertEqual(resp_ac.status_code, 200)
         self.assertLessEqual(len(ctx_ac), 6)
+
+
+class TrimestreLectivoAsignacionTest(TestCase):
+    def setUp(self):
+        self.patcher_crear = patch('plan_de_estudio.signals.crear_clase_e_invitar_maestro')
+        self.patcher_crear.start()
+        self.admin_user = User.objects.create_superuser(
+            username="admin_trim", email="admin_trim@example.com", password="adminpassword"
+        )
+        self.docente = User.objects.create_user(
+            username="docente_trim", first_name="Elena", last_name="Vega", password="docpassword"
+        )
+        ConfiguracionSistema.get_solo()
+        self.carrera = Carrera.objects.create(
+            nombre="Ingeniería en Computación", codigo="IC01", cine_2011=1, cine_2013=2,
+            area_formacion="Tecnologías de la información", area_disiplinaria=1
+        )
+        self.asignatura = Asignatura.objects.create(nombre="Compiladores")
+        self.plan = Plan_de_estudio.objects.create(
+            carrera=self.carrera, año="IV", trimestre="IV", pensol="2026",
+            codigo="COMP401", asignatura=self.asignatura,
+            horas_presenciales=24, horas_estudio_independiente=48
+        )
+
+    def tearDown(self):
+        self.patcher_crear.stop()
+
+    def test_admin_add_muestra_y_exige_trimestre_lectivo_sin_borrar_fecha(self):
+        client = Client()
+        client.login(username="admin_trim", password="adminpassword")
+        add_url = reverse('admin:plan_de_estudio_asignacionplanestudio_add')
+
+        resp_get = client.get(add_url)
+        self.assertEqual(resp_get.status_code, 200)
+        self.assertContains(resp_get, 'name="trimestre_lectivo"')
+        self.assertContains(resp_get, "Trimestre lectivo")
+
+        # Enviar sin trimestre_lectivo debe fallar y no guardar
+        resp_invalid = client.post(add_url, {
+            'usuario': str(self.docente.pk),
+            'plan_de_estudio': str(self.plan.pk),
+            'trimestre_lectivo': '',
+            'bloque': 'Primer bloque - 8:00',
+        })
+        self.assertEqual(resp_invalid.status_code, 200)
+        self.assertContains(resp_invalid, "Este campo es requerido.")
+        self.assertEqual(AsignacionPlanEstudio.objects.count(), 0)
+
+        # Enviar con trimestre_lectivo explícito (próximo trimestre 2026-IV) debe guardar correctamente
+        resp_ok = client.post(add_url, {
+            'usuario': str(self.docente.pk),
+            'plan_de_estudio': str(self.plan.pk),
+            'trimestre_lectivo': '2026-IV',
+            'bloque': 'Primer bloque - 8:00',
+        })
+        self.assertEqual(resp_ok.status_code, 302)
+        asig = AsignacionPlanEstudio.objects.get()
+        self.assertEqual(asig.trimestre_lectivo, '2026-IV')
+        self.assertIsNotNone(asig.fecha_asignacion)
+
+        # Listado del admin muestra columna y filtro por trimestre lectivo
+        changelist_url = reverse('admin:plan_de_estudio_asignacionplanestudio_changelist')
+        resp_list = client.get(f"{changelist_url}?trimestre_lectivo=2026-IV")
+        self.assertEqual(resp_list.status_code, 200)
+        self.assertContains(resp_list, "2026 - Trimestre IV")
+        self.assertContains(resp_list, "COMPILADORES")
+
+        # Vista de cambio muestra tanto trimestre_lectivo editable como fecha_asignacion (solo lectura)
+        change_url = reverse('admin:plan_de_estudio_asignacionplanestudio_change', args=[asig.pk])
+        resp_change = client.get(change_url)
+        self.assertEqual(resp_change.status_code, 200)
+        self.assertContains(resp_change, "Fecha asignacion")
+
+    def test_curriculum_planner_y_vistas_docente_usan_trimestre_lectivo(self):
+        from plan_de_estudio.utils.curriculum_planner import calcular_tiempos_y_fechas
+
+        asig = AsignacionPlanEstudio.objects.create(
+            usuario=self.docente,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo="2026-IV",
+            bloque="Primer bloque - 8:00",
+        )
+        # Aunque fecha_asignacion sea hoy (noviembre 2026), el planificador usa 2026-IV (Dic 2026 - Feb 2027)
+        tiempos = calcular_tiempos_y_fechas(asig, encuentro=1)
+        self.assertEqual(tiempos["fecha_encuentro"], "2026-12-05")
+        self.assertIn("Ciclo Dic 2026 – Feb 2027", tiempos["ciclo_nombre"])
+
+        # En inicio del docente se muestra el trimestre lectivo y se conserva fecha_asignacion
+        doc_client = Client()
+        doc_client.login(username="docente_trim", password="docpassword")
+        resp_inicio = doc_client.get(reverse('inicio'))
+        self.assertEqual(resp_inicio.status_code, 200)
+        self.assertContains(resp_inicio, "2026 - Trimestre IV")
+        self.assertContains(resp_inicio, "Asignado el:")
+
+        # Filtro por trimestre_lectivo en ranking docente
+        resp_rank = doc_client.get(reverse('ranking_docentes'), {'trimestre_lectivo': '2026-IV'})
+        self.assertEqual(resp_rank.status_code, 200)
+        self.assertContains(resp_rank, "2026 - Trimestre IV")
+        self.assertContains(resp_rank, "Elena Vega")
+
+    def test_exportar_form_y_backfill_migracion(self):
+        import importlib
+        mig_0023 = importlib.import_module(
+            'plan_de_estudio.migrations.0023_asignacionplanestudio_trimestre_lectivo'
+        )
+        self.assertEqual(mig_0023._codigo_desde_fecha(datetime.date(2026, 4, 10) if False else timezone.make_aware(datetime.datetime(2026, 4, 10, 10, 0))), "2026-I")
+        self.assertEqual(mig_0023._codigo_desde_fecha(timezone.make_aware(datetime.datetime(2026, 7, 10, 10, 0))), "2026-II")
+        self.assertEqual(mig_0023._codigo_desde_fecha(timezone.make_aware(datetime.datetime(2026, 11, 18, 10, 0))), "2026-III")
+        self.assertEqual(mig_0023._codigo_desde_fecha(timezone.make_aware(datetime.datetime(2026, 12, 1, 10, 0))), "2026-IV")
+        self.assertEqual(mig_0023._codigo_desde_fecha(timezone.make_aware(datetime.datetime(2026, 1, 15, 10, 0))), "2025-IV")
+
+        form = ExportarAsignacionesForm(data={
+            'trimestre_lectivo': '2026-IV',
+            'trimestre': 'IV',
+            'carreras': [self.carrera.id],
+            'años': ['IV'],
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+
 
 
 

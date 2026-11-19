@@ -2,6 +2,7 @@ import datetime
 from django.utils import timezone
 
 from plan_de_estudio.ranking_utils import obtener_rango_ciclo_actual
+from plan_de_estudio.trimestre_utils import obtener_rango_por_trimestre_lectivo
 
 
 UNIDADES_ROMANOS = [
@@ -439,12 +440,18 @@ def calcular_tiempos_y_fechas(
     from plan_de_estudio.models import Guia, Silabo
 
     plan = asignacion.plan_de_estudio
-    fecha_ref = (
-        asignacion.fecha_asignacion.date()
-        if getattr(asignacion, "fecha_asignacion", None)
-        else timezone.localdate()
-    )
-    inicio_ciclo, fin_ciclo, ciclo_nombre = obtener_rango_ciclo_actual(fecha_ref=fecha_ref)
+    trimestre_lectivo = getattr(asignacion, "trimestre_lectivo", None)
+    if trimestre_lectivo:
+        inicio_ciclo, fin_ciclo, ciclo_nombre = obtener_rango_por_trimestre_lectivo(
+            trimestre_lectivo
+        )
+    else:
+        fecha_ref = (
+            asignacion.fecha_asignacion.date()
+            if getattr(asignacion, "fecha_asignacion", None)
+            else timezone.localdate()
+        )
+        inicio_ciclo, fin_ciclo, ciclo_nombre = obtener_rango_ciclo_actual(fecha_ref=fecha_ref)
 
     silabo_anterior = (
         Silabo.objects.filter(asignacion_plan=asignacion, encuentros__lt=encuentro)

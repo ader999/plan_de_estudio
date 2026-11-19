@@ -176,6 +176,7 @@
                     <span><i class="fas fa-user-tie me-1"></i> <strong>Docente:</strong> {{ asignacion.usuario.get_full_name|default:asignacion.usuario.username }}</span>
                     <span><i class="fas fa-barcode me-1"></i> <strong>Código:</strong> {{ asignacion.plan_de_estudio.codigo }}</span>
                     <span><i class="fas fa-calendar me-1"></i> <strong>Año/Trimestre:</strong> {{ asignacion.plan_de_estudio.año }} | {{ asignacion.plan_de_estudio.trimestre }}</span>
+                    <span><i class="fas fa-calendar-check me-1"></i> <strong>Trimestre lectivo:</strong> {{ asignacion.trimestre_lectivo_display }}</span>
                     <span><i class="fas fa-clock me-1"></i> <strong>Bloque:</strong> {{ asignacion.bloque|default:"General" }}</span>
                 </div>
             </div>

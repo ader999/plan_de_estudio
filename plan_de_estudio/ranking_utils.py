@@ -4,6 +4,11 @@ from django.db.models import Count
 from django.utils import timezone
 
 from .models import AsignacionPlanEstudio, Carrera, Guia, TRIMESTRES_ROMANOS
+from .trimestre_utils import (
+    formatear_trimestre_lectivo,
+    obtener_rango_por_trimestre_lectivo,
+    obtener_trimestre_lectivo_de_fecha,
+)
 
 ENCUENTROS_ESPERADOS = 11
 ENTREGABLES_POR_ASIGNACION = ENCUENTROS_ESPERADOS * 2
@@ -11,44 +16,11 @@ ENTREGABLES_POR_ASIGNACION = ENCUENTROS_ESPERADOS * 2
 
 def obtener_rango_ciclo_actual(fecha_ref=None):
     """
-    Calcula las fechas de inicio y fin del trimestre/ciclo actual
-    (Mar-May, Jun-Ago, Sep-Nov, Dic-Feb), alineado con AsignacionPlanEstudio.clean().
+    Calcula las fechas de inicio y fin del trimestre/ciclo calendario
+    (Mar-May, Jun-Ago, Sep-Nov, Dic-Feb).
     """
-    hoy = fecha_ref or timezone.localdate()
-    mes = hoy.month
-    year = hoy.year
-
-    if 3 <= mes <= 5:
-        return (
-            datetime.date(year, 3, 1),
-            datetime.date(year, 5, 31),
-            f"Ciclo Mar – May {year} (Trimestre I)",
-        )
-    if 6 <= mes <= 8:
-        return (
-            datetime.date(year, 6, 1),
-            datetime.date(year, 8, 31),
-            f"Ciclo Jun – Ago {year} (Trimestre II)",
-        )
-    if 9 <= mes <= 11:
-        return (
-            datetime.date(year, 9, 1),
-            datetime.date(year, 11, 30),
-            f"Ciclo Sep – Nov {year} (Trimestre III)",
-        )
-    if mes == 12:
-        fin = datetime.date(year + 1, 3, 1) - datetime.timedelta(days=1)
-        return (
-            datetime.date(year, 12, 1),
-            fin,
-            f"Ciclo Dic {year} – Feb {year + 1} (Trimestre IV)",
-        )
-    inicio = datetime.date(year - 1, 12, 1)
-    fin = datetime.date(year, 3, 1) - datetime.timedelta(days=1)
-    return (
-        inicio,
-        fin,
-        f"Ciclo Dic {year - 1} – Feb {year} (Trimestre IV)",
+    return obtener_rango_por_trimestre_lectivo(
+        obtener_trimestre_lectivo_de_fecha(fecha_ref)
     )
 
 
@@ -130,6 +102,8 @@ def _calcular_metricas_asignacion(asignacion):
         "carrera_id": plan.carrera_id,
         "anio": plan.año,
         "trimestre": plan.trimestre,
+        "trimestre_lectivo": asignacion.trimestre_lectivo,
+        "trimestre_lectivo_display": asignacion.trimestre_lectivo_display,
         "pensol": plan.pensol,
         "bloque": asignacion.bloque or "Sin bloque",
         "fecha_asignacion": asignacion.fecha_asignacion,
@@ -266,6 +240,7 @@ def construir_ranking_docentes(
     orden="mayor",
     carrera_id=None,
     trimestre=None,
+    trimestre_lectivo=None,
     estado="todos",
     query="",
     fecha_ref=None,
@@ -289,27 +264,30 @@ def construir_ranking_docentes(
         )
     )
 
-    inicio_ciclo, fin_ciclo, ciclo_nombre = obtener_rango_ciclo_actual(fecha_ref=fecha_ref)
-    ciclo_qs = base_qs.filter(
-        fecha_asignacion__date__gte=inicio_ciclo,
-        fecha_asignacion__date__lte=fin_ciclo,
+    ciclo_codigo_actual = obtener_trimestre_lectivo_de_fecha(fecha_ref)
+    inicio_ciclo, fin_ciclo, ciclo_nombre = obtener_rango_por_trimestre_lectivo(
+        ciclo_codigo_actual
     )
+    ciclo_qs = base_qs.filter(trimestre_lectivo=ciclo_codigo_actual)
 
     total_asignaciones_ciclo = ciclo_qs.count()
     total_asignaciones_historico = base_qs.count()
 
     alcance_normalizado = "todas" if alcance == "todas" else "actual"
     auto_fallback_todas = False
-    if (
-        not alcance_explicito
-        and alcance_normalizado == "actual"
-        and total_asignaciones_ciclo == 0
-        and total_asignaciones_historico > 0
-    ):
-        alcance_normalizado = "todas"
-        auto_fallback_todas = True
+    if trimestre_lectivo:
+        qs = base_qs.filter(trimestre_lectivo=trimestre_lectivo)
+    else:
+        if (
+            not alcance_explicito
+            and alcance_normalizado == "actual"
+            and total_asignaciones_ciclo == 0
+            and total_asignaciones_historico > 0
+        ):
+            alcance_normalizado = "todas"
+            auto_fallback_todas = True
 
-    qs = base_qs if alcance_normalizado == "todas" else ciclo_qs
+        qs = base_qs if alcance_normalizado == "todas" else ciclo_qs
 
     if carrera_id:
         qs = qs.filter(plan_de_estudio__carrera_id=carrera_id)
@@ -386,11 +364,28 @@ def construir_ranking_docentes(
         plan_de_estudio__asignacionplanestudio__isnull=False
     ).distinct().order_by("nombre")
 
+    codigos_lectivos = list(
+        AsignacionPlanEstudio.objects.values_list("trimestre_lectivo", flat=True)
+        .distinct()
+        .order_by("-trimestre_lectivo")
+    )
+    trimestres_lectivos_disponibles = [
+        (code, formatear_trimestre_lectivo(code, detallado=True))
+        for code in codigos_lectivos
+        if code
+    ]
+
     return {
         "alcance": alcance_normalizado,
         "auto_fallback_todas": auto_fallback_todas,
         "orden": orden_normalizado,
         "ciclo_nombre": ciclo_nombre,
+        "ciclo_codigo_actual": ciclo_codigo_actual,
+        "ciclo_filtrado_nombre": (
+            formatear_trimestre_lectivo(trimestre_lectivo, detallado=True)
+            if trimestre_lectivo
+            else ""
+        ),
         "inicio_ciclo": inicio_ciclo,
         "fin_ciclo": fin_ciclo,
         "total_asignaciones_ciclo": total_asignaciones_ciclo,
@@ -411,4 +406,5 @@ def construir_ranking_docentes(
         },
         "carreras_disponibles": carreras_disponibles,
         "trimestres_disponibles": TRIMESTRES_ROMANOS,
+        "trimestres_lectivos_disponibles": trimestres_lectivos_disponibles,
     }

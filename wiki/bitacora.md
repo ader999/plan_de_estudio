@@ -1,5 +1,21 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-18] Campo Explícito `trimestre_lectivo` en Asignaciones de Plan de Estudio
+- **Modelo y Migración (`plan_de_estudio/trimestre_utils.py`, `plan_de_estudio/models.py`, `plan_de_estudio/migrations/0023_asignacionplanestudio_trimestre_lectivo.py`)**:
+  - Se creó `trimestre_utils.py` con formato `AAAA-I/II/III/IV`, `validar_trimestre_lectivo()`, `obtener_rango_por_trimestre_lectivo()`, `formatear_trimestre_lectivo()` y `generar_opciones_trimestre_lectivo()`.
+  - Se agregó `trimestre_lectivo` (visible, obligatorio, sin `default` en modelo/formulario) a `AsignacionPlanEstudio`, conservando intacto `fecha_asignacion` (`auto_now_add=True`).
+  - Se eliminó la clasificación por rangos de `fecha_asignacion` en `AsignacionPlanEstudio.clean()`, validando duplicados por `(usuario, plan_de_estudio, trimestre_lectivo)`.
+  - La migración `0023` crea la columna nullable, realiza backfill automático sobre los registros históricos usando su `fecha_asignacion` (`poblar_trimestre_lectivo_existente`) y aplica `NOT NULL`.
+- **Admin y Formularios (`plan_de_estudio/forms.py`, `plan_de_estudio/admin.py`)**:
+  - Se añadió `AsignacionPlanEstudioAdminForm` (selector obligatorio sin valor inicial al crear) y `TrimestreLectivoFilter` en `AsignacionPlanEstudioAdmin`, exponiendo `trimestre_lectivo_display` en `list_display` y `fecha_asignacion` en `readonly_fields`.
+  - Se añadió filtro opcional `trimestre_lectivo` en `ExportarAsignacionesForm` y `exportar_asignaciones_view`.
+- **Ranking, Planificador IA, Vistas y PWA (`plan_de_estudio/ranking_utils.py`, `plan_de_estudio/utils/curriculum_planner.py`, `plan_de_estudio/views.py`, `plantillas/*.html`, `plantillas/pwa/sw.js`)**:
+  - `construir_ranking_docentes` filtra **Ciclo Actual** por `trimestre_lectivo` en lugar de rangos de `fecha_asignacion` y soporta filtro explícito `trimestre_lectivo`.
+  - `calcular_tiempos_y_fechas()` calcula el ciclo y fechas semanales de los 11 encuentros a partir de `asignacion.trimestre_lectivo` (con respaldo a `fecha_asignacion` solo si falta).
+  - Se muestra `trimestre_lectivo` junto a `fecha_asignacion` en `inicio.html`, `plan_estudio.html`, `ver_planeacion.html` y `ranking_docentes.html`, y se actualizó `SW_VERSION` a `planeauml-v12`.
+- **Pruebas y Verificación (`plan_de_estudio/tests.py`)**:
+  - Agregada `TrimestreLectivoAsignacionTest` y actualizadas `AsignacionPlanEstudioModelTest` y `RankingDocentesTest`. `manage.py check`, `makemigrations --check --dry-run` y suite completa (`87` pruebas) pasando (**OK**).
+
 ## [2026-11-17] Corrección de Timeout/Pantalla Sin Conexión en Admin (`ProgramaAsignatura2026`)
 - **Diagnóstico en Producción (Railway)**:
   - Las trazas HTTP y de red mostraron que `GET /admin/plan_de_estudio/programaasignatura2026/` terminaba en `HTTP 499` exactamente a los `~12,000ms` porque: (1) `ProgramaAsignatura2026Admin` usaba el `list_per_page=100` por defecto; (2) al ser `plan_estudio` nullable (`null=True`), Django Admin omitía `select_related` automático causando ~3 consultas N+1 por fila (`Plan_de_estudio`, `Asignatura`, `Carrera`); (3) el `SELECT *` traía ~35 `TextField` extensos por fila (~893 KB desde PostgreSQL en `us-east4` vía proxy TCP hasta `us-west2`), elevando la respuesta a `~22s+`; y (4) `sw.js` abortaba rutas `BYPASS_PREFIXES` a los `12s` sirviendo `offline.html` ("Sin conexión o señal muy lenta"), mientras un único worker Gunicorn quedaba bloqueado.

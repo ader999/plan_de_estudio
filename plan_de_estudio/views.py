@@ -20,6 +20,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Silabo, Guia, AsignacionPlanEstudio, Asignatura, Plan_de_estudio, ModeloIAConfig, ConfiguracionSistema, TRIMESTRES_ROMANOS
 from .ranking_utils import construir_ranking_docentes
+from .trimestre_utils import parsear_trimestre_lectivo
 
 from .forms import SilaboForm
 from . import pwa_views
@@ -2058,6 +2059,11 @@ def ranking_docentes(request):
     valid_trimestres = {code for code, _ in TRIMESTRES_ROMANOS}
     trimestre = trimestre_raw if trimestre_raw in valid_trimestres else None
 
+    trimestre_lectivo_raw = request.GET.get("trimestre_lectivo", "").strip()
+    trimestre_lectivo = (
+        trimestre_lectivo_raw if parsear_trimestre_lectivo(trimestre_lectivo_raw) else None
+    )
+
     estado = request.GET.get("estado", "todos").strip()
     valid_estados = {"todos", "cumplido", "en_progreso", "pendientes", "sin_avance"}
     if estado not in valid_estados:
@@ -2070,6 +2076,7 @@ def ranking_docentes(request):
         orden=orden,
         carrera_id=carrera_id,
         trimestre=trimestre,
+        trimestre_lectivo=trimestre_lectivo,
         estado=estado,
         query=query,
         alcance_explicito=alcance_explicito,
@@ -2082,6 +2089,7 @@ def ranking_docentes(request):
         "ranking_visible_docentes": ranking_visible_docentes,
         "filtro_carrera": str(carrera_id) if carrera_id else "",
         "filtro_trimestre": trimestre or "",
+        "filtro_trimestre_lectivo": trimestre_lectivo or "",
         "filtro_estado": estado,
         "filtro_q": query,
     }

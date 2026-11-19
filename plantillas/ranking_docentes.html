@@ -192,7 +192,11 @@
                         <span class="badge bg-primary px-3 py-2 rounded-pill">
                             <i class="fas fa-chart-line me-1"></i> Tablero de Transparencia
                         </span>
-                        {% if alcance == 'actual' %}
+                        {% if filtro_trimestre_lectivo %}
+                            <span class="badge bg-info text-dark px-3 py-2 rounded-pill">
+                                <i class="fas fa-calendar-alt me-1"></i> {{ ciclo_filtrado_nombre }}
+                            </span>
+                        {% elif alcance == 'actual' %}
                             <span class="badge bg-info text-dark px-3 py-2 rounded-pill">
                                 <i class="fas fa-calendar-alt me-1"></i> {{ ciclo_nombre }}
                             </span>
@@ -255,12 +259,12 @@
         </div>
 
         <div class="pill-switch-group" role="group" aria-label="Orden del ranking">
-            <a href="?alcance={{ alcance }}&orden=mayor&carrera={{ filtro_carrera }}&trimestre={{ filtro_trimestre }}&estado={{ filtro_estado }}&q={{ filtro_q|urlencode }}"
+            <a href="?alcance={{ alcance }}&orden=mayor&carrera={{ filtro_carrera }}&trimestre={{ filtro_trimestre }}&trimestre_lectivo={{ filtro_trimestre_lectivo }}&estado={{ filtro_estado }}&q={{ filtro_q|urlencode }}"
                class="btn pill-switch-btn {% if orden == 'mayor' %}active{% endif %}">
                 <i class="fas fa-sort-amount-down"></i>
                 <span>Mayor Cumplimiento</span>
             </a>
-            <a href="?alcance={{ alcance }}&orden=menor&carrera={{ filtro_carrera }}&trimestre={{ filtro_trimestre }}&estado={{ filtro_estado }}&q={{ filtro_q|urlencode }}"
+            <a href="?alcance={{ alcance }}&orden=menor&carrera={{ filtro_carrera }}&trimestre={{ filtro_trimestre }}&trimestre_lectivo={{ filtro_trimestre_lectivo }}&estado={{ filtro_estado }}&q={{ filtro_q|urlencode }}"
                class="btn pill-switch-btn {% if orden == 'menor' %}active-danger{% endif %}">
                 <i class="fas fa-exclamation-triangle"></i>
                 <span>Rezagados Primero</span>
@@ -404,17 +408,27 @@
                 <input type="hidden" name="alcance" value="{{ alcance }}">
                 <input type="hidden" name="orden" value="{{ orden }}">
 
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-3">
                     <label for="filtro-q" class="form-label small mb-1">Buscar docente o asignatura</label>
                     <input type="text" id="filtro-q" name="q" value="{{ filtro_q }}" class="form-control" placeholder="Nombre, usuario, código o asignatura...">
                 </div>
 
-                <div class="col-12 col-sm-6 col-md-3">
+                <div class="col-12 col-sm-6 col-md-2">
                     <label for="filtro-carrera" class="form-label small mb-1">Carrera</label>
                     <select id="filtro-carrera" name="carrera" class="form-select">
                         <option value="">Todas las carreras</option>
                         {% for c in carreras_disponibles %}
                             <option value="{{ c.id }}" {% if filtro_carrera == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-6 col-sm-3 col-md-2">
+                    <label for="filtro-trimestre-lectivo" class="form-label small mb-1">Trimestre Lectivo</label>
+                    <select id="filtro-trimestre-lectivo" name="trimestre_lectivo" class="form-select">
+                        <option value="">Según alcance</option>
+                        {% for code, label in trimestres_lectivos_disponibles %}
+                            <option value="{{ code }}" {% if filtro_trimestre_lectivo == code %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -446,7 +460,7 @@
                     </button>
                 </div>
 
-                {% if filtro_q or filtro_carrera or filtro_trimestre or filtro_estado != 'todos' %}
+                {% if filtro_q or filtro_carrera or filtro_trimestre or filtro_trimestre_lectivo or filtro_estado != 'todos' %}
                 <div class="col-12 mt-2">
                     <a href="?alcance={{ alcance }}&orden={{ orden }}" class="small fw-semibold text-decoration-underline">
                         <i class="fas fa-times-circle me-1"></i> Limpiar filtros ({{ resumen.docentes_visibles }} de {{ resumen.total_docentes }} docentes mostrados)
@@ -541,7 +555,7 @@
                                             <span class="badge {{ asig.badge_class }}">{{ asig.porcentaje }}%</span>
                                         </div>
                                         <div class="small text-muted mt-1">
-                                            {{ asig.carrera }} · Año {{ asig.anio }} · Trimestre {{ asig.trimestre }} · {{ asig.bloque }} · Asignado el {{ asig.fecha_asignacion|date:"d/m/Y" }}
+                                            {{ asig.carrera }} · Año {{ asig.anio }} · Trimestre {{ asig.trimestre }} · Lectivo {{ asig.trimestre_lectivo_display }} · {{ asig.bloque }} · Asignado el {{ asig.fecha_asignacion|date:"d/m/Y" }}
                                         </div>
                                     </div>
                                     <div class="d-flex flex-wrap align-items-center gap-2">

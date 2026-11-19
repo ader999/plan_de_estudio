@@ -22,6 +22,8 @@ from .email_utils import enviar_correos_plan_incompleto
 from django.shortcuts import render, redirect, get_object_or_404
 from .utils.gemini_parser import parse_curriculum_with_ai
 from .ai_generators import listar_modelos_disponibles
+from .forms import AsignacionPlanEstudioAdminForm
+from .trimestre_utils import formatear_trimestre_lectivo, obtener_rango_por_trimestre_lectivo
 import json
 import logging
 from django.http import JsonResponse, HttpResponseForbidden
@@ -212,10 +214,45 @@ class FiltrarGuia(admin.ModelAdmin):
         return False
 
 
+class TrimestreLectivoFilter(admin.SimpleListFilter):
+    """Permite filtrar asignaciones por su trimestre lectivo exacto."""
+    title = 'Trimestre lectivo'
+    parameter_name = 'trimestre_lectivo'
+
+    def lookups(self, request, model_admin):
+        codigos = (
+            AsignacionPlanEstudio.objects.values_list('trimestre_lectivo', flat=True)
+            .distinct()
+            .order_by('-trimestre_lectivo')
+        )
+        return [
+            (codigo, formatear_trimestre_lectivo(codigo, detallado=True))
+            for codigo in codigos
+            if codigo
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(trimestre_lectivo=self.value())
+        return queryset
+
+
 class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
+    form = AsignacionPlanEstudioAdminForm
     change_list_template = 'admin/plan_de_estudio/asignacionplanestudio/change_list.html'
+    fields = (
+        'usuario',
+        'plan_de_estudio',
+        'trimestre_lectivo',
+        'bloque',
+        'fecha_asignacion',
+        'silabos_creados',
+        'guias_creadas',
+        'curso_classroom_id',
+        'curso_classroom_url',
+    )
     # Añade 'exportar_excel_boton' a list_display
-    list_display = ('usuario', 'plan_de_estudio', 'bloque', 'fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
+    list_display = ('usuario', 'plan_de_estudio', 'trimestre_lectivo_display', 'bloque', 'fecha_asignacion', 'progreso_silabos_guias', 'completado_icono', 'exportar_excel_boton')
     list_per_page = 20
     list_select_related = (
         'usuario',
@@ -223,14 +260,18 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
         'plan_de_estudio__asignatura',
         'plan_de_estudio__carrera',
     )
-    readonly_fields = ('silabos_creados', 'guias_creadas', 'curso_classroom_id', 'curso_classroom_url')
+    readonly_fields = ('fecha_asignacion', 'silabos_creados', 'guias_creadas', 'curso_classroom_id', 'curso_classroom_url')
     autocomplete_fields = ['plan_de_estudio', 'usuario'] # Habilita buscador dinámico
     search_fields = ('usuario__username', 'usuario__first_name', 'usuario__last_name') # Habilita buscador por usuario
     search_help_text = "Busque por nombre de usuario, nombre o apellido"
-    list_filter = ('plan_de_estudio__carrera', 'plan_de_estudio__pensol', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'bloque') # Añadir filtros útiles
+    list_filter = (TrimestreLectivoFilter, 'plan_de_estudio__carrera', 'plan_de_estudio__pensol', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'bloque') # Añadir filtros útiles
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(*self.list_select_related)
+
+    @admin.display(description='Trimestre lectivo', ordering='trimestre_lectivo')
+    def trimestre_lectivo_display(self, obj):
+        return obj.trimestre_lectivo_display
 
     def completado_icono(self, obj):
         # Retorna True si silabos_creados es igual a 11
@@ -319,26 +360,33 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
             if form.is_valid():
                 import datetime
                 from django.utils import timezone
+                trimestre_lectivo = form.cleaned_data.get('trimestre_lectivo')
                 trimestre = form.cleaned_data['trimestre']
                 carreras = form.cleaned_data['carreras']
                 años = form.cleaned_data['años']
-                
-                # Automatic date calculation based on trimester
-                current_year = timezone.now().year
-                if trimestre == 'I':
-                    fecha_inicio = datetime.date(current_year, 3, 1)
-                elif trimestre == 'II':
-                    fecha_inicio = datetime.date(current_year, 6, 1)
-                elif trimestre == 'III':
-                    fecha_inicio = datetime.date(current_year, 9, 1)
-                else: # IV
-                    fecha_inicio = datetime.date(current_year, 12, 1)
+
+                if trimestre_lectivo:
+                    fecha_inicio = obtener_rango_por_trimestre_lectivo(trimestre_lectivo)[0]
+                else:
+                    # Automatic date calculation based on trimester
+                    current_year = timezone.now().year
+                    if trimestre == 'I':
+                        fecha_inicio = datetime.date(current_year, 3, 1)
+                    elif trimestre == 'II':
+                        fecha_inicio = datetime.date(current_year, 6, 1)
+                    elif trimestre == 'III':
+                        fecha_inicio = datetime.date(current_year, 9, 1)
+                    else: # IV
+                        fecha_inicio = datetime.date(current_year, 12, 1)
 
                 queryset = AsignacionPlanEstudio.objects.filter(
                     plan_de_estudio__trimestre=trimestre,
                     plan_de_estudio__carrera__in=carreras,
                     plan_de_estudio__año__in=años
-                ).select_related('plan_de_estudio__carrera', 'plan_de_estudio__asignatura', 'usuario') \
+                )
+                if trimestre_lectivo:
+                    queryset = queryset.filter(trimestre_lectivo=trimestre_lectivo)
+                queryset = queryset.select_related('plan_de_estudio__carrera', 'plan_de_estudio__asignatura', 'usuario') \
                  .order_by('plan_de_estudio__carrera__nombre', 'plan_de_estudio__año')
 
                 if 'export_excel' in request.POST:

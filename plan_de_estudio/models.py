@@ -9,6 +9,10 @@ from multiselectfield import MultiSelectField
 from django.utils import timezone
 import datetime
 from django.conf import settings
+from .trimestre_utils import (
+    formatear_trimestre_lectivo,
+    validar_trimestre_lectivo,
+)
 
 class CredencialesGoogle(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='credenciales_google')
@@ -173,6 +177,12 @@ class AsignacionPlanEstudio(models.Model):
 
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     plan_de_estudio = models.ForeignKey(Plan_de_estudio, on_delete=models.CASCADE)
+    trimestre_lectivo = models.CharField(
+        max_length=20,
+        verbose_name='Trimestre lectivo',
+        validators=[validar_trimestre_lectivo],
+        help_text='Trimestre y año lectivo exacto al que pertenece esta asignación.',
+    )
     bloque = models.CharField(max_length=50, choices=BLOQUE_CHOICES, verbose_name='Bloque', null=True, blank=True)
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
     silabos_creados = models.IntegerField(default=0)
@@ -189,49 +199,38 @@ class AsignacionPlanEstudio(models.Model):
     def __str__(self):
         return f"{self.usuario} - {self.plan_de_estudio}"
 
+    @property
+    def trimestre_lectivo_display(self):
+        return formatear_trimestre_lectivo(self.trimestre_lectivo)
+
+    @property
+    def trimestre_lectivo_detalle(self):
+        return formatear_trimestre_lectivo(self.trimestre_lectivo, detallado=True)
+
     def clean(self):
         if self.plan_de_estudio_id is None:
             raise ValidationError({'plan_de_estudio': "Debes asignar un plan de estudio."})
-            
-        now = timezone.now()
-        mes = now.month
-        year = now.year
 
-        # Definir rangos de trimestres (Marzo inicio)
-        # T1: Marzo, Abril, Mayo
-        # T2: Junio, Julio, Agosto
-        # T3: Septiembre, Octubre, Noviembre
-        # T4: Diciembre, Enero, Febrero
-        
-        if 3 <= mes <= 5:
-            start_date = datetime.date(year, 3, 1)
-            end_date = datetime.date(year, 5, 31)
-        elif 6 <= mes <= 8:
-            start_date = datetime.date(year, 6, 1)
-            end_date = datetime.date(year, 8, 31)
-        elif 9 <= mes <= 11:
-            start_date = datetime.date(year, 9, 1)
-            end_date = datetime.date(year, 11, 30)
-        else: # 12, 1, 2
-            if mes == 12:
-                start_date = datetime.date(year, 12, 1)
-                # Fin de febrero del siguiente año
-                # Usamos 1ro marzo - 1 dia para manejar bisiestos
-                end_date = datetime.date(year + 1, 3, 1) - datetime.timedelta(days=1)
-            else: # Enero, Febrero
-                start_date = datetime.date(year - 1, 12, 1)
-                end_date = datetime.date(year, 3, 1) - datetime.timedelta(days=1)
+        codigo_trimestre = (self.trimestre_lectivo or "").strip()
+        if not codigo_trimestre:
+            raise ValidationError({'trimestre_lectivo': "Debes seleccionar un trimestre lectivo."})
+        try:
+            validar_trimestre_lectivo(codigo_trimestre)
+        except ValidationError as err:
+            raise ValidationError({'trimestre_lectivo': err.messages})
+        self.trimestre_lectivo = codigo_trimestre
 
-        # Buscar duplicados en el rango de fechas calculado
-        duplicados = AsignacionPlanEstudio.objects.filter(
-            usuario=self.usuario,
-            plan_de_estudio=self.plan_de_estudio,
-            fecha_asignacion__date__gte=start_date,
-            fecha_asignacion__date__lte=end_date
-        ).exclude(pk=self.pk)
+        if self.usuario_id is not None:
+            duplicados = AsignacionPlanEstudio.objects.filter(
+                usuario_id=self.usuario_id,
+                plan_de_estudio_id=self.plan_de_estudio_id,
+                trimestre_lectivo=self.trimestre_lectivo,
+            ).exclude(pk=self.pk)
 
-        if duplicados.exists():
-            raise ValidationError("Asignacion plan estudio con este Usuario y Plan de estudio ya existe en el trimestre actual.")
+            if duplicados.exists():
+                raise ValidationError(
+                    "Asignacion plan estudio con este Usuario y Plan de estudio ya existe en el trimestre lectivo seleccionado."
+                )
 
 
 class Silabo(models.Model):
