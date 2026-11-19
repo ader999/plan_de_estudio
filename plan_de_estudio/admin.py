@@ -23,7 +23,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .utils.gemini_parser import parse_curriculum_with_ai
 from .ai_generators import listar_modelos_disponibles
 from .forms import AsignacionPlanEstudioAdminForm
-from .trimestre_utils import formatear_trimestre_lectivo, obtener_rango_por_trimestre_lectivo
+from .trimestre_utils import (
+    formatear_trimestre_lectivo,
+    obtener_rango_por_trimestre_lectivo,
+    ordenar_codigos_trimestre_lectivo,
+)
 import json
 import logging
 from django.http import JsonResponse, HttpResponseForbidden
@@ -220,15 +224,13 @@ class TrimestreLectivoFilter(admin.SimpleListFilter):
     parameter_name = 'trimestre_lectivo'
 
     def lookups(self, request, model_admin):
-        codigos = (
-            AsignacionPlanEstudio.objects.values_list('trimestre_lectivo', flat=True)
-            .distinct()
-            .order_by('-trimestre_lectivo')
+        codigos = ordenar_codigos_trimestre_lectivo(
+            AsignacionPlanEstudio.objects.values_list('trimestre_lectivo', flat=True).distinct(),
+            descendente=True,
         )
         return [
             (codigo, formatear_trimestre_lectivo(codigo, detallado=True))
             for codigo in codigos
-            if codigo
         ]
 
     def queryset(self, request, queryset):

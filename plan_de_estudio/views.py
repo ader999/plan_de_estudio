@@ -2082,6 +2082,10 @@ def ranking_docentes(request):
         alcance_explicito=alcance_explicito,
     )
 
+    hay_filtros_activos = bool(
+        query or carrera_id or trimestre or trimestre_lectivo or estado != "todos"
+    )
+
     context = {
         **ranking_data,
         "usuario": request.user.get_full_name() or request.user.username,
@@ -2092,6 +2096,7 @@ def ranking_docentes(request):
         "filtro_trimestre_lectivo": trimestre_lectivo or "",
         "filtro_estado": estado,
         "filtro_q": query,
+        "hay_filtros_activos": hay_filtros_activos,
     }
     return render(request, "ranking_docentes.html", context)
 

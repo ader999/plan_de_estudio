@@ -1535,6 +1535,119 @@ class RankingDocentesTest(TestCase):
             (datetime.date(2023, 12, 1), datetime.date(2024, 2, 29))
         )
 
+    def test_ranking_trimestre_lectivo_futuro_multi_ciclo_y_ui_filtros(self):
+        # Crear una asignación para Ana en un trimestre lectivo futuro (con fecha_asignacion actual)
+        # y un histórico de Luis en 2025-I para verificar orden cronológico, ciclos_futuros y UI.
+        hoy = timezone.localdate()
+        futuro_codigo = f"{hoy.year + 1}-I"
+        asig_futuro = AsignacionPlanEstudio.objects.create(
+            usuario=self.docente_top,
+            plan_de_estudio=self.plan_4,
+            trimestre_lectivo=futuro_codigo,
+            bloque="Primer bloque - 8:00",
+        )
+        sil_futuro = Silabo.objects.create(
+            codigo=self.plan_4.codigo,
+            encuentros=1,
+            fecha=datetime.date(hoy.year + 1, 3, 7),
+            unidad="Unidad I",
+            nombre_de_la_unidad="Intro Futuro",
+            contenido_tematico="Contenido",
+            objetivo_conceptual="Obj C",
+            objetivo_procedimental="Obj P",
+            objetivo_actitudinal="Obj A",
+            tipo_primer_momento="Evaluación diagnóstica",
+            detalle_primer_momento="Det 1",
+            tiempo_primer_momento=15,
+            recursos_primer_momento="Pizarra",
+            tipo_segundo_momento_claseteoria="Conferencia",
+            clase_teorica="Teoría",
+            tipo_segundo_momento_practica="Taller",
+            clase_practica="Práctica",
+            tiempo_segundo_momento_teorica=30,
+            tiempo_segundo_momento_practica=30,
+            recursos_segundo_momento="Proyector",
+            tipo_tercer_momento=["Orientación del estudio independiente"],
+            detalle_tercer_momento="Det 3",
+            tiempo_tercer_momento=15,
+            recursos_tercer_momento="Guía",
+            eje_transversal=["Investigación"],
+            detalle_eje_transversal="Eje",
+            asignacion_plan=asig_futuro,
+        )
+        Guia.objects.create(
+            silabo=sil_futuro,
+            numero_encuentro=1,
+            fecha=datetime.date(hoy.year + 1, 3, 7),
+            unidad="Unidad I",
+            nombre_de_la_unidad="Intro Futuro",
+            tipo_objetivo_1="Conceptual",
+            objetivo_aprendizaje_1="Obj",
+            contenido_tematico_1="Cont",
+            actividad_aprendizaje_1="Act",
+            tecnica_evaluacion_1="Observación",
+            tipo_evaluacion_1="Formativa",
+            instrumento_evaluacion_1="Rúbrica",
+            criterios_evaluacion_1="Crit",
+            agente_evaluador_1=["Heteroevaluación"],
+            tiempo_minutos_1=45,
+            recursos_didacticos_1="PDF",
+            periodo_tiempo_programado_1="I Corte Evaluativo",
+            puntaje_1=10,
+            fecha_entrega_1=datetime.date(hoy.year + 1, 3, 12),
+        )
+        AsignacionPlanEstudio.objects.create(
+            usuario=self.docente_cero,
+            plan_de_estudio=self.plan_1,
+            trimestre_lectivo="2025-I",
+            bloque="Segundo bloque - 10:20",
+        )
+
+        # Verificar ciclos_futuros, conteos y orden cronológico descendente de opciones disponibles
+        data_actual = construir_ranking_docentes(alcance='actual', alcance_explicito=True)
+        self.assertEqual([c['codigo'] for c in data_actual['ciclos_futuros']], [futuro_codigo])
+        self.assertEqual(data_actual['ciclos_futuros'][0]['total'], 1)
+        codes_disp = [code for code, _ in data_actual['trimestres_lectivos_disponibles']]
+        self.assertEqual(codes_disp[0], futuro_codigo)
+        self.assertEqual(codes_disp[-1], '2025-I')
+
+        # En alcance actual NO se contamina con la asignación futura aunque se haya creado hoy
+        ana_actual = next(d for d in data_actual['docentes'] if d['username'] == 'ana_gomez')
+        self.assertEqual(ana_actual['total_asignaciones'], 1)
+
+        # Vista HTTP filtrada por trimestre_lectivo futuro: no deja activo 'Ciclo Actual' y calcula métricas exactas
+        client = Client()
+        client.login(username="ana_gomez", password="docpassword")
+        url = reverse('ranking_docentes')
+        resp_fut = client.get(url, {'trimestre_lectivo': futuro_codigo})
+        self.assertEqual(resp_fut.status_code, 200)
+        self.assertEqual(len(resp_fut.context['docentes']), 1)
+        ana_fut = resp_fut.context['docentes'][0]
+        self.assertEqual(ana_fut['total_asignaciones'], 1)
+        self.assertEqual(ana_fut['total_silabos'], 1)
+        self.assertEqual(ana_fut['total_guias'], 1)
+        self.assertEqual(ana_fut['porcentaje_general'], 9.1)
+        html_fut = resp_fut.content.decode('utf-8')
+        self.assertIn(f"{hoy.year + 1} - Trimestre I", html_fut)
+        self.assertNotIn('class="btn pill-switch-btn active">\n                <i class="fas fa-calendar-check">', html_fut)
+
+        # Al combinar filtro de trimestre_lectivo futuro con estado sin coincidencias, muestra estado vacío de filtros (no ciclo vacío)
+        resp_vacio = client.get(url, {'trimestre_lectivo': futuro_codigo, 'estado': 'cumplido'})
+        self.assertEqual(resp_vacio.status_code, 200)
+        html_vacio = resp_vacio.content.decode('utf-8')
+        self.assertIn("Limpiar filtros", html_vacio)
+        self.assertNotIn("No hay asignaciones registradas dentro de", html_vacio)
+
+        # Cuando la fecha de referencia entra al ciclo futuro, ese ciclo deja de ser futuro y pasa a Ciclo Actual
+        data_en_futuro = construir_ranking_docentes(
+            alcance='actual',
+            alcance_explicito=True,
+            fecha_ref=datetime.date(hoy.year + 1, 3, 15),
+        )
+        self.assertEqual(data_en_futuro['ciclo_codigo_actual'], futuro_codigo)
+        self.assertEqual(data_en_futuro['ciclos_futuros'], [])
+        self.assertEqual(data_en_futuro['total_asignaciones_ciclo'], 1)
+
     def test_visibilidad_toggle_admin_y_acceso(self):
         ranking_url = reverse('ranking_docentes')
         toggle_url = reverse('admin:plan_de_estudio_copiaseguridad_toggle_ranking_docentes')

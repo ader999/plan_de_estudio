@@ -115,12 +115,23 @@ def formatear_trimestre_lectivo(codigo, detallado=False):
     return f"{year} - Trimestre {trim} ({TRIMESTRE_LECTIVO_MESES[trim]} {year})"
 
 
-def _clave_orden_trimestre_lectivo(codigo):
+def clave_orden_trimestre_lectivo(codigo):
+    """Retorna tupla (anio, indice_trimestre) para orden cronológico consistente."""
     parsed = parsear_trimestre_lectivo(codigo)
     if not parsed:
-        return (0, 0)
+        return (0, -1)
     year, trim = parsed
     return (year, TRIMESTRES_LECTIVOS_ORDEN.index(trim))
+
+
+def ordenar_codigos_trimestre_lectivo(codigos, descendente=False):
+    """Filtra códigos válidos, elimina duplicados y ordena cronológicamente."""
+    validos = {
+        str(c).strip()
+        for c in codigos
+        if c and parsear_trimestre_lectivo(c)
+    }
+    return sorted(validos, key=clave_orden_trimestre_lectivo, reverse=descendente)
 
 
 def generar_opciones_trimestre_lectivo(
@@ -142,10 +153,7 @@ def generar_opciones_trimestre_lectivo(
     ]
 
     if extra_values:
-        for val in extra_values:
-            if val and parsear_trimestre_lectivo(val) and val not in codigos:
-                codigos.append(val)
-        codigos.sort(key=_clave_orden_trimestre_lectivo)
+        codigos = ordenar_codigos_trimestre_lectivo([*codigos, *extra_values])
 
     opciones = [
         (codigo, formatear_trimestre_lectivo(codigo, detallado=detallado))

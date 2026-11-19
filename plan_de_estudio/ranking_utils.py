@@ -5,9 +5,12 @@ from django.utils import timezone
 
 from .models import AsignacionPlanEstudio, Carrera, Guia, TRIMESTRES_ROMANOS
 from .trimestre_utils import (
+    clave_orden_trimestre_lectivo,
     formatear_trimestre_lectivo,
     obtener_rango_por_trimestre_lectivo,
     obtener_trimestre_lectivo_de_fecha,
+    ordenar_codigos_trimestre_lectivo,
+    parsear_trimestre_lectivo,
 )
 
 ENCUENTROS_ESPERADOS = 11
@@ -193,7 +196,9 @@ def _agrupar_por_docente(asignaciones_qs):
         )
 
         # Ordenar asignaturas mostrando primero las más atrasadas para facilitar seguimiento
-        entry["asignaciones"].sort(key=lambda a: (a["porcentaje"], a["asignatura"]))
+        entry["asignaciones"].sort(
+            key=lambda a: (a["porcentaje"], a["asignatura"], a["trimestre_lectivo"], a["id"])
+        )
         entry.update({
             "asignaciones_pendientes": total_asig - entry["asignaciones_completadas"],
             "esperado_silabos": esperado_por_tipo,
@@ -268,10 +273,17 @@ def construir_ranking_docentes(
     inicio_ciclo, fin_ciclo, ciclo_nombre = obtener_rango_por_trimestre_lectivo(
         ciclo_codigo_actual
     )
-    ciclo_qs = base_qs.filter(trimestre_lectivo=ciclo_codigo_actual)
 
-    total_asignaciones_ciclo = ciclo_qs.count()
-    total_asignaciones_historico = base_qs.count()
+    conteos_lectivos = dict(
+        AsignacionPlanEstudio.objects.values_list("trimestre_lectivo").annotate(total=Count("id"))
+    )
+    total_asignaciones_ciclo = conteos_lectivos.get(ciclo_codigo_actual, 0)
+    total_asignaciones_historico = sum(conteos_lectivos.values())
+
+    trimestre_lectivo_clean = (trimestre_lectivo or "").strip()
+    trimestre_lectivo = (
+        trimestre_lectivo_clean if parsear_trimestre_lectivo(trimestre_lectivo_clean) else None
+    )
 
     alcance_normalizado = "todas" if alcance == "todas" else "actual"
     auto_fallback_todas = False
@@ -287,7 +299,11 @@ def construir_ranking_docentes(
             alcance_normalizado = "todas"
             auto_fallback_todas = True
 
-        qs = base_qs if alcance_normalizado == "todas" else ciclo_qs
+        qs = (
+            base_qs
+            if alcance_normalizado == "todas"
+            else base_qs.filter(trimestre_lectivo=ciclo_codigo_actual)
+        )
 
     if carrera_id:
         qs = qs.filter(plan_de_estudio__carrera_id=carrera_id)
@@ -364,15 +380,24 @@ def construir_ranking_docentes(
         plan_de_estudio__asignacionplanestudio__isnull=False
     ).distinct().order_by("nombre")
 
-    codigos_lectivos = list(
-        AsignacionPlanEstudio.objects.values_list("trimestre_lectivo", flat=True)
-        .distinct()
-        .order_by("-trimestre_lectivo")
+    codigos_lectivos = ordenar_codigos_trimestre_lectivo(
+        conteos_lectivos.keys(), descendente=True
     )
     trimestres_lectivos_disponibles = [
         (code, formatear_trimestre_lectivo(code, detallado=True))
         for code in codigos_lectivos
-        if code
+    ]
+
+    clave_actual = clave_orden_trimestre_lectivo(ciclo_codigo_actual)
+    ciclos_futuros = [
+        {
+            "codigo": code,
+            "etiqueta": formatear_trimestre_lectivo(code),
+            "nombre": formatear_trimestre_lectivo(code, detallado=True),
+            "total": conteos_lectivos.get(code, 0),
+        }
+        for code in reversed(codigos_lectivos)
+        if clave_orden_trimestre_lectivo(code) > clave_actual and conteos_lectivos.get(code, 0) > 0
     ]
 
     return {
@@ -386,6 +411,7 @@ def construir_ranking_docentes(
             if trimestre_lectivo
             else ""
         ),
+        "ciclos_futuros": ciclos_futuros,
         "inicio_ciclo": inicio_ciclo,
         "fin_ciclo": fin_ciclo,
         "total_asignaciones_ciclo": total_asignaciones_ciclo,

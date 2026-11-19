@@ -1,5 +1,15 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-18] Validación y Mejoras de UX en Ranking Docente con `trimestre_lectivo`
+- **Utilidades y Admin (`plan_de_estudio/trimestre_utils.py`, `plan_de_estudio/ranking_utils.py`, `plan_de_estudio/admin.py`)**:
+  - Agregados `clave_orden_trimestre_lectivo()` y `ordenar_codigos_trimestre_lectivo()` en `trimestre_utils.py`, reutilizados en `construir_ranking_docentes()` y `TrimestreLectivoFilter`.
+  - `construir_ranking_docentes()` agrega conteos por `trimestre_lectivo` en una sola consulta, expone `ciclos_futuros` (trimestres lectivos posteriores al ciclo calendario actual ya registrados en BD) y desempata determinísticamente las asignaturas de cada docente.
+- **Vista, Plantilla y PWA (`plan_de_estudio/views.py`, `plantillas/ranking_docentes.html`, `plantillas/pwa/sw.js`)**:
+  - Corregido el estado `.active` de **Ciclo Actual** / **Todas las Asignaciones** cuando `filtro_trimestre_lectivo` está activo.
+  - Agregados accesos rápidos para `ciclos_futuros`, auto-envío en `#filtro-trimestre-lectivo` y corrección del estado vacío con `hay_filtros_activos`. `SW_VERSION` actualizada a `planeauml-v13`.
+- **Pruebas y Verificación (`plan_de_estudio/tests.py`)**:
+  - Agregada `test_ranking_trimestre_lectivo_futuro_multi_ciclo_y_ui_filtros` en `RankingDocentesTest`. `manage.py check`, `makemigrations --check --dry-run` y suite completa (`88` pruebas en `plan_de_estudio` + `eventos`) pasando (**OK**).
+
 ## [2026-11-18] Campo Explícito `trimestre_lectivo` en Asignaciones de Plan de Estudio
 - **Modelo y Migración (`plan_de_estudio/trimestre_utils.py`, `plan_de_estudio/models.py`, `plan_de_estudio/migrations/0023_asignacionplanestudio_trimestre_lectivo.py`)**:
   - Se creó `trimestre_utils.py` con formato `AAAA-I/II/III/IV`, `validar_trimestre_lectivo()`, `obtener_rango_por_trimestre_lectivo()`, `formatear_trimestre_lectivo()` y `generar_opciones_trimestre_lectivo()`.
