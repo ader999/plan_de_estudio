@@ -1,5 +1,14 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-21] Corrección de Ajuste de Texto en Móviles en Ranking Docente
+- **Plantilla y Estilos Responsive (`plantillas/ranking_docentes.html`)**:
+  - Diagnóstico: `.highlight-item` utilizaba la clase inexistente en Bootstrap 5 `min-width-0` junto a `.text-truncate` (`white-space: nowrap`), impidiendo que el contenedor flex encogiera y causando que nombres largos en **Mayor Cumplimiento** y **Prioridad de Seguimiento (Menor Avance)** desbordaran la fila y expulsaran/recortaran el badge de porcentaje contra `overflow: hidden` de `.card`; adicionalmente `.card { padding: 1rem !important }` de `static/css/base.css` añadía doble padding junto a `.card-body`.
+  - Se reemplazó el marcado de `.highlight-item` por `.highlight-main`, `.highlight-rank`, `.highlight-text`, `.highlight-name`, `.highlight-meta` y `.highlight-score` (`flex: 1 1 0%; min-width: 0;`, `white-space: normal; overflow-wrap: anywhere; word-break: break-word;` en textos y `flex-shrink: 0; white-space: nowrap;` en badges) permitiendo ajuste multilínea limpio sin recortar porcentajes.
+  - Se aplicaron `.min-w-0` y `.text-wrap-safe` en tarjetas KPI, `.docente-rank-card` y `.asignacion-subcard`, ajuste de `.ranking-hero .badge`, y en `@media (max-width: 767.98px)` se anuló el doble padding de `.ranking-page .card` (`padding: 0 !important`), ajustando márgenes laterales y tamaños de badges/avatares en móviles.
+- **PWA y Pruebas (`plantillas/pwa/sw.js`, `plan_de_estudio/tests.py`)**:
+  - Incrementada `SW_VERSION` a `planeauml-v14` para renovar caché en clientes PWA/móviles.
+  - Ampliada `RankingDocentesTest.test_filtros_vista_ranking_docentes` para validar las nuevas clases de ajuste y evitar regresiones con `min-width-0` / `text-truncate`. `manage.py check`, `makemigrations --check --dry-run`, `collectstatic --dry-run` (`201` archivos), `node --check` sobre `sw.js` renderizado y suite completa (`88` pruebas en `plan_de_estudio` + `eventos`) pasando (**OK**).
+
 ## [2026-11-18] Validación y Mejoras de UX en Ranking Docente con `trimestre_lectivo`
 - **Utilidades y Admin (`plan_de_estudio/trimestre_utils.py`, `plan_de_estudio/ranking_utils.py`, `plan_de_estudio/admin.py`)**:
   - Agregados `clave_orden_trimestre_lectivo()` y `ordenar_codigos_trimestre_lectivo()` en `trimestre_utils.py`, reutilizados en `construir_ranking_docentes()` y `TrimestreLectivoFilter`.

@@ -1488,6 +1488,12 @@ class RankingDocentesTest(TestCase):
         self.assertIn("Luis Mora", html)
         self.assertIn("Tú", html)
         self.assertIn("Ver asignaturas", html)
+        self.assertIn('class="highlight-main"', html)
+        self.assertIn('class="highlight-text"', html)
+        self.assertIn('class="highlight-name"', html)
+        self.assertIn('highlight-score', html)
+        self.assertNotIn("min-width-0", html)
+        self.assertNotIn("text-truncate", html)
         self.assertNotIn("fa-file-signature text-primary", html)
         self.assertNotIn("fa-book-reader text-info", html)
 
