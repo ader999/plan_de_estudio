@@ -672,6 +672,11 @@ class CopiaSeguridad(Carrera):
         verbose_name = "Copia de Seguridad"
         verbose_name_plural = "Copias de Seguridad / Configuración"
 
+TOTAL_ENCUENTROS_SILABO = 11
+TOTAL_ENCUENTROS_GUIA_SIN_ULTIMO = 10
+TOTAL_ENCUENTROS_GUIA_COMPLETO = 11
+
+
 class ConfiguracionSistema(models.Model):
     permitir_descarga_plan_tematico = models.BooleanField(
         default=True,
@@ -683,11 +688,24 @@ class ConfiguracionSistema(models.Model):
         verbose_name="Mostrar Ranking Docente a usuarios",
         help_text="Si está activo, todos los docentes con sesión iniciada podrán consultar el ranking de cumplimiento. Si se desactiva, solo los administradores podrán verlo."
     )
+    habilitar_ultimo_encuentro_guia = models.BooleanField(
+        default=False,
+        verbose_name="Habilitar guía del último encuentro (Encuentro 11)",
+        help_text="Si está desactivado, solo se requieren 10 guías de estudio (encuentros 1 al 10) junto a los 11 sílabos, ya que el último día de clase cierra el acumulado sin dejar tarea. Actívelo si se solicita restaurar la guía del encuentro 11."
+    )
     actualizado_el = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Configuración del Sistema"
         verbose_name_plural = "Configuración del Sistema"
+
+    @property
+    def max_encuentros_guia(self):
+        return (
+            TOTAL_ENCUENTROS_GUIA_COMPLETO
+            if self.habilitar_ultimo_encuentro_guia
+            else TOTAL_ENCUENTROS_GUIA_SIN_ULTIMO
+        )
 
     @classmethod
     def get_solo(cls):
@@ -696,6 +714,23 @@ class ConfiguracionSistema(models.Model):
 
     def __str__(self):
         return "Configuración del Sistema"
+
+
+def obtener_max_encuentros_guia(config=None):
+    """
+    Devuelve la cantidad activa de encuentros con guía de estudio (10 por defecto,
+    o 11 si se restaura el último encuentro de la guía en ConfiguracionSistema).
+    """
+    if config is None:
+        try:
+            config = ConfiguracionSistema.get_solo()
+        except Exception:
+            return TOTAL_ENCUENTROS_GUIA_SIN_ULTIMO
+    return (
+        TOTAL_ENCUENTROS_GUIA_COMPLETO
+        if getattr(config, 'habilitar_ultimo_encuentro_guia', False)
+        else TOTAL_ENCUENTROS_GUIA_SIN_ULTIMO
+    )
 
 
 class ProveedorIA(models.Model):

@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (
     Plan_de_estudio, Asignatura, Carrera, Silabo, Guia,
     AsignacionPlanEstudio, PlanTematico, ProgramaAsignatura2026,
-    CopiaSeguridad, ModeloIAConfig, ProveedorIA, ConfiguracionSistema
+    CopiaSeguridad, ModeloIAConfig, ProveedorIA, ConfiguracionSistema,
+    TOTAL_ENCUENTROS_SILABO, obtener_max_encuentros_guia,
 )
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -11,7 +12,7 @@ from django.contrib.admin import DateFieldListFilter, RelatedFieldListFilter, Al
 from django.forms import DateInput
 from import_export.admin import ExportMixin
 from import_export import resources
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.db.models import Count, Prefetch, Q, TextField
 from django.contrib.auth.models import User
 from .document_generators import generar_excel_admin
@@ -30,7 +31,8 @@ from .trimestre_utils import (
 )
 import json
 import logging
-from django.http import JsonResponse, HttpResponseForbidden
+import os
+from django.http import FileResponse, Http404, JsonResponse, HttpResponseForbidden
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +100,8 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
             model = Plan_de_estudio
             fields = ('carrera__nombre', 'pensol', 'año', 'trimestre', 'codigo', 'asignatura__nombre', 'horas_presenciales', 'horas_estudio_independiente','total_horas')
 
-    list_per_page = 20  # Limitar a 20 elementos por página
-    list_display = ('carrera', 'pensol', 'año', 'trimestre', 'asignatura', 'pr')  # Mostrar los campos
+    list_per_page = 30  # Mostrar 30 elementos seguidos por página
+    list_display = ('carrera', 'pensol', 'año', 'trimestre', 'asignatura', 'pr', 'descargas_documentos')  # Mostrar los campos
     list_filter = (CarreraFilter, 'pensol', 'año', 'trimestre')  # Filtros en el panel de administración, incluyendo 'carrera'
     autocomplete_fields = ['asignatura', 'pr', 'pc', 'cr']
     search_fields = ('asignatura__nombre', 'codigo', 'carrera__nombre', 'pensol')  # Para permitir búsqueda en autocomplete
@@ -107,6 +109,95 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('carrera', 'asignatura', 'pr')
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<int:plan_id>/descargar/<str:tipo>/',
+                self.admin_site.admin_view(self.descargar_documento_view),
+                name='plan_de_estudio_plan_de_estudio_descargar_documento',
+            ),
+        ]
+        return custom_urls + urls
+
+    @admin.display(description='Descargas')
+    def descargas_documentos(self, obj):
+        botones = []
+        base_style = (
+            'display:inline-flex; align-items:center; gap:4px; '
+            'padding:4px 8px; font-weight:600; white-space:nowrap; text-decoration:none;'
+        )
+        if obj.plan_tematico and obj.plan_tematico.name:
+            url_plan = reverse(
+                'admin:plan_de_estudio_plan_de_estudio_descargar_documento',
+                args=[obj.pk, 'plan_tematico'],
+            )
+            botones.append((
+                url_plan,
+                f"Descargar Plan temático: {os.path.basename(obj.plan_tematico.name)}",
+                base_style,
+                '↓ Plan temático',
+            ))
+        if obj.documento_adjunto and obj.documento_adjunto.name:
+            url_adjunto = reverse(
+                'admin:plan_de_estudio_plan_de_estudio_descargar_documento',
+                args=[obj.pk, 'documento_adjunto'],
+            )
+            botones.append((
+                url_adjunto,
+                f"Descargar Documento adjunto: {os.path.basename(obj.documento_adjunto.name)}",
+                f"{base_style} background:#198754; color:#ffffff; border-color:#198754;",
+                '↓ Doc. adjunto',
+            ))
+        if not botones:
+            return format_html('<span style="color: var(--body-quiet-color, #888);">—</span>')
+        enlaces = format_html_join(
+            '',
+            '<a class="button" href="{}" title="{}" style="{}">{}</a>',
+            botones,
+        )
+        return format_html(
+            '<div style="display:inline-flex; flex-wrap:wrap; gap:6px; align-items:center;">{}</div>',
+            enlaces,
+        )
+
+    def descargar_documento_view(self, request, plan_id, tipo):
+        if tipo not in ('plan_tematico', 'documento_adjunto'):
+            raise Http404("Tipo de documento no válido.")
+        plan = get_object_or_404(Plan_de_estudio, pk=plan_id)
+        if not self.has_view_permission(request, plan):
+            return HttpResponseForbidden()
+
+        changelist_url = reverse('admin:plan_de_estudio_plan_de_estudio_changelist')
+        archivo = getattr(plan, tipo, None)
+        if not archivo or not archivo.name:
+            etiqueta = 'plan temático' if tipo == 'plan_tematico' else 'documento adjunto'
+            self.message_user(
+                request,
+                f"El plan de estudio '{plan}' no tiene un {etiqueta} cargado.",
+                level=messages.WARNING,
+            )
+            return HttpResponseRedirect(changelist_url)
+
+        nombre_archivo = os.path.basename(archivo.name)
+        try:
+            file_handle = archivo.open('rb')
+            # Fuerza la apertura del archivo subyacente para capturar faltantes antes de responder.
+            getattr(file_handle, 'file', None)
+        except Exception as exc:
+            logger.warning(
+                "No se pudo descargar %s del Plan_de_estudio %s (%s): %s",
+                tipo, plan.pk, archivo.name, exc,
+            )
+            self.message_user(
+                request,
+                f"No se pudo descargar el archivo '{nombre_archivo}'. Verifique que exista en el almacenamiento.",
+                level=messages.ERROR,
+            )
+            return HttpResponseRedirect(changelist_url)
+
+        return FileResponse(file_handle, as_attachment=True, filename=nombre_archivo)
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
@@ -269,22 +360,24 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
     list_filter = (TrimestreLectivoFilter, 'plan_de_estudio__carrera', 'plan_de_estudio__pensol', 'plan_de_estudio__año', 'plan_de_estudio__trimestre', 'bloque') # Añadir filtros útiles
 
     def get_queryset(self, request):
+        self._max_guias_cache = obtener_max_encuentros_guia()
         return super().get_queryset(request).select_related(*self.list_select_related)
 
     @admin.display(description='Trimestre lectivo', ordering='trimestre_lectivo')
     def trimestre_lectivo_display(self, obj):
         return obj.trimestre_lectivo_display
 
+    def _get_max_guias(self):
+        max_guias = getattr(self, '_max_guias_cache', None)
+        return max_guias if max_guias is not None else obtener_max_encuentros_guia()
+
     def completado_icono(self, obj):
-        # Retorna True si silabos_creados es igual a 11
-        # Ajusta el número 11 si el total esperado de sílabos es diferente
-        total_esperado = 11 # O obtén esto dinámicamente si es variable
-        return obj.silabos_creados >= total_esperado # Usar >= por si acaso
+        return obj.silabos_creados >= TOTAL_ENCUENTROS_SILABO and obj.guias_creadas >= self._get_max_guias()
     completado_icono.boolean = True
     completado_icono.short_description = 'Completado'
 
     def progreso_silabos_guias(self, obj):
-        return f"S:{obj.silabos_creados}, G:{obj.guias_creadas}"
+        return f"S:{obj.silabos_creados}/{TOTAL_ENCUENTROS_SILABO}, G:{obj.guias_creadas}/{self._get_max_guias()}"
     progreso_silabos_guias.short_description = 'Progreso (S/G)'
 
     # Método para generar el botón de exportar y ver planeación
@@ -495,11 +588,58 @@ class PlanTematicoAdmin(admin.ModelAdmin):
         return qs
 
 
+class Programa2026CarreraFilter(admin.SimpleListFilter):
+    title = 'Carrera'
+    parameter_name = 'carrera'
+
+    def lookups(self, request, model_admin):
+        return list(Carrera.objects.order_by('nombre').values_list('id', 'nombre'))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            try:
+                carrera_id = int(self.value())
+            except (TypeError, ValueError):
+                return queryset.none()
+            return queryset.filter(plan_estudio__carrera_id=carrera_id)
+        return queryset
+
+
+class Programa2026PlanAsociadoFilter(admin.SimpleListFilter):
+    title = 'Estado de asociación'
+    parameter_name = 'plan_asociado'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('si', 'Con plan de estudio'),
+            ('no', 'Sin plan de estudio'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'si':
+            return queryset.filter(plan_estudio__isnull=False)
+        if self.value() == 'no':
+            return queryset.filter(plan_estudio__isnull=True)
+        return queryset
+
+
 class ProgramaAsignatura2026Admin(admin.ModelAdmin):
     list_display = ('plan_estudio',)
+    list_filter = (
+        Programa2026CarreraFilter,
+        'plan_estudio__pensol',
+        'plan_estudio__año',
+        'plan_estudio__trimestre',
+        Programa2026PlanAsociadoFilter,
+    )
     list_per_page = 20
     list_select_related = ('plan_estudio', 'plan_estudio__asignatura', 'plan_estudio__carrera')
-    search_fields = ('plan_estudio__codigo', 'plan_estudio__asignatura__nombre')
+    search_fields = (
+        'plan_estudio__codigo',
+        'plan_estudio__asignatura__nombre',
+        'plan_estudio__carrera__nombre',
+        'plan_estudio__pensol',
+    )
     autocomplete_fields = ['plan_estudio']
     _CHANGELIST_DEFERRED_FIELDS = tuple(
         field.name
@@ -700,6 +840,7 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
             path('ver-guia/', self.admin_site.admin_view(self.ver_guia_view), name='plan_de_estudio_copiaseguridad_ver_guia'),
             path('toggle-descarga-plan-tematico/', self.admin_site.admin_view(self.toggle_descarga_plan_tematico_view), name='plan_de_estudio_copiaseguridad_toggle_descarga_plan_tematico'),
             path('toggle-ranking-docentes/', self.admin_site.admin_view(self.toggle_ranking_docentes_view), name='plan_de_estudio_copiaseguridad_toggle_ranking_docentes'),
+            path('toggle-ultimo-encuentro-guia/', self.admin_site.admin_view(self.toggle_ultimo_encuentro_guia_view), name='plan_de_estudio_copiaseguridad_toggle_ultimo_encuentro_guia'),
             path('guardar-proveedor-ia/', self.admin_site.admin_view(self.guardar_proveedor_ia_view), name='plan_de_estudio_copiaseguridad_guardar_proveedor_ia'),
             path('eliminar-proveedor-ia/<int:proveedor_id>/', self.admin_site.admin_view(self.eliminar_proveedor_ia_view), name='plan_de_estudio_copiaseguridad_eliminar_proveedor_ia'),
             path('consultar-modelos-ia/', self.admin_site.admin_view(self.consultar_modelos_ia_view), name='plan_de_estudio_copiaseguridad_consultar_modelos_ia'),
@@ -750,6 +891,15 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
             'mostrar_ranking_docentes',
             "El Ranking de Cumplimiento Docente ahora es visible para todos los usuarios con sesión iniciada.",
             "El Ranking de Cumplimiento Docente ha sido restringido únicamente a administradores.",
+        )
+
+    def toggle_ultimo_encuentro_guia_view(self, request):
+        """Habilita o desactiva el último encuentro (Encuentro 11) de la Guía de Estudio Independiente."""
+        return self._toggle_config_boolean(
+            request,
+            'habilitar_ultimo_encuentro_guia',
+            "La guía del último encuentro (Encuentro 11) ha sido restaurada (11 sílabos y 11 guías requeridas).",
+            "La guía del último encuentro (Encuentro 11) ha sido desactivada (11 sílabos y 10 guías requeridas).",
         )
 
     def guardar_proveedor_ia_view(self, request):

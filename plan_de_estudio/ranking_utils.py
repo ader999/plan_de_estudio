@@ -3,7 +3,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django.utils import timezone
 
-from .models import AsignacionPlanEstudio, Carrera, Guia, TRIMESTRES_ROMANOS
+from .models import (
+    AsignacionPlanEstudio,
+    Carrera,
+    Guia,
+    TOTAL_ENCUENTROS_SILABO,
+    TRIMESTRES_ROMANOS,
+    obtener_max_encuentros_guia,
+)
 from .trimestre_utils import (
     clave_orden_trimestre_lectivo,
     formatear_trimestre_lectivo,
@@ -13,8 +20,16 @@ from .trimestre_utils import (
     parsear_trimestre_lectivo,
 )
 
-ENCUENTROS_ESPERADOS = 11
-ENTREGABLES_POR_ASIGNACION = ENCUENTROS_ESPERADOS * 2
+ENCUENTROS_ESPERADOS = TOTAL_ENCUENTROS_SILABO
+ENCUENTROS_SILABO_ESPERADOS = TOTAL_ENCUENTROS_SILABO
+ENTREGABLES_POR_ASIGNACION = ENCUENTROS_SILABO_ESPERADOS + 10
+
+
+def obtener_metas_ranking():
+    """Devuelve (esperado_silabos, esperado_guias, esperado_entregables_por_asignacion)."""
+    esperado_silabos = ENCUENTROS_SILABO_ESPERADOS
+    esperado_guias = obtener_max_encuentros_guia()
+    return esperado_silabos, esperado_guias, esperado_silabos + esperado_guias
 
 
 def obtener_rango_ciclo_actual(fecha_ref=None):
@@ -77,7 +92,16 @@ def _clasificar_estado(porcentaje):
     }
 
 
-def _calcular_metricas_asignacion(asignacion):
+def _calcular_metricas_asignacion(asignacion, esperado_silabos=None, esperado_guias=None):
+    if esperado_silabos is None or esperado_guias is None:
+        meta_s, meta_g, _ = obtener_metas_ranking()
+        if esperado_silabos is None:
+            esperado_silabos = meta_s
+        if esperado_guias is None:
+            esperado_guias = meta_g
+
+    esperado_total = esperado_silabos + esperado_guias
+
     silabos_db = getattr(asignacion, "silabos_db", None)
     if silabos_db is None:
         silabos_db = asignacion.silabo_set.count()
@@ -85,14 +109,14 @@ def _calcular_metricas_asignacion(asignacion):
     if guias_db is None:
         guias_db = Guia.objects.filter(silabo__asignacion_plan=asignacion).count()
 
-    silabos = min(silabos_db if silabos_db > 0 else max(asignacion.silabos_creados or 0, 0), ENCUENTROS_ESPERADOS)
-    guias = min(guias_db if guias_db > 0 else max(asignacion.guias_creadas or 0, 0), ENCUENTROS_ESPERADOS)
+    silabos = min(silabos_db if silabos_db > 0 else max(asignacion.silabos_creados or 0, 0), esperado_silabos)
+    guias = min(guias_db if guias_db > 0 else max(asignacion.guias_creadas or 0, 0), esperado_guias)
 
     total_entregables = silabos + guias
-    porcentaje = round((total_entregables / ENTREGABLES_POR_ASIGNACION) * 100, 1)
-    porcentaje_silabos = round((silabos / ENCUENTROS_ESPERADOS) * 100, 1)
-    porcentaje_guias = round((guias / ENCUENTROS_ESPERADOS) * 100, 1)
-    completada = silabos >= ENCUENTROS_ESPERADOS and guias >= ENCUENTROS_ESPERADOS
+    porcentaje = round((total_entregables / esperado_total) * 100, 1) if esperado_total > 0 else 0.0
+    porcentaje_silabos = round((silabos / esperado_silabos) * 100, 1) if esperado_silabos > 0 else 0.0
+    porcentaje_guias = round((guias / esperado_guias) * 100, 1) if esperado_guias > 0 else 0.0
+    completada = silabos >= esperado_silabos and guias >= esperado_guias
     sin_iniciar = silabos == 0 and guias == 0
     clasificacion = _clasificar_estado(porcentaje)
 
@@ -112,12 +136,14 @@ def _calcular_metricas_asignacion(asignacion):
         "fecha_asignacion": asignacion.fecha_asignacion,
         "silabos": silabos,
         "guias": guias,
-        "esperado_por_tipo": ENCUENTROS_ESPERADOS,
+        "esperado_silabos": esperado_silabos,
+        "esperado_guias": esperado_guias,
+        "esperado_por_tipo": esperado_silabos,
         "total_entregables": total_entregables,
-        "esperado_total": ENTREGABLES_POR_ASIGNACION,
-        "faltantes_silabos": ENCUENTROS_ESPERADOS - silabos,
-        "faltantes_guias": ENCUENTROS_ESPERADOS - guias,
-        "faltantes_total": ENTREGABLES_POR_ASIGNACION - total_entregables,
+        "esperado_total": esperado_total,
+        "faltantes_silabos": max(0, esperado_silabos - silabos),
+        "faltantes_guias": max(0, esperado_guias - guias),
+        "faltantes_total": max(0, esperado_total - total_entregables),
         "porcentaje": porcentaje,
         "porcentaje_silabos": porcentaje_silabos,
         "porcentaje_guias": porcentaje_guias,
@@ -127,13 +153,25 @@ def _calcular_metricas_asignacion(asignacion):
     }
 
 
-def _agrupar_por_docente(asignaciones_qs):
+def _agrupar_por_docente(asignaciones_qs, esperado_silabos=None, esperado_guias=None):
+    if esperado_silabos is None or esperado_guias is None:
+        meta_s, meta_g, _ = obtener_metas_ranking()
+        if esperado_silabos is None:
+            esperado_silabos = meta_s
+        if esperado_guias is None:
+            esperado_guias = meta_g
+
+    esperado_por_asignacion = esperado_silabos + esperado_guias
     docentes_map = {}
 
     for asignacion in asignaciones_qs:
         usuario = asignacion.usuario
         uid = usuario.id
-        metrica = _calcular_metricas_asignacion(asignacion)
+        metrica = _calcular_metricas_asignacion(
+            asignacion,
+            esperado_silabos=esperado_silabos,
+            esperado_guias=esperado_guias,
+        )
 
         if uid not in docentes_map:
             nombre_completo = f"{usuario.first_name} {usuario.last_name}".strip() or usuario.username
@@ -175,8 +213,9 @@ def _agrupar_por_docente(asignaciones_qs):
     docentes_list = []
     for entry in docentes_map.values():
         total_asig = entry["total_asignaciones"]
-        esperado_por_tipo = total_asig * ENCUENTROS_ESPERADOS
-        esperado_entregables = total_asig * ENTREGABLES_POR_ASIGNACION
+        esperado_silabos_total = total_asig * esperado_silabos
+        esperado_guias_total = total_asig * esperado_guias
+        esperado_entregables = total_asig * esperado_por_asignacion
         total_entregables = entry["total_silabos"] + entry["total_guias"]
 
         porcentaje_general = (
@@ -185,13 +224,13 @@ def _agrupar_por_docente(asignaciones_qs):
             else 0.0
         )
         porcentaje_silabos = (
-            round((entry["total_silabos"] / esperado_por_tipo) * 100, 1)
-            if esperado_por_tipo > 0
+            round((entry["total_silabos"] / esperado_silabos_total) * 100, 1)
+            if esperado_silabos_total > 0
             else 0.0
         )
         porcentaje_guias = (
-            round((entry["total_guias"] / esperado_por_tipo) * 100, 1)
-            if esperado_por_tipo > 0
+            round((entry["total_guias"] / esperado_guias_total) * 100, 1)
+            if esperado_guias_total > 0
             else 0.0
         )
 
@@ -201,13 +240,13 @@ def _agrupar_por_docente(asignaciones_qs):
         )
         entry.update({
             "asignaciones_pendientes": total_asig - entry["asignaciones_completadas"],
-            "esperado_silabos": esperado_por_tipo,
-            "esperado_guias": esperado_por_tipo,
+            "esperado_silabos": esperado_silabos_total,
+            "esperado_guias": esperado_guias_total,
             "total_entregables": total_entregables,
             "esperado_entregables": esperado_entregables,
-            "faltantes_silabos": esperado_por_tipo - entry["total_silabos"],
-            "faltantes_guias": esperado_por_tipo - entry["total_guias"],
-            "faltantes_total": esperado_entregables - total_entregables,
+            "faltantes_silabos": max(0, esperado_silabos_total - entry["total_silabos"]),
+            "faltantes_guias": max(0, esperado_guias_total - entry["total_guias"]),
+            "faltantes_total": max(0, esperado_entregables - total_entregables),
             "porcentaje_general": porcentaje_general,
             "porcentaje_silabos": porcentaje_silabos,
             "porcentaje_guias": porcentaje_guias,
@@ -310,7 +349,12 @@ def construir_ranking_docentes(
     if trimestre:
         qs = qs.filter(plan_de_estudio__trimestre=trimestre)
 
-    docentes_scope = _agrupar_por_docente(qs)
+    esperado_silabos, esperado_guias, esperado_por_asignacion = obtener_metas_ranking()
+    docentes_scope = _agrupar_por_docente(
+        qs,
+        esperado_silabos=esperado_silabos,
+        esperado_guias=esperado_guias,
+    )
     # Orden canónico de ranking (mayor cumplimiento primero) para asignar puesto real 1..N
     docentes_scope.sort(
         key=lambda d: (
@@ -430,6 +474,9 @@ def construir_ranking_docentes(
             "docentes_con_pendientes": docentes_con_pendientes,
             "docentes_sin_avance": docentes_sin_avance,
         },
+        "esperado_silabos": esperado_silabos,
+        "esperado_guias": esperado_guias,
+        "esperado_entregables_asignacion": esperado_por_asignacion,
         "carreras_disponibles": carreras_disponibles,
         "trimestres_disponibles": TRIMESTRES_ROMANOS,
         "trimestres_lectivos_disponibles": trimestres_lectivos_disponibles,

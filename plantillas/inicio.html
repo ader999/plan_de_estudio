@@ -145,14 +145,14 @@
                                     {% endif %}
 
                                     <!-- Botón para llenar el silabo, solo aparece si no está completado -->
-                                    {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < 11 %}
+                                    {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < max_guias %}
                                         <div class="d-flex flex-column align-items-center mb-3">
-                                            <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente o si ya se completaron los 11 -->
-                                            <a {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
-                                               class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                            <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente (hasta max_guias) o si ya se completaron los 11 -->
+                                            <a {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
+                                               class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
                                                {% if asignacion.silabos_creados >= 11 %}
                                                disabled title="Ya se han completado los 11 sílabos"
-                                               {% elif asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}
+                                               {% elif asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}
                                                disabled title="Debe crear la guía del sílabo anterior antes de continuar"
                                                {% endif %}>
                                                 <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
@@ -170,12 +170,12 @@
 
                                         <div class="d-flex flex-column align-items-center">
                                             <!-- Botón para generar guía de estudio independiente -->
-                                            <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"
-                                               class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= 11 %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                            <a {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= max_guias %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"{% endif %}
+                                               class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= max_guias %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
                                                {% if asignacion.silabos_creados == 0 %}
                                                disabled title="Debe crear al menos un sílabo primero"
-                                               {% elif asignacion.guias_creadas >= 11 %}
-                                               disabled title="Ya se han completado las 11 guías"
+                                               {% elif asignacion.guias_creadas >= max_guias %}
+                                               disabled title="Ya se han completado las {{ max_guias }} guías"
                                                {% elif asignacion.guias_creadas >= asignacion.silabos_creados %}
                                                disabled title="Debe crear el siguiente sílabo antes de continuar con más guías"
                                                {% endif %}>
@@ -184,7 +184,7 @@
 
                                             <!-- Indicadores numéricos para guías -->
                                             <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
-                                                {% for i in rango %}
+                                                {% for i in rango_guias %}
                                                     <div class="mx-1 my-1 div-custom {% if i <= asignacion.guias_creadas|default:0 %}div-blue{% else %}div-yellow{% endif %}">
                                                         <p class="text-center">{{ i }}</p>
                                                     </div>
@@ -200,7 +200,7 @@
                                     <div class="card-footer text-muted d-flex justify-content-between">
                                         <span>Asignado el: {{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
                                         <span>
-                                            {% if asignacion.silabos_creados == 11 %}
+                                            {% if asignacion.silabos_creados >= 11 and asignacion.guias_creadas >= max_guias %}
                                                 <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
                                             {% else %}
                                                 <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>
@@ -276,14 +276,14 @@
                                     {% endif %}
 
                                     <!-- Botón para llenar el silabo, solo aparece si no está completado -->
-                                    {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < 11 %}
+                                    {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < max_guias %}
                                         <div class="d-flex flex-column align-items-center mb-3">
-                                            <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente o si ya se completaron los 11 -->
-                                            <a {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
-                                               class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                            <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente (hasta max_guias) o si ya se completaron los 11 -->
+                                            <a {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
+                                               class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
                                                {% if asignacion.silabos_creados >= 11 %}
                                                disabled title="Ya se han completado los 11 sílabos"
-                                               {% elif asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 %}
+                                               {% elif asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}
                                                disabled title="Debe crear la guía del sílabo anterior antes de continuar"
                                                {% endif %}>
                                                 <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
@@ -301,12 +301,12 @@
 
                                         <div class="d-flex flex-column align-items-center">
                                             <!-- Botón para generar guía de estudio independiente -->
-                                            <a href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"
-                                               class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= 11 %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                            <a {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= max_guias %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"{% endif %}
+                                               class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= max_guias %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
                                                {% if asignacion.silabos_creados == 0 %}
                                                disabled title="Debe crear al menos un sílabo primero"
-                                               {% elif asignacion.guias_creadas >= 11 %}
-                                               disabled title="Ya se han completado las 11 guías"
+                                               {% elif asignacion.guias_creadas >= max_guias %}
+                                               disabled title="Ya se han completado las {{ max_guias }} guías"
                                                {% elif asignacion.guias_creadas >= asignacion.silabos_creados %}
                                                disabled title="Debe crear el siguiente sílabo antes de continuar con más guías"
                                                {% endif %}>
@@ -315,7 +315,7 @@
 
                                             <!-- Indicadores numéricos para guías -->
                                             <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
-                                                {% for i in rango %}
+                                                {% for i in rango_guias %}
                                                     <div class="mx-1 my-1 div-custom {% if i <= asignacion.guias_creadas|default:0 %}div-blue{% else %}div-yellow{% endif %}">
                                                         <p class="text-center">{{ i }}</p>
                                                     </div>
@@ -331,7 +331,7 @@
                                     <div class="card-footer text-muted d-flex justify-content-between">
                                         <span>Asignado el: {{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
                                         <span>
-                                            {% if asignacion.silabos_creados == 11 %}
+                                            {% if asignacion.silabos_creados >= 11 and asignacion.guias_creadas >= max_guias %}
                                                 <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
                                             {% else %}
                                                 <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>

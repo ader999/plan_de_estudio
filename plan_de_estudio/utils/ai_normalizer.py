@@ -261,6 +261,8 @@ def normalizar_respuesta_silabo(
     corte_forzado=None,
     puntaje_objetivo=None,
     puntaje_max=None,
+    forzar_exacto=False,
+    sin_guia_encuentro=False,
     minutos_clase_objetivo=None,
     fecha_objetivo=None,
 ):
@@ -378,8 +380,14 @@ def normalizar_respuesta_silabo(
         out.get("tipo_tercer_momento"),
         SILABO_TIPOS_TERCER_MOMENTO,
         max_choices=2,
-        default="Orientación del estudio independiente",
+        default="Realimentación del aprendizaje" if sin_guia_encuentro else "Orientación del estudio independiente",
     )
+    if sin_guia_encuentro:
+        filtrados_m3 = [
+            opt for opt in out["tipo_tercer_momento"]
+            if opt != "Orientación del estudio independiente"
+        ]
+        out["tipo_tercer_momento"] = filtrados_m3 or ["Realimentación del aprendizaje"]
     out["eje_transversal"] = _resolver_multiopcion(
         out.get("eje_transversal"),
         SILABO_EJES_TRANSVERSALES,
@@ -439,10 +447,14 @@ def normalizar_respuesta_silabo(
         cap = max(0, int(puntaje_max))
         if cap == 0:
             puntaje_val = 0
+        elif forzar_exacto and puntaje_objetivo is not None:
+            puntaje_val = min(cap, max(0, int(puntaje_objetivo)))
         elif puntaje_val > cap:
             puntaje_val = min(cap, max(0, default_pts)) if puntaje_objetivo is not None else cap
         elif puntaje_val == 0 and puntaje_objetivo and int(puntaje_objetivo) > 0:
             puntaje_val = min(cap, int(puntaje_objetivo))
+    elif forzar_exacto and puntaje_objetivo is not None:
+        puntaje_val = max(0, min(100, int(puntaje_objetivo)))
     out["puntaje"] = puntaje_val
 
     return out
@@ -477,6 +489,7 @@ def normalizar_respuesta_guia(
     fecha_entrega_max=None,
     unidad_forzada=None,
     fecha_objetivo=None,
+    max_encuentros=11,
 ):
     """
     Normaliza y valida el diccionario de respuesta de IA para una Guía de Estudio Independiente.
@@ -487,7 +500,8 @@ def normalizar_respuesta_guia(
 
     out = _desanidar_tareas_guia(data)
     num_act = _entero(numero_actividades, 4, minimo=1, maximo=4)
-    enc_num = _entero(encuentro if encuentro is not None else out.get("numero_encuentro"), 1, minimo=1, maximo=11)
+    max_enc = _entero(max_encuentros, 11, minimo=1, maximo=11)
+    enc_num = _entero(encuentro if encuentro is not None else out.get("numero_encuentro"), 1, minimo=1, maximo=max_enc)
     hoy_iso = fecha_objetivo or fecha_default or datetime.date.today().isoformat()
 
     out["numero_encuentro"] = enc_num

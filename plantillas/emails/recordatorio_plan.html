@@ -67,8 +67,8 @@
                 no está completo.</p>
             <p>Actualmente tienes:</p>
             <ul>
-                <li>Sílabos creados: <strong>{{ silabos_creados }}</strong> (Requerido: 11)</li>
-                <li>Guías creadas: <strong>{{ guias_creadas }}</strong> (Requerido: 11)</li>
+                <li>Sílabos creados: <strong>{{ silabos_creados }}</strong> (Requerido: {{ requerido_silabos|default:11 }})</li>
+                <li>Guías creadas: <strong>{{ guias_creadas }}</strong> (Requerido: {{ requerido_guias|default:10 }})</li>
             </ul>
             <p>Por favor, asegúrate de completar los sílabos y guías faltantes lo antes posible para cumplir con los
                 requisitos académicos.</p>

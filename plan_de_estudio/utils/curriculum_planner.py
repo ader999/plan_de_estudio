@@ -356,15 +356,23 @@ def formatear_contexto_curricular(contexto_info, mapa, encuentro):
     return "\n\n".join(partes)
 
 
-def calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=False):
+def calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=False, max_guias=None):
     """
     Calcula el Corte Evaluativo correspondiente al encuentro y el presupuesto de puntos
     disponible (regla institucional: Sílabos + Guías <= 100 puntos por cada Corte).
+    Respeta la cantidad activa de guías (`max_guias`: 10 por defecto, 11 si se restaura),
+    de modo que el III Corte reparte sus 100 pts entre los sílabos 9-11 y las guías habilitadas.
     """
-    from plan_de_estudio.models import Guia, Silabo
+    from plan_de_estudio.models import Guia, Silabo, obtener_max_encuentros_guia
 
+    max_guias_efectivo = (
+        obtener_max_encuentros_guia()
+        if max_guias is None
+        else max(1, min(TOTAL_ENCUENTROS, int(max_guias)))
+    )
     corte = obtener_corte_para_encuentro(encuentro)
     encuentros_corte = ENCUENTROS_POR_CORTE[corte]
+    encuentros_guias_corte = [e for e in encuentros_corte if e <= max_guias_efectivo]
     scores = calcular_puntajes_por_corte(asignacion)
     usado_corte = scores.get(corte, 0)
     saldo_corte = max(0, PUNTAJE_MAX_POR_CORTE - usado_corte)
@@ -376,16 +384,16 @@ def calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=False):
     )
     guias_cubiertas = set()
     for g in Guia.objects.filter(silabo__asignacion_plan=asignacion).select_related("silabo"):
-        enc_g = g.numero_encuentro if g.numero_encuentro in encuentros_corte else g.silabo.encuentros
-        if enc_g in encuentros_corte:
+        enc_g = g.numero_encuentro if g.numero_encuentro in encuentros_guias_corte else g.silabo.encuentros
+        if enc_g in encuentros_guias_corte:
             guias_cubiertas.add(enc_g)
 
     silabos_pendientes = [e for e in encuentros_corte if e not in silabos_existentes]
-    guias_pendientes = [e for e in encuentros_corte if e not in guias_cubiertas]
+    guias_pendientes = [e for e in encuentros_guias_corte if e not in guias_cubiertas]
 
     if not es_guia and encuentro not in silabos_pendientes:
         silabos_pendientes.append(encuentro)
-    if es_guia and encuentro not in guias_pendientes:
+    if es_guia and encuentro in encuentros_guias_corte and encuentro not in guias_pendientes:
         guias_pendientes.append(encuentro)
 
     otros_s = max(0, len(silabos_pendientes) - (0 if es_guia else 1))
@@ -417,6 +425,8 @@ def calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=False):
     return {
         "corte": corte,
         "encuentros_corte": encuentros_corte,
+        "encuentros_guias_corte": encuentros_guias_corte,
+        "max_guias": max_guias_efectivo,
         "usado_corte": usado_corte,
         "saldo_corte": saldo_corte,
         "presupuesto_objetivo": objetivo,
@@ -432,13 +442,20 @@ def calcular_tiempos_y_fechas(
     unidad_info=None,
     silabo=None,
     numero_actividades=4,
+    max_guias=None,
 ):
     """
     Calcula fechas semanales coherentes con el ciclo del trimestre, metas de minutos
-    presenciales e independientes según Plan_de_estudio, y ventana de fechas de entrega.
+    presenciales (11 sílabos) e independientes (10 guías por defecto o 11 si se restaura)
+    según Plan_de_estudio, y ventana de fechas de entrega.
     """
-    from plan_de_estudio.models import Guia, Silabo
+    from plan_de_estudio.models import Guia, Silabo, obtener_max_encuentros_guia
 
+    max_guias_efectivo = (
+        obtener_max_encuentros_guia()
+        if max_guias is None
+        else max(1, min(TOTAL_ENCUENTROS, int(max_guias)))
+    )
     plan = asignacion.plan_de_estudio
     trimestre_lectivo = getattr(asignacion, "trimestre_lectivo", None)
     if trimestre_lectivo:
@@ -485,7 +502,7 @@ def calcular_tiempos_y_fechas(
         fecha_entrega_min = fecha_encuentro - datetime.timedelta(days=5)
         fecha_entrega_max = fecha_encuentro
 
-    # Horas presenciales (Plan_de_estudio)
+    # Horas presenciales (Plan_de_estudio): siempre distribuidas en los 11 sílabos
     total_presenciales_min = max(60, int(plan.horas_presenciales or 24) * 60)
     silabos_otros = Silabo.objects.filter(asignacion_plan=asignacion).exclude(encuentros=encuentro)
     usado_presenciales_min = sum(
@@ -511,18 +528,19 @@ def calcular_tiempos_y_fechas(
     t2_teo_sug = max(10, round(t2_total * ratio_t))
     t2_pra_sug = max(10, t2_total - t2_teo_sug)
 
-    # Horas de estudio independiente (Plan_de_estudio)
+    # Horas de estudio independiente (Plan_de_estudio): distribuidas en max_guias_efectivo (10 por defecto, 11 si se restaura)
     total_indep_min = max(60, int(plan.horas_estudio_independiente or 70) * 60)
-    guias_otras = Guia.objects.filter(silabo__asignacion_plan=asignacion).exclude(
-        numero_encuentro=encuentro
-    )
+    guias_otras = Guia.objects.filter(
+        silabo__asignacion_plan=asignacion,
+        numero_encuentro__lte=max_guias_efectivo,
+    ).exclude(numero_encuentro=encuentro)
     usado_indep_min = sum(
         sum(int(getattr(g, f"tiempo_minutos_{i}", 0) or 0) for i in range(1, 5))
         for g in guias_otras
     )
-    restantes_guias = max(1, TOTAL_ENCUENTROS - guias_otras.count())
+    restantes_guias = max(1, max_guias_efectivo - guias_otras.count())
     restante_indep = max(60, total_indep_min - usado_indep_min)
-    min_indep_objetivo = max(60, min(600, round(restante_indep / restantes_guias)))
+    min_indep_objetivo = max(60, min(720, round(restante_indep / restantes_guias)))
 
     return {
         "ciclo_nombre": ciclo_nombre,
@@ -531,6 +549,7 @@ def calcular_tiempos_y_fechas(
         "fecha_encuentro": fecha_encuentro.isoformat(),
         "fecha_entrega_min": fecha_entrega_min.isoformat(),
         "fecha_entrega_max": fecha_entrega_max.isoformat(),
+        "max_guias": max_guias_efectivo,
         "horas_presenciales_plan": int(plan.horas_presenciales or 24),
         "horas_independientes_plan": int(plan.horas_estudio_independiente or 70),
         "usado_presenciales_min": usado_presenciales_min,

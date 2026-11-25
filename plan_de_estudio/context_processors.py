@@ -1,4 +1,4 @@
-from .models import CredencialesGoogle, ConfiguracionSistema
+from .models import CredencialesGoogle, ConfiguracionSistema, TOTAL_ENCUENTROS_GUIA_SIN_ULTIMO
 
 
 def google_classroom_context(request):
@@ -27,5 +27,10 @@ def google_classroom_context(request):
         'is_google_linked': is_google_linked,
         'google_profile_picture': google_profile_picture,
         'config_sistema': config_sistema,
+        'max_encuentros_guia': (
+            config_sistema.max_encuentros_guia
+            if config_sistema is not None
+            else TOTAL_ENCUENTROS_GUIA_SIN_ULTIMO
+        ),
     }
 

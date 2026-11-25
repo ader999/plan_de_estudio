@@ -1,5 +1,41 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-25] Desactivación Reversible del Último Encuentro de la Guía (10 Guías y 11 Sílabos)
+- **Modelo, Migración y Configuración (`plan_de_estudio/models.py`, `plan_de_estudio/migrations/0024_configuracionsistema_habilitar_ultimo_encuentro_guia.py`, `plan_de_estudio/context_processors.py`)**:
+  - Se añadió `habilitar_ultimo_encuentro_guia` (`BooleanField(default=False)`) en `ConfiguracionSistema`, junto a la propiedad `max_encuentros_guia` y el helper `obtener_max_encuentros_guia()` (`10` por defecto; `11` si se restaura), preservando intactos todos los registros históricos de guías del Encuentro 11 en BD sin cambios destructivos de esquema.
+  - Se inyectó `max_encuentros_guia` en `google_classroom_context`.
+- **Panel Admin (`plan_de_estudio/admin.py`, `plantillas/admin/plan_de_estudio/copiaseguridad/change_list.html`)**:
+  - Se agregó la ruta `toggle-ultimo-encuentro-guia/` (`toggle_ultimo_encuentro_guia_view`) y la fila **Guía del Último Encuentro (Encuentro 11)** en **Copias de Seguridad / Configuración** para restaurar o desactivar el Encuentro 11 de la guía en cualquier momento sin tocar código ni migraciones.
+  - Se actualizaron `AsignacionPlanEstudioAdmin.completado_icono` y `progreso_silabos_guias` (`S:X/11, G:Y/10`) usando caché por petición en `get_queryset()` para evitar consultas N+1.
+- **Ranking Docente (`plan_de_estudio/ranking_utils.py`, `plantillas/ranking_docentes.html`)**:
+  - Se separó la meta de sílabos (`11`) y la meta dinámica de guías (`obtener_max_encuentros_guia()`, `10` por defecto → `21` entregables por asignación; `22` si se restaura), acotando el conteo de guías por asignación al tope vigente para que asignaciones históricas con `11` guías mantengan `100.0%` sin desbordes ni faltantes negativos.
+- **IA Generativa y Planificador Curricular (`plan_de_estudio/utils/curriculum_planner.py`, `plan_de_estudio/utils/ai_normalizer.py`, `plan_de_estudio/views.py`)**:
+  - `calcular_corte_y_presupuesto()` filtra los encuentros de guía del III Corte a `<= max_guias` (`[9, 10]` por defecto), de modo que el III Corte reparta exactamente **100 pts** entre `S9, G9, S10, G10 y S11` (`es_ultimo_en_corte=True` en `S11`) y vuelva a reservar para `G11` si se restaura.
+  - `calcular_tiempos_y_fechas()` mantiene las `horas_presenciales` divididas en **11 sílabos** y divide las `horas_estudio_independiente` entre **10 guías** (o `11` si se restaura).
+  - En `generar_silabo`, `normalizar_respuesta_silabo()` soporta `forzar_exacto` y `sin_guia_encuentro`, indicando en Encuentro 11 que no se asigna tarea/guía y priorizando `["Realimentación del aprendizaje"]` en el tercer momento.
+  - En `generar_estudio_independiente`, `ver_formulario_guia` y `guardar_guia` se bloquea crear nuevas guías por encima de `max_guias` (`HTTP 400` / redirección a `inicio`), conservando edición y visualización de guías históricas existentes.
+- **Vistas, Plantillas, Recordatorios y PWA (`plan_de_estudio/views.py`, `plan_de_estudio/email_utils.py`, `plantillas/inicio.html`, `plantillas/ver_planeacion.html`, `plantillas/plan_estudio.html`, `plantillas/emails/recordatorio_plan.html`, `plantillas/pwa/sw.js`, `management/commands/test_ai_11_encuentros.py`)**:
+  - En `inicio.html` se muestran `1..11` para sílabos y `1..10` (`rango_guias`) para guías; una asignación con `11` sílabos y `10` guías pasa a **Archivados** como **Completado** sin botones pendientes.
+  - En `ver_planeacion` y `guia_autodidactica` el Encuentro 11 sin guía figura como **Cierre sin guía** (completo) mientras las asignaciones antiguas con guía 11 siguen mostrándose íntegras.
+  - `enviar_correos_plan_incompleto()` evalúa `guias_creadas < max_guias` y pasa `requerido_guias` al correo; `SW_VERSION` actualizada a `planeauml-v15`.
+- **Pruebas y Verificación (`plan_de_estudio/tests.py`)**:
+  - Actualizadas `RankingDocentesTest` y `CurriculumPlannerFase2Test` y añadida `DesactivacionUltimoEncuentroGuiaTest` (`4` pruebas cubriendo toggle admin, flujo de inicio, ranking, compatibilidad histórica, correos, IA y restauración a 11 guías). `manage.py check`, `makemigrations --check --dry-run`, `collectstatic --dry-run` y suite completa (`95` pruebas en `plan_de_estudio` + `eventos`) pasando (**OK**).
+
+## [2026-11-25] Paginación de 30 Elementos y Descarga Directa de Documentos en Admin de Planes de Estudio
+- **Admin (`plan_de_estudio/admin.py`)**:
+  - Se incrementó `PlanDeEstudioAdmin.list_per_page` de `20` a `30` para mostrar 30 planes de estudio por página en `/admin/plan_de_estudio/plan_de_estudio/`.
+  - Se añadió la columna `descargas_documentos` (`Descargas`) a `PlanDeEstudioAdmin.list_display`, mostrando botones compactos de descarga directa para **Plan temático** (`↓ Plan temático`) y **Documento adjunto** (`↓ Doc. adjunto`) únicamente cuando el archivo existe en el registro (o `—` cuando no hay archivos), sin consultas SQL ni llamadas presigned a MinIO durante el renderizado del listado.
+  - Se registró la ruta administrativa `<int:plan_id>/descargar/<str:tipo>/` (`plan_de_estudio_plan_de_estudio_descargar_documento`) respaldada por `descargar_documento_view`, con validación de permisos `has_view_permission`, descarga forzada vía `FileResponse(..., as_attachment=True)` y manejo seguro de archivos ausentes en almacenamiento local o MinIO.
+- **Pruebas (`plan_de_estudio/tests.py`)**:
+  - Se añadió `AdminChangelistPerformanceTest.test_plan_de_estudio_changelist_paginacion_30_y_descarga_documentos` cubriendo paginación de 30 elementos (`p=1` y `p=2`), presupuesto de consultas (`<= 10`), visibilidad condicional de botones, descarga binaria de `plan_tematico` y `documento_adjunto`, tipo inválido (`404`), archivo vacío/faltante y control de acceso.
+
+## [2026-11-25] Filtros Esenciales en Admin de Programas de Asignatura 2026
+- **Admin (`plan_de_estudio/admin.py`)**:
+  - Se añadieron los filtros esenciales en `ProgramaAsignatura2026Admin.list_filter`: **Carrera** (`Programa2026CarreraFilter`, ordenado alfabéticamente con una única consulta ligera `values_list('id', 'nombre')` y validación segura de ID), **Pensol** (`plan_estudio__pensol`), **Año** (`plan_estudio__año`), **Trimestre** (`plan_estudio__trimestre`) y **Estado de asociación** (`Programa2026PlanAsociadoFilter`: *Con plan de estudio* / *Sin plan de estudio*, 0 consultas adicionales).
+  - Se amplió `ProgramaAsignatura2026Admin.search_fields` para incluir `plan_estudio__carrera__nombre` y `plan_estudio__pensol` junto a código y nombre de asignatura.
+- **Pruebas (`plan_de_estudio/tests.py`)**:
+  - Se añadió `AdminChangelistPerformanceTest.test_programa_2026_changelist_filtros_necesarios` cubriendo todos los filtros individuales, combinación de filtros, búsqueda por carrera/pensol, parámetro inválido y conservación del presupuesto de consultas (`<= 10`) sin N+1.
+
 ## [2026-11-25] Mostrar y Filtrar por Pensol en Búsqueda de Planes de Estudio (Admin)
 - **Diagnóstico**: Al existir legítimamente una misma asignatura en la misma carrera bajo distintos pensol (`unique_together = ('carrera', 'asignatura', 'pensol')`, p. ej. `2018` y `2026`), `Plan_de_estudio.__str__()` solo mostraba `"{asignatura} - {carrera} - {año}"`, generando ambigüedad en el buscador autocomplete de **Añadir asignación plan estudio** y demás selectores del admin.
 - **Modelo y Admin (`plan_de_estudio/models.py`, `plan_de_estudio/admin.py`)**:

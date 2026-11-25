@@ -192,12 +192,12 @@
                     </div>
                     <div class="d-flex justify-content-around text-center mt-2" style="font-size: 0.8rem;">
                         <div>
-                            <span class="d-block fw-bold text-success fs-6">{{ silabos_count }}</span>
+                            <span class="d-block fw-bold text-success fs-6">{{ silabos_count }}/{{ total_encuentros }}</span>
                             <span style="color:#94a3b8;">Sílabos</span>
                         </div>
                         <div style="border-left: 1px solid rgba(255,255,255,0.2);"></div>
                         <div>
-                            <span class="d-block fw-bold text-info fs-6">{{ guias_count }}</span>
+                            <span class="d-block fw-bold text-info fs-6">{{ guias_count }}/{{ max_guias }}</span>
                             <span style="color:#94a3b8;">Guías</span>
                         </div>
                     </div>
@@ -260,6 +260,8 @@
 
                     {% if item.tiene_guia %}
                         <span class="badge bg-info"><i class="fas fa-check-circle me-1"></i> Guía Presente</span>
+                    {% elif not item.requiere_guia %}
+                        <span class="badge bg-secondary"><i class="fas fa-flag-checkered me-1"></i> Cierre sin guía</span>
                     {% else %}
                         <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i> Guía Pendiente</span>
                     {% endif %}
@@ -402,6 +404,8 @@
                         <span><i class="fas fa-book-reader me-2"></i> 2. Guía de Estudio Autodidáctica</span>
                         {% if item.tiene_guia %}
                             <span class="badge bg-success fw-normal">{{ item.tareas|length }} Tarea(s) Registrada(s)</span>
+                        {% elif not item.requiere_guia %}
+                            <span class="badge bg-secondary fw-normal">No aplica (Cierre de curso)</span>
                         {% else %}
                             <span class="badge bg-warning text-dark fw-normal">Sin Guía</span>
                         {% endif %}
@@ -462,6 +466,11 @@
                                     </div>
                                 </div>
                                 {% endfor %}
+                            </div>
+                        {% elif not item.requiere_guia %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-flag-checkered fa-2x mb-2 text-secondary"></i>
+                                <p class="mb-0">El Encuentro #{{ item.numero }} corresponde al cierre de clases y no requiere guía de estudio independiente.</p>
                             </div>
                         {% else %}
                             <div class="text-center py-4 text-muted">

@@ -56,7 +56,7 @@
         {% if page_obj %}
             {% for asignacion in page_obj %}
                 <div class="col-xl-4 col-lg-6 col-md-8 mb-4">
-                    {% if asignacion.silabos_creados >= 11 %}
+                    {% if asignacion.silabos_creados >= 11 and asignacion.guias_creadas >= max_guias %}
                         <div class="card book-card book-completed shadow-sm h-100">
                     {% else %}
                         <div class="card book-card book-pending shadow-sm h-100">
@@ -151,7 +151,7 @@
                         <div class="card-footer text-muted d-flex justify-content-between">
                             <span>Asignado el: {{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
                             <span>
-                                {% if asignacion.silabos_creados >= 11 %}
+                                {% if asignacion.silabos_creados >= 11 and asignacion.guias_creadas >= max_guias %}
                                     <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
                                 {% else %}
                                     <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>

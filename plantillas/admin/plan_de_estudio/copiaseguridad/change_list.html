@@ -136,6 +136,40 @@
                             </form>
                         </td>
                     </tr>
+
+                    <!-- Fila 5: Control del último encuentro de la Guía de Estudio Independiente (Encuentro 11) -->
+                    <tr style="border-bottom: 1px solid var(--border-color); background: var(--body-bg);">
+                        <td style="padding: 18px 15px; font-weight: 600; color: var(--body-fg);">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--link-color); flex-shrink: 0;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                <span>Guía del Último Encuentro (Encuentro 11)</span>
+                                {% if config_sistema and config_sistema.habilitar_ultimo_encuentro_guia %}
+                                    <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #2f855a; color: white;">Habilitada (11 guías)</span>
+                                {% else %}
+                                    <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #718096; color: white;">Desactivada (10 guías)</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td style="padding: 18px 15px; line-height: 1.5; color: var(--body-fg); opacity: 0.95;">
+                            Controla si el <strong>Encuentro 11</strong> requiere Guía de Estudio Independiente. Desactivada exige <strong>11 sílabos y 10 guías</strong> (ajustando automáticamente el Ranking Docente y los cálculos de notas/horas de la IA) sin borrar guías históricas. Puede restaurarse en cualquier momento.
+                        </td>
+                        <td style="padding: 18px 15px; text-align: center;">
+                            <form method="post" action="{% url 'admin:plan_de_estudio_copiaseguridad_toggle_ultimo_encuentro_guia' %}" style="display: inline; margin: 0;">
+                                {% csrf_token %}
+                                {% if config_sistema and config_sistema.habilitar_ultimo_encuentro_guia %}
+                                    <input type="hidden" name="accion" value="desactivar">
+                                    <button type="submit" style="background: #e53e3e; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                                        Desactivar
+                                    </button>
+                                {% else %}
+                                    <input type="hidden" name="accion" value="activar">
+                                    <button type="submit" style="background: #2f855a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;">
+                                        Restaurar
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
                     
                 </tbody>
             </table>

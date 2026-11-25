@@ -18,7 +18,18 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from .models import Silabo, Guia, AsignacionPlanEstudio, Asignatura, Plan_de_estudio, ModeloIAConfig, ConfiguracionSistema, TRIMESTRES_ROMANOS
+from .models import (
+    Silabo,
+    Guia,
+    AsignacionPlanEstudio,
+    Asignatura,
+    Plan_de_estudio,
+    ModeloIAConfig,
+    ConfiguracionSistema,
+    TOTAL_ENCUENTROS_SILABO,
+    TRIMESTRES_ROMANOS,
+    obtener_max_encuentros_guia,
+)
 from .ranking_utils import construir_ranking_docentes
 from .trimestre_utils import parsear_trimestre_lectivo
 
@@ -104,10 +115,18 @@ def inicio(request):
     asignaciones = AsignacionPlanEstudio.objects.filter(
         usuario__username=nombre_de_usuario
     ).order_by('-id')
-    rango = range(1, 12)  # Crear el rango para pasarlo al template
+    max_guias = obtener_max_encuentros_guia()
+    rango = range(1, TOTAL_ENCUENTROS_SILABO + 1)  # 1..11 para sílabos
+    rango_guias = range(1, max_guias + 1)  # 1..10 por defecto (o 1..11 si se restaura)
 
-    asignaciones_pendientes = [a for a in asignaciones if a.silabos_creados < 11]
-    asignaciones_completadas = [a for a in asignaciones if a.silabos_creados >= 11]
+    asignaciones_pendientes = [
+        a for a in asignaciones
+        if a.silabos_creados < TOTAL_ENCUENTROS_SILABO or a.guias_creadas < max_guias
+    ]
+    asignaciones_completadas = [
+        a for a in asignaciones
+        if a.silabos_creados >= TOTAL_ENCUENTROS_SILABO and a.guias_creadas >= max_guias
+    ]
 
     return render(
         request,
@@ -117,6 +136,8 @@ def inicio(request):
             "asignaciones_pendientes": asignaciones_pendientes,
             "asignaciones_completadas": asignaciones_completadas,
             "rango": rango,
+            "rango_guias": rango_guias,
+            "max_guias": max_guias,
             "usuario": nombre_de_usuario
         },
     )
@@ -185,6 +206,7 @@ def plan_estudio(request):
         "page_obj": page_obj,
         "usuario": nombre_de_usuario,
         "año_actual": año_actual,
+        "max_guias": obtener_max_encuentros_guia(),
     }
 
     return render(request, "plan_estudio.html", context)
@@ -195,6 +217,7 @@ def guia_autodidactica(request, codigo=None):
     # Obtiene el usuario autenticado
     usuario_autenticado = request.user
     nombre_de_usuario = request.user.get_full_name()
+    max_guias = obtener_max_encuentros_guia()
 
     # Obtener código desde URL o parámetros GET
     if not codigo:
@@ -204,7 +227,7 @@ def guia_autodidactica(request, codigo=None):
     asignaciones = AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
 
     # Luego obtenemos los silabos relacionados con esas asignaciones
-    silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones)
+    silabos = Silabo.objects.filter(asignacion_plan__in=asignaciones).prefetch_related('guias')
 
     # Si se especifica un código, filtrar solo por ese código
     if codigo:
@@ -216,6 +239,10 @@ def guia_autodidactica(request, codigo=None):
     for silabo in silabos:
         # Si el sílabo no tiene asignación de plan o plan de estudio, continuamos al siguiente
         if not silabo.asignacion_plan or not silabo.asignacion_plan.plan_de_estudio:
+            continue
+
+        # Omitir encuentros que no requieren guía (ej. E11) salvo que ya exista guía histórica
+        if silabo.encuentros > max_guias and not silabo.guia_id and not silabo.guias.exists():
             continue
 
         # Usamos el código del plan de estudio como clave
@@ -501,11 +528,14 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
     return JsonResponse({"error": "Falta ID de asignación"}, status=400)
 
 
-def _obtener_silabo_pendiente_guia(asignacion):
-    """Retorna el primer sílabo de la asignación sin guía asociada, ordenado por encuentro."""
+def _obtener_silabo_pendiente_guia(asignacion, max_guias=None):
+    """Retorna el primer sílabo habilitado (1..max_guias) sin guía asociada, ordenado por encuentro."""
+    if max_guias is None:
+        max_guias = obtener_max_encuentros_guia()
     return (
         Silabo.objects.filter(
             asignacion_plan=asignacion,
+            encuentros__lte=max_guias,
             guias__isnull=True,
             guia__isnull=True,
         )
@@ -530,6 +560,7 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
         else:
             asignacion = get_object_or_404(AsignacionPlanEstudio, id=id)
         nombre_de_usuario = request.user.username
+        max_guias = obtener_max_encuentros_guia()
         silabos_creados = asignacion.silabo_set.count()
         guias_creadas = Guia.objects.filter(silabo__asignacion_plan=asignacion).count()
         campos_sync = []
@@ -543,7 +574,7 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
             asignacion.save(update_fields=campos_sync)
 
         print(
-            f"Asignación encontrada: {asignacion}, Sílabos creados: {silabos_creados}, Guías creadas: {guias_creadas}"
+            f"Asignación encontrada: {asignacion}, Sílabos creados: {silabos_creados}, Guías creadas: {guias_creadas}, Máx guías: {max_guias}"
         )
 
         # Obtener el sílabo correspondiente al encuentro pendiente
@@ -556,17 +587,24 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
             except Silabo.DoesNotExist:
                 print(f"No se encontró sílabo con ID {silabo_id}")
 
+        if silabo and silabo.encuentros > max_guias and not Guia.objects.filter(silabo=silabo).exists():
+            messages.warning(
+                request,
+                f"El encuentro {silabo.encuentros} no requiere guía de estudio independiente (máximo actual: {max_guias} guías).",
+            )
+            return redirect("inicio")
+
         encuentro_guia = None
         if not silabo:
-            if guias_creadas >= 11:
+            if guias_creadas >= max_guias:
                 messages.warning(
                     request,
-                    f"Ya se han completado las 11 guías de estudio para {asignacion.plan_de_estudio}.",
+                    f"Ya se han completado las {max_guias} guías de estudio para {asignacion.plan_de_estudio}.",
                 )
                 return redirect("inicio")
 
-            # Buscar el primer sílabo (ordenado por encuentro) que aún no tiene guía
-            silabo = _obtener_silabo_pendiente_guia(asignacion)
+            # Buscar el primer sílabo habilitado (1..max_guias) que aún no tiene guía
+            silabo = _obtener_silabo_pendiente_guia(asignacion, max_guias=max_guias)
             if silabo:
                 encuentro_guia = silabo.encuentros
                 print(
@@ -579,8 +617,8 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
                     )
                 )
                 encuentro_guia = next(
-                    (n for n in range(1, 12) if n not in encuentros_con_guia),
-                    min(guias_creadas + 1, 11),
+                    (n for n in range(1, max_guias + 1) if n not in encuentros_con_guia),
+                    min(guias_creadas + 1, max_guias),
                 )
                 if silabos_creados > 0:
                     messages.info(
@@ -627,6 +665,7 @@ def ver_formulario_guia(request, asignacion_id=None, id=None, silabo_id=None):
                 "usuario": nombre_de_usuario,
                 "silabos_creados": silabos_creados,
                 "guias_creadas": guias_creadas,
+                "max_guias": max_guias,
                 "encuentro": encuentro_guia,
                 "guias": guias,
                 "unidad_choices": unidad_choices,
@@ -718,9 +757,26 @@ def guardar_guia(request, silabo_id=None, asignacion_id=None, id=None):
                 silabo = Silabo.objects.get(id=silabo_id)
                 print(f"Sílabo encontrado: {silabo}")
 
+                max_guias = obtener_max_encuentros_guia()
                 # Verificar si ya existe una guía para este sílabo
                 # (asegurando la relación uno a uno)
                 existing_guia = Guia.objects.filter(silabo=silabo).first()
+                try:
+                    numero_encuentro_req = int(data.get("numero_encuentro") or silabo.encuentros or 1)
+                except (ValueError, TypeError):
+                    numero_encuentro_req = silabo.encuentros
+
+                if not existing_guia and not data.get("guia_id"):
+                    if silabo.encuentros > max_guias or numero_encuentro_req > max_guias:
+                        enc_invalido = max(silabo.encuentros or 0, numero_encuentro_req or 0)
+                        return JsonResponse(
+                            {
+                                "success": False,
+                                "error": f"El encuentro {enc_invalido} no requiere guía de estudio independiente. Solo se permiten guías para los encuentros 1 al {max_guias}.",
+                            },
+                            status=400,
+                        )
+
                 if existing_guia and not data.get("guia_id"):
                     # Si ya existe una guía y estamos intentando crear una nueva (no actualizar),
                     # actualicemos la existente en lugar de crear una nueva
@@ -1007,11 +1063,17 @@ def generar_silabo(request):
             except ValueError as err:
                 return JsonResponse({"error": str(err)}, status=400)
 
+            max_guias = obtener_max_encuentros_guia()
             mapa = construir_mapa_maestro(contexto_info["unidades"])
             enc_plan = mapa["por_encuentro"][encuentro]
-            presupuesto = calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=False)
+            presupuesto = calcular_corte_y_presupuesto(
+                asignacion, encuentro, es_guia=False, max_guias=max_guias
+            )
             tiempos = calcular_tiempos_y_fechas(
-                asignacion, encuentro, unidad_info=enc_plan["unidad_dict"]
+                asignacion,
+                encuentro,
+                unidad_info=enc_plan["unidad_dict"],
+                max_guias=max_guias,
             )
             historial = construir_historial_compacto(asignacion, encuentro)
             contexto_curricular = formatear_contexto_curricular(
@@ -1053,12 +1115,21 @@ def generar_silabo(request):
                 status=400,
             )
 
+        sin_guia_este_encuentro = encuentro > max_guias
         nota_cierre = ""
         if encuentro == 11:
-            nota_cierre = (
-                f"\nREGLA ESPECIAL DE CIERRE (ENCUENTRO 11): Este es el ÚLTIMO encuentro del trimestre ({tiempos['fecha_encuentro']}). "
-                "Realiza síntesis e integración final en el aula y evaluación final dentro del mismo encuentro; NO dejes exposiciones ni defensas pendientes para semanas posteriores."
-            )
+            if sin_guia_este_encuentro:
+                nota_cierre = (
+                    f"\nREGLA ESPECIAL DE CIERRE (ENCUENTRO 11 DE 11 — SIN GUÍA DE ESTUDIO INDEPENDIENTE): "
+                    f"Este es el ÚLTIMO día de clase del trimestre ({tiempos['fecha_encuentro']}). "
+                    f"NO se deja tarea ni guía de estudio independiente porque las {max_guias} guías cerraron en el Encuentro {max_guias} y hoy se cierra todo el acumulado del III Corte Evaluativo. "
+                    "Realiza síntesis, integración final y evaluación final presencial dentro del mismo encuentro; en `tipo_tercer_momento` usa `[\"Realimentación del aprendizaje\"]` y NO orientes estudio independiente ni dejes exposiciones o entregas pendientes para después."
+                )
+            else:
+                nota_cierre = (
+                    f"\nREGLA ESPECIAL DE CIERRE (ENCUENTRO 11): Este es el ÚLTIMO encuentro del trimestre ({tiempos['fecha_encuentro']}). "
+                    "Realiza síntesis e integración final en el aula y evaluación final dentro del mismo encuentro; NO dejes exposiciones ni defensas pendientes para semanas posteriores."
+                )
 
         reglas_variedad = ""
         if historial["tecnicas_clase_recientes"]:
@@ -1154,6 +1225,8 @@ def generar_silabo(request):
                 corte_forzado=presupuesto["corte"],
                 puntaje_objetivo=presupuesto["presupuesto_objetivo"],
                 puntaje_max=presupuesto["presupuesto_max"],
+                forzar_exacto=presupuesto["es_ultimo_en_corte"],
+                sin_guia_encuentro=sin_guia_este_encuentro,
                 minutos_clase_objetivo=tiempos["min_clase_objetivo"],
                 fecha_objetivo=tiempos["fecha_encuentro"],
             )
@@ -1178,10 +1251,16 @@ def generar_estudio_independiente(request):
     if request.method == "POST":
         silabo_id = request.POST.get("silabo_id")
         asignacion_id = request.POST.get("asignacion_id")
+        max_guias = obtener_max_encuentros_guia()
         try:
             encuentro = int(request.POST.get("encuentro", 1))
-            if encuentro < 1 or encuentro > 11:
-                return JsonResponse({"error": "El número de encuentro debe estar entre 1 y 11"}, status=400)
+            if encuentro < 1 or encuentro > max_guias:
+                return JsonResponse(
+                    {
+                        "error": f"El número de encuentro para la guía debe estar entre 1 y {max_guias}"
+                    },
+                    status=400,
+                )
         except (ValueError, TypeError):
             return JsonResponse({"error": "El número de encuentro debe ser un número válido"}, status=400)
         modelo_seleccionado = request.POST.get("modelo")
@@ -1236,7 +1315,7 @@ def generar_estudio_independiente(request):
                         print(f"No se encontró sílabo para el encuentro {encuentro}")
 
                         # 4. Si no se encuentra por encuentro específico, buscar el primer sílabo pendiente de guía
-                        silabo = _obtener_silabo_pendiente_guia(asignacion)
+                        silabo = _obtener_silabo_pendiente_guia(asignacion, max_guias=max_guias)
 
                         if silabo:
                             encuentro = silabo.encuentros
@@ -1272,6 +1351,15 @@ def generar_estudio_independiente(request):
 
             if not asignacion:
                 asignacion = silabo.asignacion_plan
+
+            if (silabo.encuentros and silabo.encuentros > max_guias) or encuentro > max_guias:
+                enc_rechazado = max(silabo.encuentros or 0, encuentro or 0)
+                return JsonResponse(
+                    {
+                        "error": f"El encuentro {enc_rechazado} no requiere guía de estudio independiente (máximo permitido: {max_guias} guías)."
+                    },
+                    status=400,
+                )
 
             from plan_de_estudio.utils.ai_normalizer import normalizar_respuesta_guia
             from plan_de_estudio.utils.curriculum_planner import (
@@ -1334,13 +1422,16 @@ def generar_estudio_independiente(request):
                 )
 
             if asignacion:
-                presupuesto = calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=True)
+                presupuesto = calcular_corte_y_presupuesto(
+                    asignacion, encuentro, es_guia=True, max_guias=max_guias
+                )
                 tiempos = calcular_tiempos_y_fechas(
                     asignacion,
                     encuentro,
                     unidad_info=enc_plan["unidad_dict"],
                     silabo=silabo,
                     numero_actividades=numero_actividades,
+                    max_guias=max_guias,
                 )
                 historial = construir_historial_compacto(asignacion, encuentro)
                 plan_str = str(asignacion.plan_de_estudio)
@@ -1357,14 +1448,15 @@ def generar_estudio_independiente(request):
                     "presupuesto_max": 100,
                     "es_ultimo_en_corte": False,
                 }
+                min_indep_fallback = round((70 * 60) / max_guias)
                 tiempos = {
                     "ciclo_nombre": "Ciclo actual",
                     "fecha_encuentro": fecha_base.isoformat(),
                     "fecha_entrega_min": fecha_ent_min.isoformat(),
                     "fecha_entrega_max": fecha_ent_max.isoformat(),
                     "horas_independientes_plan": 70,
-                    "min_indep_objetivo": 360,
-                    "min_por_tarea_aprox": max(15, round(360 / max(1, numero_actividades))),
+                    "min_indep_objetivo": min_indep_fallback,
+                    "min_por_tarea_aprox": max(15, round(min_indep_fallback / max(1, numero_actividades))),
                 }
                 historial = {
                     "resumen_texto": "Ningún encuentro previo registrado.",
@@ -1409,6 +1501,12 @@ def generar_estudio_independiente(request):
                     f"TODAS las tareas (fecha_entrega_1..{numero_actividades}) DEBEN entregarse entre {tiempos['fecha_entrega_min']} y {tiempos['fecha_entrega_max']}. "
                     "PROHIBIDO programar fechas de entrega, exposiciones o defensas posteriores al cierre del curso."
                 )
+            elif encuentro == max_guias and max_guias < TOTAL_ENCUENTROS_SILABO:
+                nota_cierre = (
+                    f"\nREGLA DE CIERRE DE ESTUDIO INDEPENDIENTE (GUÍA {encuentro} DE {max_guias}): "
+                    f"Esta es la ÚLTIMA guía de estudio independiente del trimestre (el Encuentro {TOTAL_ENCUENTROS_SILABO} es el cierre presencial y NO lleva guía ni tarea). "
+                    f"TODAS las tareas (fecha_entrega_1..{numero_actividades}) DEBEN entregarse entre {tiempos['fecha_entrega_min']} y {tiempos['fecha_entrega_max']}, antes del último día de clases."
+                )
 
             reglas_variedad = ""
             if historial["tecnicas_guia_recientes"]:
@@ -1418,7 +1516,7 @@ def generar_estudio_independiente(request):
                 )
 
             prompt_completo = f"""
-            Instrucciones: Crea una guía de estudio independiente para el Encuentro {encuentro} de 11 y devuélvela únicamente como un objeto JSON válido.
+            Instrucciones: Crea una guía de estudio independiente para el Encuentro {encuentro} de {max_guias} (sobre {TOTAL_ENCUENTROS_SILABO} encuentros presenciales) y devuélvela únicamente como un objeto JSON válido.
 
             Plan de estudio: {plan_str}
             Asignatura: {asig_nombre}
@@ -1428,7 +1526,7 @@ def generar_estudio_independiente(request):
             - Corte Evaluativo obligatorio (`periodo_tiempo_programado_1..{numero_actividades}`): "{presupuesto['corte']}"
             - Acumulado previo en {presupuesto['corte']} (sílabos + guías): {presupuesto['usado_corte']}/100 pts (saldo disponible: {presupuesto['saldo_corte']}/100 pts).
             - PRESUPUESTO TOTAL DE ESTA GUÍA (`puntaje_1 + ... + puntaje_{numero_actividades}`): DEBE sumar {presupuesto['presupuesto_objetivo']} puntos (máximo estricto permitido: {presupuesto['presupuesto_max']} puntos). NO asignes 100 puntos a la guía completa.
-            - CARGA HORARIA INDEPENDIENTE (`tiempo_minutos_1 + ... + tiempo_minutos_{numero_actividades}`): DEBE sumar ~{tiempos['min_indep_objetivo']} minutos en total (~{tiempos['min_por_tarea_aprox']} min por tarea; plan total: {tiempos['horas_independientes_plan']}h en 11 encuentros).
+            - CARGA HORARIA INDEPENDIENTE (`tiempo_minutos_1 + ... + tiempo_minutos_{numero_actividades}`): DEBE sumar ~{tiempos['min_indep_objetivo']} minutos en total (~{tiempos['min_por_tarea_aprox']} min por tarea; plan total: {tiempos['horas_independientes_plan']}h distribuidas en {max_guias} guías de estudio independiente).
             - VENTANA DE ENTREGA (`fecha_entrega_1..{numero_actividades}`): entre {tiempos['fecha_entrega_min']} y {tiempos['fecha_entrega_max']}.{nota_cierre}
 
             {contexto_curricular}
@@ -1496,6 +1594,7 @@ def generar_estudio_independiente(request):
                 minutos_totales_objetivo=tiempos["min_indep_objetivo"],
                 fecha_entrega_min=tiempos["fecha_entrega_min"],
                 fecha_entrega_max=tiempos["fecha_entrega_max"],
+                max_encuentros=max_guias,
             )
 
             return JsonResponse({"success": True, "datos": data})
@@ -1545,7 +1644,13 @@ def cargar_guia(request, silabo_id):
 
         if guias_count == 0:
             print(f"No se encontraron guías para el sílabo {silabo_id}")
-            context["mensaje_error"] = "Este sílabo no tiene guía asociada."
+            max_guias = obtener_max_encuentros_guia()
+            if silabo.encuentros > max_guias:
+                context["mensaje_error"] = (
+                    f"El encuentro {silabo.encuentros} corresponde al cierre de curso y no requiere guía de estudio independiente."
+                )
+            else:
+                context["mensaje_error"] = "Este sílabo no tiene guía asociada."
             html_content = render_to_string(template_name, context, request=request)
             return JsonResponse({"success": True, "html": html_content})
 
@@ -1991,9 +2096,10 @@ def ver_planeacion(request, asignacion_id):
         return tareas
 
     encuentros_list = []
-    total_encuentros = 11
+    max_guias = obtener_max_encuentros_guia()
+    total_encuentros = TOTAL_ENCUENTROS_SILABO
     if silabos.exists():
-        max_enc = max([s.encuentros for s in silabos] + [11])
+        max_enc = max([s.encuentros for s in silabos] + [TOTAL_ENCUENTROS_SILABO])
         total_encuentros = max_enc
 
     for num in range(1, total_encuentros + 1):
@@ -2006,15 +2112,19 @@ def ver_planeacion(request, asignacion_id):
                 guia_item = g_qs.first()
                 
         tareas_list = extract_tareas(guia_item)
+        tiene_silabo = silabo_item is not None
+        tiene_guia = guia_item is not None and len(tareas_list) > 0
+        requiere_guia = (num <= max_guias) or tiene_guia
         
         encuentros_list.append({
             'numero': num,
             'silabo': silabo_item,
             'guia': guia_item,
             'tareas': tareas_list,
-            'tiene_silabo': silabo_item is not None,
-            'tiene_guia': guia_item is not None and len(tareas_list) > 0,
-            'completo': silabo_item is not None and (guia_item is not None and len(tareas_list) > 0)
+            'tiene_silabo': tiene_silabo,
+            'tiene_guia': tiene_guia,
+            'requiere_guia': requiere_guia,
+            'completo': tiene_silabo and (tiene_guia or not requiere_guia),
         })
 
     silabos_count = len([e for e in encuentros_list if e['tiene_silabo']])
@@ -2025,6 +2135,7 @@ def ver_planeacion(request, asignacion_id):
         'encuentros_list': encuentros_list,
         'silabos_count': silabos_count,
         'guias_count': guias_count,
+        'max_guias': max_guias,
         'total_encuentros': total_encuentros,
     }
     return render(request, 'ver_planeacion.html', context)

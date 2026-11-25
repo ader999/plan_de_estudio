@@ -1414,10 +1414,14 @@ class RankingDocentesTest(TestCase):
         docentes = data_mayor['docentes']
         self.assertEqual(len(docentes), 3)
 
-        # Orden esperado mayor a menor: Ana (100.0%), Carlos (3/44 = 6.8%), Luis (0.0%)
+        # Orden esperado mayor a menor (11 sílabos + 10 guías = 21 entregables por asignación):
+        # Ana (100.0%, compatible incluso con 11 guías legadas), Carlos (3/42 = 7.1%), Luis (0.0%)
         self.assertEqual(docentes[0]['username'], 'ana_gomez')
         self.assertEqual(docentes[0]['puesto'], 1)
         self.assertEqual(docentes[0]['porcentaje_general'], 100.0)
+        self.assertEqual(docentes[0]['total_silabos'], 11)
+        self.assertEqual(docentes[0]['total_guias'], 10)
+        self.assertEqual(docentes[0]['esperado_entregables'], 21)
         self.assertEqual(docentes[0]['estado'], 'cumplido')
 
         self.assertEqual(docentes[1]['username'], 'carlos_ruiz')
@@ -1425,8 +1429,8 @@ class RankingDocentesTest(TestCase):
         self.assertEqual(docentes[1]['total_silabos'], 2)
         self.assertEqual(docentes[1]['total_guias'], 1)
         self.assertEqual(docentes[1]['total_entregables'], 3)
-        self.assertEqual(docentes[1]['esperado_entregables'], 44)
-        self.assertEqual(docentes[1]['porcentaje_general'], 6.8)
+        self.assertEqual(docentes[1]['esperado_entregables'], 42)
+        self.assertEqual(docentes[1]['porcentaje_general'], 7.1)
         self.assertEqual(docentes[1]['estado'], 'rezagado')
 
         self.assertEqual(docentes[2]['username'], 'luis_mora')
@@ -1635,7 +1639,7 @@ class RankingDocentesTest(TestCase):
         self.assertEqual(ana_fut['total_asignaciones'], 1)
         self.assertEqual(ana_fut['total_silabos'], 1)
         self.assertEqual(ana_fut['total_guias'], 1)
-        self.assertEqual(ana_fut['porcentaje_general'], 9.1)
+        self.assertEqual(ana_fut['porcentaje_general'], 9.5)
         html_fut = resp_fut.content.decode('utf-8')
         self.assertIn(f"{hoy.year + 1} - Trimestre I", html_fut)
         self.assertNotIn('class="btn pill-switch-btn active">\n                <i class="fas fa-calendar-check">', html_fut)
@@ -2159,35 +2163,57 @@ class CurriculumPlannerFase2Test(TestCase):
             self.assertEqual(r_s_save.status_code, 200, r_s_save.content.decode('utf-8'))
             silabo_id = r_s_save.json()["silabo_id"]
 
-            with patch('plan_de_estudio.ai_generators.usar_modelo_google', return_value=_fake_guia_json(enc)) as m_g:
-                r_g_gen = self.client.post(reverse('generar_estudio_independiente'), {
+            if enc <= 10:
+                with patch('plan_de_estudio.ai_generators.usar_modelo_google', return_value=_fake_guia_json(enc)) as m_g:
+                    r_g_gen = self.client.post(reverse('generar_estudio_independiente'), {
+                        'silabo_id': str(silabo_id),
+                        'encuentro': str(enc),
+                        'modelo': 'google',
+                        'numero_actividades': '4',
+                    })
+                    self.assertEqual(r_g_gen.status_code, 200, r_g_gen.content.decode('utf-8'))
+                    prompts_guia[enc] = m_g.call_args[0][0]
+                    g_data = r_g_gen.json()["datos"]
+
+                r_g_save = self.client.post(
+                    reverse('guardar_guia', args=[silabo_id]),
+                    data=json.dumps(g_data),
+                    content_type="application/json",
+                )
+                self.assertEqual(r_g_save.status_code, 200, r_g_save.content.decode('utf-8'))
+            else:
+                # Por defecto (encuentro 11 de la guía desactivado), el backend rechaza generar o guardar guía 11
+                r_g11_gen = self.client.post(reverse('generar_estudio_independiente'), {
                     'silabo_id': str(silabo_id),
-                    'encuentro': str(enc),
+                    'encuentro': '11',
                     'modelo': 'google',
                     'numero_actividades': '4',
                 })
-                self.assertEqual(r_g_gen.status_code, 200, r_g_gen.content.decode('utf-8'))
-                prompts_guia[enc] = m_g.call_args[0][0]
-                g_data = r_g_gen.json()["datos"]
-
-            r_g_save = self.client.post(
-                reverse('guardar_guia', args=[silabo_id]),
-                data=json.dumps(g_data),
-                content_type="application/json",
-            )
-            self.assertEqual(r_g_save.status_code, 200, r_g_save.content.decode('utf-8'))
+                self.assertEqual(r_g11_gen.status_code, 400)
+                r_g11_save = self.client.post(
+                    reverse('guardar_guia', args=[silabo_id]),
+                    data=json.dumps({
+                        "numero_encuentro": 11,
+                        "fecha": s_data["fecha"],
+                        "unidad": s_data["unidad"],
+                        "nombre_de_la_unidad": s_data["nombre_de_la_unidad"],
+                    }),
+                    content_type="application/json",
+                )
+                self.assertEqual(r_g11_save.status_code, 400)
 
         # 1. Validar regla institucional: exactamente 100 pts por Corte Evaluativo (300 total)
+        #    divididos en 11 sílabos y 10 guías (en III Corte: S9+G9+S10+G10+S11 = 100)
         cortes = calcular_puntajes_por_corte(self.asignacion_prog)
         self.assertEqual(cortes["I Corte Evaluativo"], 100)
         self.assertEqual(cortes["II Corte Evaluativo"], 100)
         self.assertEqual(cortes["III Corte Evaluativo"], 100)
 
-        # 2. Validar cobertura de todas las unidades del programa, horas y progresión semanal de fechas
+        # 2. Validar cobertura de todas las unidades del programa, horas (11 sílabos / 10 guías) y progresión semanal
         silabos = list(Silabo.objects.filter(asignacion_plan=self.asignacion_prog).order_by("encuentros"))
         guias = list(Guia.objects.filter(silabo__asignacion_plan=self.asignacion_prog).order_by("numero_encuentro"))
         self.assertEqual(len(silabos), 11)
-        self.assertEqual(len(guias), 11)
+        self.assertEqual(len(guias), 10)
 
         unidades_usadas = [s.unidad for s in silabos]
         self.assertIn("Unidad I", unidades_usadas)
@@ -2210,18 +2236,23 @@ class CurriculumPlannerFase2Test(TestCase):
         for idx in range(1, len(silabos)):
             self.assertEqual((silabos[idx].fecha - silabos[idx - 1].fecha).days, 7)
 
-        # 3. En Encuentro 11 no puede haber fechas de entrega posteriores al cierre
-        g11 = guias[-1]
+        # 3. En Encuentro 10 (última guía) las fechas de entrega ocurren antes del último encuentro (E11),
+        #    y en Encuentro 11 el sílabo cierra con Realimentación sin orientar tarea/estudio independiente
+        g10 = guias[-1]
         s11 = silabos[-1]
         for n in range(1, 5):
-            fecha_ent = getattr(g11, f"fecha_entrega_{n}")
+            fecha_ent = getattr(g10, f"fecha_entrega_{n}")
             self.assertLessEqual(fecha_ent, s11.fecha)
+        self.assertEqual(list(s11.tipo_tercer_momento), ["Realimentación del aprendizaje"])
 
-        # 4. El prompt en E11 incluye todas las tareas T1..T4 de guías previas y se mantiene compacto
+        # 4. Los prompts reflejan 10 guías / 11 sílabos, incluyen tareas previas T1..T4 y se mantienen compactos
         self.assertIn("TareaAutonoma E1 T4", prompts_silabo[11])
-        self.assertIn("TareaAutonoma E10 T4", prompts_guia[11])
+        self.assertIn("TareaAutonoma E10 T4", prompts_silabo[11])
+        self.assertIn("SIN GUÍA DE ESTUDIO INDEPENDIENTE", prompts_silabo[11])
+        self.assertIn("10 guías", prompts_guia[10])
+        self.assertIn("TareaAutonoma E9 T4", prompts_guia[10])
         self.assertLess(len(prompts_silabo[11]), 20000)
-        self.assertLess(len(prompts_guia[11]), 20000)
+        self.assertLess(len(prompts_guia[10]), 20000)
 
 
 class Fase3FlujosYDocumentoTest(TestCase):
@@ -2755,6 +2786,223 @@ class AdminChangelistPerformanceTest(TestCase):
         results_2018 = resp_2018.json()['results']
         self.assertEqual([r['id'] for r in results_2018], [str(plan_2018.pk)])
 
+    def test_programa_2026_changelist_filtros_necesarios(self):
+        carrera_farmacia = Carrera.objects.create(
+            nombre="Licenciatura en Farmacia Filtro", codigo="FARF01", cine_2011=1, cine_2013=2,
+            area_formacion="Salud y servicios sociales ", area_disiplinaria=1
+        )
+        asig_farma = Asignatura.objects.create(nombre="Farmacología Filtro")
+        plan_farma_2018 = Plan_de_estudio.objects.create(
+            carrera=carrera_farmacia, año="III", trimestre="IV", pensol="2018",
+            codigo="FARF-304", asignatura=asig_farma,
+            horas_presenciales=24, horas_estudio_independiente=48
+        )
+        ProgramaAsignatura2026.objects.create(
+            plan_estudio=plan_farma_2018,
+            fundamentacion="F",
+            relacion_unidades="R",
+            aportes_perfil="A",
+            valores="V",
+            ejes_transversales="E",
+            objetivo_conceptual="OC",
+            objetivo_procedimental="OP",
+            objetivo_actitudinal="OA",
+        )
+
+        client = Client()
+        client.login(username="admin_perf", password="adminpassword")
+        changelist_url = reverse('admin:plan_de_estudio_programaasignatura2026_changelist')
+
+        # 1. Filtro por Carrera
+        resp_carrera = client.get(changelist_url, {'carrera': str(carrera_farmacia.pk)})
+        self.assertEqual(resp_carrera.status_code, 200)
+        self.assertContains(resp_carrera, "FARMACOLOGÍA FILTRO")
+        self.assertNotContains(resp_carrera, "ASIGNATURA PERF 0")
+        self.assertContains(resp_carrera, "1 Programa de asignatura 2026")
+
+        # 2. Filtro por Pensol
+        resp_pensol = client.get(changelist_url, {'plan_estudio__pensol__exact': '2018'})
+        self.assertEqual(resp_pensol.status_code, 200)
+        self.assertContains(resp_pensol, "FARMACOLOGÍA FILTRO")
+        self.assertContains(resp_pensol, "1 Programa de asignatura 2026")
+
+        # 3. Filtro por Año
+        resp_anio = client.get(changelist_url, {'plan_estudio__año__exact': 'III'})
+        self.assertEqual(resp_anio.status_code, 200)
+        self.assertContains(resp_anio, "FARMACOLOGÍA FILTRO")
+        self.assertContains(resp_anio, "1 Programa de asignatura 2026")
+
+        # 4. Filtro por Trimestre
+        resp_trim = client.get(changelist_url, {'plan_estudio__trimestre__exact': 'IV'})
+        self.assertEqual(resp_trim.status_code, 200)
+        self.assertContains(resp_trim, "FARMACOLOGÍA FILTRO")
+        self.assertContains(resp_trim, "1 Programa de asignatura 2026")
+
+        # 5. Filtro por Estado de asociación (sin plan / con plan)
+        resp_sin_plan = client.get(changelist_url, {'plan_asociado': 'no'})
+        self.assertEqual(resp_sin_plan.status_code, 200)
+        self.assertContains(resp_sin_plan, "None - Programa 2026")
+        self.assertContains(resp_sin_plan, "1 Programa de asignatura 2026")
+
+        resp_con_plan = client.get(changelist_url, {'plan_asociado': 'si'})
+        self.assertEqual(resp_con_plan.status_code, 200)
+        self.assertNotContains(resp_con_plan, "None - Programa 2026")
+        self.assertContains(resp_con_plan, "26 Programas de asignatura 2026")
+
+        # 6. Filtro combinado (Carrera + Pensol + Año + Trimestre) y búsqueda por carrera/pensol
+        resp_combo = client.get(changelist_url, {
+            'carrera': str(carrera_farmacia.pk),
+            'plan_estudio__pensol__exact': '2018',
+            'plan_estudio__año__exact': 'III',
+            'plan_estudio__trimestre__exact': 'IV',
+        })
+        self.assertEqual(resp_combo.status_code, 200)
+        self.assertContains(resp_combo, "FARMACOLOGÍA FILTRO")
+        self.assertContains(resp_combo, "1 Programa de asignatura 2026")
+
+        resp_search_carrera = client.get(changelist_url, {'q': 'Farmacia Filtro 2018'})
+        self.assertEqual(resp_search_carrera.status_code, 200)
+        self.assertContains(resp_search_carrera, "FARMACOLOGÍA FILTRO")
+
+        # 7. Parámetro inválido en filtro de carrera no produce error 500
+        resp_invalid = client.get(changelist_url, {'carrera': 'invalido'})
+        self.assertEqual(resp_invalid.status_code, 200)
+        self.assertContains(resp_invalid, "0 Programas de asignatura 2026")
+
+    def test_plan_de_estudio_changelist_paginacion_30_y_descarga_documentos(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        tmp_media = tempfile.mkdtemp()
+        try:
+            with override_settings(MEDIA_ROOT=tmp_media):
+                # Creamos 10 planes adicionales (total 35) para verificar paginación de 30 en 30
+                extra_planes = []
+                for idx in range(25, 35):
+                    asig = Asignatura.objects.create(nombre=f"Asignatura Extra {idx}")
+                    extra_planes.append(
+                        Plan_de_estudio.objects.create(
+                            carrera=self.carrera, año="II", trimestre="II", pensol="2026",
+                            codigo=f"PERF-{idx:02d}", asignatura=asig,
+                            horas_presenciales=24, horas_estudio_independiente=48,
+                        )
+                    )
+
+                # Plan con ambos documentos (reciente -> aparece en página 1)
+                plan_ambos = extra_planes[-1]
+                plan_ambos.plan_tematico.save(
+                    "programa_ambos.docx",
+                    SimpleUploadedFile("programa_ambos.docx", b"contenido-plan-tematico", content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+                    save=False,
+                )
+                plan_ambos.documento_adjunto.save(
+                    "anexo_ambos.pdf",
+                    SimpleUploadedFile("anexo_ambos.pdf", b"%PDF-1.4 contenido-adjunto", content_type="application/pdf"),
+                    save=False,
+                )
+                plan_ambos.save()
+
+                # Plan solo con plan temático
+                plan_solo_pt = extra_planes[-2]
+                plan_solo_pt.plan_tematico.save(
+                    "solo_plan.pdf",
+                    SimpleUploadedFile("solo_plan.pdf", b"%PDF-1.4 solo-pt", content_type="application/pdf"),
+                    save=True,
+                )
+
+                # Plan sin documentos
+                plan_sin_docs = extra_planes[-3]
+
+                client = Client()
+                client.login(username="admin_perf", password="adminpassword")
+                changelist_url = reverse('admin:plan_de_estudio_plan_de_estudio_changelist')
+
+                with CaptureQueriesContext(connection) as ctx:
+                    resp_p1 = client.get(changelist_url)
+                self.assertEqual(resp_p1.status_code, 200)
+                self.assertLessEqual(len(ctx), 10)
+                # Verifica 30 elementos por página (35 totales -> 30 en p1, 5 en p2)
+                self.assertEqual(resp_p1.context['cl'].list_per_page, 30)
+                self.assertEqual(len(resp_p1.context['cl'].result_list), 30)
+                self.assertContains(resp_p1, 'data-actions-icnt="30"')
+                self.assertContains(resp_p1, "35 Planes de estudio")
+
+                url_descarga_pt = reverse(
+                    'admin:plan_de_estudio_plan_de_estudio_descargar_documento',
+                    args=[plan_ambos.pk, 'plan_tematico'],
+                )
+                url_descarga_adj = reverse(
+                    'admin:plan_de_estudio_plan_de_estudio_descargar_documento',
+                    args=[plan_ambos.pk, 'documento_adjunto'],
+                )
+                url_solo_pt = reverse(
+                    'admin:plan_de_estudio_plan_de_estudio_descargar_documento',
+                    args=[plan_solo_pt.pk, 'plan_tematico'],
+                )
+                url_solo_adj_inexistente = reverse(
+                    'admin:plan_de_estudio_plan_de_estudio_descargar_documento',
+                    args=[plan_solo_pt.pk, 'documento_adjunto'],
+                )
+                url_sin_docs = reverse(
+                    'admin:plan_de_estudio_plan_de_estudio_descargar_documento',
+                    args=[plan_sin_docs.pk, 'plan_tematico'],
+                )
+
+                self.assertContains(resp_p1, url_descarga_pt)
+                self.assertContains(resp_p1, url_descarga_adj)
+                self.assertContains(resp_p1, url_solo_pt)
+                self.assertNotContains(resp_p1, url_solo_adj_inexistente)
+                self.assertNotContains(resp_p1, url_sin_docs)
+
+                # Página 2 debe mostrar los 5 restantes
+                resp_p2 = client.get(changelist_url, {'p': '2'})
+                self.assertEqual(resp_p2.status_code, 200)
+                self.assertEqual(len(resp_p2.context['cl'].result_list), 5)
+
+                # Descarga directa del Plan temático
+                resp_pt = client.get(url_descarga_pt)
+                self.assertEqual(resp_pt.status_code, 200)
+                self.assertIn('attachment;', resp_pt['Content-Disposition'])
+                self.assertIn('programa_ambos', resp_pt['Content-Disposition'])
+                self.assertEqual(b''.join(resp_pt.streaming_content), b'contenido-plan-tematico')
+                resp_pt.close()
+
+                # Descarga directa del Documento adjunto
+                resp_adj = client.get(url_descarga_adj)
+                self.assertEqual(resp_adj.status_code, 200)
+                self.assertIn('attachment;', resp_adj['Content-Disposition'])
+                self.assertIn('anexo_ambos', resp_adj['Content-Disposition'])
+                self.assertEqual(b''.join(resp_adj.streaming_content), b'%PDF-1.4 contenido-adjunto')
+                resp_adj.close()
+
+                # Tipo de documento inválido retorna 404
+                url_invalido = reverse(
+                    'admin:plan_de_estudio_plan_de_estudio_descargar_documento',
+                    args=[plan_ambos.pk, 'otro_campo'],
+                )
+                self.assertEqual(client.get(url_invalido).status_code, 404)
+
+                # Plan sin archivo cargado redirige con advertencia al changelist
+                resp_vacio = client.get(url_sin_docs, follow=True)
+                self.assertEqual(resp_vacio.status_code, 200)
+                self.assertContains(resp_vacio, "no tiene un plan temático cargado")
+
+                # Archivo faltante en almacenamiento redirige con error limpio (sin 500)
+                plan_solo_pt.plan_tematico.storage.delete(plan_solo_pt.plan_tematico.name)
+                resp_missing = client.get(url_solo_pt, follow=True)
+                self.assertEqual(resp_missing.status_code, 200)
+                self.assertContains(resp_missing, "No se pudo descargar el archivo")
+
+                # Usuario sin permisos de admin no puede descargar
+                docente = User.objects.create_user(username="docente_sin_perm", password="pwd")
+                anon_client = Client()
+                anon_client.login(username="docente_sin_perm", password="pwd")
+                resp_unauth = anon_client.get(url_descarga_pt)
+                self.assertEqual(resp_unauth.status_code, 302)
+                self.assertIn('/admin/login/', resp_unauth['Location'])
+        finally:
+            shutil.rmtree(tmp_media, ignore_errors=True)
+
 
 class TrimestreLectivoAsignacionTest(TestCase):
     def setUp(self):
@@ -2873,6 +3121,338 @@ class TrimestreLectivoAsignacionTest(TestCase):
             'años': ['IV'],
         })
         self.assertTrue(form.is_valid(), form.errors)
+
+
+class DesactivacionUltimoEncuentroGuiaTest(TestCase):
+    def setUp(self):
+        self.patcher_crear = patch('plan_de_estudio.signals.crear_clase_e_invitar_maestro')
+        self.patcher_subir = patch('plan_de_estudio.services.google_classroom.subir_tareas_desde_guia')
+        self.patcher_crear.start()
+        self.patcher_subir.start()
+
+        self.admin_user = User.objects.create_superuser(
+            username="admin_g10", email="admin_g10@example.com", password="adminpassword"
+        )
+        self.docente = User.objects.create_user(
+            username="docente_g10", email="docente_g10@example.com", password="docpassword",
+            first_name="Marta", last_name="Solís"
+        )
+        self.carrera = Carrera.objects.create(
+            nombre="Ingeniería de Sistemas G10", codigo="ISG10", cine_2011=111, cine_2013=222,
+            area_formacion="Tecnologías de la información", area_disiplinaria=1
+        )
+        self.asig = Asignatura.objects.create(nombre="Ingeniería Web II")
+        self.plan = Plan_de_estudio.objects.create(
+            carrera=self.carrera, año="V", trimestre="IV", pensol="2026",
+            codigo="IS1844", asignatura=self.asig,
+            horas_presenciales=24, horas_estudio_independiente=70,
+        )
+        self.programa = ProgramaAsignatura2026.objects.create(
+            plan_estudio=self.plan,
+            fundamentacion="Fundamentación Web II",
+            relacion_unidades="3 unidades",
+            aportes_perfil="Perfil",
+            valores="Valores",
+            ejes_transversales="Tecnología",
+            objetivo_conceptual="Obj C",
+            objetivo_procedimental="Obj P",
+            objetivo_actitudinal="Obj A",
+            unidad_1_nombre="APIs REST",
+            unidad_1_horas_teoricas=4,
+            unidad_1_horas_practicas=4,
+            unidad_1_horas_independientes=24,
+            unidad_1_objetivos_especificos="Diseñar APIs",
+            unidad_1_contenido="REST, JSON, autenticación",
+            unidad_2_nombre="Frontend Moderno",
+            unidad_2_horas_teoricas=4,
+            unidad_2_horas_practicas=4,
+            unidad_2_horas_independientes=24,
+            unidad_2_objetivos_especificos="Construir SPA",
+            unidad_2_contenido="Componentes, estado, enrutamiento",
+            unidad_3_nombre="Despliegue y Seguridad",
+            unidad_3_horas_teoricas=4,
+            unidad_3_horas_practicas=4,
+            unidad_3_horas_independientes=22,
+            unidad_3_objetivos_especificos="Desplegar en producción",
+            unidad_3_contenido="CI/CD, HTTPS, OWASP",
+        )
+        self.asignacion = AsignacionPlanEstudio.objects.create(
+            usuario=self.docente,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(),
+            bloque="Primer bloque - 8:00",
+        )
+        self.doc_client = Client()
+        self.doc_client.login(username="docente_g10", password="docpassword")
+        self.admin_client = Client()
+        self.admin_client.login(username="admin_g10", password="adminpassword")
+
+    def tearDown(self):
+        self.patcher_crear.stop()
+        self.patcher_subir.stop()
+
+    def _crear_silabo(self, enc, puntaje=10):
+        corte = "I Corte Evaluativo" if enc <= 4 else ("II Corte Evaluativo" if enc <= 8 else "III Corte Evaluativo")
+        return Silabo.objects.create(
+            codigo=self.plan.codigo,
+            asignacion_plan=self.asignacion,
+            encuentros=enc,
+            fecha=datetime.date(2026, 9, 5) + datetime.timedelta(days=7 * (enc - 1)),
+            unidad="Unidad I",
+            nombre_de_la_unidad="APIs REST",
+            contenido_tematico=f"Tema {enc}",
+            objetivo_conceptual="OC",
+            objetivo_procedimental="OP",
+            objetivo_actitudinal="OA",
+            tipo_primer_momento="Evaluación diagnóstica",
+            detalle_primer_momento="Inicio",
+            tiempo_primer_momento=15,
+            recursos_primer_momento="Pizarra",
+            tipo_segundo_momento_claseteoria="Conferencia",
+            clase_teorica="Teoría",
+            tipo_segundo_momento_practica="Taller",
+            clase_practica="Práctica",
+            tiempo_segundo_momento_teorica=45,
+            tiempo_segundo_momento_practica=55,
+            recursos_segundo_momento="Proyector",
+            tipo_tercer_momento=["Realimentación del aprendizaje"],
+            detalle_tercer_momento="Cierre",
+            tiempo_tercer_momento=15,
+            recursos_tercer_momento="Rúbrica",
+            eje_transversal=["Tecnología de la información y comunicación"],
+            detalle_eje_transversal="TIC",
+            actividad_aprendizaje="Taller",
+            tecnica_evaluacion=["Observación"],
+            tipo_evaluacion=["Formativa"],
+            periodo_tiempo_programado=corte,
+            tiempo_minutos=20,
+            agente_evaluador=["Heteroevaluación"],
+            instrumento_evaluacion="Rúbrica",
+            criterios_evaluacion="Precisión",
+            puntaje=puntaje,
+        )
+
+    def _crear_guia(self, silabo, enc, puntaje=15, tiempo=420):
+        corte = "I Corte Evaluativo" if enc <= 4 else ("II Corte Evaluativo" if enc <= 8 else "III Corte Evaluativo")
+        guia = Guia.objects.create(
+            silabo=silabo,
+            numero_encuentro=enc,
+            fecha=silabo.fecha,
+            unidad=silabo.unidad,
+            nombre_de_la_unidad=silabo.nombre_de_la_unidad,
+            tipo_objetivo_1="Conceptual",
+            objetivo_aprendizaje_1=f"Obj guía {enc}",
+            contenido_tematico_1=f"Tema guía {enc}",
+            actividad_aprendizaje_1=f"Actividad guía {enc}",
+            tecnica_evaluacion_1="Proyecto",
+            tipo_evaluacion_1="Sumativa",
+            instrumento_evaluacion_1="Rúbrica",
+            criterios_evaluacion_1="Criterio",
+            agente_evaluador_1=["Heteroevaluación"],
+            tiempo_minutos_1=tiempo,
+            recursos_didacticos_1="Manual",
+            periodo_tiempo_programado_1=corte,
+            puntaje_1=puntaje,
+            fecha_entrega_1=silabo.fecha + datetime.timedelta(days=5 if enc < 11 else 0),
+        )
+        silabo.guia = guia
+        silabo.save(update_fields=["guia"])
+        return guia
+
+    def test_toggle_admin_y_permisos_ultimo_encuentro_guia(self):
+        config = ConfiguracionSistema.get_solo()
+        self.assertFalse(config.habilitar_ultimo_encuentro_guia)
+        self.assertEqual(config.max_encuentros_guia, 10)
+
+        toggle_url = reverse('admin:plan_de_estudio_copiaseguridad_toggle_ultimo_encuentro_guia')
+        changelist_url = reverse('admin:plan_de_estudio_copiaseguridad_changelist')
+
+        # Docente no puede modificar el ajuste
+        resp_doc = self.doc_client.post(toggle_url, {'accion': 'activar'})
+        self.assertEqual(resp_doc.status_code, 302)
+        self.assertIn('/admin/login/', resp_doc['Location'])
+        self.assertFalse(ConfiguracionSistema.get_solo().habilitar_ultimo_encuentro_guia)
+
+        # Admin visualiza estado desactivado (10 guías) y puede restaurar (11 guías) y volver a desactivar
+        resp_list = self.admin_client.get(changelist_url)
+        self.assertEqual(resp_list.status_code, 200)
+        self.assertContains(resp_list, "Guía del Último Encuentro (Encuentro 11)")
+        self.assertContains(resp_list, "Desactivada (10 guías)")
+
+        resp_on = self.admin_client.post(toggle_url, {'accion': 'activar'})
+        self.assertEqual(resp_on.status_code, 302)
+        config.refresh_from_db()
+        self.assertTrue(config.habilitar_ultimo_encuentro_guia)
+        self.assertEqual(config.max_encuentros_guia, 11)
+
+        resp_list_on = self.admin_client.get(changelist_url)
+        self.assertContains(resp_list_on, "Habilitada (11 guías)")
+
+        resp_off = self.admin_client.post(toggle_url, {'accion': 'desactivar'})
+        self.assertEqual(resp_off.status_code, 302)
+        config.refresh_from_db()
+        self.assertFalse(config.habilitar_ultimo_encuentro_guia)
+        self.assertEqual(config.max_encuentros_guia, 10)
+
+    def test_inicio_flujo_10_guias_11_silabos_y_restauracion(self):
+        # Con 5 sílabos y 5 guías: pendiente, muestra 1..11 para sílabo y 1..10 para guía
+        self.asignacion.silabos_creados = 5
+        self.asignacion.guias_creadas = 5
+        self.asignacion.save()
+        resp_mid = self.doc_client.get(reverse('inicio'))
+        self.assertEqual(resp_mid.status_code, 200)
+        self.assertEqual(list(resp_mid.context['rango']), list(range(1, 12)))
+        self.assertEqual(list(resp_mid.context['rango_guias']), list(range(1, 11)))
+        self.assertEqual(len(resp_mid.context['asignaciones_pendientes']), 1)
+        self.assertEqual(len(resp_mid.context['asignaciones_completadas']), 0)
+
+        # Con 10 sílabos y 10 guías: sigue pendiente por Sílabo 11, botón Generar Guía deshabilitado (10 guías completadas)
+        self.asignacion.silabos_creados = 10
+        self.asignacion.guias_creadas = 10
+        self.asignacion.save()
+        resp_10 = self.doc_client.get(reverse('inicio'))
+        self.assertEqual(len(resp_10.context['asignaciones_pendientes']), 1)
+        self.assertContains(resp_10, "Ya se han completado las 10 guías")
+        self.assertContains(resp_10, reverse('ver_formulario_silabo', args=[self.asignacion.id]))
+
+        # Con 11 sílabos y 10 guías: pasa a Archivados / Completado sin botones de generación
+        self.asignacion.silabos_creados = 11
+        self.asignacion.guias_creadas = 10
+        self.asignacion.save()
+        resp_done = self.doc_client.get(reverse('inicio'))
+        self.assertEqual(len(resp_done.context['asignaciones_pendientes']), 0)
+        self.assertEqual(len(resp_done.context['asignaciones_completadas']), 1)
+        self.assertNotContains(resp_done, "Generar Guía")
+
+        # Si el administrador restaura el Encuentro 11 de la guía, vuelve a requerir la guía 11
+        cfg = ConfiguracionSistema.get_solo()
+        cfg.habilitar_ultimo_encuentro_guia = True
+        cfg.save()
+        resp_restored = self.doc_client.get(reverse('inicio'))
+        self.assertEqual(list(resp_restored.context['rango_guias']), list(range(1, 12)))
+        self.assertEqual(len(resp_restored.context['asignaciones_pendientes']), 1)
+        self.assertContains(resp_restored, "Generar Guía")
+
+    def test_ver_planeacion_guia_autodidactica_ranking_compatibilidad_historica_y_correos(self):
+        from plan_de_estudio.email_utils import enviar_correos_plan_incompleto
+
+        silabos = [self._crear_silabo(enc) for enc in range(1, 12)]
+        for enc in range(1, 11):
+            self._crear_guia(silabos[enc - 1], enc)
+        self.asignacion.silabos_creados = 11
+        self.asignacion.guias_creadas = 10
+        self.asignacion.save()
+
+        # 1. ver_formulario_guia redirige a inicio y generar_estudio_independiente rechaza silabo 11
+        self.assertEqual(self.doc_client.get(reverse('ver_formulario_guia', args=[self.asignacion.id])).status_code, 302)
+        resp_g11_ia = self.doc_client.post(reverse('generar_estudio_independiente'), {
+            'silabo_id': str(silabos[10].id),
+            'encuentro': '1',
+            'modelo': 'google',
+            'numero_actividades': '4',
+        })
+        self.assertEqual(resp_g11_ia.status_code, 400)
+
+        # 2. ver_planeacion muestra E11 como completo sin guía ("Cierre sin guía")
+        resp_vp = self.doc_client.get(reverse('ver_planeacion', args=[self.asignacion.id]))
+        self.assertEqual(resp_vp.status_code, 200)
+        enc11 = resp_vp.context['encuentros_list'][10]
+        self.assertTrue(enc11['completo'])
+        self.assertFalse(enc11['requiere_guia'])
+        self.assertContains(resp_vp, "Cierre sin guía")
+        self.assertContains(resp_vp, "10/10")
+
+        # 3. guia_autodidactica solo lista los 10 encuentros con guía
+        resp_ga = self.doc_client.get(reverse('guia_autodidactica'), {'codigo': self.plan.codigo})
+        self.assertEqual(resp_ga.status_code, 200)
+        self.assertEqual(len(resp_ga.context['silabos_agrupados'][self.plan.codigo]), 10)
+
+        # 4. Ranking marca 100.0% (21/21) con 11 sílabos y 10 guías
+        rank = construir_ranking_docentes(alcance='actual', alcance_explicito=True)
+        self.assertEqual(rank['esperado_silabos'], 11)
+        self.assertEqual(rank['esperado_guias'], 10)
+        doc_rank = rank['docentes'][0]
+        self.assertEqual(doc_rank['porcentaje_general'], 100.0)
+        self.assertEqual(doc_rank['total_entregables'], 21)
+        self.assertEqual(doc_rank['esperado_entregables'], 21)
+        self.assertEqual(doc_rank['estado'], 'cumplido')
+
+        # 5. Recordatorios por correo NO marcan como incompleta una asignación 11/10
+        with patch('plan_de_estudio.email_utils.resend.api_key', 're_test_key'), \
+             patch('plan_de_estudio.email_utils.resend.Emails.send', return_value={'id': 'msg_1'}) as mock_send, \
+             patch('plan_de_estudio.email_utils.time.sleep'):
+            enviados_10 = enviar_correos_plan_incompleto()
+            self.assertEqual(enviados_10, 0)
+            self.assertEqual(mock_send.call_count, 0)
+
+        # 6. Compatibilidad histórica: si una asignación antigua tiene guía en Encuentro 11,
+        #    sigue mostrándose en ver_planeacion, guia_autodidactica y ranking sin superar 100%
+        guia_11 = self._crear_guia(silabos[10], 11)
+        self.asignacion.guias_creadas = 11
+        self.asignacion.save()
+
+        resp_vp_hist = self.doc_client.get(reverse('ver_planeacion', args=[self.asignacion.id]))
+        self.assertTrue(resp_vp_hist.context['encuentros_list'][10]['tiene_guia'])
+        self.assertTrue(resp_vp_hist.context['encuentros_list'][10]['completo'])
+        self.assertContains(resp_vp_hist, "Actividad guía 11")
+
+        resp_ga_hist = self.doc_client.get(reverse('guia_autodidactica'), {'codigo': self.plan.codigo})
+        self.assertEqual(len(resp_ga_hist.context['silabos_agrupados'][self.plan.codigo]), 11)
+
+        rank_hist = construir_ranking_docentes(alcance='actual', alcance_explicito=True)
+        self.assertEqual(rank_hist['docentes'][0]['porcentaje_general'], 100.0)
+        self.assertEqual(rank_hist['docentes'][0]['faltantes_guias'], 0)
+
+        # La guía histórica 11 sigue pudiendo editarse vía actualizar_guia
+        resp_edit = self.doc_client.get(reverse('actualizar_guia', args=[guia_11.id]))
+        self.assertEqual(resp_edit.status_code, 200)
+
+    def test_ia_restaurar_encuentro_11_divide_notas_y_tiempos_en_11_guias(self):
+        from plan_de_estudio.utils.curriculum_planner import (
+            calcular_corte_y_presupuesto,
+            calcular_tiempos_y_fechas,
+        )
+
+        # Con 10 guías (por defecto): 70h = 4200 min / 10 = 420 min por guía
+        tiempos_10 = calcular_tiempos_y_fechas(self.asignacion, encuentro=1)
+        self.assertEqual(tiempos_10['max_guias'], 10)
+        self.assertEqual(tiempos_10['min_indep_objetivo'], 420)
+
+        # Al restaurar temporalmente Encuentro 11 sin guías previas: 70h = 4200 min / 11 ≈ 382 min por guía
+        cfg = ConfiguracionSistema.get_solo()
+        cfg.habilitar_ultimo_encuentro_guia = True
+        cfg.save()
+        tiempos_11_inicio = calcular_tiempos_y_fechas(self.asignacion, encuentro=1)
+        self.assertEqual(tiempos_11_inicio['max_guias'], 11)
+        self.assertEqual(tiempos_11_inicio['min_indep_objetivo'], 382)
+
+        # Volver a desactivar (10 guías) y crear S9, G9, S10, G10 (total 85 pts en III Corte):
+        # S11 cierra exactamente el III Corte (15 pts -> 100)
+        cfg.habilitar_ultimo_encuentro_guia = False
+        cfg.save()
+        s9 = self._crear_silabo(9, puntaje=12)
+        self._crear_guia(s9, 9, puntaje=30)
+        s10 = self._crear_silabo(10, puntaje=13)
+        self._crear_guia(s10, 10, puntaje=30)
+
+        pres_s11_sin_g11 = calcular_corte_y_presupuesto(self.asignacion, encuentro=11, es_guia=False)
+        self.assertTrue(pres_s11_sin_g11['es_ultimo_en_corte'])
+        self.assertEqual(pres_s11_sin_g11['presupuesto_objetivo'], 15)
+        self.assertEqual(pres_s11_sin_g11['presupuesto_max'], 15)
+
+        # Al restaurar Encuentro 11 de la guía con G9 y G10 ya creadas (840 min):
+        # remanente 3360 min / 9 guías restantes = 373 min, y S11 reserva puntos para G11
+        cfg.habilitar_ultimo_encuentro_guia = True
+        cfg.save()
+
+        tiempos_11 = calcular_tiempos_y_fechas(self.asignacion, encuentro=1)
+        self.assertEqual(tiempos_11['max_guias'], 11)
+        self.assertEqual(tiempos_11['min_indep_objetivo'], 373)
+
+        pres_s11_con_g11 = calcular_corte_y_presupuesto(self.asignacion, encuentro=11, es_guia=False)
+        self.assertFalse(pres_s11_con_g11['es_ultimo_en_corte'])
+        self.assertLess(pres_s11_con_g11['presupuesto_objetivo'], 15)
+
 
 
 

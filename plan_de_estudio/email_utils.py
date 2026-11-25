@@ -3,25 +3,29 @@ import time
 import resend
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .models import AsignacionPlanEstudio
+from .models import AsignacionPlanEstudio, TOTAL_ENCUENTROS_SILABO, obtener_max_encuentros_guia
 
 # Configurar API Key de Resend
 resend.api_key = os.environ.get("RESEND")
 
 def enviar_correos_plan_incompleto():
     """
-    Envía correos electrónicos a los usuarios que tienen menos de 11 sílabos o guías creadas
+    Envía correos electrónicos a los usuarios que tienen menos de 11 sílabos o menos del
+    máximo activo de guías creadas (10 por defecto, o 11 si se restaura el encuentro 11)
     usando la API de Resend.
     """
     if not resend.api_key:
         print("Error: La variable de entorno RESEND no está configurada.")
         return 0
 
+    requerido_silabos = TOTAL_ENCUENTROS_SILABO
+    requerido_guias = obtener_max_encuentros_guia()
+
     # Filtrar asignaciones con planes incompletos
     asignaciones_incompletas = AsignacionPlanEstudio.objects.filter(
-        silabos_creados__lt=11
+        silabos_creados__lt=requerido_silabos
     ) | AsignacionPlanEstudio.objects.filter(
-        guias_creadas__lt=11
+        guias_creadas__lt=requerido_guias
     )
     
     # Eliminar duplicados
@@ -41,6 +45,8 @@ def enviar_correos_plan_incompleto():
             'asignatura': asignacion.plan_de_estudio.asignatura.nombre,
             'silabos_creados': asignacion.silabos_creados,
             'guias_creadas': asignacion.guias_creadas,
+            'requerido_silabos': requerido_silabos,
+            'requerido_guias': requerido_guias,
         }
 
         html_message = render_to_string('emails/recordatorio_plan.html', context)

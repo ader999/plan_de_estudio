@@ -6,7 +6,7 @@ from django.test import RequestFactory
 from django.contrib.auth.models import User
 from plan_de_estudio.models import (
     AsignacionPlanEstudio, Plan_de_estudio, Carrera, Asignatura,
-    ProgramaAsignatura2026, Silabo, Guia
+    ProgramaAsignatura2026, Silabo, Guia, obtener_max_encuentros_guia
 )
 from plan_de_estudio.ai_generators import generar_respuesta_ai, get_default_config
 from plan_de_estudio.views import generar_silabo, generar_estudio_independiente
@@ -52,6 +52,7 @@ class Command(BaseCommand):
             Silabo.objects.filter(asignacion_plan=asignacion).delete()
 
         factory = RequestFactory()
+        max_guias = obtener_max_encuentros_guia()
         
         reporte_encuentros = []
 
@@ -59,7 +60,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(f'\n--- Procesando Encuentro {enc} de 11 ---'))
             inicio_enc = time.time()
             
-            res_silabo = {'encuentro': enc, 'silabo_ok': False, 'guia_ok': False, 'errores': []}
+            res_silabo = {'encuentro': enc, 'silabo_ok': False, 'guia_ok': enc > max_guias, 'errores': []}
             
             # 1. Generar Sílabo
             request_silabo = factory.post('/generar-silabo/', {
@@ -133,7 +134,14 @@ class Command(BaseCommand):
                 res_silabo['errores'].append(err)
                 continue
 
-            # 2. Generar Guía de Estudio Independiente para este Sílabo
+            # 2. Generar Guía de Estudio Independiente para este Sílabo (solo hasta max_guias)
+            if enc > max_guias:
+                self.stdout.write(self.style.NOTICE(f'[Encuentro {enc}] Omitiendo guía (máximo configurado: {max_guias}).'))
+                duracion = round(time.time() - inicio_enc, 2)
+                res_silabo['duracion_seg'] = duracion
+                reporte_encuentros.append(res_silabo)
+                continue
+
             request_guia = factory.post('/generar-estudio-independiente/', {
                 'silabo_id': str(silabo_obj.id),
                 'asignacion_id': str(asignacion.id),
@@ -196,10 +204,10 @@ class Command(BaseCommand):
         # Resumen Final
         self.stdout.write(self.style.SUCCESS('\n================ RESUMEN DE LA PRUEBA (11 ENCUENTROS) ================'))
         exitosos_silabo = sum(1 for r in reporte_encuentros if r['silabo_ok'])
-        exitosos_guia = sum(1 for r in reporte_encuentros if r['guia_ok'])
+        exitosos_guia = sum(1 for r in reporte_encuentros if r['encuentro'] <= max_guias and r['guia_ok'])
         
         self.stdout.write(f"Sílabos exitosos: {exitosos_silabo} / 11")
-        self.stdout.write(f"Guías exitosas:   {exitosos_guia} / 11")
+        self.stdout.write(f"Guías exitosas:   {exitosos_guia} / {max_guias}")
         
         for r in reporte_encuentros:
             status = "OK" if r['silabo_ok'] and r['guia_ok'] else "CON ERRORES"
