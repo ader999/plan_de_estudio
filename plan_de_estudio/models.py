@@ -113,7 +113,7 @@ class Plan_de_estudio(models.Model):
         verbose_name_plural = "Planes de estudio"
 
     def __str__(self):
-        return f"{self.asignatura} - {self.carrera} - {self.año}"
+        return f"{self.asignatura} - {self.carrera} - {self.año} - Pensol {self.pensol}"
 
     def clean(self):
 

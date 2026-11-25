@@ -1,5 +1,13 @@
 # Bitácora de Documentación y Cambios - PLANEAUML
 
+## [2026-11-25] Mostrar y Filtrar por Pensol en Búsqueda de Planes de Estudio (Admin)
+- **Diagnóstico**: Al existir legítimamente una misma asignatura en la misma carrera bajo distintos pensol (`unique_together = ('carrera', 'asignatura', 'pensol')`, p. ej. `2018` y `2026`), `Plan_de_estudio.__str__()` solo mostraba `"{asignatura} - {carrera} - {año}"`, generando ambigüedad en el buscador autocomplete de **Añadir asignación plan estudio** y demás selectores del admin.
+- **Modelo y Admin (`plan_de_estudio/models.py`, `plan_de_estudio/admin.py`)**:
+  - Se actualizó `Plan_de_estudio.__str__()` a `"{self.asignatura} - {self.carrera} - {self.año} - Pensol {self.pensol}"` para distinguir claramente cada pensol en el autocompletado y listados.
+  - Se amplió `PlanDeEstudioAdmin.search_fields` a `('asignatura__nombre', 'codigo', 'carrera__nombre', 'pensol')`, permitiendo filtrar directamente por asignatura, carrera y año de pensol (p. ej. `bioes 2026`).
+- **Pruebas (`plan_de_estudio/tests.py`)**:
+  - Se actualizó `PlanDeEstudioModelTest.test_creacion_plan_exitoso` y se añadió `AdminChangelistPerformanceTest.test_autocomplete_asignacion_plan_muestra_y_filtra_por_pensol` validando visualización y filtrado por pensol en `/admin/autocomplete/`.
+
 ## [2026-11-21] Corrección de Ajuste de Texto en Móviles en Ranking Docente
 - **Plantilla y Estilos Responsive (`plantillas/ranking_docentes.html`)**:
   - Diagnóstico: `.highlight-item` utilizaba la clase inexistente en Bootstrap 5 `min-width-0` junto a `.text-truncate` (`white-space: nowrap`), impidiendo que el contenedor flex encogiera y causando que nombres largos en **Mayor Cumplimiento** y **Prioridad de Seguimiento (Menor Avance)** desbordaran la fila y expulsaran/recortaran el badge de porcentaje contra `overflow: hidden` de `.card`; adicionalmente `.card { padding: 1rem !important }` de `static/css/base.css` añadía doble padding junto a `.card-body`.

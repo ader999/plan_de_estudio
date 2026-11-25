@@ -68,7 +68,10 @@ class PlanDeEstudioModelTest(TestCase):
         plan.full_clean()
         plan.save()
         self.assertEqual(plan.codigo, "PLAN001")
-        self.assertEqual(str(plan), f"{self.asignatura.nombre.upper()} - {self.carrera.nombre} - I")
+        self.assertEqual(
+            str(plan),
+            f"{self.asignatura.nombre.upper()} - {self.carrera.nombre} - I - Pensol 2018",
+        )
 
     def test_plan_carrera_obligatoria(self):
         plan = Plan_de_estudio(
@@ -2688,6 +2691,69 @@ class AdminChangelistPerformanceTest(TestCase):
             })
         self.assertEqual(resp_ac.status_code, 200)
         self.assertLessEqual(len(ctx_ac), 6)
+
+    def test_autocomplete_asignacion_plan_muestra_y_filtra_por_pensol(self):
+        carrera_farmacia = Carrera.objects.create(
+            nombre="Licenciatura en farmacia", codigo="FAR01", cine_2011=1, cine_2013=2,
+            area_formacion="Salud y servicios sociales ", area_disiplinaria=1
+        )
+        asig_bioes = Asignatura.objects.create(nombre="Bioestadística")
+        plan_2018 = Plan_de_estudio.objects.create(
+            carrera=carrera_farmacia, año="II", trimestre="I", pensol="2018",
+            codigo="FAR-BIO-18", asignatura=asig_bioes,
+            horas_presenciales=24, horas_estudio_independiente=48
+        )
+        plan_2026 = Plan_de_estudio.objects.create(
+            carrera=carrera_farmacia, año="I", trimestre="I", pensol="2026",
+            codigo="FAR-BIO-26", asignatura=asig_bioes,
+            horas_presenciales=24, horas_estudio_independiente=48
+        )
+
+        client = Client()
+        client.login(username="admin_perf", password="adminpassword")
+        autocomplete_url = reverse('admin:autocomplete')
+
+        # Búsqueda por nombre muestra ambos planes diferenciados por Pensol
+        resp_ambos = client.get(autocomplete_url, {
+            'app_label': 'plan_de_estudio',
+            'model_name': 'asignacionplanestudio',
+            'field_name': 'plan_de_estudio',
+            'term': 'bioes',
+        })
+        self.assertEqual(resp_ambos.status_code, 200)
+        results_ambos = resp_ambos.json()['results']
+        textos = {r['id']: r['text'] for r in results_ambos}
+        self.assertIn(str(plan_2018.pk), textos)
+        self.assertIn(str(plan_2026.pk), textos)
+        self.assertEqual(
+            textos[str(plan_2018.pk)],
+            "BIOESTADÍSTICA - Licenciatura en farmacia - II - Pensol 2018",
+        )
+        self.assertEqual(
+            textos[str(plan_2026.pk)],
+            "BIOESTADÍSTICA - Licenciatura en farmacia - I - Pensol 2026",
+        )
+
+        # Búsqueda combinada con pensol filtra exactamente al pensol indicado
+        resp_2026 = client.get(autocomplete_url, {
+            'app_label': 'plan_de_estudio',
+            'model_name': 'asignacionplanestudio',
+            'field_name': 'plan_de_estudio',
+            'term': 'bioes 2026',
+        })
+        self.assertEqual(resp_2026.status_code, 200)
+        results_2026 = resp_2026.json()['results']
+        self.assertEqual([r['id'] for r in results_2026], [str(plan_2026.pk)])
+
+        resp_2018 = client.get(autocomplete_url, {
+            'app_label': 'plan_de_estudio',
+            'model_name': 'asignacionplanestudio',
+            'field_name': 'plan_de_estudio',
+            'term': 'bioes farmacia 2018',
+        })
+        self.assertEqual(resp_2018.status_code, 200)
+        results_2018 = resp_2018.json()['results']
+        self.assertEqual([r['id'] for r in results_2018], [str(plan_2018.pk)])
 
 
 class TrimestreLectivoAsignacionTest(TestCase):

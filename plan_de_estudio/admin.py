@@ -102,7 +102,7 @@ class PlanDeEstudioAdmin(ExportMixin, admin.ModelAdmin):  # Agrega ExportMixin a
     list_display = ('carrera', 'pensol', 'año', 'trimestre', 'asignatura', 'pr')  # Mostrar los campos
     list_filter = (CarreraFilter, 'pensol', 'año', 'trimestre')  # Filtros en el panel de administración, incluyendo 'carrera'
     autocomplete_fields = ['asignatura', 'pr', 'pc', 'cr']
-    search_fields = ('asignatura__nombre', 'codigo') # Para permitir búsqueda en autocomplete
+    search_fields = ('asignatura__nombre', 'codigo', 'carrera__nombre', 'pensol')  # Para permitir búsqueda en autocomplete
     resource_class = PlanDeEstudioResource
 
     def get_queryset(self, request):
