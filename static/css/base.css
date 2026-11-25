@@ -715,6 +715,32 @@ main {
 .div-yellow {
     background: var(--corp-warning);
 }
+.div-exam-done {
+    background: #6d28d9;
+}
+.div-exam-ready {
+    background: #9333ea;
+    box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.35), 0 4px 8px rgba(109, 40, 217, 0.35);
+}
+.div-exam-locked {
+    background: #64748b;
+    opacity: 0.72;
+}
+.btn-exam {
+    background-color: #6d28d9 !important;
+    border-color: #6d28d9 !important;
+    color: #ffffff !important;
+}
+.btn-exam:hover, .btn-exam:focus, .btn-exam:active {
+    background-color: #5b21b6 !important;
+    border-color: #5b21b6 !important;
+    color: #ffffff !important;
+}
+.btn-exam.disabled, .btn-exam:disabled {
+    background-color: #6d28d9 !important;
+    border-color: #6d28d9 !important;
+    opacity: 0.55;
+}
 
 /* Override text-white classes to ensure they use dark font on light theme */
 h1.text-white, h2.text-white, h3.text-white, h4.text-white, h5.text-white, h6.text-white,

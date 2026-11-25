@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
-from plan_de_estudio import views, pwa_views
+from plan_de_estudio import views, pwa_views, exam_views
 from django.conf.urls.static import static
 from django.conf import settings
 
@@ -43,6 +43,14 @@ urlpatterns = [
     path('formulario_guia/<int:asignacion_id>/', views.ver_formulario_guia, name='ver_formulario_guia'),
     path('guardar_silabo/<int:asignacion_id>/', views.guardar_silabo, name='guardar_silabo'),
     path('guardar-guia/<int:silabo_id>/', views.guardar_guia, name='guardar_guia'),
+
+    # Rutas para Proyecto de Examen (Evaluaciones en Encuentros 4, 8 y 11)
+    path('formulario_examen/<int:asignacion_id>/', exam_views.ver_formulario_examen, name='ver_formulario_examen'),
+    path('guardar_examen/<int:asignacion_id>/', exam_views.guardar_examen, name='guardar_examen'),
+    path('generar-proyecto-examen/', exam_views.generar_proyecto_examen, name='generar_proyecto_examen'),
+    path('examenes/<int:asignacion_id>/', exam_views.detalle_examenes, name='detalle_examenes'),
+    path('examen/actualizar/<int:examen_id>/', exam_views.actualizar_examen, name='actualizar_examen'),
+    path('examen/descargar/<int:examen_id>/', exam_views.descargar_proyecto_examen, name='descargar_proyecto_examen'),
     path('centro-de-recursos/', views.vista_tutoriales, name='tutoriales'),
     path(
         'tutoriales/',

@@ -12,7 +12,7 @@ from django.urls import reverse
 
 from django.utils import timezone
 from plan_de_estudio.models import (
-    Asignatura, Carrera, Plan_de_estudio, AsignacionPlanEstudio, Silabo, Guia,
+    Asignatura, Carrera, Plan_de_estudio, AsignacionPlanEstudio, Silabo, Guia, ProyectoExamen,
     ModeloIAConfig, ProveedorIA, ProgramaAsignatura2026, PlanTematico, ConfiguracionSistema
 )
 from plan_de_estudio.forms import (
@@ -1320,12 +1320,12 @@ class RankingDocentesTest(TestCase):
             asignatura=self.asig_4, horas_presenciales=40, horas_estudio_independiente=40
         )
 
-        # Ana: 100% completo (11 sílabos + 11 guías)
+        # Ana: 100% completo (11 sílabos + 10/11 guías + 3 proyectos de examen)
         ciclo_actual = obtener_trimestre_lectivo_de_fecha()
         self.asig_ana = AsignacionPlanEstudio.objects.create(
             usuario=self.docente_top, plan_de_estudio=self.plan_1,
             trimestre_lectivo=ciclo_actual,
-            bloque="Primer bloque - 8:00", silabos_creados=11, guias_creadas=11
+            bloque="Primer bloque - 8:00", silabos_creados=11, guias_creadas=11, examenes_creados=3
         )
 
         # Carlos: 2 asignaciones -> en plan_2 tiene 2 sílabos reales y 1 guía real en BD; en plan_4 tiene 0/0
@@ -1414,14 +1414,15 @@ class RankingDocentesTest(TestCase):
         docentes = data_mayor['docentes']
         self.assertEqual(len(docentes), 3)
 
-        # Orden esperado mayor a menor (11 sílabos + 10 guías = 21 entregables por asignación):
-        # Ana (100.0%, compatible incluso con 11 guías legadas), Carlos (3/42 = 7.1%), Luis (0.0%)
+        # Orden esperado mayor a menor (11 sílabos + 10 guías + 3 exámenes = 24 entregables por asignación):
+        # Ana (100.0%, compatible incluso con 11 guías legadas), Carlos (3/48 = 6.2%), Luis (0.0%)
         self.assertEqual(docentes[0]['username'], 'ana_gomez')
         self.assertEqual(docentes[0]['puesto'], 1)
         self.assertEqual(docentes[0]['porcentaje_general'], 100.0)
         self.assertEqual(docentes[0]['total_silabos'], 11)
         self.assertEqual(docentes[0]['total_guias'], 10)
-        self.assertEqual(docentes[0]['esperado_entregables'], 21)
+        self.assertEqual(docentes[0]['total_examenes'], 3)
+        self.assertEqual(docentes[0]['esperado_entregables'], 24)
         self.assertEqual(docentes[0]['estado'], 'cumplido')
 
         self.assertEqual(docentes[1]['username'], 'carlos_ruiz')
@@ -1429,8 +1430,8 @@ class RankingDocentesTest(TestCase):
         self.assertEqual(docentes[1]['total_silabos'], 2)
         self.assertEqual(docentes[1]['total_guias'], 1)
         self.assertEqual(docentes[1]['total_entregables'], 3)
-        self.assertEqual(docentes[1]['esperado_entregables'], 42)
-        self.assertEqual(docentes[1]['porcentaje_general'], 7.1)
+        self.assertEqual(docentes[1]['esperado_entregables'], 48)
+        self.assertEqual(docentes[1]['porcentaje_general'], 6.2)
         self.assertEqual(docentes[1]['estado'], 'rezagado')
 
         self.assertEqual(docentes[2]['username'], 'luis_mora')
@@ -1639,7 +1640,7 @@ class RankingDocentesTest(TestCase):
         self.assertEqual(ana_fut['total_asignaciones'], 1)
         self.assertEqual(ana_fut['total_silabos'], 1)
         self.assertEqual(ana_fut['total_guias'], 1)
-        self.assertEqual(ana_fut['porcentaje_general'], 9.5)
+        self.assertEqual(ana_fut['porcentaje_general'], 8.3)
         html_fut = resp_fut.content.decode('utf-8')
         self.assertIn(f"{hoy.year + 1} - Trimestre I", html_fut)
         self.assertNotIn('class="btn pill-switch-btn active">\n                <i class="fas fa-calendar-check">', html_fut)
@@ -2202,8 +2203,54 @@ class CurriculumPlannerFase2Test(TestCase):
                 )
                 self.assertEqual(r_g11_save.status_code, 400)
 
+            # En encuentros de examen (4, 8 y 11) se crea el Proyecto de Examen para completar los 100 pts del corte y desbloquear el siguiente sílabo
+            if enc in (4, 8, 11):
+                num_eval = {4: 1, 8: 2, 11: 3}[enc]
+                from plan_de_estudio.utils.exam_utils import calcular_puntaje_examen_disponible
+                info_ex = calcular_puntaje_examen_disponible(self.asignacion_prog, num_eval)
+                pts_rest = info_ex["puntaje_disponible"]
+                self.assertGreater(pts_rest, 0)
+                p1 = pts_rest // 2
+                p2 = pts_rest - p1
+                texto_largo = " ".join(
+                    f"Ejercicio analítico detallado {k} sobre los contenidos del corte {num_eval} con contexto práctico y requerimientos técnicos completos."
+                    for k in range(1, 22)
+                )
+                resp_ex = self.client.post(
+                    reverse('guardar_examen', args=[self.asignacion_prog.id]),
+                    data=json.dumps({
+                        "numero_evaluacion": num_eval,
+                        "fecha": s_data["fecha"],
+                        "anio_lectivo": "2026",
+                        "trimestre": "III",
+                        "carrera_texto": "Ingeniería de Sistemas F2",
+                        "modalidad": "Por encuentro",
+                        "tipo_examen": "De corte evaluativo",
+                        "items": [
+                            {
+                                "numero": "I",
+                                "objetivo": f"Analizar y aplicar los fundamentos del corte {num_eval}.",
+                                "ejercicios": f"I. Estudio de caso y resolución práctica.\n{texto_largo}",
+                                "posibles_respuestas": f"I. Clave de solución completa.\n{texto_largo}",
+                                "puntaje": p1,
+                                "detalle_puntaje": f"{p1} pts",
+                            },
+                            {
+                                "numero": "II",
+                                "objetivo": f"Evaluar diseños y soluciones integrales del corte {num_eval}.",
+                                "ejercicios": f"II. Desarrollo técnico argumentado.\n{texto_largo}",
+                                "posibles_respuestas": f"II. Solución esperada y criterios.\n{texto_largo}",
+                                "puntaje": p2,
+                                "detalle_puntaje": f"{p2} pts",
+                            },
+                        ],
+                    }),
+                    content_type="application/json",
+                )
+                self.assertEqual(resp_ex.status_code, 200, resp_ex.content.decode('utf-8'))
+
         # 1. Validar regla institucional: exactamente 100 pts por Corte Evaluativo (300 total)
-        #    divididos en 11 sílabos y 10 guías (en III Corte: S9+G9+S10+G10+S11 = 100)
+        #    divididos en 11 sílabos + 10 guías (50 acumulado) + 3 exámenes (50 examen) = 100 por corte
         cortes = calcular_puntajes_por_corte(self.asignacion_prog)
         self.assertEqual(cortes["I Corte Evaluativo"], 100)
         self.assertEqual(cortes["II Corte Evaluativo"], 100)
@@ -3306,18 +3353,21 @@ class DesactivacionUltimoEncuentroGuiaTest(TestCase):
         self.assertEqual(len(resp_mid.context['asignaciones_pendientes']), 1)
         self.assertEqual(len(resp_mid.context['asignaciones_completadas']), 0)
 
-        # Con 10 sílabos y 10 guías: sigue pendiente por Sílabo 11, botón Generar Guía deshabilitado (10 guías completadas)
+        # Con 10 sílabos, 10 guías y 2 exámenes (E4 y E8): sigue pendiente por Sílabo 11 y Examen 3,
+        # botón Generar Guía deshabilitado (10 guías completadas) y Sílabo 11 habilitado
         self.asignacion.silabos_creados = 10
         self.asignacion.guias_creadas = 10
+        self.asignacion.examenes_creados = 2
         self.asignacion.save()
         resp_10 = self.doc_client.get(reverse('inicio'))
         self.assertEqual(len(resp_10.context['asignaciones_pendientes']), 1)
         self.assertContains(resp_10, "Ya se han completado las 10 guías")
         self.assertContains(resp_10, reverse('ver_formulario_silabo', args=[self.asignacion.id]))
 
-        # Con 11 sílabos y 10 guías: pasa a Archivados / Completado sin botones de generación
+        # Con 11 sílabos, 10 guías y 3 exámenes: pasa a Archivados / Completado sin botones de generación
         self.asignacion.silabos_creados = 11
         self.asignacion.guias_creadas = 10
+        self.asignacion.examenes_creados = 3
         self.asignacion.save()
         resp_done = self.doc_client.get(reverse('inicio'))
         self.assertEqual(len(resp_done.context['asignaciones_pendientes']), 0)
@@ -3339,8 +3389,24 @@ class DesactivacionUltimoEncuentroGuiaTest(TestCase):
         silabos = [self._crear_silabo(enc) for enc in range(1, 12)]
         for enc in range(1, 11):
             self._crear_guia(silabos[enc - 1], enc)
+        for num_eval, enc_ex, corte_ex in ((1, 4, "I Corte Evaluativo"), (2, 8, "II Corte Evaluativo"), (3, 11, "III Corte Evaluativo")):
+            ProyectoExamen.objects.create(
+                asignacion_plan=self.asignacion,
+                silabo=silabos[enc_ex - 1],
+                numero_evaluacion=num_eval,
+                encuentro=enc_ex,
+                periodo_corte=corte_ex,
+                fecha=silabos[enc_ex - 1].fecha,
+                anio_lectivo="2026",
+                trimestre="III",
+                carrera_texto=self.carrera.nombre,
+                items_json=[{"numero": "I", "objetivo": "Obj", "ejercicios": "Ej", "posibles_respuestas": "Resp", "puntaje": 50, "detalle_puntaje": "50 pts"}],
+                puntaje_total=50,
+                paginas_estimadas=3.2,
+            )
         self.asignacion.silabos_creados = 11
         self.asignacion.guias_creadas = 10
+        self.asignacion.examenes_creados = 3
         self.asignacion.save()
 
         # 1. ver_formulario_guia redirige a inicio y generar_estudio_independiente rechaza silabo 11
@@ -3353,7 +3419,7 @@ class DesactivacionUltimoEncuentroGuiaTest(TestCase):
         })
         self.assertEqual(resp_g11_ia.status_code, 400)
 
-        # 2. ver_planeacion muestra E11 como completo sin guía ("Cierre sin guía")
+        # 2. ver_planeacion muestra E11 como completo sin guía ("Cierre sin guía") y con Examen Presente
         resp_vp = self.doc_client.get(reverse('ver_planeacion', args=[self.asignacion.id]))
         self.assertEqual(resp_vp.status_code, 200)
         enc11 = resp_vp.context['encuentros_list'][10]
@@ -3367,14 +3433,15 @@ class DesactivacionUltimoEncuentroGuiaTest(TestCase):
         self.assertEqual(resp_ga.status_code, 200)
         self.assertEqual(len(resp_ga.context['silabos_agrupados'][self.plan.codigo]), 10)
 
-        # 4. Ranking marca 100.0% (21/21) con 11 sílabos y 10 guías
+        # 4. Ranking marca 100.0% (24/24) con 11 sílabos, 10 guías y 3 exámenes
         rank = construir_ranking_docentes(alcance='actual', alcance_explicito=True)
         self.assertEqual(rank['esperado_silabos'], 11)
         self.assertEqual(rank['esperado_guias'], 10)
+        self.assertEqual(rank['esperado_examenes'], 3)
         doc_rank = rank['docentes'][0]
         self.assertEqual(doc_rank['porcentaje_general'], 100.0)
-        self.assertEqual(doc_rank['total_entregables'], 21)
-        self.assertEqual(doc_rank['esperado_entregables'], 21)
+        self.assertEqual(doc_rank['total_entregables'], 24)
+        self.assertEqual(doc_rank['esperado_entregables'], 24)
         self.assertEqual(doc_rank['estado'], 'cumplido')
 
         # 5. Recordatorios por correo NO marcan como incompleta una asignación 11/10
@@ -3426,14 +3493,14 @@ class DesactivacionUltimoEncuentroGuiaTest(TestCase):
         self.assertEqual(tiempos_11_inicio['max_guias'], 11)
         self.assertEqual(tiempos_11_inicio['min_indep_objetivo'], 382)
 
-        # Volver a desactivar (10 guías) y crear S9, G9, S10, G10 (total 85 pts en III Corte):
-        # S11 cierra exactamente el III Corte (15 pts -> 100)
+        # Volver a desactivar (10 guías) y crear S9, G9, S10, G10 (total 35 pts acumulados en III Corte, reservando 50 pts para Examen 3):
+        # S11 cierra exactamente el acumulado del III Corte (15 pts -> 50 acumulado + 50 examen = 100)
         cfg.habilitar_ultimo_encuentro_guia = False
         cfg.save()
-        s9 = self._crear_silabo(9, puntaje=12)
-        self._crear_guia(s9, 9, puntaje=30)
-        s10 = self._crear_silabo(10, puntaje=13)
-        self._crear_guia(s10, 10, puntaje=30)
+        s9 = self._crear_silabo(9, puntaje=5)
+        self._crear_guia(s9, 9, puntaje=12)
+        s10 = self._crear_silabo(10, puntaje=6)
+        self._crear_guia(s10, 10, puntaje=12)
 
         pres_s11_sin_g11 = calcular_corte_y_presupuesto(self.asignacion, encuentro=11, es_guia=False)
         self.assertTrue(pres_s11_sin_g11['es_ultimo_en_corte'])
@@ -3452,6 +3519,425 @@ class DesactivacionUltimoEncuentroGuiaTest(TestCase):
         pres_s11_con_g11 = calcular_corte_y_presupuesto(self.asignacion, encuentro=11, es_guia=False)
         self.assertFalse(pres_s11_con_g11['es_ultimo_en_corte'])
         self.assertLess(pres_s11_con_g11['presupuesto_objetivo'], 15)
+
+
+class ProyectoExamenModuloTest(TestCase):
+    """Pruebas integrales del módulo Proyecto de Examen (E4, E8, E11), bloqueo secuencial, puntaje automático, >2 páginas, IA 4-8 hojas y DOCX."""
+
+    def setUp(self):
+        self.patcher_crear = patch('plan_de_estudio.signals.crear_clase_e_invitar_maestro')
+        self.patcher_subir = patch('plan_de_estudio.services.google_classroom.subir_tareas_desde_guia')
+        self.mock_crear = self.patcher_crear.start()
+        self.mock_subir = self.patcher_subir.start()
+
+        self.docente = User.objects.create_user(
+            username="docente_ex", password="docpassword",
+            first_name="Elena", last_name="Vargas", email="elena@uml.edu.ni"
+        )
+        self.carrera = Carrera.objects.create(
+            nombre="Ingeniería en Sistemas EX", codigo="ISEX01",
+            cine_2011=11, cine_2013=22,
+            area_formacion="Tecnologías de la información", area_disiplinaria=1
+        )
+        self.asignatura = Asignatura.objects.create(nombre="Geografía Económica EX")
+        self.plan = Plan_de_estudio.objects.create(
+            carrera=self.carrera, año="II", trimestre="II", pensol="2026",
+            codigo="GEOX201", asignatura=self.asignatura,
+            horas_presenciales=24, horas_estudio_independiente=70
+        )
+        self.programa = ProgramaAsignatura2026.objects.create(
+            plan_estudio=self.plan,
+            fundamentacion="Estudio económico y territorial.",
+            relacion_unidades="Secuencia progresiva.",
+            aportes_perfil="Análisis regional.",
+            valores="Ética.",
+            ejes_transversales="Medio ambiente.",
+            objetivo_conceptual="Comprender la geografía económica.",
+            objetivo_procedimental="Analizar indicadores productivos.",
+            objetivo_actitudinal="Valorar el desarrollo sostenible.",
+            unidad_1_nombre="Sectores Productivos",
+            unidad_1_horas_teoricas=4, unidad_1_horas_practicas=4, unidad_1_horas_independientes=24,
+            unidad_1_objetivos_especificos="Analizar sectores primario, secundario y terciario.",
+            unidad_1_contenido="Agricultura, ganadería, industria y servicios.",
+            unidad_2_nombre="Infraestructura y Comercio",
+            unidad_2_horas_teoricas=4, unidad_2_horas_practicas=4, unidad_2_horas_independientes=24,
+            unidad_2_objetivos_especificos="Evaluar redes de transporte y comercio.",
+            unidad_2_contenido="Puertos, carreteras, exportaciones.",
+            unidad_3_nombre="Desarrollo Regional Sostenible",
+            unidad_3_horas_teoricas=4, unidad_3_horas_practicas=4, unidad_3_horas_independientes=22,
+            unidad_3_objetivos_especificos="Proponer estrategias territoriales.",
+            unidad_3_contenido="Ordenamiento territorial y sostenibilidad.",
+        )
+        self.asignacion = AsignacionPlanEstudio.objects.create(
+            usuario=self.docente,
+            plan_de_estudio=self.plan,
+            trimestre_lectivo=obtener_trimestre_lectivo_de_fecha(),
+            bloque="Primer bloque - 8:00",
+        )
+        self.client = Client()
+        self.client.login(username="docente_ex", password="docpassword")
+
+    def tearDown(self):
+        self.patcher_crear.stop()
+        self.patcher_subir.stop()
+
+    def _crear_silabo(self, enc, puntaje=5):
+        corte = "I Corte Evaluativo" if enc <= 4 else ("II Corte Evaluativo" if enc <= 8 else "III Corte Evaluativo")
+        s = Silabo.objects.create(
+            codigo=self.plan.codigo,
+            encuentros=enc,
+            fecha=datetime.date(2026, 6, 1) + datetime.timedelta(days=7 * (enc - 1)),
+            unidad="Unidad I" if enc <= 4 else ("Unidad II" if enc <= 8 else "Unidad III"),
+            nombre_de_la_unidad=f"Unidad encuentro {enc}",
+            contenido_tematico=f"Contenido temático del encuentro {enc}",
+            objetivo_conceptual=f"OC {enc}",
+            objetivo_procedimental=f"OP {enc}",
+            objetivo_actitudinal=f"OA {enc}",
+            tipo_primer_momento="Realimentación del aprendizaje",
+            detalle_primer_momento="Inicio",
+            tiempo_primer_momento=15,
+            recursos_primer_momento="Pizarra",
+            tipo_segundo_momento_claseteoria="Conferencia",
+            clase_teorica="Teoría",
+            tipo_segundo_momento_practica="Taller",
+            clase_practica="Práctica",
+            tiempo_segundo_momento_teorica=45,
+            tiempo_segundo_momento_practica=45,
+            recursos_segundo_momento="Proyector",
+            tipo_tercer_momento=["Realimentación del aprendizaje"],
+            detalle_tercer_momento="Cierre",
+            tiempo_tercer_momento=15,
+            recursos_tercer_momento="Guía",
+            eje_transversal=["Medio ambiente"],
+            detalle_eje_transversal="Eje",
+            actividad_aprendizaje=f"Actividad aula {enc}",
+            tecnica_evaluacion=["Ensayo"],
+            tipo_evaluacion=["Formativa"],
+            periodo_tiempo_programado=corte,
+            tiempo_minutos=20,
+            agente_evaluador=["Heteroevaluación"],
+            instrumento_evaluacion="Rúbrica",
+            criterios_evaluacion="Criterio",
+            puntaje=puntaje,
+            asignacion_plan=self.asignacion,
+        )
+        self.asignacion.silabos_creados = self.asignacion.silabo_set.count()
+        self.asignacion.save(update_fields=["silabos_creados"])
+        return s
+
+    def _crear_guia(self, silabo, enc, puntaje=10):
+        corte = "I Corte Evaluativo" if enc <= 4 else ("II Corte Evaluativo" if enc <= 8 else "III Corte Evaluativo")
+        g = Guia.objects.create(
+            silabo=silabo,
+            numero_encuentro=enc,
+            fecha=silabo.fecha,
+            unidad=silabo.unidad,
+            nombre_de_la_unidad=silabo.nombre_de_la_unidad,
+            tipo_objetivo_1="Conceptual",
+            objetivo_aprendizaje_1=f"Obj guía {enc}",
+            contenido_tematico_1=f"Tema guía {enc}",
+            actividad_aprendizaje_1=f"Actividad guía {enc}",
+            tecnica_evaluacion_1="Ensayo",
+            tipo_evaluacion_1="Sumativa",
+            instrumento_evaluacion_1="Rúbrica",
+            criterios_evaluacion_1="Claridad",
+            agente_evaluador_1=["Heteroevaluación"],
+            tiempo_minutos_1=120,
+            recursos_didacticos_1="Manual",
+            periodo_tiempo_programado_1=corte,
+            puntaje_1=puntaje,
+            fecha_entrega_1=silabo.fecha + datetime.timedelta(days=5),
+        )
+        silabo.guia = g
+        silabo.save(update_fields=["guia"])
+        self.asignacion.guias_creadas = Guia.objects.filter(silabo__asignacion_plan=self.asignacion).count()
+        self.asignacion.save(update_fields=["guias_creadas"])
+        return g
+
+    def _items_validos_mas_de_2_paginas(self, puntaje_total):
+        bloque = "\n".join(
+            f"{k}. Analice detenidamente el caso territorial #{k} considerando producción agrícola, cadena de suministro, infraestructura vial e impacto económico en la región norte de Nicaragua."
+            for k in range(1, 14)
+        )
+        clave = "\n".join(
+            f"{k}. El estudiante debe identificar al menos tres factores estructurales del caso #{k}, sustentar cuantitativamente la productividad y proponer dos medidas de mejora viables."
+            for k in range(1, 14)
+        )
+        p1 = puntaje_total // 2
+        p2 = puntaje_total - p1
+        return [
+            {
+                "numero": "I",
+                "objetivo": "Analizar críticamente la estructura productiva regional y sus indicadores económicos fundamentales.",
+                "ejercicios": f"I. Análisis de casos productivos aplicados.\n{bloque}",
+                "posibles_respuestas": f"I. Solución modelo detallada.\n{clave}",
+                "puntaje": p1,
+                "detalle_puntaje": f"{p1} pts",
+            },
+            {
+                "numero": "II",
+                "objetivo": "Diseñar propuestas técnicas de desarrollo económico local integrando criterios de sostenibilidad.",
+                "ejercicios": f"II. Resolución de problemas y evaluación comparativa.\n{bloque}",
+                "posibles_respuestas": f"II. Criterios y respuestas esperadas.\n{clave}",
+                "puntaje": p2,
+                "detalle_puntaje": f"{p2} pts",
+            },
+        ]
+
+    def test_activacion_en_encuentro_4_bloqueo_silabo_5_y_puntaje_automatico(self):
+        # Con 3 sílabos: botón de examen bloqueado y vista redirige a inicio
+        for enc in range(1, 4):
+            s = self._crear_silabo(enc, puntaje=5)
+            self._crear_guia(s, enc, puntaje=10)
+
+        resp_inicio_3 = self.client.get(reverse('inicio'))
+        self.assertEqual(resp_inicio_3.status_code, 200)
+        asig_ctx = resp_inicio_3.context['asignaciones_pendientes'][0]
+        self.assertFalse(asig_ctx.estado_examenes['puede_generar_examen'])
+        self.assertFalse(asig_ctx.estado_examenes['examen_bloquea_silabo'])
+        self.assertEqual(
+            self.client.get(reverse('ver_formulario_examen', args=[self.asignacion.id])).status_code,
+            302,
+        )
+
+        # Al completar Sílabo 4 (y Guía 4): acumulado I Corte = 4*5 + 4*10 = 60 pts -> examen automático = 40 pts
+        s4 = self._crear_silabo(4, puntaje=5)
+        self._crear_guia(s4, 4, puntaje=10)
+
+        resp_inicio_4 = self.client.get(reverse('inicio'))
+        asig_ctx4 = resp_inicio_4.context['asignaciones_pendientes'][0]
+        self.assertTrue(asig_ctx4.estado_examenes['puede_generar_examen'])
+        self.assertEqual(asig_ctx4.estado_examenes['siguiente_evaluacion'], 1)
+        self.assertTrue(asig_ctx4.estado_examenes['examen_bloquea_silabo'])
+        self.assertTrue(asig_ctx4.estado_examenes['silabo_deshabilitado'])
+
+        # Sílabo 5 bloqueado tanto en formulario GET como en guardar_silabo POST hasta hacer Examen 1
+        resp_s5_get = self.client.get(reverse('ver_formulario_silabo', args=[self.asignacion.id]))
+        self.assertEqual(resp_s5_get.status_code, 302)
+
+        resp_form_ex = self.client.get(reverse('ver_formulario_examen', args=[self.asignacion.id]))
+        self.assertEqual(resp_form_ex.status_code, 200)
+        self.assertEqual(resp_form_ex.context['puntaje_info']['acumulado_total'], 60)
+        self.assertEqual(resp_form_ex.context['puntaje_info']['puntaje_disponible'], 40)
+
+        # Rechaza guardar examen de 1 página (bloqueo anti-pereza)
+        resp_corto = self.client.post(
+            reverse('guardar_examen', args=[self.asignacion.id]),
+            data=json.dumps({
+                "numero_evaluacion": 1,
+                "fecha": "2026-06-22",
+                "anio_lectivo": "2026",
+                "trimestre": "II",
+                "carrera_texto": self.carrera.nombre,
+                "modalidad": "Por encuentro",
+                "tipo_examen": "De corte evaluativo",
+                "items": [
+                    {"numero": "I", "objetivo": "Obj 1", "ejercicios": "Pregunta 1", "posibles_respuestas": "Resp 1", "puntaje": 20},
+                    {"numero": "II", "objetivo": "Obj 2", "ejercicios": "Pregunta 2", "posibles_respuestas": "Resp 2", "puntaje": 20},
+                ],
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(resp_corto.status_code, 400)
+        self.assertIn("2 páginas", resp_corto.json()["error"])
+
+        # Rechaza intento de inflar páginas con saltos de línea vacíos
+        resp_trampa = self.client.post(
+            reverse('guardar_examen', args=[self.asignacion.id]),
+            data=json.dumps({
+                "numero_evaluacion": 1,
+                "fecha": "2026-06-22",
+                "anio_lectivo": "2026",
+                "trimestre": "II",
+                "carrera_texto": self.carrera.nombre,
+                "items": [
+                    {"numero": "I", "objetivo": "Obj", "ejercicios": "A" + ("\n" * 150) + "B", "posibles_respuestas": "C", "puntaje": 20},
+                    {"numero": "II", "objetivo": "Obj 2", "ejercicios": "D" + ("\n" * 150) + "E", "posibles_respuestas": "F", "puntaje": 20},
+                ],
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(resp_trampa.status_code, 400)
+
+        # Rechaza puntaje distinto al restante exacto (40 pts)
+        resp_pts_mal = self.client.post(
+            reverse('guardar_examen', args=[self.asignacion.id]),
+            data=json.dumps({
+                "numero_evaluacion": 1,
+                "fecha": "2026-06-22",
+                "anio_lectivo": "2026",
+                "trimestre": "II",
+                "carrera_texto": self.carrera.nombre,
+                "items": self._items_validos_mas_de_2_paginas(30),
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(resp_pts_mal.status_code, 400)
+        self.assertIn("40 pts", resp_pts_mal.json()["error"])
+
+        # Guarda examen válido (>2 páginas y exactamente 40 pts) -> redirige a success_view?examen_id=...
+        resp_ok = self.client.post(
+            reverse('guardar_examen', args=[self.asignacion.id]),
+            data=json.dumps({
+                "numero_evaluacion": 1,
+                "fecha": "2026-06-22",
+                "anio_lectivo": "2026",
+                "trimestre": "II",
+                "codigo_grupo": "IS-II-A",
+                "carrera_texto": self.carrera.nombre,
+                "modalidad": "Por encuentro",
+                "tipo_examen": "De corte evaluativo",
+                "items": self._items_validos_mas_de_2_paginas(40),
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(resp_ok.status_code, 200, resp_ok.content.decode('utf-8'))
+        payload_ok = resp_ok.json()
+        examen_id = payload_ok["examen_id"]
+        self.assertIn(f"examen_id={examen_id}", payload_ok["redirect_url"])
+        self.assertGreater(payload_ok["paginas_estimadas"], 2.0)
+
+        # Pantalla de éxito muestra el botón directo para descargar Word (.docx)
+        resp_exito = self.client.get(payload_ok["redirect_url"])
+        self.assertEqual(resp_exito.status_code, 200)
+        self.assertContains(resp_exito, reverse('descargar_proyecto_examen', args=[examen_id]))
+        self.assertContains(resp_exito, "Descargar Proyecto de Examen (.docx)")
+
+        # Tarjeta de Ver datos (plan_estudio) muestra Exámenes y enlace directo de descarga
+        resp_datos = self.client.get(reverse('plan_de_estudio'))
+        self.assertEqual(resp_datos.status_code, 200)
+        self.assertContains(resp_datos, "1/3 Exámenes")
+        self.assertContains(resp_datos, reverse('detalle_examenes', args=[self.asignacion.id]))
+        self.assertContains(resp_datos, reverse('descargar_proyecto_examen', args=[examen_id]))
+
+        # Ahora Sílabo 5 queda desbloqueado
+        resp_s5_ok = self.client.get(reverse('ver_formulario_silabo', args=[self.asignacion.id]))
+        self.assertEqual(resp_s5_ok.status_code, 200)
+        self.assertEqual(resp_s5_ok.context['encuentro'], 5)
+
+    def test_bloqueo_cuando_docente_sobre_acumula_100_pts_en_corte(self):
+        # Docente acumula 100 pts en I Corte (4*10 sílabos + 4*15 guías = 100 pts) -> 0 pts disponibles para Examen 1
+        for enc in range(1, 5):
+            s = self._crear_silabo(enc, puntaje=10)
+            self._crear_guia(s, enc, puntaje=15)
+
+        resp_form = self.client.get(reverse('ver_formulario_examen', args=[self.asignacion.id]))
+        self.assertEqual(resp_form.status_code, 200)
+        self.assertTrue(resp_form.context['puntaje_info']['bloqueado_por_puntaje'])
+        self.assertEqual(resp_form.context['puntaje_info']['puntaje_disponible'], 0)
+        self.assertContains(resp_form, "No quedan puntos disponibles para este Proyecto de Examen")
+
+        # Tanto guardar como generar con IA deben rechazar con HTTP 400
+        resp_ia = self.client.post(reverse('generar_proyecto_examen'), {
+            'asignacion_id': str(self.asignacion.id),
+            'numero_evaluacion': '1',
+            'numero_hojas': '4',
+            'modelo_select': 'google',
+        })
+        self.assertEqual(resp_ia.status_code, 400)
+
+        resp_save = self.client.post(
+            reverse('guardar_examen', args=[self.asignacion.id]),
+            data=json.dumps({
+                "numero_evaluacion": 1,
+                "fecha": "2026-06-22",
+                "items": self._items_validos_mas_de_2_paginas(10),
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(resp_save.status_code, 400)
+
+    def test_ia_rango_hojas_4_a_8_y_descarga_docx_sin_modificar_plantilla(self):
+        import hashlib
+        import io
+        from pathlib import Path
+        from django.conf import settings
+        from docx import Document
+
+        for enc in range(1, 5):
+            s = self._crear_silabo(enc, puntaje=5)
+            self._crear_guia(s, enc, puntaje=8)
+        # Acumulado = 4*5 + 4*8 = 52 pts -> examen automático = 48 pts
+
+        # Rechaza < 4 hojas y > 8 hojas en IA
+        for hojas_bad in ('1', '2', '3', '9'):
+            r_bad = self.client.post(reverse('generar_proyecto_examen'), {
+                'asignacion_id': str(self.asignacion.id),
+                'numero_evaluacion': '1',
+                'numero_hojas': hojas_bad,
+                'modelo_select': 'google',
+            })
+            self.assertEqual(r_bad.status_code, 400)
+
+        # Genera con 6 hojas: normaliza suma exacta = 48 pts aunque la IA proponga otros puntajes
+        fake_ai_json = json.dumps({
+            "fecha": "2026-06-22",
+            "anio_lectivo": "2026",
+            "trimestre": "II",
+            "items": self._items_validos_mas_de_2_paginas(90),  # IA infla a 90 -> normalizador ajusta a 48 exactos
+        })
+        with patch('plan_de_estudio.ai_generators.usar_modelo_google', return_value=fake_ai_json) as mock_ai:
+            r_ia = self.client.post(reverse('generar_proyecto_examen'), {
+                'asignacion_id': str(self.asignacion.id),
+                'numero_evaluacion': '1',
+                'numero_hojas': '6',
+                'modelo_select': 'google',
+            })
+            self.assertEqual(r_ia.status_code, 200, r_ia.content.decode('utf-8'))
+            self.assertIn("6 HOJAS", mock_ai.call_args[0][0])
+            datos = r_ia.json()["datos"]
+            self.assertEqual(datos["puntaje_total"], 48)
+            self.assertEqual(sum(it["puntaje"] for it in datos["items"]), 48)
+            self.assertEqual(datos["hojas_objetivo_ia"], 6)
+
+        # Guardar y descargar .docx verificando que la plantilla original NO se altera
+        r_save = self.client.post(
+            reverse('guardar_examen', args=[self.asignacion.id]),
+            data=json.dumps({
+                "numero_evaluacion": 1,
+                "fecha": "2026-06-22",
+                "anio_lectivo": "2026",
+                "trimestre": "II",
+                "codigo_grupo": "GEOX-G1",
+                "carrera_texto": self.carrera.nombre,
+                "modalidad": "Por encuentro",
+                "tipo_examen": "De corte evaluativo",
+                "hojas_objetivo_ia": 6,
+                "items": datos["items"],
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(r_save.status_code, 200, r_save.content.decode('utf-8'))
+        examen_id = r_save.json()["examen_id"]
+
+        tpl_path = Path(settings.BASE_DIR) / 'docx_templates' / 'plantilla_proyecto_examen.docx'
+        sha_antes = hashlib.sha256(tpl_path.read_bytes()).hexdigest()
+
+        r_docx = self.client.get(reverse('descargar_proyecto_examen', args=[examen_id]))
+        self.assertEqual(r_docx.status_code, 200)
+        self.assertEqual(
+            r_docx['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+
+        sha_despues = hashlib.sha256(tpl_path.read_bytes()).hexdigest()
+        self.assertEqual(sha_antes, sha_despues)
+
+        # Inspeccionar contenido del Word generado
+        doc = Document(io.BytesIO(r_docx.content))
+        texto_parrafos = "\n".join(p.text for p in doc.paragraphs)
+        self.assertIn("UNIVERSIDAD MARTÍN LUTERO", texto_parrafos)
+        self.assertIn("Geografía Económica EX", texto_parrafos)
+        self.assertIn("Elena Vargas", texto_parrafos)
+        self.assertIn("GEOX-G1", texto_parrafos)
+        self.assertEqual(len(doc.tables), 1)
+        tabla = doc.tables[0]
+        # Encabezado + 2 apartados + fila TOTAL = 4 filas
+        self.assertEqual(len(tabla.rows), 4)
+        self.assertIn("48 pts", tabla.rows[-1].cells[3].text)
+        # Verificar que el logo embebido en P[0] sigue presente en el documento
+        self.assertIn("drawing", doc.paragraphs[0]._p.xml)
+
 
 
 

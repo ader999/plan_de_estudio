@@ -178,6 +178,14 @@
         <p class="success-message">{{ message }}</p>
         
         <div class="success-actions">
+            {% if examen %}
+            <a href="{% url 'descargar_proyecto_examen' examen_id=examen.id %}" class="btn btn-success">
+                <i class="fas fa-file-word me-2"></i>Descargar Proyecto de Examen (.docx)
+            </a>
+            <a href="{% url 'detalle_examenes' asignacion_id=examen.asignacion_plan_id %}" class="btn btn-exam">
+                <i class="fas fa-clipboard-check me-2"></i>Ver Proyectos de Examen
+            </a>
+            {% endif %}
             <a href="{% url 'plan_de_estudio' %}" class="btn btn-primary">
                 <i class="fas fa-eye me-2"></i>Ver datos guardados
             </a>

@@ -56,7 +56,7 @@
         {% if page_obj %}
             {% for asignacion in page_obj %}
                 <div class="col-xl-4 col-lg-6 col-md-8 mb-4">
-                    {% if asignacion.silabos_creados >= 11 and asignacion.guias_creadas >= max_guias %}
+                    {% if asignacion.estado_examenes.esta_completada %}
                         <div class="card book-card book-completed shadow-sm h-100">
                     {% else %}
                         <div class="card book-card book-pending shadow-sm h-100">
@@ -83,10 +83,14 @@
                                     <strong>Horas Teóricas:</strong> {{ asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
                                     <strong>Total de Horas:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}<br>
                                 </p>
-                                <div class="text-center mt-3">
+                                <div class="text-center mt-3 d-flex flex-wrap justify-content-center gap-2">
                                     <span class="badge bg-primary px-3 py-2 rounded-pill">
                                         <i class="fas fa-calendar-check me-1"></i>
                                         {{ asignacion.silabo_set.count }}/11 Encuentros
+                                    </span>
+                                    <span class="badge px-3 py-2 rounded-pill" style="background-color: #6d28d9; color: #fff;">
+                                        <i class="fas fa-clipboard-check me-1"></i>
+                                        {{ asignacion.estado_examenes.examenes_creados }}/{{ total_examenes|default:3 }} Exámenes
                                     </span>
                                 </div>
                             </div>
@@ -136,6 +140,29 @@
                                     </div>
                                 </div>
 
+                                <!-- Proyectos de Examen Row -->
+                                <div class="mt-2">
+                                    <a href="{% url 'detalle_examenes' asignacion_id=asignacion.id %}"
+                                       class="btn btn-exam w-100 py-2 d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-clipboard-check me-2"></i>
+                                        <span style="font-size: 0.85rem; font-weight: 600;">
+                                            Proyectos de Examen ({{ asignacion.estado_examenes.examenes_creados }}/{{ total_examenes|default:3 }})
+                                        </span>
+                                    </a>
+                                    {% if asignacion.examenes_lista %}
+                                    <div class="d-flex flex-wrap justify-content-center gap-1 mt-2">
+                                        {% for ex in asignacion.examenes_lista %}
+                                            <a href="{% url 'descargar_proyecto_examen' examen_id=ex.id %}"
+                                               class="btn btn-sm btn-outline-primary py-1 px-2"
+                                               style="width: auto; font-size: 0.75rem;"
+                                               title="Descargar Word del Proyecto de Examen #{{ ex.numero_evaluacion }} ({{ ex.periodo_corte }})">
+                                                <i class="fas fa-file-word me-1"></i>Eval {{ ex.numero_evaluacion }} (.docx)
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+
                                 <!-- Ver Planeación Row -->
                                 <div class="mt-2">
                                     <a href="{% url 'ver_planeacion' asignacion_id=asignacion.id %}"
@@ -151,7 +178,7 @@
                         <div class="card-footer text-muted d-flex justify-content-between">
                             <span>Asignado el: {{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
                             <span>
-                                {% if asignacion.silabos_creados >= 11 and asignacion.guias_creadas >= max_guias %}
+                                {% if asignacion.estado_examenes.esta_completada %}
                                     <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
                                 {% else %}
                                     <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>

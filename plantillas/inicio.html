@@ -145,15 +145,13 @@
                                     {% endif %}
 
                                     <!-- Botón para llenar el silabo, solo aparece si no está completado -->
-                                    {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < max_guias %}
+                                    {% if not asignacion.estado_examenes.esta_completada %}
                                         <div class="d-flex flex-column align-items-center mb-3">
-                                            <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente (hasta max_guias) o si ya se completaron los 11 -->
-                                            <a {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
-                                               class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
-                                               {% if asignacion.silabos_creados >= 11 %}
-                                               disabled title="Ya se han completado los 11 sílabos"
-                                               {% elif asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}
-                                               disabled title="Debe crear la guía del sílabo anterior antes de continuar"
+                                            <!-- El botón de silabo se desactiva si falta guía anterior, examen de corte pendiente (E4/E8) o si ya se completaron los 11 -->
+                                            <a {% if asignacion.estado_examenes.silabo_deshabilitado %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
+                                               class="btn {% if asignacion.estado_examenes.silabo_deshabilitado %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                               {% if asignacion.estado_examenes.silabo_deshabilitado %}
+                                               disabled title="{{ asignacion.estado_examenes.razon_bloqueo_silabo }}"
                                                {% endif %}>
                                                 <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
                                             </a>
@@ -168,7 +166,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="d-flex flex-column align-items-center">
+                                        <div class="d-flex flex-column align-items-center mb-3">
                                             <!-- Botón para generar guía de estudio independiente -->
                                             <a {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= max_guias %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"{% endif %}
                                                class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= max_guias %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
@@ -191,6 +189,39 @@
                                                 {% endfor %}
                                             </div>
                                         </div>
+
+                                        <div class="d-flex flex-column align-items-center">
+                                            <!-- Botón para generar Proyecto de Examen (Encuentros 4, 8 y 11) -->
+                                            <a {% if not asignacion.estado_examenes.puede_generar_examen %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_examen' asignacion_id=asignacion.id %}"{% endif %}
+                                               class="btn btn-exam {% if not asignacion.estado_examenes.puede_generar_examen %}disabled{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                               {% if not asignacion.estado_examenes.puede_generar_examen %}
+                                               disabled title="{{ asignacion.estado_examenes.razon_bloqueo_examen }}"
+                                               {% else %}
+                                               title="Crear Evaluación #{{ asignacion.estado_examenes.siguiente_evaluacion }} (Encuentro {{ asignacion.estado_examenes.siguiente_encuentro_examen }})"
+                                               {% endif %}>
+                                                <i class="fas fa-clipboard-check fa-lg me-2"></i>
+                                                {% if asignacion.estado_examenes.puede_generar_examen %}
+                                                    Generar Examen #{{ asignacion.estado_examenes.siguiente_evaluacion }} (Enc. {{ asignacion.estado_examenes.siguiente_encuentro_examen }})
+                                                {% else %}
+                                                    Generar Proyecto de Examen
+                                                {% endif %}
+                                            </a>
+
+                                            <!-- Indicadores numéricos para exámenes (Encuentros 4, 8 y 11) -->
+                                            <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
+                                                {% for ex_ind in asignacion.estado_examenes.indicadores_examen %}
+                                                    <div class="mx-1 my-1 div-custom {% if ex_ind.completado %}div-exam-done{% elif ex_ind.desbloqueado %}div-exam-ready{% else %}div-exam-locked{% endif %}"
+                                                         title="Examen #{{ ex_ind.numero_evaluacion }} — {{ ex_ind.corte }} (Encuentro {{ ex_ind.encuentro }}): {% if ex_ind.completado %}Completado{% elif ex_ind.desbloqueado %}Disponible ahora{% else %}Se activa al completar Sílabo {{ ex_ind.encuentro }}{% endif %}">
+                                                        <p class="text-center">{{ ex_ind.encuentro }}</p>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                            {% if asignacion.estado_examenes.examen_bloquea_silabo %}
+                                                <small class="text-danger fw-semibold mt-1 text-center">
+                                                    <i class="fas fa-lock me-1"></i>{{ asignacion.estado_examenes.razon_bloqueo_silabo_por_examen }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
                                     {% endif %}
 
                                     <!-- Progress indicator styles are loaded globally from base.css -->
@@ -200,7 +231,7 @@
                                     <div class="card-footer text-muted d-flex justify-content-between">
                                         <span>Asignado el: {{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
                                         <span>
-                                            {% if asignacion.silabos_creados >= 11 and asignacion.guias_creadas >= max_guias %}
+                                            {% if asignacion.estado_examenes.esta_completada %}
                                                 <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
                                             {% else %}
                                                 <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>
@@ -276,15 +307,13 @@
                                     {% endif %}
 
                                     <!-- Botón para llenar el silabo, solo aparece si no está completado -->
-                                    {% if asignacion.silabos_creados < 11 or asignacion.guias_creadas < max_guias %}
+                                    {% if not asignacion.estado_examenes.esta_completada %}
                                         <div class="d-flex flex-column align-items-center mb-3">
-                                            <!-- El botón de silabo se desactiva si hay un silabo creado pero falta su guía correspondiente (hasta max_guias) o si ya se completaron los 11 -->
-                                            <a {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
-                                               class="btn {% if asignacion.silabos_creados >= 11 or asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
-                                               {% if asignacion.silabos_creados >= 11 %}
-                                               disabled title="Ya se han completado los 11 sílabos"
-                                               {% elif asignacion.silabos_creados > asignacion.guias_creadas and asignacion.silabos_creados > 0 and asignacion.guias_creadas < max_guias %}
-                                               disabled title="Debe crear la guía del sílabo anterior antes de continuar"
+                                            <!-- El botón de silabo se desactiva si falta guía anterior, examen de corte pendiente (E4/E8) o si ya se completaron los 11 -->
+                                            <a {% if asignacion.estado_examenes.silabo_deshabilitado %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_silabo' asignacion_id=asignacion.id %}"{% endif %}
+                                               class="btn {% if asignacion.estado_examenes.silabo_deshabilitado %}btn-warning disabled{% else %}btn-warning{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                               {% if asignacion.estado_examenes.silabo_deshabilitado %}
+                                               disabled title="{{ asignacion.estado_examenes.razon_bloqueo_silabo }}"
                                                {% endif %}>
                                                 <i class="fas fa-file-signature fa-lg me-2"></i> Generar Silabo
                                             </a>
@@ -299,7 +328,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="d-flex flex-column align-items-center">
+                                        <div class="d-flex flex-column align-items-center mb-3">
                                             <!-- Botón para generar guía de estudio independiente -->
                                             <a {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= max_guias %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_guia' asignacion_id=asignacion.id %}"{% endif %}
                                                class="btn {% if asignacion.silabos_creados == 0 or asignacion.guias_creadas >= asignacion.silabos_creados or asignacion.guias_creadas >= max_guias %}btn-info disabled{% else %}btn-info{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
@@ -322,6 +351,39 @@
                                                 {% endfor %}
                                             </div>
                                         </div>
+
+                                        <div class="d-flex flex-column align-items-center">
+                                            <!-- Botón para generar Proyecto de Examen (Encuentros 4, 8 y 11) -->
+                                            <a {% if not asignacion.estado_examenes.puede_generar_examen %}href="#" aria-disabled="true" tabindex="-1" onclick="return false;"{% else %}href="{% url 'ver_formulario_examen' asignacion_id=asignacion.id %}"{% endif %}
+                                               class="btn btn-exam {% if not asignacion.estado_examenes.puede_generar_examen %}disabled{% endif %} mb-2 w-100 d-flex align-items-center justify-content-center py-2"
+                                               {% if not asignacion.estado_examenes.puede_generar_examen %}
+                                               disabled title="{{ asignacion.estado_examenes.razon_bloqueo_examen }}"
+                                               {% else %}
+                                               title="Crear Evaluación #{{ asignacion.estado_examenes.siguiente_evaluacion }} (Encuentro {{ asignacion.estado_examenes.siguiente_encuentro_examen }})"
+                                               {% endif %}>
+                                                <i class="fas fa-clipboard-check fa-lg me-2"></i>
+                                                {% if asignacion.estado_examenes.puede_generar_examen %}
+                                                    Generar Examen #{{ asignacion.estado_examenes.siguiente_evaluacion }} (Enc. {{ asignacion.estado_examenes.siguiente_encuentro_examen }})
+                                                {% else %}
+                                                    Generar Proyecto de Examen
+                                                {% endif %}
+                                            </a>
+
+                                            <!-- Indicadores numéricos para exámenes (Encuentros 4, 8 y 11) -->
+                                            <div class="d-flex flex-wrap justify-content-center align-items-center mt-1">
+                                                {% for ex_ind in asignacion.estado_examenes.indicadores_examen %}
+                                                    <div class="mx-1 my-1 div-custom {% if ex_ind.completado %}div-exam-done{% elif ex_ind.desbloqueado %}div-exam-ready{% else %}div-exam-locked{% endif %}"
+                                                         title="Examen #{{ ex_ind.numero_evaluacion }} — {{ ex_ind.corte }} (Encuentro {{ ex_ind.encuentro }}): {% if ex_ind.completado %}Completado{% elif ex_ind.desbloqueado %}Disponible ahora{% else %}Se activa al completar Sílabo {{ ex_ind.encuentro }}{% endif %}">
+                                                        <p class="text-center">{{ ex_ind.encuentro }}</p>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                            {% if asignacion.estado_examenes.examen_bloquea_silabo %}
+                                                <small class="text-danger fw-semibold mt-1 text-center">
+                                                    <i class="fas fa-lock me-1"></i>{{ asignacion.estado_examenes.razon_bloqueo_silabo_por_examen }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
                                     {% endif %}
 
                                     <!-- Progress indicator styles are loaded globally from base.css -->
@@ -331,7 +393,7 @@
                                     <div class="card-footer text-muted d-flex justify-content-between">
                                         <span>Asignado el: {{ asignacion.fecha_asignacion|date:"d/m/Y" }}</span>
                                         <span>
-                                            {% if asignacion.silabos_creados >= 11 and asignacion.guias_creadas >= max_guias %}
+                                            {% if asignacion.estado_examenes.esta_completada %}
                                                 <span class="text-success"><i class="fa fa-check-circle"></i> Completado</span>
                                             {% else %}
                                                 <span class="text-danger"><i class="fa fa-times-circle"></i> No Completado</span>

@@ -3,16 +3,21 @@ import time
 import resend
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .models import AsignacionPlanEstudio, TOTAL_ENCUENTROS_SILABO, obtener_max_encuentros_guia
+from .models import (
+    AsignacionPlanEstudio,
+    TOTAL_ENCUENTROS_SILABO,
+    TOTAL_EXAMENES,
+    obtener_max_encuentros_guia,
+)
 
 # Configurar API Key de Resend
 resend.api_key = os.environ.get("RESEND")
 
 def enviar_correos_plan_incompleto():
     """
-    Envía correos electrónicos a los usuarios que tienen menos de 11 sílabos o menos del
+    Envía correos electrónicos a los usuarios que tienen menos de 11 sílabos, menos del
     máximo activo de guías creadas (10 por defecto, o 11 si se restaura el encuentro 11)
-    usando la API de Resend.
+    o menos de 3 proyectos de examen usando la API de Resend.
     """
     if not resend.api_key:
         print("Error: La variable de entorno RESEND no está configurada.")
@@ -20,12 +25,13 @@ def enviar_correos_plan_incompleto():
 
     requerido_silabos = TOTAL_ENCUENTROS_SILABO
     requerido_guias = obtener_max_encuentros_guia()
+    requerido_examenes = TOTAL_EXAMENES
 
     # Filtrar asignaciones con planes incompletos
-    asignaciones_incompletas = AsignacionPlanEstudio.objects.filter(
-        silabos_creados__lt=requerido_silabos
-    ) | AsignacionPlanEstudio.objects.filter(
-        guias_creadas__lt=requerido_guias
+    asignaciones_incompletas = (
+        AsignacionPlanEstudio.objects.filter(silabos_creados__lt=requerido_silabos)
+        | AsignacionPlanEstudio.objects.filter(guias_creadas__lt=requerido_guias)
+        | AsignacionPlanEstudio.objects.filter(examenes_creados__lt=requerido_examenes)
     )
     
     # Eliminar duplicados
@@ -45,8 +51,10 @@ def enviar_correos_plan_incompleto():
             'asignatura': asignacion.plan_de_estudio.asignatura.nombre,
             'silabos_creados': asignacion.silabos_creados,
             'guias_creadas': asignacion.guias_creadas,
+            'examenes_creados': asignacion.examenes_creados,
             'requerido_silabos': requerido_silabos,
             'requerido_guias': requerido_guias,
+            'requerido_examenes': requerido_examenes,
         }
 
         html_message = render_to_string('emails/recordatorio_plan.html', context)

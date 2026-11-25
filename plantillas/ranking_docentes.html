@@ -292,7 +292,7 @@
                         Ranking de Cumplimiento Docente
                     </h1>
                     <p class="mb-0" style="color: var(--text-secondary);">
-                        Progreso de planificación académica por docente: <strong>{{ esperado_silabos }} sílabos</strong> y <strong>{{ esperado_guias }} guías de estudio</strong> por cada asignatura asignada.
+                        Progreso de planificación académica por docente: <strong>{{ esperado_silabos }} sílabos</strong>, <strong>{{ esperado_guias }} guías de estudio</strong> y <strong>{{ esperado_examenes|default:3 }} proyectos de examen</strong> por cada asignatura asignada.
                     </p>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
@@ -468,7 +468,7 @@
                                     <div class="highlight-text">
                                         <div class="highlight-name">{{ item.nombre_completo }}</div>
                                         <div class="small text-muted highlight-meta">
-                                            Faltan {{ item.faltantes_silabos }} sílabos y {{ item.faltantes_guias }} guías
+                                            Faltan {{ item.faltantes_silabos }} sílabos, {{ item.faltantes_guias }} guías y {{ item.faltantes_examenes|default:0 }} exámenes
                                         </div>
                                     </div>
                                 </div>
@@ -650,6 +650,9 @@
                                         </span>
                                         <span class="badge {% if asig.guias >= asig.esperado_guias %}bg-success{% elif asig.guias > 0 %}bg-info text-dark{% else %}bg-danger{% endif %}">
                                             Guías: {{ asig.guias }}/{{ asig.esperado_guias }}
+                                        </span>
+                                        <span class="badge {% if asig.examenes >= asig.esperado_examenes %}bg-success{% elif asig.examenes > 0 %}bg-primary{% else %}bg-danger{% endif %}">
+                                            Exámenes: {{ asig.examenes|default:0 }}/{{ asig.esperado_examenes|default:3 }}
                                         </span>
                                         <a href="{% url 'ver_planeacion' asignacion_id=asig.id %}" class="btn btn-success btn-compact">
                                             <i class="fas fa-eye me-1"></i> Ver Planeación

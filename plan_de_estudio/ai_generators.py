@@ -452,7 +452,7 @@ def procesar_respuesta_ai(respuesta_ai, tipo_respuesta=None):
 
     data = _extraer_objeto_json(respuesta_ai)
     if data is not None:
-        if tipo_respuesta in ("silabo", "guia"):
+        if tipo_respuesta in ("silabo", "guia", "examen"):
             logging.info("Datos estructurados (%s) procesados correctamente", tipo_respuesta)
             return data
 
@@ -473,7 +473,7 @@ def procesar_respuesta_ai(respuesta_ai, tipo_respuesta=None):
         logging.info("Datos procesados correctamente")
         return data
 
-    if tipo_respuesta in ("silabo", "guia"):
+    if tipo_respuesta in ("silabo", "guia", "examen"):
         raise ValueError(f"La respuesta de la IA para {tipo_respuesta} no contiene un objeto JSON válido.")
 
     logging.warning("No se encontró un formato JSON válido en la respuesta. Creando respuesta de emergencia.")
@@ -732,7 +732,7 @@ def generar_respuesta_ai(prompt_completo, modelo_seleccionado='google', **kwargs
                     raise e
         elif proveedor == 'google' or (proveedor == 'custom' and formato_api == 'google'):
             generation_config = dict(kwargs.get('generation_config') or get_default_config('google'))
-            if tipo_respuesta in ('silabo', 'guia'):
+            if tipo_respuesta in ('silabo', 'guia', 'examen'):
                 generation_config.setdefault('response_mime_type', 'application/json')
             respuesta_ai = usar_modelo_google(
                 prompt_completo,

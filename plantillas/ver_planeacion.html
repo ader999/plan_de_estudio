@@ -200,6 +200,11 @@
                             <span class="d-block fw-bold text-info fs-6">{{ guias_count }}/{{ max_guias }}</span>
                             <span style="color:#94a3b8;">Guías</span>
                         </div>
+                        <div style="border-left: 1px solid rgba(255,255,255,0.2);"></div>
+                        <div>
+                            <span class="d-block fw-bold text-warning fs-6">{{ examenes_count|default:0 }}/{{ total_examenes|default:3 }}</span>
+                            <span style="color:#94a3b8;">Exámenes</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -264,6 +269,14 @@
                         <span class="badge bg-secondary"><i class="fas fa-flag-checkered me-1"></i> Cierre sin guía</span>
                     {% else %}
                         <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i> Guía Pendiente</span>
+                    {% endif %}
+
+                    {% if item.es_encuentro_examen %}
+                        {% if item.tiene_examen %}
+                            <span class="badge ms-1" style="background-color:#6d28d9; color:#fff;"><i class="fas fa-clipboard-check me-1"></i> Examen Presente</span>
+                        {% else %}
+                            <span class="badge bg-danger ms-1"><i class="fas fa-clipboard-list me-1"></i> Examen Pendiente</span>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -480,6 +493,63 @@
                         {% endif %}
                     </div>
                 </div>
+
+                {% if item.es_encuentro_examen %}
+                <!-- SECTION 3: PROYECTO DE EXAMEN (CORTE EVALUATIVO) -->
+                <div class="card-custom">
+                    <div class="card-custom-header" style="background-color: #f5f3ff; color: #5b21b6; border-left: 5px solid #6d28d9;">
+                        <span><i class="fas fa-clipboard-check me-2"></i> 3. Proyecto de Examen (Día de Examen)</span>
+                        {% if item.tiene_examen %}
+                            <div class="d-flex gap-2 align-items-center">
+                                <span class="badge bg-dark">{{ item.examen.puntaje_total }} pts</span>
+                                <a href="{% url 'descargar_proyecto_examen' examen_id=item.examen.id %}" class="btn btn-sm btn-primary py-1 px-2">
+                                    <i class="fas fa-file-word me-1"></i> Descargar Word
+                                </a>
+                            </div>
+                        {% else %}
+                            <span class="badge bg-danger fw-normal">Pendiente</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body p-4">
+                        {% if item.tiene_examen %}
+                            <div class="d-flex flex-wrap gap-3 small text-muted mb-3">
+                                <span><strong>Evaluación:</strong> #{{ item.examen.numero_evaluacion }} ({{ item.examen.periodo_corte }})</span>
+                                <span><strong>Fecha:</strong> {{ item.examen.fecha|date:"d/m/Y" }}</span>
+                                <span><strong>Modalidad:</strong> {{ item.examen.modalidad }}</span>
+                                <span><strong>Tipo:</strong> {{ item.examen.tipo_examen }}</span>
+                                <span><strong>Extensión estimada:</strong> {{ item.examen.paginas_estimadas }} páginas</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-eval mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 24%;">Objetivos</th>
+                                            <th style="width: 36%;">Ejercicios Propuestos</th>
+                                            <th style="width: 30%;">Posibles Respuestas</th>
+                                            <th style="width: 10%;">Puntaje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for apart in item.examen.items_json %}
+                                        <tr>
+                                            <td style="white-space: pre-line;"><strong>{{ apart.numero }}.</strong> {{ apart.objetivo }}</td>
+                                            <td style="white-space: pre-line;">{{ apart.ejercicios }}</td>
+                                            <td style="white-space: pre-line;">{{ apart.posibles_respuestas }}</td>
+                                            <td class="text-center fw-bold">{{ apart.detalle_puntaje|default:apart.puntaje }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-clipboard-list fa-2x mb-2 text-danger"></i>
+                                <p class="mb-0">El Encuentro #{{ item.numero }} corresponde a día de examen de corte y aún no tiene Proyecto de Examen registrado.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
 
             {% endif %}
 

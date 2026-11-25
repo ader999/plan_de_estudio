@@ -187,6 +187,7 @@ class AsignacionPlanEstudio(models.Model):
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
     silabos_creados = models.IntegerField(default=0)
     guias_creadas = models.IntegerField(default=0)
+    examenes_creados = models.IntegerField(default=0)
 
     # Google Classroom Integration Fields
     curso_classroom_id = models.CharField(max_length=150, null=True, blank=True, verbose_name="ID Curso Classroom")
@@ -675,6 +676,137 @@ class CopiaSeguridad(Carrera):
 TOTAL_ENCUENTROS_SILABO = 11
 TOTAL_ENCUENTROS_GUIA_SIN_ULTIMO = 10
 TOTAL_ENCUENTROS_GUIA_COMPLETO = 11
+ENCUENTROS_EXAMEN = (4, 8, 11)
+TOTAL_EXAMENES = len(ENCUENTROS_EXAMEN)
+EXAMEN_POR_ENCUENTRO = {
+    4: (1, 'I Corte Evaluativo'),
+    8: (2, 'II Corte Evaluativo'),
+    11: (3, 'III Corte Evaluativo'),
+}
+ENCUENTRO_POR_EVALUACION = {
+    1: 4,
+    2: 8,
+    3: 11,
+}
+CORTE_POR_EVALUACION = {
+    1: 'I Corte Evaluativo',
+    2: 'II Corte Evaluativo',
+    3: 'III Corte Evaluativo',
+}
+
+
+class ProyectoExamen(models.Model):
+    """
+    Proyecto de Examen aplicado al cierre de cada corte evaluativo:
+    Evaluación 1 (Encuentro 4 - I Corte), Evaluación 2 (Encuentro 8 - II Corte),
+    Evaluación 3 (Encuentro 11 - III Corte).
+    """
+
+    MODALIDAD_CHOICES = (
+        ('Por encuentro', 'Por encuentro'),
+        ('Regular', 'Regular'),
+    )
+
+    TIPO_EXAMEN_CHOICES = (
+        ('De corte evaluativo', 'De corte evaluativo'),
+        ('Reprogramación', 'Reprogramación'),
+        ('Especial', 'Especial'),
+        ('Suficiencia', 'Suficiencia'),
+    )
+
+    NUMERO_EVALUACION_CHOICES = (
+        (1, 'Evaluación 1 (I Corte - Encuentro 4)'),
+        (2, 'Evaluación 2 (II Corte - Encuentro 8)'),
+        (3, 'Evaluación 3 (III Corte - Encuentro 11)'),
+    )
+
+    asignacion_plan = models.ForeignKey(
+        AsignacionPlanEstudio,
+        on_delete=models.CASCADE,
+        related_name='examenes_set',
+        verbose_name='Asignación de plan de estudio',
+    )
+    silabo = models.ForeignKey(
+        Silabo,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='examenes',
+        verbose_name='Sílabo del encuentro de examen',
+    )
+    numero_evaluacion = models.IntegerField(
+        choices=NUMERO_EVALUACION_CHOICES,
+        validators=[MinValueValidator(1), MaxValueValidator(3)],
+        verbose_name='No. de evaluación',
+    )
+    encuentro = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(11)],
+        verbose_name='Número de encuentro',
+    )
+    periodo_corte = models.CharField(
+        max_length=100,
+        choices=Silabo.PERIODO_TIEMPO_LIST,
+        verbose_name='Corte evaluativo',
+    )
+    fecha = models.DateField(verbose_name='Fecha del examen')
+    anio_lectivo = models.CharField(max_length=20, verbose_name='Año lectivo')
+    trimestre = models.CharField(max_length=20, verbose_name='Trimestre')
+    codigo_grupo = models.CharField(max_length=100, blank=True, default='', verbose_name='Código de grupo')
+    carrera_texto = models.CharField(max_length=255, blank=True, default='', verbose_name='Carrera(s)')
+    modalidad = models.CharField(
+        max_length=30,
+        choices=MODALIDAD_CHOICES,
+        default='Por encuentro',
+        verbose_name='Modalidad',
+    )
+    tipo_examen = models.CharField(
+        max_length=40,
+        choices=TIPO_EXAMEN_CHOICES,
+        default='De corte evaluativo',
+        verbose_name='Tipo de examen',
+    )
+    municipio = models.CharField(
+        max_length=100,
+        default='Municipio Jalapa',
+        verbose_name='Municipio / Sede',
+    )
+    items_json = models.JSONField(default=list, verbose_name='Apartados del examen')
+    puntaje_total = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
+        verbose_name='Puntaje total',
+    )
+    paginas_estimadas = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        default=3.0,
+        verbose_name='Páginas estimadas',
+    )
+    hojas_objetivo_ia = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(4), MaxValueValidator(8)],
+        verbose_name='Hojas objetivo IA (4–8)',
+    )
+    creado_el = models.DateTimeField(auto_now_add=True)
+    actualizado_el = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('asignacion_plan', 'numero_evaluacion')
+        ordering = ['numero_evaluacion']
+        verbose_name = 'Proyecto de Examen'
+        verbose_name_plural = 'Proyectos de Examen'
+
+    def __str__(self):
+        asig = self.asignacion_plan.plan_de_estudio.asignatura.nombre if self.asignacion_plan_id else ''
+        return f"Examen #{self.numero_evaluacion} (E{self.encuentro}) - {asig}"
+
+    def clean(self):
+        if self.numero_evaluacion in ENCUENTRO_POR_EVALUACION:
+            self.encuentro = ENCUENTRO_POR_EVALUACION[self.numero_evaluacion]
+            self.periodo_corte = CORTE_POR_EVALUACION[self.numero_evaluacion]
+        if not isinstance(self.items_json, list) or len(self.items_json) == 0:
+            raise ValidationError({'items_json': 'El proyecto de examen debe contener al menos un apartado.'})
 
 
 class ConfiguracionSistema(models.Model):

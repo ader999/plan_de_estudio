@@ -21,17 +21,24 @@ from django.contrib.auth.decorators import login_required
 from .models import (
     Silabo,
     Guia,
+    ProyectoExamen,
     AsignacionPlanEstudio,
     Asignatura,
     Plan_de_estudio,
     ModeloIAConfig,
     ConfiguracionSistema,
+    ENCUENTROS_EXAMEN,
     TOTAL_ENCUENTROS_SILABO,
+    TOTAL_EXAMENES,
     TRIMESTRES_ROMANOS,
     obtener_max_encuentros_guia,
 )
 from .ranking_utils import construir_ranking_docentes
 from .trimestre_utils import parsear_trimestre_lectivo
+from .utils.exam_utils import (
+    obtener_estado_examenes_asignacion,
+    verificar_examen_bloqueando_encuentro,
+)
 
 from .forms import SilaboForm
 from . import pwa_views
@@ -112,21 +119,31 @@ def detalle_silabo(request, codigo=None):
 def inicio(request):
     nombre_de_usuario = request.user.username
     # Ajusta el filtro al campo correspondiente en AsignacionPlanEstudio para el usuario
-    asignaciones = AsignacionPlanEstudio.objects.filter(
-        usuario__username=nombre_de_usuario
-    ).order_by('-id')
+    asignaciones = list(
+        AsignacionPlanEstudio.objects.filter(usuario__username=nombre_de_usuario)
+        .select_related(
+            "plan_de_estudio",
+            "plan_de_estudio__asignatura",
+            "plan_de_estudio__carrera",
+        )
+        .prefetch_related("examenes_set")
+        .order_by("-id")
+    )
     max_guias = obtener_max_encuentros_guia()
     rango = range(1, TOTAL_ENCUENTROS_SILABO + 1)  # 1..11 para sílabos
     rango_guias = range(1, max_guias + 1)  # 1..10 por defecto (o 1..11 si se restaura)
 
-    asignaciones_pendientes = [
-        a for a in asignaciones
-        if a.silabos_creados < TOTAL_ENCUENTROS_SILABO or a.guias_creadas < max_guias
-    ]
-    asignaciones_completadas = [
-        a for a in asignaciones
-        if a.silabos_creados >= TOTAL_ENCUENTROS_SILABO and a.guias_creadas >= max_guias
-    ]
+    asignaciones_pendientes = []
+    asignaciones_completadas = []
+    for a in asignaciones:
+        examenes_map = {ex.numero_evaluacion: ex for ex in a.examenes_set.all()}
+        a.estado_examenes = obtener_estado_examenes_asignacion(
+            a, max_guias=max_guias, examenes_por_eval=examenes_map
+        )
+        if a.estado_examenes["esta_completada"]:
+            asignaciones_completadas.append(a)
+        else:
+            asignaciones_pendientes.append(a)
 
     return render(
         request,
@@ -137,8 +154,10 @@ def inicio(request):
             "asignaciones_completadas": asignaciones_completadas,
             "rango": rango,
             "rango_guias": rango_guias,
+            "rango_examenes": ENCUENTROS_EXAMEN,
             "max_guias": max_guias,
-            "usuario": nombre_de_usuario
+            "total_examenes": TOTAL_EXAMENES,
+            "usuario": nombre_de_usuario,
         },
     )
 
@@ -185,19 +204,34 @@ def plan_estudio(request):
 
     # Primero obtenemos las asignaciones del usuario autenticado, ordenadas por fecha de asignación desc (los últimos asignados primero)
     # Solo consideramos las asignaciones que tengan al menos un sílabo creado (para mantener el comportamiento original de la vista de datos)
-    asignaciones_list = AsignacionPlanEstudio.objects.filter(
-        usuario=usuario_autenticado
-    ).annotate(
-        num_silabos=Count('silabo_set')
-    ).filter(
-        num_silabos__gt=0
-    ).order_by('-fecha_asignacion')
+    asignaciones_list = (
+        AsignacionPlanEstudio.objects.filter(usuario=usuario_autenticado)
+        .select_related(
+            "plan_de_estudio",
+            "plan_de_estudio__asignatura",
+            "plan_de_estudio__carrera",
+        )
+        .prefetch_related("examenes_set")
+        .annotate(num_silabos=Count("silabo_set", distinct=True))
+        .filter(num_silabos__gt=0)
+        .order_by("-fecha_asignacion")
+    )
 
     # Paginación: 5 asignaciones por página
     from django.core.paginator import Paginator
     paginator = Paginator(asignaciones_list, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    max_guias = obtener_max_encuentros_guia()
+    for a in page_obj:
+        examenes_ordenados = sorted(a.examenes_set.all(), key=lambda ex: ex.numero_evaluacion)
+        a.examenes_lista = examenes_ordenados
+        a.estado_examenes = obtener_estado_examenes_asignacion(
+            a,
+            max_guias=max_guias,
+            examenes_por_eval={ex.numero_evaluacion: ex for ex in examenes_ordenados},
+        )
 
     # Obtener el año actual
     año_actual = datetime.datetime.now().year
@@ -206,7 +240,8 @@ def plan_estudio(request):
         "page_obj": page_obj,
         "usuario": nombre_de_usuario,
         "año_actual": año_actual,
-        "max_guias": obtener_max_encuentros_guia(),
+        "max_guias": max_guias,
+        "total_examenes": TOTAL_EXAMENES,
     }
 
     return render(request, "plan_estudio.html", context)
@@ -417,11 +452,37 @@ def generar_docx(request):
 
 @login_required
 def success_view(request):
+    examen = None
+    examen_id = request.GET.get("examen_id")
+    if examen_id and str(examen_id).isdigit():
+        cand = (
+            ProyectoExamen.objects.select_related(
+                "asignacion_plan",
+                "asignacion_plan__plan_de_estudio",
+                "asignacion_plan__plan_de_estudio__asignatura",
+            )
+            .filter(id=int(examen_id))
+            .first()
+        )
+        if cand and (
+            request.user.is_staff
+            or request.user.is_superuser
+            or cand.asignacion_plan.usuario_id == request.user.id
+        ):
+            examen = cand
+
+    mensaje = (
+        f"El Proyecto de Examen #{examen.numero_evaluacion} ({examen.periodo_corte}) de "
+        f"{examen.asignacion_plan.plan_de_estudio.asignatura.nombre} se ha guardado correctamente."
+        if examen
+        else "¡Gracias por llenar el formulario! Apreciamos el tiempo que has dedicado a completarlo."
+    )
     return render(
         request,
         "exito.html",
         {
-            "message": "¡Gracias por llenar el formulario! Apreciamos el tiempo que has dedicado a completarlo.",
+            "message": mensaje,
+            "examen": examen,
             "usuario": request.user.username,
         },
     )
@@ -484,6 +545,16 @@ def ver_formulario_silabo(request, asignacion_id=None, id=None):
             messages.warning(
                 request,
                 f"Ya se han completado los 11 sílabos para {asignacion.plan_de_estudio}.",
+            )
+            return redirect("inicio")
+
+        bloqueo_examen = verificar_examen_bloqueando_encuentro(asignacion, proximo_encuentro)
+        if bloqueo_examen is not None:
+            num_eval_bloq, enc_bloq = bloqueo_examen
+            messages.warning(
+                request,
+                f"Debe completar el Proyecto de Examen #{num_eval_bloq} (Encuentro {enc_bloq}) "
+                f"antes de continuar con el sílabo del encuentro {proximo_encuentro}.",
             )
             return redirect("inicio")
 
@@ -702,6 +773,19 @@ def guardar_silabo(request, asignacion_id=None, id=None):
         form = SilaboForm(request.POST)
         if form.is_valid():
             silabo = form.save(commit=False)
+            bloqueo_examen = verificar_examen_bloqueando_encuentro(asignacion, silabo.encuentros)
+            if bloqueo_examen is not None:
+                num_eval_bloq, enc_bloq = bloqueo_examen
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "error": (
+                            f"Debe completar el Proyecto de Examen #{num_eval_bloq} (Encuentro {enc_bloq}) "
+                            f"antes de guardar el sílabo del encuentro {silabo.encuentros}."
+                        ),
+                    },
+                    status=400,
+                )
             silabo.asignacion_plan = (
                 asignacion  # Corregido: asignacion_plan en lugar de asignacion
             )
@@ -2067,6 +2151,10 @@ def ver_planeacion(request, asignacion_id):
         elif g.numero_encuentro:
             guia_map[g.numero_encuentro] = g
 
+    # Obtener proyectos de examen asociados a esta asignación (encuentros 4, 8 y 11)
+    examenes = ProyectoExamen.objects.filter(asignacion_plan=asignacion).order_by('numero_evaluacion')
+    examen_map = {ex.encuentro: ex for ex in examenes}
+
     def extract_tareas(guia):
         if not guia:
             return []
@@ -2115,26 +2203,35 @@ def ver_planeacion(request, asignacion_id):
         tiene_silabo = silabo_item is not None
         tiene_guia = guia_item is not None and len(tareas_list) > 0
         requiere_guia = (num <= max_guias) or tiene_guia
-        
+        examen_item = examen_map.get(num)
+        es_encuentro_examen = num in ENCUENTROS_EXAMEN
+        tiene_examen = examen_item is not None
+
         encuentros_list.append({
             'numero': num,
             'silabo': silabo_item,
             'guia': guia_item,
+            'examen': examen_item,
+            'es_encuentro_examen': es_encuentro_examen,
+            'tiene_examen': tiene_examen,
             'tareas': tareas_list,
             'tiene_silabo': tiene_silabo,
             'tiene_guia': tiene_guia,
             'requiere_guia': requiere_guia,
-            'completo': tiene_silabo and (tiene_guia or not requiere_guia),
+            'completo': tiene_silabo and (tiene_guia or not requiere_guia) and (tiene_examen or not es_encuentro_examen),
         })
 
     silabos_count = len([e for e in encuentros_list if e['tiene_silabo']])
     guias_count = len([e for e in encuentros_list if e['tiene_guia']])
+    examenes_count = len([e for e in encuentros_list if e['tiene_examen']])
 
     context = {
         'asignacion': asignacion,
         'encuentros_list': encuentros_list,
         'silabos_count': silabos_count,
         'guias_count': guias_count,
+        'examenes_count': examenes_count,
+        'total_examenes': TOTAL_EXAMENES,
         'max_guias': max_guias,
         'total_encuentros': total_encuentros,
     }

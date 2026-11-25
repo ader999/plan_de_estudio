@@ -27,6 +27,7 @@ ENCUENTROS_POR_CORTE = {
 }
 
 PUNTAJE_MAX_POR_CORTE = 100
+RESERVA_EXAMEN_CORTE = 50
 TOTAL_ENCUENTROS = 11
 
 
@@ -92,9 +93,15 @@ def reparto_hamilton(total, pesos, minimo_por_item=0):
     return asignacion
 
 
-def calcular_puntajes_por_corte(asignacion, exclude_silabo_id=None, exclude_guia_id=None):
-    """Suma los puntajes acumulados de Sílabos y Guías por Corte Evaluativo."""
-    from plan_de_estudio.models import Guia, Silabo
+def calcular_puntajes_por_corte(
+    asignacion,
+    exclude_silabo_id=None,
+    exclude_guia_id=None,
+    exclude_examen_id=None,
+    incluir_examenes=True,
+):
+    """Suma los puntajes acumulados de Sílabos, Guías y (opcionalmente) Proyectos de Examen por Corte Evaluativo."""
+    from plan_de_estudio.models import Guia, ProyectoExamen, Silabo
 
     scores = {corte: 0 for corte in CORTES_ORDEN}
 
@@ -115,6 +122,15 @@ def calcular_puntajes_por_corte(asignacion, exclude_silabo_id=None, exclude_guia
             corte = (getattr(g, f"periodo_tiempo_programado_{idx}", None) or "").strip()
             if pts and corte in scores:
                 scores[corte] += pts
+
+    if incluir_examenes:
+        examenes = ProyectoExamen.objects.filter(asignacion_plan=asignacion)
+        if exclude_examen_id:
+            examenes = examenes.exclude(id=exclude_examen_id)
+        for ex in examenes:
+            corte = (ex.periodo_corte or "").strip()
+            if corte in scores and ex.puntaje_total:
+                scores[corte] += ex.puntaje_total
 
     return scores
 
@@ -356,14 +372,21 @@ def formatear_contexto_curricular(contexto_info, mapa, encuentro):
     return "\n\n".join(partes)
 
 
-def calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=False, max_guias=None):
+def calcular_corte_y_presupuesto(
+    asignacion,
+    encuentro,
+    es_guia=False,
+    max_guias=None,
+    reservar_examen=True,
+):
     """
     Calcula el Corte Evaluativo correspondiente al encuentro y el presupuesto de puntos
-    disponible (regla institucional: Sílabos + Guías <= 100 puntos por cada Corte).
-    Respeta la cantidad activa de guías (`max_guias`: 10 por defecto, 11 si se restaura),
-    de modo que el III Corte reparte sus 100 pts entre los sílabos 9-11 y las guías habilitadas.
+    disponible (regla institucional: Sílabos + Guías + Proyecto de Examen = 100 pts por Corte).
+    Cuando `reservar_examen=True` y aún no existe Proyecto de Examen para el corte, reserva
+    `RESERVA_EXAMEN_CORTE` (50 pts) para el examen de modo que los sílabos y guías generados
+    con IA sumen 50 pts acumulados y dejen automáticamente 50 pts disponibles para el examen.
     """
-    from plan_de_estudio.models import Guia, Silabo, obtener_max_encuentros_guia
+    from plan_de_estudio.models import Guia, ProyectoExamen, Silabo, obtener_max_encuentros_guia
 
     max_guias_efectivo = (
         obtener_max_encuentros_guia()
@@ -373,9 +396,15 @@ def calcular_corte_y_presupuesto(asignacion, encuentro, es_guia=False, max_guias
     corte = obtener_corte_para_encuentro(encuentro)
     encuentros_corte = ENCUENTROS_POR_CORTE[corte]
     encuentros_guias_corte = [e for e in encuentros_corte if e <= max_guias_efectivo]
-    scores = calcular_puntajes_por_corte(asignacion)
+    scores = calcular_puntajes_por_corte(asignacion, incluir_examenes=True)
     usado_corte = scores.get(corte, 0)
-    saldo_corte = max(0, PUNTAJE_MAX_POR_CORTE - usado_corte)
+
+    examen_existe = ProyectoExamen.objects.filter(
+        asignacion_plan=asignacion, periodo_corte=corte
+    ).exists()
+    reserva = RESERVA_EXAMEN_CORTE if (reservar_examen and not examen_existe) else 0
+    techo_acumulado = max(0, PUNTAJE_MAX_POR_CORTE - reserva)
+    saldo_corte = max(0, techo_acumulado - usado_corte)
 
     silabos_existentes = set(
         Silabo.objects.filter(

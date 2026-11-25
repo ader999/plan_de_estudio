@@ -1,9 +1,9 @@
 from django.contrib import admin
 from .models import (
-    Plan_de_estudio, Asignatura, Carrera, Silabo, Guia,
+    Plan_de_estudio, Asignatura, Carrera, Silabo, Guia, ProyectoExamen,
     AsignacionPlanEstudio, PlanTematico, ProgramaAsignatura2026,
     CopiaSeguridad, ModeloIAConfig, ProveedorIA, ConfiguracionSistema,
-    TOTAL_ENCUENTROS_SILABO, obtener_max_encuentros_guia,
+    TOTAL_ENCUENTROS_SILABO, TOTAL_EXAMENES, obtener_max_encuentros_guia,
 )
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -341,6 +341,7 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
         'fecha_asignacion',
         'silabos_creados',
         'guias_creadas',
+        'examenes_creados',
         'curso_classroom_id',
         'curso_classroom_url',
     )
@@ -353,7 +354,7 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
         'plan_de_estudio__asignatura',
         'plan_de_estudio__carrera',
     )
-    readonly_fields = ('fecha_asignacion', 'silabos_creados', 'guias_creadas', 'curso_classroom_id', 'curso_classroom_url')
+    readonly_fields = ('fecha_asignacion', 'silabos_creados', 'guias_creadas', 'examenes_creados', 'curso_classroom_id', 'curso_classroom_url')
     autocomplete_fields = ['plan_de_estudio', 'usuario'] # Habilita buscador dinámico
     search_fields = ('usuario__username', 'usuario__first_name', 'usuario__last_name') # Habilita buscador por usuario
     search_help_text = "Busque por nombre de usuario, nombre o apellido"
@@ -372,13 +373,17 @@ class AsignacionPlanEstudioAdmin(admin.ModelAdmin):
         return max_guias if max_guias is not None else obtener_max_encuentros_guia()
 
     def completado_icono(self, obj):
-        return obj.silabos_creados >= TOTAL_ENCUENTROS_SILABO and obj.guias_creadas >= self._get_max_guias()
+        return (
+            obj.silabos_creados >= TOTAL_ENCUENTROS_SILABO
+            and obj.guias_creadas >= self._get_max_guias()
+            and obj.examenes_creados >= TOTAL_EXAMENES
+        )
     completado_icono.boolean = True
     completado_icono.short_description = 'Completado'
 
     def progreso_silabos_guias(self, obj):
-        return f"S:{obj.silabos_creados}/{TOTAL_ENCUENTROS_SILABO}, G:{obj.guias_creadas}/{self._get_max_guias()}"
-    progreso_silabos_guias.short_description = 'Progreso (S/G)'
+        return f"S:{obj.silabos_creados}/{TOTAL_ENCUENTROS_SILABO}, G:{obj.guias_creadas}/{self._get_max_guias()}, E:{obj.examenes_creados}/{TOTAL_EXAMENES}"
+    progreso_silabos_guias.short_description = 'Progreso (S/G/E)'
 
     # Método para generar el botón de exportar y ver planeación
     def exportar_excel_boton(self, obj):
@@ -1126,5 +1131,49 @@ class CopiaSeguridadAdmin(admin.ModelAdmin):
             **self.admin_site.each_context(request),
             'title': 'Guía de Restauración de Base de Datos',
         })
+
+
+@admin.register(ProyectoExamen)
+class ProyectoExamenAdmin(admin.ModelAdmin):
+    list_display = (
+        'asignacion_plan',
+        'numero_evaluacion',
+        'encuentro',
+        'periodo_corte',
+        'fecha',
+        'puntaje_total',
+        'paginas_estimadas',
+        'acciones_examen',
+    )
+    list_filter = ('numero_evaluacion', 'periodo_corte', 'modalidad', 'tipo_examen')
+    search_fields = (
+        'asignacion_plan__usuario__username',
+        'asignacion_plan__usuario__first_name',
+        'asignacion_plan__usuario__last_name',
+        'asignacion_plan__plan_de_estudio__asignatura__nombre',
+        'asignacion_plan__plan_de_estudio__codigo',
+    )
+    list_select_related = (
+        'asignacion_plan',
+        'asignacion_plan__usuario',
+        'asignacion_plan__plan_de_estudio',
+        'asignacion_plan__plan_de_estudio__asignatura',
+        'asignacion_plan__plan_de_estudio__carrera',
+    )
+    readonly_fields = ('creado_el', 'actualizado_el', 'paginas_estimadas')
+
+    @admin.display(description='Acciones')
+    def acciones_examen(self, obj):
+        url_docx = reverse('descargar_proyecto_examen', args=[obj.pk])
+        url_edit = reverse('actualizar_examen', args=[obj.pk])
+        return format_html(
+            '<div style="display:inline-flex; gap:6px; align-items:center;">'
+            '<a class="button" href="{}" style="background:#2563eb; color:#fff; border-color:#2563eb; padding:4px 8px;">↓ Word</a>'
+            '<a class="button" href="{}" style="padding:4px 8px;">Editar</a>'
+            '</div>',
+            url_docx,
+            url_edit,
+        )
+
 
 

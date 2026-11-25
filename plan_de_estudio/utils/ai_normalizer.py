@@ -659,3 +659,99 @@ def normalizar_respuesta_guia(
             out[f"puntaje_{n}"] = val
 
     return out
+
+
+def normalizar_respuesta_examen(
+    data,
+    puntaje_objetivo,
+    numero_hojas=4,
+    fecha_default=None,
+    anio_lectivo_default=None,
+    trimestre_default=None,
+):
+    """
+    Normaliza la respuesta JSON de IA para un Proyecto de Examen:
+    - Asegura apartados numerados en romano (I, II, III, ...) con objetivo, ejercicios,
+      posibles_respuestas, puntaje y detalle_puntaje.
+    - Garantiza que la suma de puntajes sea EXACTAMENTE `puntaje_objetivo`.
+    """
+    from plan_de_estudio.utils.curriculum_planner import reparto_hamilton
+    from plan_de_estudio.utils.exam_utils import (
+        NUMEROS_ROMANOS_ITEMS,
+        estimar_paginas_examen,
+    )
+
+    out_raw = dict(data or {})
+    raw_items = (
+        out_raw.get("items")
+        or out_raw.get("apartados")
+        or out_raw.get("secciones")
+        or []
+    )
+    if not isinstance(raw_items, list):
+        raw_items = []
+
+    items = []
+    for idx, it in enumerate(raw_items):
+        if not isinstance(it, dict):
+            continue
+        objetivo = _a_texto(
+            it.get("objetivo") or it.get("objetivos") or it.get("objetivo_aprendizaje"),
+            separador="\n",
+        )
+        ejercicios = _a_texto(
+            it.get("ejercicios")
+            or it.get("ejercicios_propuestos")
+            or it.get("enunciado")
+            or it.get("actividades"),
+            separador="\n",
+        )
+        respuestas = _a_texto(
+            it.get("posibles_respuestas")
+            or it.get("respuestas")
+            or it.get("clave_respuesta")
+            or it.get("solucion"),
+            separador="\n",
+        )
+        if not (objetivo or ejercicios or respuestas):
+            continue
+        pts = _entero(it.get("puntaje"), default=5, minimo=1, maximo=100)
+        detalle = _a_texto(it.get("detalle_puntaje") or it.get("desglose_puntaje"), separador=" ")
+        num_romano = NUMEROS_ROMANOS_ITEMS[len(items)] if len(items) < len(NUMEROS_ROMANOS_ITEMS) else str(len(items) + 1)
+        items.append({
+            "numero": num_romano,
+            "objetivo": objetivo or f"Evaluar los aprendizajes del apartado {num_romano}.",
+            "ejercicios": ejercicios or f"Desarrolle el ejercicio propuesto del apartado {num_romano}.",
+            "posibles_respuestas": respuestas or "Respuesta abierta según criterios técnicos del programa de asignatura.",
+            "puntaje": pts,
+            "detalle_puntaje": detalle,
+        })
+
+    if not items:
+        raise ValueError("La IA no devolvió apartados válidos para el proyecto de examen.")
+
+    objetivo_pts = max(1, int(puntaje_objetivo))
+    # Si hay más ítems que puntos disponibles, recortar para que cada ítem tenga al menos 1 punto
+    if len(items) > objetivo_pts:
+        items = items[:objetivo_pts]
+
+    pesos = [max(1, it["puntaje"]) for it in items]
+    puntajes_ajustados = reparto_hamilton(objetivo_pts, pesos, minimo_por_item=1)
+    for it, pts in zip(items, puntajes_ajustados):
+        it["puntaje"] = pts
+        det = it.get("detalle_puntaje", "").strip()
+        if not det or str(pts) not in det:
+            it["detalle_puntaje"] = f"{pts} pts"
+
+    hoy_iso = fecha_default or datetime.date.today().isoformat()
+    estimacion = estimar_paginas_examen(items)
+
+    return {
+        "fecha": _fecha_iso(out_raw.get("fecha"), hoy_iso),
+        "anio_lectivo": str(out_raw.get("anio_lectivo") or anio_lectivo_default or datetime.date.today().year).strip(),
+        "trimestre": str(out_raw.get("trimestre") or trimestre_default or "I").strip(),
+        "hojas_objetivo_ia": _entero(numero_hojas, default=4, minimo=4, maximo=8),
+        "items": items,
+        "puntaje_total": sum(it["puntaje"] for it in items),
+        "estimacion": estimacion,
+    }

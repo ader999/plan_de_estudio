@@ -1,7 +1,9 @@
+import io
 import os
 from pathlib import Path
 from django.core.files.storage import default_storage
 from django.conf import settings
+from docx import Document
 from openpyxl import load_workbook
 import tempfile
 
@@ -148,3 +150,31 @@ def ensure_template_in_storage(template_name):
             return False
     
     return False
+
+
+def get_docx_template(template_name='plantilla_proyecto_examen.docx'):
+    """
+    Carga una copia en memoria de una plantilla Word (.docx) desde storage (MinIO)
+    o desde el directorio local `docx_templates/`. Nunca modifica el archivo original.
+    """
+    storage_path = f'docx_templates/{template_name}'
+
+    if default_storage.exists(storage_path):
+        try:
+            with default_storage.open(storage_path, 'rb') as storage_file:
+                buffer = io.BytesIO(storage_file.read())
+                buffer.seek(0)
+                return Document(buffer)
+        except Exception as e:
+            print(f"Error loading docx template from storage: {e}")
+
+    local_path = Path(settings.BASE_DIR) / 'docx_templates' / template_name
+    if local_path.exists():
+        with open(local_path, 'rb') as local_file:
+            buffer = io.BytesIO(local_file.read())
+            buffer.seek(0)
+            return Document(buffer)
+
+    raise FileNotFoundError(
+        f"La plantilla Word '{template_name}' no fue encontrada en storage ni en {local_path}"
+    )
