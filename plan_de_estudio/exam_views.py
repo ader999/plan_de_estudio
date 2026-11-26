@@ -13,6 +13,8 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -226,7 +228,9 @@ def ver_formulario_examen(request, asignacion_id):
         "modalidad_inicial": "Por encuentro",
         "tipo_examen_inicial": "De corte evaluativo",
         "municipio_inicial": "Municipio Jalapa",
+        "items_iniciales": [],
         "items_iniciales_json": json.dumps([], ensure_ascii=False),
+        "hojas_ia_inicial": 4,
         "modalidad_choices": ProyectoExamen.MODALIDAD_CHOICES,
         "tipo_examen_choices": ProyectoExamen.TIPO_EXAMEN_CHOICES,
         "hojas_ia_opciones": list(range(MIN_HOJAS_IA, MAX_HOJAS_IA + 1)),
@@ -278,7 +282,9 @@ def actualizar_examen(request, examen_id):
         "modalidad_inicial": examen.modalidad,
         "tipo_examen_inicial": examen.tipo_examen,
         "municipio_inicial": examen.municipio or "Municipio Jalapa",
+        "items_iniciales": examen.items_json or [],
         "items_iniciales_json": json.dumps(examen.items_json or [], ensure_ascii=False),
+        "hojas_ia_inicial": examen.hojas_objetivo_ia or 4,
         "modalidad_choices": ProyectoExamen.MODALIDAD_CHOICES,
         "tipo_examen_choices": ProyectoExamen.TIPO_EXAMEN_CHOICES,
         "hojas_ia_opciones": list(range(MIN_HOJAS_IA, MAX_HOJAS_IA + 1)),
@@ -420,8 +426,28 @@ def guardar_examen(request, asignacion_id):
     if hojas_ia is not None:
         examen.hojas_objetivo_ia = hojas_ia
 
-    examen.full_clean()
-    examen.save()
+    try:
+        examen.full_clean()
+        examen.save()
+    except ValidationError as exc:
+        errores_val = []
+        if hasattr(exc, "message_dict"):
+            for msgs in exc.message_dict.values():
+                errores_val.extend(msgs)
+        else:
+            errores_val.extend(exc.messages)
+        errores_val = errores_val or ["Los datos del proyecto de examen no son válidos."]
+        return JsonResponse(
+            {
+                "success": False,
+                "error": " ".join(errores_val),
+                "errors": errores_val,
+            },
+            status=400,
+        )
+    except IntegrityError:
+        msg = "Ya existe un Proyecto de Examen registrado para esta evaluación. Recarga la página e intenta nuevamente."
+        return JsonResponse({"success": False, "error": msg, "errors": [msg]}, status=400)
 
     asignacion.examenes_creados = ProyectoExamen.objects.filter(asignacion_plan=asignacion).count()
     asignacion.save(update_fields=["examenes_creados"])

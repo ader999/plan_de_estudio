@@ -4055,6 +4055,74 @@ class ProyectoExamenModuloTest(TestCase):
         self.assertNotIn("Solución modelo", texto_total)
         self.assertNotIn("Posibles Respuestas", texto_total)
 
+    def test_formulario_examen_render_limpio_edicion_y_validacion_borde(self):
+        # Preparar I Corte con 60 pts acumulados -> 40 pts disponibles
+        for enc in range(1, 5):
+            s = self._crear_silabo(enc, puntaje=5)
+            self._crear_guia(s, enc, puntaje=10)
+
+        # 1) GET creación: usa json_script seguro, carga examen_form.js y omite secciones redundantes
+        resp_new = self.client.get(reverse('ver_formulario_examen', args=[self.asignacion.id]))
+        self.assertEqual(resp_new.status_code, 200)
+        self.assertContains(resp_new, 'id="examen-items-iniciales"')
+        self.assertContains(resp_new, 'js/examen_form.js')
+        self.assertContains(resp_new, 'Desglose del corte:')
+        self.assertNotContains(resp_new, 'class="exam-hero"')
+        self.assertNotContains(resp_new, 'btn-agregar-apartado-bottom')
+        self.assertNotContains(resp_new, 'Hrs Trab. Indep.')
+
+        # 2) Rechazo JSON limpio (HTTP 400) cuando hay apartados vacíos o puntajes negativos
+        resp_neg = self.client.post(
+            reverse('guardar_examen', args=[self.asignacion.id]),
+            data=json.dumps({
+                "numero_evaluacion": 1,
+                "fecha": "2026-06-22",
+                "anio_lectivo": "2026",
+                "trimestre": "II",
+                "carrera_texto": self.carrera.nombre,
+                "items": [
+                    {"numero": "I", "objetivo": "Obj", "ejercicios": "Ejer " * 90, "posibles_respuestas": "Resp " * 90, "puntaje": -5},
+                    {"numero": "II", "objetivo": "Obj 2", "ejercicios": "Ejer 2 " * 90, "posibles_respuestas": "Resp 2 " * 90, "puntaje": 45},
+                    {"numero": "III", "objetivo": "", "ejercicios": "", "posibles_respuestas": "", "puntaje": 0},
+                ],
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(resp_neg.status_code, 400)
+        self.assertIn("error", resp_neg.json())
+
+        # 3) Guardar examen con contenido literal "</script>" para verificar escape seguro en edición
+        items = self._items_validos_mas_de_2_paginas(40)
+        items[0]["ejercicios"] += '\nEjemplo de etiqueta HTML literal: </script><script>alert(1)</script>'
+
+        resp_save = self.client.post(
+            reverse('guardar_examen', args=[self.asignacion.id]),
+            data=json.dumps({
+                "numero_evaluacion": 1,
+                "fecha": "2026-06-22",
+                "anio_lectivo": "2026",
+                "trimestre": "II",
+                "carrera_texto": self.carrera.nombre,
+                "hojas_objetivo_ia": 6,
+                "items": items,
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(resp_save.status_code, 200, resp_save.content.decode('utf-8'))
+        examen_id = resp_save.json()["examen_id"]
+
+        # 4) GET modo edición: preselecciona hojas_ia_inicial=6, expone ambos .docx y escapa "</script>"
+        resp_edit = self.client.get(reverse('actualizar_examen', args=[examen_id]))
+        self.assertEqual(resp_edit.status_code, 200)
+        self.assertEqual(resp_edit.context['hojas_ia_inicial'], 6)
+        self.assertContains(resp_edit, '<option value="6" selected>6 hojas</option>', html=True)
+        self.assertContains(resp_edit, reverse('descargar_proyecto_examen', args=[examen_id]))
+        self.assertContains(resp_edit, reverse('descargar_examen_estudiante', args=[examen_id]))
+        html_edit = resp_edit.content.decode('utf-8')
+        self.assertNotIn('</script><script>alert(1)</script>', html_edit)
+        self.assertIn('\\u003C/script\\u003E', html_edit)
+
+
 
 
 

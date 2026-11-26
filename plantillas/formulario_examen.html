@@ -3,678 +3,517 @@
 
 {% block content %}
 <style>
-    .exam-hero {
-        background: linear-gradient(135deg, #4c1d95 0%, #6d28d9 100%);
-        color: #ffffff;
-        border-radius: 16px;
-        padding: 1.5rem 1.75rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 10px 25px -5px rgba(109, 40, 217, 0.25);
-    }
-    .exam-hero h2, .exam-hero h4, .exam-hero p, .exam-hero span, .exam-hero strong {
-        color: #ffffff !important;
-    }
-    .exam-ai-box {
-        background: linear-gradient(135deg, rgba(109, 40, 217, 0.08) 0%, rgba(37, 99, 235, 0.08) 100%);
-        border: 1px solid rgba(109, 40, 217, 0.28);
-        border-radius: 14px;
-        padding: 1.25rem;
-        margin-bottom: 1.25rem;
-    }
-    .exam-meter-bar {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 14px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 1.25rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-    .apartado-card {
-        border: 1px solid var(--border-color);
-        border-left: 4px solid #6d28d9;
-        border-radius: 12px;
-        background-color: var(--bg-secondary);
-        margin-bottom: 1.25rem;
+    #examen-form-root .card.shadow-lg {
         overflow: visible !important;
     }
+
+    #examen-form-root .btn-outline-primary {
+        background-color: transparent !important;
+        border: 1px solid var(--corp-primary) !important;
+        color: var(--corp-primary) !important;
+    }
+
+    #examen-form-root .btn-outline-primary:hover {
+        background-color: var(--corp-primary) !important;
+        color: #ffffff !important;
+    }
+
+    #examen-form-root .btn-outline-danger {
+        background-color: transparent !important;
+        border: 1px solid var(--corp-danger) !important;
+        color: var(--corp-danger) !important;
+    }
+
+    #examen-form-root .btn-outline-danger:hover:not(:disabled) {
+        background-color: var(--corp-danger) !important;
+        color: #ffffff !important;
+    }
+
+    #examen-form-root .btn-compact-inline,
+    #examen-form-root .btn-del-apartado,
+    #examen-form-root .btn-toggle-apartado {
+        width: auto !important;
+        padding: 0.38rem 0.8rem !important;
+        font-size: 0.84rem !important;
+    }
+
+    .draft-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        background-color: rgba(5, 150, 105, 0.1);
+        border: 1px solid rgba(5, 150, 105, 0.35);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 1rem;
+        font-size: 0.88rem;
+        color: var(--text-primary);
+    }
+
+    .draft-discard-btn {
+        width: auto !important;
+        padding: 5px 12px !important;
+        font-size: 0.8rem !important;
+        border-radius: 999px !important;
+    }
+
+    .exam-status-header {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .exam-score-details,
+    .exam-extra-meta {
+        border-top: 1px solid var(--border-color);
+    }
+
+    .exam-score-details > summary,
+    .exam-extra-meta > summary {
+        cursor: pointer;
+        user-select: none;
+        list-style-position: inside;
+    }
+
+    .wizard-ai-box {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(124, 77, 255, 0.08) 100%);
+        border: 1px solid rgba(37, 99, 235, 0.25);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 1rem;
+    }
+
+    .apartado-card {
+        border: 1px solid var(--border-color);
+        border-left: 3px solid var(--corp-primary);
+        border-radius: 10px;
+        background-color: var(--bg-primary);
+        margin-bottom: 1rem;
+        overflow: visible !important;
+    }
+
     .apartado-header {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.85rem 1.15rem;
-        background-color: rgba(109, 40, 217, 0.07);
+        gap: 0.65rem;
+        padding: 0.75rem 1rem;
+        background-color: var(--bg-secondary);
         border-bottom: 1px solid var(--border-color);
-        border-radius: 12px 12px 0 0;
+        border-radius: 10px 10px 0 0;
     }
+
+    .apartado-card.is-collapsed .apartado-header {
+        border-bottom: none;
+        border-radius: 10px;
+    }
+
+    .apartado-card.is-collapsed .apartado-body {
+        display: none;
+    }
+
     .apartado-badge {
-        background-color: #6d28d9;
+        background-color: var(--corp-primary);
         color: #ffffff;
         font-weight: 700;
-        padding: 0.35rem 0.75rem;
+        padding: 0.3rem 0.7rem;
         border-radius: 999px;
-        font-size: 0.88rem;
+        font-size: 0.82rem;
+        white-space: nowrap;
     }
-    .score-breakdown-box {
-        background-color: #ffffff;
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 1.25rem;
+
+    .apartado-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
     }
-    .btn-compact-inline {
+
+    .apartado-pts-field {
+        width: 96px;
+    }
+
+    .apartado-detalle-field {
+        width: 205px;
+    }
+
+    .apartado-preview {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        max-width: 240px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .exam-bottom-bar {
+        padding-top: 0.5rem;
+    }
+
+    #examen-form-root .exam-cancel-btn,
+    #examen-form-root .exam-save-btn {
         width: auto !important;
-        padding: 0.4rem 0.85rem !important;
-        font-size: 0.85rem !important;
+        padding: 0.55rem 1.25rem !important;
+    }
+
+    @media (max-width: 767.98px) {
+        #examen-form-root .btn-compact-inline,
+        #examen-form-root .btn-del-apartado,
+        #examen-form-root .btn-toggle-apartado {
+            width: auto !important;
+            padding: 0.38rem 0.72rem !important;
+        }
+
+        #examen-form-root .row.g-3,
+        #examen-form-root .row.g-2 {
+            row-gap: 0.75rem;
+        }
+
+        #examen-form-root .apartado-header {
+            padding: 0.7rem 0.75rem;
+        }
+
+        #examen-form-root .apartado-controls {
+            width: 100%;
+        }
+
+        #examen-form-root .apartado-pts-field {
+            flex: 0 0 92px;
+            width: 92px;
+        }
+
+        #examen-form-root .apartado-detalle-field {
+            flex: 1 1 140px;
+            width: auto;
+        }
+
+        #examen-form-root .exam-bottom-bar {
+            flex-direction: column-reverse;
+            align-items: stretch !important;
+        }
+
+        #examen-form-root .exam-cancel-btn,
+        #examen-form-root .exam-save-btn {
+            width: 100% !important;
+            padding: 0.75rem 1rem !important;
+        }
     }
 </style>
 
-<div class="container form-page-container my-3" id="examen-form-root">
-    <!-- Barra superior -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <a href="{% url 'inicio' %}" class="btn btn-outline-secondary btn-compact-inline">
-            <i class="fas fa-arrow-left me-1"></i> Volver al inicio
-        </a>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{% url 'detalle_examenes' asignacion_id=asignacion.id %}" class="btn btn-outline-primary btn-compact-inline">
-                <i class="fas fa-list me-1"></i> Ver exámenes de esta asignatura
-            </a>
-            {% if modo_edicion and examen %}
-            <a href="{% url 'descargar_proyecto_examen' examen_id=examen.id %}" class="btn btn-success btn-compact-inline">
-                <i class="fas fa-file-word me-1"></i> Descargar Word (.docx)
-            </a>
-            {% endif %}
+<div class="container-fluid mt-2 form-page-container"
+     id="examen-form-root"
+     data-asignacion-id="{{ asignacion.id }}"
+     data-numero-evaluacion="{{ numero_evaluacion }}"
+     data-examen-id="{% if examen %}{{ examen.id }}{% endif %}"
+     data-modo-edicion="{{ modo_edicion|yesno:'true,false' }}"
+     data-puntaje-requerido="{{ puntaje_info.puntaje_disponible|default:0 }}"
+     data-bloqueado-puntaje="{{ puntaje_info.bloqueado_por_puntaje|yesno:'true,false' }}"
+     data-min-paginas="{{ min_paginas_exclusivo|default:'2.0' }}"
+     data-url-guardar="{% url 'guardar_examen' asignacion_id=asignacion.id %}"
+     data-url-ia="{% url 'generar_proyecto_examen' %}">
+
+    <!-- Cabecera centrada estilo Sílabo y Guía -->
+    <div class="text-center mb-3">
+        <h2 class="mb-1 fw-bold">
+            {% if modo_edicion %}Actualizar Proyecto de Examen{% else %}Proyecto de Examen{% endif %}
+        </h2>
+        <div class="fw-semibold text-secondary">
+            {{ asignacion.plan_de_estudio.asignatura.nombre }} — {{ asignacion.plan_de_estudio.carrera.nombre }} · {{ asignacion.plan_de_estudio.codigo }}
         </div>
+        <span class="badge bg-primary rounded-pill mt-1 px-3 py-2">
+            Evaluación #{{ numero_evaluacion }} · {{ periodo_corte }} (Encuentro {{ encuentro }})
+        </span>
     </div>
 
-    <!-- Encabezado principal -->
-    <div class="exam-hero">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-            <div>
-                <span class="badge bg-light text-dark mb-2" style="color: #4c1d95 !important;">
-                    <i class="fas fa-clipboard-check me-1"></i>
-                    {% if modo_edicion %}Editando Proyecto de Examen{% else %}Nuevo Proyecto de Examen{% endif %}
-                    · Evaluación #{{ numero_evaluacion }} (Encuentro {{ encuentro }})
-                </span>
-                <h2 class="mb-1 fw-bold">{{ asignacion.plan_de_estudio.asignatura.nombre }}</h2>
-                <p class="mb-0 opacity-90">
-                    {{ periodo_corte }} · {{ asignacion.plan_de_estudio.carrera.nombre }} · Código: {{ asignacion.plan_de_estudio.codigo }}
-                </p>
-            </div>
-            <div class="text-md-end p-3 rounded-3" style="background: rgba(255, 255, 255, 0.14);">
-                <div class="small text-uppercase fw-semibold opacity-75">Puntaje automático requerido</div>
-                <div class="display-6 fw-bold mb-0">{{ puntaje_info.puntaje_disponible }} pts</div>
-                <div class="small">Restante de 100 pts en {{ periodo_corte }}</div>
-            </div>
-        </div>
-    </div>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-md-11 col-sm-12">
 
-    <!-- Diagnóstico de puntaje automático del corte -->
-    <div class="score-breakdown-box">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-            <h5 class="mb-0 fw-bold">
-                <i class="fas fa-calculator text-primary me-2"></i>Cálculo Automático de Puntaje — {{ periodo_corte }}
-            </h5>
-            <div class="d-flex flex-wrap gap-2">
-                <span class="badge bg-primary">Sílabos del corte: {{ puntaje_info.acumulado_silabos }} pts</span>
-                <span class="badge bg-info text-dark">Guías del corte: {{ puntaje_info.acumulado_guias }} pts</span>
-                <span class="badge {% if puntaje_info.bloqueado_por_puntaje %}bg-danger{% else %}bg-success{% endif %}">
-                    Acumulado: {{ puntaje_info.acumulado_total }}/100 pts → Examen: {{ puntaje_info.puntaje_disponible }} pts
-                </span>
-            </div>
-        </div>
-
-        {% if puntaje_info.bloqueado_por_puntaje %}
-        <div class="alert alert-danger mt-2 mb-2" role="alert">
-            <h6 class="fw-bold mb-1"><i class="fas fa-ban me-2"></i>No quedan puntos disponibles para este Proyecto de Examen</h6>
-            <p class="mb-2 small">
-                Ya acumulaste <strong>{{ puntaje_info.acumulado_total }} / 100 pts</strong> entre sílabos y guías del <strong>{{ periodo_corte }}</strong>
-                {% if puntaje_info.exceso > 0 %}(exceso de <strong>{{ puntaje_info.exceso }} pts</strong>){% endif %}.
-                Para poder crear o guardar este examen, corrige primero los puntajes de tus sílabos o guías de este corte para liberar los puntos correspondientes al examen.
-            </p>
-            <div class="d-flex flex-wrap gap-2">
-                {% for ds in puntaje_info.detalle_silabos %}
-                    <a href="{% url 'actualizar_silabo' silabo_id=ds.id %}" class="btn btn-sm btn-outline-danger btn-compact-inline">
-                        <i class="fas fa-edit me-1"></i>Editar Sílabo E{{ ds.encuentro }} ({{ ds.puntaje }} pts)
+                <!-- Navegación rápida y descargas (en modo edición) -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <a href="{% url 'inicio' %}" class="btn btn-outline-secondary btn-compact-inline">
+                        <i class="fas fa-arrow-left me-1"></i>Volver al inicio
                     </a>
-                {% endfor %}
-                {% for dg in puntaje_info.detalle_guias %}
-                    <a href="{% url 'actualizar_guia' guia_id=dg.id %}" class="btn btn-sm btn-outline-danger btn-compact-inline">
-                        <i class="fas fa-edit me-1"></i>Editar Guía E{{ dg.encuentro }} ({{ dg.puntaje }} pts)
-                    </a>
-                {% endfor %}
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'detalle_examenes' asignacion_id=asignacion.id %}" class="btn btn-outline-primary btn-compact-inline">
+                            <i class="fas fa-list me-1"></i>Ver exámenes
+                        </a>
+                        {% if modo_edicion and examen %}
+                        <a href="{% url 'descargar_proyecto_examen' examen_id=examen.id %}" class="btn btn-success btn-compact-inline">
+                            <i class="fas fa-file-word me-1"></i>Proyecto (.docx)
+                        </a>
+                        <a href="{% url 'descargar_examen_estudiante' examen_id=examen.id %}" class="btn btn-primary btn-compact-inline">
+                            <i class="fas fa-user-graduate me-1"></i>Estudiantes (.docx)
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card shadow-lg">
+                    <div class="card-body">
+
+                        {% if not modo_edicion %}
+                        <!-- Banner de borrador local restaurado -->
+                        <div id="draft-restored-banner" class="draft-banner d-none" role="status">
+                            <div>
+                                <i class="fas fa-history me-1 text-success"></i>
+                                <strong>Avance recuperado</strong> de este dispositivo (<span id="draft-restored-time"></span>).
+                            </div>
+                            <button type="button" id="btn-descartar-borrador" class="btn btn-outline-danger btn-sm draft-discard-btn">
+                                <i class="fas fa-trash-alt me-1"></i>Empezar de cero
+                            </button>
+                        </div>
+                        {% endif %}
+
+                        {% if puntaje_info.bloqueado_por_puntaje %}
+                        <!-- Alerta cuando ya se alcanzó o excedió el límite de 100 puntos en el corte -->
+                        <div class="alert alert-danger mb-3" role="alert">
+                            <h3 class="h6 fw-bold mb-1">
+                                <i class="fas fa-ban me-2"></i>No quedan puntos disponibles para este Proyecto de Examen
+                            </h3>
+                            <p class="mb-2 small">
+                                Acumulado en {{ periodo_corte }}: <strong>{{ puntaje_info.acumulado_total }} / 100 pts</strong>
+                                (Sílabos: {{ puntaje_info.acumulado_silabos }} pts · Guías: {{ puntaje_info.acumulado_guias }} pts{% if puntaje_info.exceso > 0 %} · Exceso: {{ puntaje_info.exceso }} pts{% endif %}).
+                                Ajusta primero los puntajes de tus sílabos o guías del corte para habilitar los puntos del examen.
+                            </p>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for ds in puntaje_info.detalle_silabos %}
+                                    <a href="{% url 'actualizar_silabo' silabo_id=ds.id %}" class="btn btn-sm btn-outline-danger btn-compact-inline">
+                                        <i class="fas fa-edit me-1"></i>Sílabo E{{ ds.encuentro }} ({{ ds.puntaje }} pts)
+                                    </a>
+                                {% endfor %}
+                                {% for dg in puntaje_info.detalle_guias %}
+                                    <a href="{% url 'actualizar_guia' guia_id=dg.id %}" class="btn btn-sm btn-outline-danger btn-compact-inline">
+                                        <i class="fas fa-edit me-1"></i>Guía E{{ dg.encuentro }} ({{ dg.puntaje }} pts)
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Estado en vivo de puntaje del corte y extensión mínima -->
+                        <div class="exam-status-header">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold small">Puntaje requerido del corte</span>
+                                        <span id="meter-puntaje-badge" class="badge bg-secondary">0 / {{ puntaje_info.puntaje_disponible }} pts</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div id="meter-puntaje-bar"
+                                             class="progress-bar bg-warning"
+                                             role="progressbar"
+                                             aria-label="Progreso de puntaje de apartados"
+                                             aria-valuemin="0"
+                                             aria-valuemax="{{ puntaje_info.puntaje_disponible|default:100 }}"
+                                             aria-valuenow="0"
+                                             style="width: 0%;"></div>
+                                    </div>
+                                    <div id="meter-puntaje-hint" class="small text-muted mt-1">
+                                        La suma debe ser exactamente {{ puntaje_info.puntaje_disponible }} pts.
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="fw-bold small">Extensión estimada</span>
+                                        <span id="meter-paginas-badge" class="badge bg-danger">0.0 páginas</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div id="meter-paginas-bar"
+                                             class="progress-bar bg-danger"
+                                             role="progressbar"
+                                             aria-label="Progreso de extensión mínima en páginas"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100"
+                                             aria-valuenow="0"
+                                             style="width: 0%;"></div>
+                                    </div>
+                                    <div id="meter-paginas-hint" class="small text-muted mt-1">
+                                        Mínimo requerido: superar 2.0 páginas con al menos 2 apartados completos.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if not puntaje_info.bloqueado_por_puntaje %}
+                            <details class="exam-score-details mt-2 pt-2">
+                                <summary class="small text-muted">
+                                    <span>Desglose del corte: Sílabos {{ puntaje_info.acumulado_silabos }} pts · Guías {{ puntaje_info.acumulado_guias }} pts · Examen {{ puntaje_info.puntaje_disponible }} pts</span>
+                                    <span class="text-primary fw-semibold ms-1">(ajustar)</span>
+                                </summary>
+                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                    {% for ds in puntaje_info.detalle_silabos %}
+                                        <a href="{% url 'actualizar_silabo' silabo_id=ds.id %}" class="btn btn-sm btn-outline-secondary btn-compact-inline">
+                                            Sílabo E{{ ds.encuentro }}: {{ ds.puntaje }} pts
+                                        </a>
+                                    {% endfor %}
+                                    {% for dg in puntaje_info.detalle_guias %}
+                                        <a href="{% url 'actualizar_guia' guia_id=dg.id %}" class="btn btn-sm btn-outline-secondary btn-compact-inline">
+                                            Guía E{{ dg.encuentro }}: {{ dg.puntaje }} pts
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </details>
+                            {% endif %}
+                        </div>
+
+                        <!-- Asistente IA compacto -->
+                        {% if mostrar_ia and not puntaje_info.bloqueado_por_puntaje %}
+                        <div class="wizard-ai-box">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="fw-bold text-primary">
+                                    <i class="fas fa-magic me-1"></i>Asistente IA para este examen
+                                </span>
+                                <small class="text-muted">Opcional</small>
+                            </div>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-5">
+                                    <label for="ai-modelo-select" class="form-label small mb-1">Modelo</label>
+                                    <select id="ai-modelo-select" class="form-select">
+                                        {% if modelos_ia %}
+                                            {% for m in modelos_ia %}
+                                                <option value="{{ m.id }}">{{ m.nombre_mostrar }}</option>
+                                            {% endfor %}
+                                        {% else %}
+                                            <option value="google">Google Gemini</option>
+                                            <option value="deepseek">DeepSeek</option>
+                                            <option value="openai">OpenAI</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="ai-hojas-select" class="form-label small mb-1">Extensión</label>
+                                    <select id="ai-hojas-select" class="form-select">
+                                        {% for h in hojas_ia_opciones %}
+                                            <option value="{{ h }}" {% if h == hojas_ia_inicial %}selected{% endif %}>{{ h }} hojas</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" id="btn-generar-ia" class="btn btn-dark w-100">
+                                        <i class="fas fa-wand-magic-sparkles me-1"></i>Generar
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="ai-status-msg" class="mt-2 small" role="status" aria-live="polite"></div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Formulario principal -->
+                        <form id="examen-form" novalidate>
+                            {% csrf_token %}
+
+                            <!-- Sección 1: Datos del Examen -->
+                            <div class="card mb-3">
+                                <div class="card-header">
+                                    <h3 class="h6 mb-0 fw-bold">
+                                        <i class="fas fa-sliders-h text-primary me-2"></i>Datos del Examen
+                                    </h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <label for="id_fecha" class="form-label">Fecha del examen *</label>
+                                            <input type="date" id="id_fecha" class="form-control" value="{{ fecha_inicial }}" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="id_codigo_grupo" class="form-label">Código de grupo</label>
+                                            <input type="text" id="id_codigo_grupo" class="form-control" value="{{ codigo_grupo_inicial }}" placeholder="Ej. ISIS-IV-A">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="id_modalidad" class="form-label">Modalidad *</label>
+                                            <select id="id_modalidad" class="form-select">
+                                                {% for val, lbl in modalidad_choices %}
+                                                    <option value="{{ val }}" {% if modalidad_inicial == val %}selected{% endif %}>{{ lbl }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="id_tipo_examen" class="form-label">Tipo de examen *</label>
+                                            <select id="id_tipo_examen" class="form-select">
+                                                {% for val, lbl in tipo_examen_choices %}
+                                                    <option value="{{ val }}" {% if tipo_examen_inicial == val %}selected{% endif %}>{{ lbl }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <details id="exam-meta-details" class="exam-extra-meta mt-3 pt-2">
+                                        <summary class="small text-muted">
+                                            <span id="exam-meta-summary-text">Datos institucionales prellenados ({{ anio_lectivo_inicial }} · Trim. {{ trimestre_inicial }} · {{ municipio_inicial }})</span>
+                                            <span class="text-primary fw-semibold ms-1">— Editar</span>
+                                        </summary>
+                                        <div class="row g-3 mt-1">
+                                            <div class="col-md-2">
+                                                <label for="id_anio_lectivo" class="form-label">Año lectivo *</label>
+                                                <input type="text" id="id_anio_lectivo" class="form-control" value="{{ anio_lectivo_inicial }}" required>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="id_trimestre" class="form-label">Trimestre *</label>
+                                                <input type="text" id="id_trimestre" class="form-control" value="{{ trimestre_inicial }}" required>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <label for="id_carrera_texto" class="form-label">Carrera(s) *</label>
+                                                <input type="text" id="id_carrera_texto" class="form-control" value="{{ carrera_inicial }}" required>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="id_municipio" class="form-label">Municipio / Sede</label>
+                                                <input type="text" id="id_municipio" class="form-control" value="{{ municipio_inicial }}">
+                                            </div>
+                                        </div>
+                                    </details>
+                                </div>
+                            </div>
+
+                            <!-- Sección 2: Apartados del Examen -->
+                            <div class="card mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center gap-2">
+                                    <h3 class="h6 mb-0 fw-bold">
+                                        <i class="fas fa-tasks text-primary me-2"></i>Apartados del Examen
+                                    </h3>
+                                    <span id="apartados-count-badge" class="badge bg-secondary">2 apartados</span>
+                                </div>
+                                <div class="card-body">
+                                    <div id="apartados-container"></div>
+
+                                    <div class="text-center mt-2">
+                                        <button type="button" id="btn-agregar-apartado" class="btn btn-outline-primary btn-compact-inline">
+                                            <i class="fas fa-plus me-1"></i>Agregar apartado
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mensajes de error -->
+                            <div id="form-error-alert" class="alert alert-danger d-none" role="alert"></div>
+
+                            <!-- Barra de acciones -->
+                            <div class="exam-bottom-bar d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <a href="{% url 'inicio' %}" class="btn btn-outline-secondary exam-cancel-btn">Cancelar</a>
+                                <button type="submit" id="btn-guardar-examen"
+                                        class="btn btn-success fw-bold exam-save-btn"
+                                        {% if puntaje_info.bloqueado_por_puntaje %}disabled{% endif %}>
+                                    <i class="fas fa-save me-2"></i>{% if modo_edicion %}Actualizar Proyecto de Examen{% else %}Guardar Proyecto de Examen{% endif %}
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
             </div>
         </div>
-        {% else %}
-        <p class="small text-muted mb-2">
-            El puntaje de este examen se calcula automáticamente como lo que falta para completar los <strong>100 puntos</strong> del {{ periodo_corte }}
-            (<code>100 - {{ puntaje_info.acumulado_total }} = {{ puntaje_info.puntaje_disponible }} pts</code>).
-            Si detectas que acumulaste demasiado o muy poco en el corte, puedes ajustar tus sílabos o guías aquí:
-        </p>
-        <div class="d-flex flex-wrap gap-1">
-            {% for ds in puntaje_info.detalle_silabos %}
-                <a href="{% url 'actualizar_silabo' silabo_id=ds.id %}" class="btn btn-sm btn-outline-secondary btn-compact-inline">
-                    Sílabo E{{ ds.encuentro }}: {{ ds.puntaje }} pts
-                </a>
-            {% endfor %}
-            {% for dg in puntaje_info.detalle_guias %}
-                <a href="{% url 'actualizar_guia' guia_id=dg.id %}" class="btn btn-sm btn-outline-secondary btn-compact-inline">
-                    Guía E{{ dg.encuentro }}: {{ dg.puntaje }} pts
-                </a>
-            {% endfor %}
-        </div>
-        {% endif %}
     </div>
-
-    <!-- Panel de Generación Asistida con IA (4 a 8 hojas) -->
-    {% if mostrar_ia and not puntaje_info.bloqueado_por_puntaje %}
-    <div class="exam-ai-box">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <div>
-                <h5 class="mb-1 fw-bold" style="color: #4c1d95 !important;">
-                    <i class="fas fa-magic me-2"></i>Generar Proyecto de Examen con Inteligencia Artificial
-                </h5>
-                <p class="small text-muted mb-0">
-                    La IA diseñará un examen completo basado en los sílabos, guías y programa del <strong>{{ periodo_corte }}</strong>,
-                    ajustado exactamente a <strong>{{ puntaje_info.puntaje_disponible }} puntos</strong> y con extensión de <strong>4 a 8 hojas</strong>.
-                </p>
-            </div>
-        </div>
-
-        <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-                <label for="ai-modelo-select" class="form-label small mb-1">Modelo de IA</label>
-                <select id="ai-modelo-select" class="form-select">
-                    {% if modelos_ia %}
-                        {% for m in modelos_ia %}
-                            <option value="{{ m.id }}">{{ m.nombre_mostrar }}</option>
-                        {% endfor %}
-                    {% else %}
-                        <option value="google">Google Gemini</option>
-                        <option value="deepseek">DeepSeek</option>
-                        <option value="openai">OpenAI</option>
-                    {% endif %}
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="ai-hojas-select" class="form-label small mb-1">Cantidad de hojas a generar (4 a 8)</label>
-                <select id="ai-hojas-select" class="form-select">
-                    {% for h in hojas_ia_opciones %}
-                        <option value="{{ h }}" {% if h == 4 %}selected{% endif %}>{{ h }} hojas (formato horizontal UML)</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <button type="button" id="btn-generar-ia" class="btn btn-exam w-100 py-2">
-                    <i class="fas fa-robot me-1"></i> Generar con IA
-                </button>
-            </div>
-        </div>
-        <div id="ai-status-msg" class="mt-2 small"></div>
-    </div>
-    {% endif %}
-
-    <!-- Formulario principal -->
-    <form id="examen-form" novalidate>
-        {% csrf_token %}
-        <!-- Sección 1: Datos del Encabezado Oficial UML -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0 fw-bold"><i class="fas fa-university text-primary me-2"></i>1. Datos del Encabezado (Plantilla UML)</h5>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label for="id_fecha" class="form-label">Fecha del examen *</label>
-                        <input type="date" id="id_fecha" class="form-control" value="{{ fecha_inicial }}" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="id_anio_lectivo" class="form-label">Año lectivo *</label>
-                        <input type="text" id="id_anio_lectivo" class="form-control" value="{{ anio_lectivo_inicial }}" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="id_trimestre" class="form-label">Trimestre *</label>
-                        <input type="text" id="id_trimestre" class="form-control" value="{{ trimestre_inicial }}" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="id_codigo_grupo" class="form-label">Código de grupo</label>
-                        <input type="text" id="id_codigo_grupo" class="form-control" value="{{ codigo_grupo_inicial }}" placeholder="Ej. ISIS-IV-A">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="id_municipio" class="form-label">Municipio / Sede</label>
-                        <input type="text" id="id_municipio" class="form-control" value="{{ municipio_inicial }}">
-                    </div>
-
-                    <div class="col-md-5">
-                        <label for="id_carrera_texto" class="form-label">Carrera(s) *</label>
-                        <input type="text" id="id_carrera_texto" class="form-control" value="{{ carrera_inicial }}" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="id_modalidad" class="form-label">Modalidad *</label>
-                        <select id="id_modalidad" class="form-select">
-                            {% for val, lbl in modalidad_choices %}
-                                <option value="{{ val }}" {% if modalidad_inicial == val %}selected{% endif %}>{{ lbl }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="id_tipo_examen" class="form-label">Tipo de examen *</label>
-                        <select id="id_tipo_examen" class="form-select">
-                            {% for val, lbl in tipo_examen_choices %}
-                                <option value="{{ val }}" {% if tipo_examen_inicial == val %}selected{% endif %}>{{ lbl }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="mt-3 p-2 rounded bg-light small text-muted d-flex flex-wrap gap-3">
-                    <span><strong>Asignatura:</strong> {{ asignacion.plan_de_estudio.asignatura.nombre }}</span>
-                    <span><strong>Código:</strong> {{ asignacion.plan_de_estudio.codigo }}</span>
-                    <span><strong>Facilitador:</strong> {{ asignacion.usuario.get_full_name|default:asignacion.usuario.username }}</span>
-                    <span><strong>Hrs Presenciales:</strong> {{ asignacion.plan_de_estudio.horas_presenciales }}</span>
-                    <span><strong>Hrs Trab. Indep.:</strong> {{ asignacion.plan_de_estudio.horas_estudio_independiente }}</span>
-                    <span><strong>Total Hrs:</strong> {{ asignacion.plan_de_estudio.horas_presenciales|add:asignacion.plan_de_estudio.horas_estudio_independiente }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Medidor en vivo de Puntaje y Extensión (> 2 páginas) -->
-        <div class="exam-meter-bar">
-            <div class="row g-3 align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="fw-bold small"><i class="fas fa-star text-warning me-1"></i>Puntaje de Apartados</span>
-                        <span id="meter-puntaje-badge" class="badge bg-secondary">0 / {{ puntaje_info.puntaje_disponible }} pts</span>
-                    </div>
-                    <div class="progress" style="height: 10px;">
-                        <div id="meter-puntaje-bar" class="progress-bar bg-warning" style="width: 0%;"></div>
-                    </div>
-                    <div id="meter-puntaje-hint" class="small text-muted mt-1">
-                        La suma debe ser exactamente {{ puntaje_info.puntaje_disponible }} pts.
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="fw-bold small"><i class="fas fa-file-alt text-primary me-1"></i>Extensión Estimada (Bloquea ≤ 2 páginas)</span>
-                        <span id="meter-paginas-badge" class="badge bg-danger">0.0 páginas</span>
-                    </div>
-                    <div class="progress" style="height: 10px;">
-                        <div id="meter-paginas-bar" class="progress-bar bg-danger" style="width: 0%;"></div>
-                    </div>
-                    <div id="meter-paginas-hint" class="small text-muted mt-1">
-                        Mínimo requerido: superar 2.0 páginas (3+ hojas) con contenido sustancial.
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sección 2: Apartados Dinámicos -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <h5 class="mb-0 fw-bold"><i class="fas fa-tasks text-primary me-2"></i>2. Apartados del Proyecto de Examen</h5>
-                <button type="button" id="btn-agregar-apartado" class="btn btn-exam btn-compact-inline">
-                    <i class="fas fa-plus me-1"></i> Agregar Apartado
-                </button>
-            </div>
-            <div class="card-body">
-                <div id="apartados-container"></div>
-
-                <div class="text-center mt-2">
-                    <button type="button" id="btn-agregar-apartado-bottom" class="btn btn-outline-primary btn-compact-inline">
-                        <i class="fas fa-plus-circle me-1"></i> Añadir otro apartado
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mensajes de error -->
-        <div id="form-error-alert" class="alert alert-danger d-none" role="alert"></div>
-
-        <!-- Botón guardar -->
-        <div class="d-flex flex-wrap justify-content-end gap-2 mb-5">
-            <a href="{% url 'inicio' %}" class="btn btn-outline-secondary btn-compact-inline">Cancelar</a>
-            <button type="submit" id="btn-guardar-examen"
-                    class="btn btn-success px-4 py-2 fw-bold"
-                    style="width: auto;"
-                    {% if puntaje_info.bloqueado_por_puntaje %}disabled{% endif %}>
-                <i class="fas fa-save me-2"></i>
-                {% if modo_edicion %}Actualizar Proyecto de Examen{% else %}Guardar Proyecto de Examen{% endif %}
-            </button>
-        </div>
-    </form>
 </div>
 
-<script>
-(function() {
-    const ROMANOS = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI","XVII","XVIII","XIX","XX"];
-    const PUNTAJE_REQUERIDO = {{ puntaje_info.puntaje_disponible|default:0 }};
-    const BLOQUEADO_POR_PUNTAJE = {{ puntaje_info.bloqueado_por_puntaje|yesno:"true,false" }};
-    const ASIGNACION_ID = {{ asignacion.id }};
-    const NUMERO_EVALUACION = {{ numero_evaluacion }};
-    const EXAMEN_ID = {% if examen %}{{ examen.id }}{% else %}null{% endif %};
-    const URL_GUARDAR = "{% url 'guardar_examen' asignacion_id=asignacion.id %}";
-    const URL_IA = "{% url 'generar_proyecto_examen' %}";
-    const CSRF_TOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
+{{ items_iniciales|json_script:"examen-items-iniciales" }}
+{% endblock %}
 
-    const CHARS_OBJ = 42, CHARS_EJER = 46, CHARS_RESP = 36, CHARS_PTS = 11;
-    const LINEAS_P1 = 25.0, LINEAS_SIG = 38.0, LINEAS_FIRMA = 3.0, LINEAS_PAD = 1.5;
-    const MIN_PAGINAS_EXCL = 2.0;
-    const MIN_CHARS_UTILES = 1200;
-
-    let hojasObjetivoUsadasIA = {% if examen and examen.hojas_objetivo_ia %}{{ examen.hojas_objetivo_ia }}{% else %}null{% endif %};
-
-    const container = document.getElementById('apartados-container');
-    const errorAlert = document.getElementById('form-error-alert');
-    const btnGuardar = document.getElementById('btn-guardar-examen');
-
-    function escapeHtml(str) {
-        return String(str || '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
-    function contarLineas(texto, charsPorLinea) {
-        const limpio = String(texto || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
-        if (!limpio) return 1.0;
-        const colapsado = limpio.replace(/\n{3,}/g, '\n\n');
-        let total = 0;
-        for (const linea of colapsado.split('\n')) {
-            const t = linea.trim();
-            if (!t) total += 0.6;
-            else total += Math.max(1, Math.ceil(t.length / charsPorLinea));
-        }
-        return Math.max(1.0, total);
-    }
-
-    function obtenerItemsDesdeDOM() {
-        const cards = container.querySelectorAll('.apartado-card');
-        const items = [];
-        cards.forEach((card, idx) => {
-            const num = ROMANOS[idx] || String(idx + 1);
-            const objetivo = card.querySelector('.inp-objetivo').value.trim();
-            const ejercicios = card.querySelector('.inp-ejercicios').value.trim();
-            const posibles_respuestas = card.querySelector('.inp-respuestas').value.trim();
-            const puntaje = parseInt(card.querySelector('.inp-puntaje').value || '0', 10) || 0;
-            const detalle_puntaje = card.querySelector('.inp-detalle-puntaje').value.trim();
-            items.push({ numero: num, objetivo, ejercicios, posibles_respuestas, puntaje, detalle_puntaje });
-        });
-        return items;
-    }
-
-    function estimarPaginas(items) {
-        let totalLineas = 0.0;
-        let charsUtiles = 0;
-        let itemsValidos = 0;
-        for (const it of items) {
-            if (it.objetivo && it.ejercicios && it.posibles_respuestas) itemsValidos++;
-            for (const c of [it.objetivo, it.ejercicios, it.posibles_respuestas]) {
-                charsUtiles += String(c || '').replace(/[\s_.\-]+/g, '').length;
-            }
-            const lObj = contarLineas(it.objetivo, CHARS_OBJ);
-            const lEjer = contarLineas(it.ejercicios, CHARS_EJER);
-            const lResp = contarLineas(it.posibles_respuestas, CHARS_RESP);
-            const lPts = contarLineas(it.detalle_puntaje || (it.puntaje + ' pts'), CHARS_PTS);
-            totalLineas += Math.max(lObj, lEjer, lResp, lPts) + LINEAS_PAD;
-        }
-        const conFirma = totalLineas + LINEAS_FIRMA;
-        let paginas = conFirma <= LINEAS_P1
-            ? (conFirma / LINEAS_P1)
-            : (1.0 + (conFirma - LINEAS_P1) / LINEAS_SIG);
-        paginas = Math.round(paginas * 10) / 10;
-        const hojas = Math.max(1, Math.ceil(paginas));
-        const cumple = itemsValidos >= 2 && paginas > MIN_PAGINAS_EXCL && charsUtiles >= MIN_CHARS_UTILES;
-        return { paginas, hojas, charsUtiles, itemsValidos, cumple };
-    }
-
-    function actualizarMedidores() {
-        const items = obtenerItemsDesdeDOM();
-        const sumaPts = items.reduce((acc, it) => acc + (it.puntaje || 0), 0);
-        const est = estimarPaginas(items);
-
-        // Puntaje
-        const badgePts = document.getElementById('meter-puntaje-badge');
-        const barPts = document.getElementById('meter-puntaje-bar');
-        const hintPts = document.getElementById('meter-puntaje-hint');
-        const pctPts = PUNTAJE_REQUERIDO > 0 ? Math.min(100, Math.round((sumaPts / PUNTAJE_REQUERIDO) * 100)) : 0;
-
-        badgePts.textContent = `${sumaPts} / ${PUNTAJE_REQUERIDO} pts`;
-        barPts.style.width = `${pctPts}%`;
-
-        if (PUNTAJE_REQUERIDO <= 0) {
-            badgePts.className = 'badge bg-danger';
-            barPts.className = 'progress-bar bg-danger';
-            hintPts.textContent = 'Sin puntaje disponible en el corte. Corrija sus sílabos o guías primero.';
-        } else if (sumaPts === PUNTAJE_REQUERIDO) {
-            badgePts.className = 'badge bg-success';
-            barPts.className = 'progress-bar bg-success';
-            hintPts.textContent = '¡Puntaje exacto! Completa exactamente los 100 puntos del corte.';
-        } else if (sumaPts < PUNTAJE_REQUERIDO) {
-            badgePts.className = 'badge bg-warning text-dark';
-            barPts.className = 'progress-bar bg-warning';
-            hintPts.textContent = `Faltan ${PUNTAJE_REQUERIDO - sumaPts} pts por distribuir entre los apartados.`;
-        } else {
-            badgePts.className = 'badge bg-danger';
-            barPts.className = 'progress-bar bg-danger';
-            hintPts.textContent = `Excede por ${sumaPts - PUNTAJE_REQUERIDO} pts el puntaje disponible del corte.`;
-        }
-
-        // Páginas
-        const badgePag = document.getElementById('meter-paginas-badge');
-        const barPag = document.getElementById('meter-paginas-bar');
-        const hintPag = document.getElementById('meter-paginas-hint');
-        const pctPag = Math.min(100, Math.round((est.paginas / 3.0) * 100));
-
-        badgePag.textContent = `${est.paginas.toFixed(1)} pág. (~${est.hojas} hoja${est.hojas === 1 ? '' : 's'})`;
-        barPag.style.width = `${pctPag}%`;
-
-        if (est.cumple) {
-            badgePag.className = 'badge bg-success';
-            barPag.className = 'progress-bar bg-success';
-            hintPag.textContent = `Extensión aprobada (${est.charsUtiles} caracteres efectivos en ${est.itemsValidos} apartados completos).`;
-        } else {
-            badgePag.className = 'badge bg-danger';
-            barPag.className = 'progress-bar bg-danger';
-            if (est.itemsValidos < 2) {
-                hintPag.textContent = 'Bloqueado: complete al menos 2 apartados y supere las 2.0 páginas (mínimo 3 hojas).';
-            } else if (est.paginas <= MIN_PAGINAS_EXCL) {
-                hintPag.textContent = `Bloqueado (${est.paginas.toFixed(1)} pág.): no se permiten exámenes de 1 o 2 páginas. Agregue más ejercicios y respuestas para superar 2.0 páginas.`;
-            } else {
-                hintPag.textContent = `Contenido aún breve (${est.charsUtiles}/${MIN_CHARS_UTILES} caracteres efectivos). Amplíe los ejercicios y respuestas.`;
-            }
-        }
-    }
-
-    function renumerarApartados() {
-        const cards = container.querySelectorAll('.apartado-card');
-        cards.forEach((card, idx) => {
-            const num = ROMANOS[idx] || String(idx + 1);
-            card.querySelector('.apartado-badge').textContent = `Apartado ${num}`;
-            const btnDel = card.querySelector('.btn-del-apartado');
-            btnDel.disabled = cards.length <= 1;
-        });
-        actualizarMedidores();
-    }
-
-    function crearCardApartado(data = {}) {
-        const card = document.createElement('div');
-        card.className = 'apartado-card';
-        card.innerHTML = `
-            <div class="apartado-header">
-                <span class="apartado-badge">Apartado</span>
-                <div class="d-flex align-items-center gap-2">
-                    <div class="input-group input-group-sm" style="width: 145px;">
-                        <span class="input-group-text fw-bold">Pts</span>
-                        <input type="number" min="1" max="100" class="form-control inp-puntaje" value="${escapeHtml(data.puntaje || '')}" placeholder="Ej. 10" required>
-                    </div>
-                    <input type="text" class="form-control form-control-sm inp-detalle-puntaje" style="width: 180px;" value="${escapeHtml(data.detalle_puntaje || '')}" placeholder="Ej. 5 c/u = 10 pts">
-                    <button type="button" class="btn btn-sm btn-outline-danger btn-del-apartado" style="width:auto;" title="Eliminar apartado">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="p-3">
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Objetivos *</label>
-                    <textarea rows="2" class="form-control inp-objetivo" placeholder="Objetivo específico que evalúa este apartado..." required>${escapeHtml(data.objetivo || '')}</textarea>
-                </div>
-                <div class="row g-3">
-                    <div class="col-lg-6">
-                        <label class="form-label small fw-bold">Ejercicios Propuestos *</label>
-                        <textarea rows="7" class="form-control inp-ejercicios" placeholder="Redacte las instrucciones y todos los ejercicios / incisos numerados (1, 2, 3...)..." required>${escapeHtml(data.ejercicios || '')}</textarea>
-                    </div>
-                    <div class="col-lg-6">
-                        <label class="form-label small fw-bold">Posibles Respuestas / Clave de Corrección *</label>
-                        <textarea rows="7" class="form-control inp-respuestas" placeholder="Soluciones modelo, respuestas esperadas y criterios claros de evaluación..." required>${escapeHtml(data.posibles_respuestas || '')}</textarea>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        card.querySelectorAll('textarea, input').forEach(el => {
-            el.addEventListener('input', actualizarMedidores);
-        });
-        card.querySelector('.btn-del-apartado').addEventListener('click', () => {
-            card.remove();
-            renumerarApartados();
-        });
-
-        container.appendChild(card);
-        renumerarApartados();
-    }
-
-    function cargarItems(items) {
-        container.innerHTML = '';
-        if (Array.isArray(items) && items.length > 0) {
-            items.forEach(it => crearCardApartado(it));
-        } else {
-            crearCardApartado({});
-            crearCardApartado({});
-        }
-    }
-
-    document.getElementById('btn-agregar-apartado').addEventListener('click', () => crearCardApartado({}));
-    document.getElementById('btn-agregar-apartado-bottom').addEventListener('click', () => crearCardApartado({}));
-
-    // Generación con IA (4 a 8 hojas)
-    const btnIA = document.getElementById('btn-generar-ia');
-    if (btnIA) {
-        btnIA.addEventListener('click', async () => {
-            const statusEl = document.getElementById('ai-status-msg');
-            const modelo = document.getElementById('ai-modelo-select').value;
-            const hojas = document.getElementById('ai-hojas-select').value;
-
-            btnIA.disabled = true;
-            btnIA.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generando...';
-            statusEl.innerHTML = '<span class="text-primary fw-semibold"><i class="fas fa-hourglass-half me-1"></i>Diseñando proyecto de examen extenso de ' + hojas + ' hojas con IA. Esto puede tardar unos segundos...</span>';
-            errorAlert.classList.add('d-none');
-
-            try {
-                const formData = new FormData();
-                formData.append('asignacion_id', String(ASIGNACION_ID));
-                formData.append('numero_evaluacion', String(NUMERO_EVALUACION));
-                formData.append('modelo_select', modelo);
-                formData.append('numero_hojas', hojas);
-
-                const resp = await fetch(URL_IA, {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': CSRF_TOKEN },
-                    body: formData
-                });
-                const json = await resp.json();
-                if (!resp.ok || !json.success) {
-                    throw new Error(json.error || 'No se pudo generar el proyecto de examen con IA.');
-                }
-
-                const datos = json.datos || {};
-                if (datos.fecha) document.getElementById('id_fecha').value = datos.fecha;
-                if (datos.anio_lectivo) document.getElementById('id_anio_lectivo').value = datos.anio_lectivo;
-                if (datos.trimestre) document.getElementById('id_trimestre').value = datos.trimestre;
-                hojasObjetivoUsadasIA = parseInt(hojas, 10);
-
-                cargarItems(datos.items || []);
-                statusEl.innerHTML = `<span class="text-success fw-semibold"><i class="fas fa-check-circle me-1"></i>¡Proyecto de examen generado (${datos.items.length} apartados, ${datos.puntaje_total} pts exactos, ~${datos.estimacion.paginas_estimadas} páginas)! Revísalo y ajústalo si deseas antes de guardar.</span>`;
-            } catch (err) {
-                statusEl.innerHTML = `<span class="text-danger fw-semibold"><i class="fas fa-exclamation-triangle me-1"></i>${escapeHtml(err.message)}</span>`;
-            } finally {
-                btnIA.disabled = false;
-                btnIA.innerHTML = '<i class="fas fa-robot me-1"></i> Generar con IA';
-            }
-        });
-    }
-
-    // Envío del formulario
-    document.getElementById('examen-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        errorAlert.classList.add('d-none');
-
-        if (BLOQUEADO_POR_PUNTAJE) {
-            errorAlert.textContent = 'No quedan puntos disponibles en este corte evaluativo. Corrija sus sílabos o guías primero.';
-            errorAlert.classList.remove('d-none');
-            return;
-        }
-
-        const items = obtenerItemsDesdeDOM();
-        const est = estimarPaginas(items);
-        const sumaPts = items.reduce((acc, it) => acc + (it.puntaje || 0), 0);
-
-        if (sumaPts !== PUNTAJE_REQUERIDO) {
-            errorAlert.textContent = `La suma de puntajes (${sumaPts} pts) debe ser exactamente ${PUNTAJE_REQUERIDO} pts para completar los 100 puntos del corte.`;
-            errorAlert.classList.remove('d-none');
-            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
-        if (!est.cumple) {
-            errorAlert.textContent = `Extensión insuficiente (${est.paginas.toFixed(1)} páginas, ${est.charsUtiles} caracteres efectivos). Los exámenes de 1 o 2 páginas están bloqueados: debe superar las 2.0 páginas (mínimo 3 hojas) con al menos 2 apartados completos.`;
-            errorAlert.classList.remove('d-none');
-            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
-
-        const payload = {
-            examen_id: EXAMEN_ID,
-            numero_evaluacion: NUMERO_EVALUACION,
-            fecha: document.getElementById('id_fecha').value,
-            anio_lectivo: document.getElementById('id_anio_lectivo').value,
-            trimestre: document.getElementById('id_trimestre').value,
-            codigo_grupo: document.getElementById('id_codigo_grupo').value,
-            carrera_texto: document.getElementById('id_carrera_texto').value,
-            modalidad: document.getElementById('id_modalidad').value,
-            tipo_examen: document.getElementById('id_tipo_examen').value,
-            municipio: document.getElementById('id_municipio').value,
-            hojas_objetivo_ia: hojasObjetivoUsadasIA,
-            items: items
-        };
-
-        btnGuardar.disabled = true;
-        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
-
-        try {
-            const resp = await fetch(URL_GUARDAR, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': CSRF_TOKEN
-                },
-                body: JSON.stringify(payload)
-            });
-            const json = await resp.json();
-            if (!resp.ok || !json.success) {
-                throw new Error(json.error || 'Error al guardar el proyecto de examen.');
-            }
-            window.location.href = json.redirect_url;
-        } catch (err) {
-            errorAlert.textContent = err.message;
-            errorAlert.classList.remove('d-none');
-            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            btnGuardar.disabled = false;
-            btnGuardar.innerHTML = '<i class="fas fa-save me-2"></i>{% if modo_edicion %}Actualizar Proyecto de Examen{% else %}Guardar Proyecto de Examen{% endif %}';
-        }
-    });
-
-    const iniciales = {{ items_iniciales_json|safe }};
-    cargarItems(iniciales);
-})();
-</script>
+{% block extra_js %}
+<script src="{% static 'js/examen_form.js' %}"></script>
 {% endblock %}
