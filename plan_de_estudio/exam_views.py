@@ -18,7 +18,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from .ai_generators import generar_respuesta_ai, get_default_config
-from .documento_proyecto_examen import generar_documento_proyecto_examen
+from .documento_proyecto_examen import (
+    generar_documento_examen_estudiante,
+    generar_documento_proyecto_examen,
+)
 from .models import (
     AsignacionPlanEstudio,
     CORTE_POR_EVALUACION,
@@ -425,6 +428,7 @@ def guardar_examen(request, asignacion_id):
 
     success_url = f"{reverse('success_view')}?examen_id={examen.id}"
     download_url = reverse("descargar_proyecto_examen", args=[examen.id])
+    student_download_url = reverse("descargar_examen_estudiante", args=[examen.id])
 
     return JsonResponse(
         {
@@ -435,6 +439,7 @@ def guardar_examen(request, asignacion_id):
             "paginas_estimadas": float(examen.paginas_estimadas),
             "redirect_url": success_url,
             "download_url": download_url,
+            "student_download_url": student_download_url,
         }
     )
 
@@ -661,6 +666,42 @@ def descargar_proyecto_examen(request, examen_id):
         for c in examen.asignacion_plan.plan_de_estudio.asignatura.nombre
     ).strip("_")
     filename = f"Proyecto_Examen_Eval{examen.numero_evaluacion}_{asig_limpia}.docx"
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
+def descargar_examen_estudiante(request, examen_id):
+    """
+    Genera y descarga el examen listo para aplicar a los estudiantes (.docx vertical):
+    incluye logo UML, docente, asignatura, corte de evaluación, campos en blanco para
+    nombre completo del estudiante y fecha, y únicamente los ejercicios con sus puntajes
+    (sin objetivos ni posibles respuestas).
+    """
+    examen = get_object_or_404(
+        ProyectoExamen.objects.select_related(
+            "asignacion_plan",
+            "asignacion_plan__plan_de_estudio",
+            "asignacion_plan__plan_de_estudio__asignatura",
+            "asignacion_plan__plan_de_estudio__carrera",
+            "asignacion_plan__usuario",
+        ),
+        id=examen_id,
+    )
+    if not _tiene_permiso_asignacion(request.user, examen.asignacion_plan):
+        return HttpResponse("No tienes permiso para descargar este documento.", status=403)
+
+    output = generar_documento_examen_estudiante(examen)
+    asig_limpia = "".join(
+        c if (c.isalnum() or c in ("_", "-")) else "_"
+        for c in examen.asignacion_plan.plan_de_estudio.asignatura.nombre
+    ).strip("_")
+    filename = f"Examen_Estudiante_Eval{examen.numero_evaluacion}_{asig_limpia}.docx"
 
     response = HttpResponse(
         output.getvalue(),

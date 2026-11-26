@@ -51,8 +51,11 @@
                             <a href="{% url 'actualizar_examen' examen_id=slot.examen.id %}" class="btn btn-sm btn-outline-primary" style="width: auto;">
                                 <i class="fas fa-edit me-1"></i> Editar
                             </a>
-                            <a href="{% url 'descargar_proyecto_examen' examen_id=slot.examen.id %}" class="btn btn-sm btn-success" style="width: auto;">
-                                <i class="fas fa-file-word me-1"></i> Descargar Word (.docx)
+                            <a href="{% url 'descargar_proyecto_examen' examen_id=slot.examen.id %}" class="btn btn-sm btn-success" style="width: auto;" title="Formato oficial UML con objetivos y posibles respuestas">
+                                <i class="fas fa-file-word me-1"></i> Proyecto (.docx)
+                            </a>
+                            <a href="{% url 'descargar_examen_estudiante' examen_id=slot.examen.id %}" class="btn btn-sm btn-primary" style="width: auto;" title="Examen listo para imprimir y aplicar a los estudiantes (sin respuestas)">
+                                <i class="fas fa-user-graduate me-1"></i> Examen Estudiantes (.docx)
                             </a>
                         {% elif slot.desbloqueado %}
                             <span class="badge bg-warning text-dark">Disponible ({{ slot.puntaje_info.puntaje_disponible }} pts restantes)</span>

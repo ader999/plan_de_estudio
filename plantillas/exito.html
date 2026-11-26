@@ -182,6 +182,9 @@
             <a href="{% url 'descargar_proyecto_examen' examen_id=examen.id %}" class="btn btn-success">
                 <i class="fas fa-file-word me-2"></i>Descargar Proyecto de Examen (.docx)
             </a>
+            <a href="{% url 'descargar_examen_estudiante' examen_id=examen.id %}" class="btn btn-info text-white">
+                <i class="fas fa-user-graduate me-2"></i>Descargar Examen para Estudiantes (.docx)
+            </a>
             <a href="{% url 'detalle_examenes' asignacion_id=examen.asignacion_plan_id %}" class="btn btn-exam">
                 <i class="fas fa-clipboard-check me-2"></i>Ver Proyectos de Examen
             </a>

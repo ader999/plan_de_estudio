@@ -3797,18 +3797,21 @@ class ProyectoExamenModuloTest(TestCase):
         self.assertIn(f"examen_id={examen_id}", payload_ok["redirect_url"])
         self.assertGreater(payload_ok["paginas_estimadas"], 2.0)
 
-        # Pantalla de éxito muestra el botón directo para descargar Word (.docx)
+        # Pantalla de éxito muestra los botones directos para descargar Proyecto y Examen para Estudiantes
         resp_exito = self.client.get(payload_ok["redirect_url"])
         self.assertEqual(resp_exito.status_code, 200)
         self.assertContains(resp_exito, reverse('descargar_proyecto_examen', args=[examen_id]))
+        self.assertContains(resp_exito, reverse('descargar_examen_estudiante', args=[examen_id]))
         self.assertContains(resp_exito, "Descargar Proyecto de Examen (.docx)")
+        self.assertContains(resp_exito, "Descargar Examen para Estudiantes (.docx)")
 
-        # Tarjeta de Ver datos (plan_estudio) muestra Exámenes y enlace directo de descarga
+        # Tarjeta de Ver datos (plan_estudio) muestra Exámenes y enlaces directos de descarga (Proyecto y Estudiantes)
         resp_datos = self.client.get(reverse('plan_de_estudio'))
         self.assertEqual(resp_datos.status_code, 200)
         self.assertContains(resp_datos, "1/3 Exámenes")
         self.assertContains(resp_datos, reverse('detalle_examenes', args=[self.asignacion.id]))
         self.assertContains(resp_datos, reverse('descargar_proyecto_examen', args=[examen_id]))
+        self.assertContains(resp_datos, reverse('descargar_examen_estudiante', args=[examen_id]))
 
         # Ahora Sílabo 5 queda desbloqueado
         resp_s5_ok = self.client.get(reverse('ver_formulario_silabo', args=[self.asignacion.id]))
@@ -3937,6 +3940,120 @@ class ProyectoExamenModuloTest(TestCase):
         self.assertIn("48 pts", tabla.rows[-1].cells[3].text)
         # Verificar que el logo embebido en P[0] sigue presente en el documento
         self.assertIn("drawing", doc.paragraphs[0]._p.xml)
+
+    def test_descarga_examen_estudiante_formato_aplicacion(self):
+        import io
+        import zipfile
+        from docx import Document
+
+        for enc in range(1, 5):
+            s = self._crear_silabo(enc, puntaje=5)
+            self._crear_guia(s, enc, puntaje=10)
+        # Acumulado = 60 pts -> examen = 40 pts
+
+        items = self._items_validos_mas_de_2_paginas(40)
+        items[0]["objetivo"] = "OBJETIVO_SECRETO_DOCENTE_SOLO_PROYECTO"
+        items[0]["posibles_respuestas"] = "CLAVE_RESPUESTA_SECRETA_NO_ESTUDIANTES"
+        items[0]["ejercicios"] = (
+            "I. Selección Múltiple con Justificación\n"
+            "Instrucciones: Seleccione la respuesta correcta y justifique.\n"
+            "1. Analice el indicador económico principal del sector primario.\n"
+            "A. Producción agropecuaria\n"
+            "B. Servicios financieros\n"
+            + "\n".join(
+                f"{k}. Analice detenidamente el caso territorial #{k} considerando producción agrícola e infraestructura vial en Nicaragua."
+                for k in range(2, 14)
+            )
+        )
+
+        r_save = self.client.post(
+            reverse('guardar_examen', args=[self.asignacion.id]),
+            data=json.dumps({
+                "numero_evaluacion": 1,
+                "fecha": "2026-06-22",
+                "anio_lectivo": "2026",
+                "trimestre": "II",
+                "codigo_grupo": "IS-2026-B",
+                "carrera_texto": self.carrera.nombre,
+                "modalidad": "Por encuentro",
+                "tipo_examen": "De corte evaluativo",
+                "items": items,
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(r_save.status_code, 200, r_save.content.decode('utf-8'))
+        payload = r_save.json()
+        examen_id = payload["examen_id"]
+        self.assertEqual(
+            payload["student_download_url"],
+            reverse('descargar_examen_estudiante', args=[examen_id]),
+        )
+
+        # Vista detalle_examenes y ver_planeacion exponen ambos botones de descarga
+        r_det = self.client.get(reverse('detalle_examenes', args=[self.asignacion.id]))
+        self.assertEqual(r_det.status_code, 200)
+        self.assertContains(r_det, reverse('descargar_proyecto_examen', args=[examen_id]))
+        self.assertContains(r_det, reverse('descargar_examen_estudiante', args=[examen_id]))
+        self.assertContains(r_det, "Examen Estudiantes (.docx)")
+
+        r_plan = self.client.get(reverse('ver_planeacion', args=[self.asignacion.id]))
+        self.assertEqual(r_plan.status_code, 200)
+        self.assertContains(r_plan, reverse('descargar_examen_estudiante', args=[examen_id]))
+
+        # Otro docente sin permiso recibe 403
+        otro_user = User.objects.create_user(username="otro_doc_ex", password="otherpassword")
+        client_otro = Client()
+        client_otro.login(username="otro_doc_ex", password="otherpassword")
+        r_403 = client_otro.get(reverse('descargar_examen_estudiante', args=[examen_id]))
+        self.assertEqual(r_403.status_code, 403)
+
+        # Descarga del formato para estudiantes
+        r_est = self.client.get(reverse('descargar_examen_estudiante', args=[examen_id]))
+        self.assertEqual(r_est.status_code, 200)
+        self.assertEqual(
+            r_est['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+        self.assertIn("Examen_Estudiante_Eval1_", r_est['Content-Disposition'])
+
+        # Verificar imagen del escudo UML embebida en el .docx
+        with zipfile.ZipFile(io.BytesIO(r_est.content), 'r') as zf:
+            media_files = [m for m in zf.namelist() if m.startswith('word/media/')]
+            self.assertTrue(len(media_files) >= 1, "El examen para estudiantes debe incluir el logo UML embebido")
+
+        doc = Document(io.BytesIO(r_est.content))
+        # Orientación vertical (Carta)
+        self.assertLess(doc.sections[0].page_width, doc.sections[0].page_height)
+
+        # Extraer todo el texto (párrafos + tablas)
+        partes_texto = [p.text for p in doc.paragraphs]
+        for tbl in doc.tables:
+            for row in tbl.rows:
+                for cell in row.cells:
+                    partes_texto.append(cell.text)
+        texto_total = "\n".join(partes_texto)
+
+        # Campos generales obligatorios solicitados
+        self.assertIn("UNIVERSIDAD MARTÍN LUTERO", texto_total)
+        self.assertIn("Nombre completo del estudiante:", texto_total)
+        self.assertIn("Fecha: _____ / _____ / ________", texto_total)
+        self.assertNotIn("22/06/2026", texto_total)
+        self.assertNotIn("2026-06-22", texto_total)
+        self.assertIn("Elena Vargas", texto_total)
+        self.assertIn("Geografía Económica EX", texto_total)
+        self.assertIn("I Corte Evaluativo", texto_total)
+        self.assertIn("40 pts", texto_total)
+
+        # Contiene los ejercicios propuestos
+        self.assertIn("Selección Múltiple con Justificación", texto_total)
+        self.assertIn("Analice el indicador económico principal del sector primario.", texto_total)
+        self.assertIn("Producción agropecuaria", texto_total)
+
+        # NO contiene objetivos ni posibles respuestas (clave del docente)
+        self.assertNotIn("OBJETIVO_SECRETO_DOCENTE_SOLO_PROYECTO", texto_total)
+        self.assertNotIn("CLAVE_RESPUESTA_SECRETA_NO_ESTUDIANTES", texto_total)
+        self.assertNotIn("Solución modelo", texto_total)
+        self.assertNotIn("Posibles Respuestas", texto_total)
 
 
 

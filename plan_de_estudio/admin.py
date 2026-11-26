@@ -1165,13 +1165,16 @@ class ProyectoExamenAdmin(admin.ModelAdmin):
     @admin.display(description='Acciones')
     def acciones_examen(self, obj):
         url_docx = reverse('descargar_proyecto_examen', args=[obj.pk])
+        url_student = reverse('descargar_examen_estudiante', args=[obj.pk])
         url_edit = reverse('actualizar_examen', args=[obj.pk])
         return format_html(
-            '<div style="display:inline-flex; gap:6px; align-items:center;">'
-            '<a class="button" href="{}" style="background:#2563eb; color:#fff; border-color:#2563eb; padding:4px 8px;">↓ Word</a>'
+            '<div style="display:inline-flex; flex-wrap:wrap; gap:6px; align-items:center;">'
+            '<a class="button" href="{}" style="background:#198754; color:#fff; border-color:#198754; padding:4px 8px;" title="Formato oficial Proyecto de Examen UML">↓ Proyecto</a>'
+            '<a class="button" href="{}" style="background:#2563eb; color:#fff; border-color:#2563eb; padding:4px 8px;" title="Examen listo para aplicar a los estudiantes">↓ Estudiantes</a>'
             '<a class="button" href="{}" style="padding:4px 8px;">Editar</a>'
             '</div>',
             url_docx,
+            url_student,
             url_edit,
         )
 

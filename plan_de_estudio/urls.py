@@ -51,6 +51,7 @@ urlpatterns = [
     path('examenes/<int:asignacion_id>/', exam_views.detalle_examenes, name='detalle_examenes'),
     path('examen/actualizar/<int:examen_id>/', exam_views.actualizar_examen, name='actualizar_examen'),
     path('examen/descargar/<int:examen_id>/', exam_views.descargar_proyecto_examen, name='descargar_proyecto_examen'),
+    path('examen/descargar-estudiante/<int:examen_id>/', exam_views.descargar_examen_estudiante, name='descargar_examen_estudiante'),
     path('centro-de-recursos/', views.vista_tutoriales, name='tutoriales'),
     path(
         'tutoriales/',
